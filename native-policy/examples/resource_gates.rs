@@ -28,6 +28,15 @@ fn main() {
     if std::env::args().any(|a| a == "--preview-child") {
         let mut mode = String::new();
         io::stdin().read_to_string(&mut mode).unwrap();
+        // A validation sentinel proves that a rejected launch never received an artifact.
+        if !mode.is_empty() {
+            if let Some(runtime) = std::env::var_os("XDG_RUNTIME_DIR") {
+                let marker = std::path::PathBuf::from(runtime)
+                    .join(format!("pn-preview-payload-{}", std::process::id()));
+                std::fs::write(marker, b"test artifact delivered\n").unwrap();
+            }
+        }
+
         match mode.as_str() {
             "loop" => loop {
                 std::hint::spin_loop();

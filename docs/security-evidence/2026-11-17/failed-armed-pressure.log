@@ -1,0 +1,37 @@
+NATIVE_UI {"pid": 4649, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 4649, "button": "CPU loop armed", "action": "find", "passed": true}
+WEBKIT_CPU {"unit":"programmable-notes-preview-4578-1794952155746173820.service","usage_usec":763115,"elapsed_ms":3057,"throttled_periods":30,"editor_response_ms":167}
+NATIVE_UI {"pid": 4759, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 4759, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 4759, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+NATIVE_UI {"pid": 4866, "button": "Arm memory attack", "action": "click", "passed": true}
+NATIVE_UI {"pid": 4866, "button": "Memory attack armed", "action": "find", "passed": true}
+PRESSURE_UNIT programmable-notes-preview-4578-1794952258414322250.service
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Missing termination cause for programmable-notes-preview-4578-1794952258414322250.service: Nov 17 21:50:58 pn-native-guest systemd[365]: Starting programmable-notes-preview-4578-1794952258414322250.service - /opt/pn/native-verified-app --preview-child...
+Nov 17 21:50:59 pn-native-guest systemd[365]: Started programmable-notes-preview-4578-1794952258414322250.service - /opt/pn/native-verified-app --preview-child.
+Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Service reached runtime time limit. Stopping.
+Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Failed to kill control group /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-4578-1794952258414322250.service, ignoring: Invalid argument
+Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Failed with result 'timeout'.
+Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Consumed 14.667s CPU time, 373.2M memory peak, 0B memory swap peak.
+
+    at requireCause (file:///opt/pn/validation/scripts/native-stress.mjs:139:10)
+    at file:///opt/pn/validation/scripts/native-stress.mjs:216:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'Nov 17 21:50:58 pn-native-guest systemd[365]: Starting programmable-notes-preview-4578-1794952258414322250.service - /opt/pn/native-verified-app --preview-child...\n' +
+    'Nov 17 21:50:59 pn-native-guest systemd[365]: Started programmable-notes-preview-4578-1794952258414322250.service - /opt/pn/native-verified-app --preview-child.\n' +
+    'Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Service reached runtime time limit. Stopping.\n' +
+    'Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Failed to kill control group /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-4578-1794952258414322250.service, ignoring: Invalid argument\n' +
+    "Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Failed with result 'timeout'.\n" +
+    'Nov 17 21:51:59 pn-native-guest systemd[365]: programmable-notes-preview-4578-1794952258414322250.service: Consumed 14.667s CPU time, 373.2M memory peak, 0B memory swap peak.\n',
+  expected: /[Oo][Oo][Mm]|oom-kill/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

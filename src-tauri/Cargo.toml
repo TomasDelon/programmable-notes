@@ -14,3 +14,6 @@ preview-policy = { path = "../native-policy" }
 [features]
 custom-protocol = ["tauri/custom-protocol"]
 security-test = []
+
+[patch.crates-io]
+wry = { path = "vendor/wry" }

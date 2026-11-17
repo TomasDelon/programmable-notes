@@ -45,6 +45,20 @@ async fn stop_preview(window: WebviewWindow, state: tauri::State<'_, Host>) -> R
         .map_err(|_| "Supervisor poisoned")?
         .stop()
 }
+fn allowed_navigation(url: &tauri::Url) -> bool {
+    let local = matches!(
+        (url.scheme(), url.host_str(), url.port()),
+        ("tauri", Some("localhost"), None) | ("http" | "https", Some("tauri.localhost"), None)
+    ) || (!cfg!(feature = "custom-protocol")
+        && url.as_str().starts_with("http://127.0.0.1:5173/"));
+    matches!(url.as_str(), "about:srcdoc" | "about:blank")
+        || (local
+            && matches!(
+                url.path(),
+                "" | "/" | "/index.html" | "/native-preview.html"
+            ))
+}
+
 fn main() {
     let child = std::env::args().any(|arg| arg == "--preview-child");
     // The test-only preview shell lets WebDriver invoke registered commands directly.
@@ -83,12 +97,7 @@ fn main() {
                 .title(if child {"Unprivileged document preview"} else {"Programmable Notes"})
                 .disable_drag_drop_handler()
                 .incognito(child)
-                .on_navigation(|url| {
-                    let local=matches!((url.scheme(),url.host_str(),url.port()),
-                        ("tauri",Some("localhost"),None) | ("http"|"https",Some("tauri.localhost"),None))
-                        || (!cfg!(feature="custom-protocol") && url.as_str().starts_with("http://127.0.0.1:5173/"));
-                    matches!(url.as_str(),"about:srcdoc"|"about:blank") || (local && matches!(url.path(),"/"|"/index.html"|"/native-preview.html"))
-                });
+                .on_navigation(allowed_navigation);
             if let Some(html)=html.as_ref() {
                 let value=serde_json::to_string(html)?;
                 // The value is serialized data; it is never evaluated as document JavaScript in this shell.
@@ -105,4 +114,41 @@ fn main() {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn embedded_root_navigation_and_boundary() {
+        for url in [
+            "tauri://localhost",
+            "tauri://localhost/",
+            "tauri://localhost/index.html",
+            "tauri://localhost/native-preview.html",
+            "http://tauri.localhost/",
+            "about:srcdoc",
+            "about:blank",
+        ] {
+            assert!(
+                allowed_navigation(&tauri::Url::parse(url).unwrap()),
+                "Rejected embedded root: {url}"
+            );
+        }
+        for url in [
+            "https://example.com/",
+            "tauri://evil/index.html",
+            "tauri://localhost:1234/",
+            "http://tauri.localhost.evil/",
+            "http://127.0.0.1:9999/",
+            "tauri://localhost/assets/author.js",
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+        ] {
+            assert!(
+                !allowed_navigation(&tauri::Url::parse(url).unwrap()),
+                "Allowed external/unlisted navigation: {url}"
+            );
+        }
+    }
 }

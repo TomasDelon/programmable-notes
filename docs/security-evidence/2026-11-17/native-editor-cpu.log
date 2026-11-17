@@ -1,0 +1,12 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_UI {"pid": 8153, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 8153, "button": "CPU loop armed", "action": "find", "passed": true}
+EDITOR_EDIT_SAVE_BLOB {"unit":"programmable-notes-preview-8070-1794953852555298470.service","responseMs":4341,"before":"usage_usec 12957833\nuser_usec 10199912\nsystem_usec 2757920\ncore_sched.force_idle_usec 0\nnr_periods 539\nnr_throttled 514\nthrottled_usec 89116035\nnr_bursts 0\nburst_usec 0\n","after":"usage_usec 14059175\nuser_usec 11293316\nsystem_usec 2765859\ncore_sched.force_idle_usec 0\nnr_periods 583\nnr_throttled 558\nthrottled_usec 92398771\nnr_bursts 0\nburst_usec 0\n","exactSource":true,"nativeDiskWriteTested":false}
+EDITOR_SOURCE_RETAINED_AFTER_STOP
+NATIVE_EDITOR_REBUILD {"status":"Compiled — requesting isolated native preview","alert":null}
+NATIVE_UI {"pid": 8265, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 8265, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 8265, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_EDITOR_PASS compiler, unsaved rebuild, governed counter, source edit/Save Blob under attack

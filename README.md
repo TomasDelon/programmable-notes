@@ -4,7 +4,7 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 
 ## Status
 
-Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: native isolation and hard resource limits remain blockers. Visual editing is deferred.
+Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: the recorded Linux native isolation/resource tests pass, while production security review and packaging remain open. Visual editing is deferred.
 
 ## Principles
 
@@ -83,4 +83,4 @@ Codex Cloud installation and restart instructions are saved in the environment c
 
 ## Experimental native security integration
 
-`npm run native:build` builds the Tauri 2 application when Rust and Linux WebKitGTK dependencies are installed. Preview uses a separate, capability-denied process under verified cgroup resource limits; unsupported resource environments refuse preview instead of falling back. `native:dev` opens the editor but preview requires an embedded-asset build. Native execution has not been validated in this cloud. Follow [NATIVE_SECURITY.md](docs/NATIVE_SECURITY.md) before using hostile documents. Visual editing remains deferred.
+`npm run native:build` builds the Tauri 2 application when Rust and Linux WebKitGTK dependencies are installed. Preview uses a separate, capability-denied process under verified cgroup resource limits; unsupported resource environments refuse preview instead of falling back. `native:dev` opens the editor but preview requires an embedded-asset build. Real Linux WebKitGTK IPC and cgroup stress validation ran in a full cloud VM; retained logs and outstanding gates are linked from [NATIVE_SECURITY.md](docs/NATIVE_SECURITY.md). Repeat its procedure on the target Linux stack before considering hostile-document use. Visual editing remains deferred.

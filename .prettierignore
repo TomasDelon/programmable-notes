@@ -10,3 +10,5 @@ docs/handoff
 
 **/target
 src-tauri/gen
+
+src-tauri/vendor

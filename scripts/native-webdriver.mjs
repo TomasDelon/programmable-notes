@@ -1,107 +1,42 @@
 /** Real Tauri/WebKitGTK tests. Missing tools are NOT RUN (exit 2), never PASS. */
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { access, readFile, readlink, writeFile, mkdir } from 'node:fs/promises';
 import process from 'node:process';
-import { createHash } from 'node:crypto';
-import { compile } from '@mdx-js/mdx';
-import { build } from 'esbuild';
-
-const binary = resolve(
-  process.env.NATIVE_BINARY || 'src-tauri/target/debug/programmable-notes',
-);
-const base = process.env.WEBDRIVER_URL || 'http://127.0.0.1:4444';
-try {
-  await access(binary);
-  if (!process.env.DISPLAY && !process.env.WAYLAND_DISPLAY)
-    throw Error('No graphical display');
-  const status = await fetch(`${base}/status`, {
-    signal: AbortSignal.timeout(3000),
-  });
-  if (!status.ok) throw Error('tauri-driver/WebKitWebDriver unavailable');
-} catch (error) {
-  console.error(`NOT RUN: native WebKitGTK prerequisites: ${error.message}`);
-  process.exit(2);
-}
-let session;
-async function wd(path, body, method = 'POST') {
-  const response = await fetch(`${base}${path}`, {
-    method,
-    headers: { 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(80000),
-  });
-  const json = await response.json();
-  if (!response.ok || json.value?.error) throw Error(JSON.stringify(json));
-  return json.value;
-}
-async function launch(args = []) {
-  const result = await wd('/session', {
-    capabilities: {
-      alwaysMatch: { 'tauri:options': { application: binary, args } },
-    },
-  });
-  session = result.sessionId;
-  await wd(`/session/${session}/timeouts`, { script: 75000 });
-}
-async function close() {
-  if (session) {
-    await wd(`/session/${session}`, undefined, 'DELETE');
-    session = undefined;
-  }
-}
-async function script(source, args = []) {
-  return wd(`/session/${session}/execute/async`, { script: source, args });
-}
-async function invoke(command, args = {}) {
-  return script(
-    `const done=arguments[arguments.length-1];
- if(typeof window.__TAURI_INTERNALS__?.invoke!=='function') return done({missingBridge:true});
- window.__TAURI_INTERNALS__.invoke(arguments[0],arguments[1]).then(value=>done({ok:true,value}),error=>done({ok:false,error:String(error)}));`,
-    [command, args],
-  );
-}
+import {
+  preflight,
+  launch,
+  close,
+  wd,
+  script,
+  invoke,
+  systemctl,
+  artifact,
+  session,
+} from './native-webdriver-lib.mjs';
+await preflight();
 function denied(result) {
+  console.log('IPC_DENIED', JSON.stringify(result));
   assert.equal(result.ok, false);
   assert.match(
     result.error,
     /not allowed|not permitted|denied|no host capabilities/i,
   );
 }
-function systemctl(...args) {
-  return execFileSync('systemctl', ['--user', ...args], {
-    encoding: 'utf8',
-    timeout: 10000,
-  }).trim();
-}
-async function artifact(source) {
-  const compiled = String(await compile(source));
-  const result = await build({
-    stdin: {
-      contents:
-        compiled +
-        "\nimport * as React from 'react';import {createRoot} from 'react-dom/client'; createRoot(document.getElementById('preview')).render(React.createElement(MDXContent));",
-      resolveDir: process.cwd(),
-    },
-    bundle: true,
-    write: false,
-    format: 'iife',
-    platform: 'browser',
-    define: { 'process.env.NODE_ENV': '"production"' },
-  });
-  const js = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-  const hash = createHash('sha256').update(js).digest('base64');
-  return `<!doctype html><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; worker-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'"><div id="preview"></div><script>${js}</script>`;
-}
 const counter = await artifact(
   await readFile('docs/handoff/samples/fixtures/counter.mdx', 'utf8'),
 );
 try {
   await launch(['--security-editor']);
-  assert.deepEqual(await invoke('host_probe'), {
+  const hostResult = await invoke('host_probe');
+  console.log('IPC_EDITOR', JSON.stringify(hostResult));
+  assert.deepEqual(hostResult, {
     ok: true,
     value: 'editor-host-only',
+  });
+  await wd(`/session/${session}/execute/sync`, {
+    script:
+      "localStorage.setItem('pn-native-validation-secret','editor-only-marker'); return true;",
+    args: [],
   });
   // Stop any initial compiler-produced session before testing a known artifact.
   assert.equal((await invoke('stop_preview')).ok, true);
@@ -110,6 +45,39 @@ try {
   const unit = started.value;
   assert.match(unit, /^programmable-notes-preview-\d+-\d+\.service$/);
   const group = systemctl('show', '--property=ControlGroup', '--value', unit);
+  const pid = systemctl('show', '--property=MainPID', '--value', unit);
+  const environment = (await readFile(`/proc/${pid}/environ`, 'utf8')).split(
+    '\0',
+  );
+  assert.ok(environment.includes('TAURI_WEBVIEW_AUTOMATION=false'));
+  assert.ok(
+    !environment.some((value) =>
+      value.startsWith('WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS='),
+    ),
+  );
+  const editorNetwork = await readlink('/proc/self/ns/net');
+  const previewNetwork = await readlink(`/proc/${pid}/ns/net`);
+  assert.notEqual(
+    previewNetwork,
+    editorNetwork,
+    'PrivateNetwork did not create an independent network namespace',
+  );
+  assert.match(
+    await readFile(`/proc/${pid}/status`, 'utf8'),
+    /NoNewPrivs:\s+1/,
+  );
+  console.log(
+    'NATIVE_OS_POLICY',
+    JSON.stringify({ editorNetwork, previewNetwork, noNewPrivileges: true }),
+  );
+  console.log(
+    'PRODUCTION_AUTOMATION',
+    JSON.stringify({
+      pid,
+      automation: 'false',
+      sandboxDisableVariableAbsent: true,
+    }),
+  );
   const dir = `/sys/fs/cgroup${group}`;
   assert.ok(group.startsWith('/user.slice/'));
   assert.ok(
@@ -122,6 +90,17 @@ try {
     .split(/\s+/)
     .map(Number);
   assert.ok(quota > 0 && quota <= period / 4);
+  console.log(
+    'EFFECTIVE_LIMITS',
+    JSON.stringify({
+      unit,
+      group,
+      memoryMax: (await readFile(`${dir}/memory.max`, 'utf8')).trim(),
+      swapMax: (await readFile(`${dir}/memory.swap.max`, 'utf8')).trim(),
+      cpuMax: `${quota} ${period}`,
+      pidsMax: (await readFile(`${dir}/pids.max`, 'utf8')).trim(),
+    }),
+  );
   assert.equal((await invoke('stop_preview')).ok, true);
   await assert.rejects(access(dir)); // cgroup must be removed, not just launcher PID.
   console.log(
@@ -129,6 +108,12 @@ try {
   );
   await close();
   await launch(['--security-probe']);
+  const isolatedStorage = await wd(`/session/${session}/execute/sync`, {
+    script: "return localStorage.getItem('pn-native-validation-secret');",
+    args: [],
+  });
+  assert.equal(isolatedStorage, null);
+  console.log('PRIVATE_STORAGE', 'editor canary absent from incognito preview');
   // Commands exist in this very binary; denial is not inferred from missing APIs.
   for (const command of ['host_probe', 'start_preview', 'stop_preview'])
     denied(await invoke(command, { html: counter }));
@@ -162,6 +147,15 @@ try {
     `const done=arguments[arguments.length-1];let n=0;const timer=setInterval(()=>{const b=document.querySelector('button');if(b){clearInterval(timer);b.click();b.click();setTimeout(()=>done(b.textContent),50);}else if(++n>100){clearInterval(timer);done('NO COUNTER');}},100);`,
   );
   assert.equal(count, 'Count: 2');
+  console.log('WEBKIT_COUNTER', count);
+  if (process.env.NATIVE_EVIDENCE_DIR) {
+    await mkdir(process.env.NATIVE_EVIDENCE_DIR, { recursive: true });
+    const png = await wd(`/session/${session}/screenshot`, undefined, 'GET');
+    await writeFile(
+      `${process.env.NATIVE_EVIDENCE_DIR}/webkit-counter.png`,
+      Buffer.from(png, 'base64'),
+    );
+  }
   const boundary = await script(
     `const done=arguments[arguments.length-1];const result={};for(const [key,fn] of Object.entries({parent:()=>parent.document.title,storage:()=>parent.localStorage.getItem('secret')})){try{fn();result[key]='allowed';}catch{result[key]='denied';}}done(result);`,
   );

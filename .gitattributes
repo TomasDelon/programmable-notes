@@ -1,0 +1,4 @@
+# Preserve recorded evidence and vendored release bytes across platforms.
+# Raw logs/upstream text contain intentional original trailing whitespace.
+docs/security-evidence/** -text whitespace=-trailing-space,-blank-at-eof
+src-tauri/vendor/** -text whitespace=-trailing-space,-blank-at-eof

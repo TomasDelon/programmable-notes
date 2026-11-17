@@ -4,25 +4,25 @@ Baseline: `f531ddf`; development branch `feat/mdx-react-engine`. The original ha
 
 ## Acceptance matrix
 
-| Criterion                                                      | Result / evidence                                                                    |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Real MDX inline hooks, events, two-click counter               | Passed in Chromium production preview                                                |
-| Unsaved CodeMirror text changes preview                        | Passed                                                                               |
-| Local imported TSX, including newly opened modules             | Passed                                                                               |
-| Pinned clsx package                                            | Passed; no runtime package fetch/installation                                        |
-| Syntax error and runtime crash recovery                        | Passed, source remains editable                                                      |
-| Rapid edits / outdated build cancellation                      | Passed latest-heading and Stop regression                                            |
-| Save/download/reopen and mixed-source bytes                    | Passed UTF-8 fixtures; CRLF no-op save regression                                    |
-| Parent DOM/storage, popup, top navigation, fetch, resource CSP | Passed Chromium negative tests                                                       |
-| Forged host message                                            | Ignored in browser test                                                              |
-| Self-navigation                                                | Initial child-only policy failed; parent frame-src restriction passed retained probe |
-| Infinite-loop parent responsiveness                            | Observed responsive in disposable Chromium probe; not a portable resource limit      |
-| High-memory pressure / hard quotas                             | Unrun, security blocker                                                              |
-| Native Tauri IPC/capability scopes and Linux WebKitGTK         | Unrun, security blocker; browser missing-global probe is not equivalent              |
-| TypeScript inside MDX                                          | Unsupported; use imported TSX                                                        |
-| Full MDX source-map composition/runtime symbolication          | Not implemented                                                                      |
-| Visual editing (Spike C)                                       | Deferred until complete A/B gates pass                                               |
-| GitHub-hosted CI                                               | Not inferred from local runs                                                         |
+| Criterion                                                      | Result / evidence                                                                       |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Real MDX inline hooks, events, two-click counter               | Passed in Chromium production preview                                                   |
+| Unsaved CodeMirror text changes preview                        | Passed                                                                                  |
+| Local imported TSX, including newly opened modules             | Passed                                                                                  |
+| Pinned clsx package                                            | Passed; no runtime package fetch/installation                                           |
+| Syntax error and runtime crash recovery                        | Passed, source remains editable                                                         |
+| Rapid edits / outdated build cancellation                      | Passed latest-heading and Stop regression                                               |
+| Save/download/reopen and mixed-source bytes                    | Passed UTF-8 fixtures; CRLF no-op save regression                                       |
+| Parent DOM/storage, popup, top navigation, fetch, resource CSP | Passed Chromium negative tests                                                          |
+| Forged host message                                            | Ignored in browser test                                                                 |
+| Self-navigation                                                | Initial child-only policy failed; parent frame-src restriction passed retained probe    |
+| Infinite-loop parent responsiveness                            | Observed responsive in disposable Chromium probe; not a portable resource limit         |
+| High-memory pressure / hard quotas                             | Passed actual Linux WebKit heap cgroup OOM at 512 MiB; CPU 25%, swap 0, pids 128        |
+| Native Tauri IPC/capability scopes and Linux WebKitGTK         | Passed actual registered-command denial, private storage, Counter and DOM/storage tests |
+| TypeScript inside MDX                                          | Unsupported; use imported TSX                                                           |
+| Full MDX source-map composition/runtime symbolication          | Not implemented                                                                         |
+| Visual editing (Spike C)                                       | Deferred until complete A/B gates pass                                                  |
+| GitHub-hosted CI                                               | Not inferred from local runs                                                            |
 
 ## Reproduce
 
@@ -41,7 +41,7 @@ That probe starts its own disposable browser server, intercepts and aborts any t
 
 ## Next milestone, in order
 
-1. Native isolation and availability: separate unprivileged preview process/webview, capability denial for manually crafted IPC, OS memory/CPU budgets, reliable termination, Linux WebKitGTK regression suite. Keep this gate blocking hostile-document use.
+1. Finish Linux production-security review and release-build/desktop validation using the retained native matrix. The cloud VM now proves core native IPC and resource behavior, not broad compromised-native-code containment or distribution readiness. Keep hostile-document shipping gated on that review.
 2. Native/browser workspace adapter: explicit file authorization, nested module selection, atomic save, dirty state, close/reopen recovery, encoding/line-ending policy, independent file undo histories.
 3. Compose MDX source maps, source-located runtime diagnostics, typed-source policy, performance budgets and lazy compiler loading.
 4. Only after security passes, Spike C: uniquely mapped Markdown paragraph patches, stale-map rejection, no-op byte identity, JSX opacity, undo/redo golden tests. No broad DOM-to-MDX serialization.
@@ -52,4 +52,8 @@ No custom grammar, AI, Git synchronization, marketplace, or native packaging is 
 
 Minimal Tauri integration, a no-capability ephemeral preview child, defense-in-depth handler authorization, and a fail-closed Linux systemd/cgroup supervisor are implemented. Resource controllers are verified before sending author HTML. See [ADR-003](decisions/ADR-003-native-runtime.md) and [Linux native validation](NATIVE_SECURITY.md).
 
-Four Rust policy tests and native frontend/configuration tests run in this cloud. Native compilation is blocked by missing GLib/GTK/WebKitGTK development libraries; native driver/runtime/resource tests are NOT RUN. No release-readiness or full native security pass is claimed. Native WebDriver assertions and stress/lifetime instructions are provided for a real delegated Linux desktop. Non-Linux native previews and Vite dev-mode native preview fail closed. Browser behavior remains available and tested separately.
+Actual Linux native validation ran in a task-local full Ubuntu 24.04 VM with WebKitGTK 2.52.6, systemd 255.4 and delegated cgroup v2. The outer cloud container could not supply those boundaries directly. Native link/build, actual Tauri ACL denial (with editor positive control), incognito profile separation, interactive WebKit Counter, CPU throttling, whole-group Stop, cgroup OOM, fixed lifetime expiry, editor SIGKILL backstop, window-close recovery and missing-controller refusal now have real evidence. See the [dated logs and matrix](security-evidence/2026-11-17/README.md) for exact scope, failures, binaries and outstanding gates.
+
+Validation found and fixed two native issues: Wry’s discarded automation flag in an incognito context (a documented minimal source fork preserves the private profile), and rejection of Tauri’s empty-path editor root URL. Production children explicitly force automation off. The full embedded editor compiles MDX in WebKit; actual CodeMirror edits and exact Save Blob bytes passed under CPU and growing-heap pressure, followed by interactive unsaved Counter rebuilds. Native disk writing remains untested. Resource policy, permissions and CSP were not relaxed.
+
+Local verification includes format/lint/strict TypeScript, six Vitest tests, five Chromium browser tests, four Rust policy tests and the native app navigation regression. CI at baseline `ad9e6fd` passed according to the user; current CI is not inferred from local checks. Non-Linux native preview and Vite native-preview mode still fail closed. Optimized release packaging, native filesystem writes and broader OS threat review remain unverified. No visual editing, custom Markdown syntax or deferred product features were started.

@@ -40,6 +40,7 @@ pub fn run_args(unit: &str, executable: &Path) -> Vec<String> {
     .map(String::from)
     .collect::<Vec<_>>();
     args.push(format!("--unit={unit}"));
+    args.push("--setenv=TAURI_WEBVIEW_AUTOMATION=false".into());
     args.extend(PROPERTIES.iter().map(|p| format!("--property={p}")));
     args.extend([
         "--".into(),
@@ -269,6 +270,7 @@ mod tests {
             ["--", "/opt/notes app/bin", "--preview-child"]
         );
         assert!(args.contains(&"--wait".into()));
+        assert!(args.contains(&"--setenv=TAURI_WEBVIEW_AUTOMATION=false".into()));
         assert!(!args.iter().any(|a| a == "sh" || a == "-c"));
     }
     #[test]

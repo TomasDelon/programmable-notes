@@ -11,6 +11,7 @@ export default defineConfig([
     'dist/**',
     '**/target/**',
     'src-tauri/gen/**',
+    'src-tauri/vendor/**',
     'node_modules/**',
     '.cache/**',
     'coverage/**',

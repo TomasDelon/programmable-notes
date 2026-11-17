@@ -1,0 +1,102 @@
+[
+  {
+    "unit": "programmable-notes-preview-5051-1794952413447358650.service",
+    "mainPID": 5101,
+    "observedSecondsSinceStartReply": 48.966,
+    "sampledPeakBytes": 67260416,
+    "sampleCount": 4,
+    "knownPIDs": ["5101", "5125", "5131"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952466120570720.service",
+    "mainPID": 5194,
+    "observedSecondsSinceStartReply": 53.376,
+    "sampledPeakBytes": 8798208,
+    "sampleCount": 2,
+    "knownPIDs": ["5194"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952522242864160.service",
+    "mainPID": 5289,
+    "observedSecondsSinceStartReply": 58.771,
+    "sampledPeakBytes": 536870912,
+    "sampleCount": 463,
+    "knownPIDs": ["5289", "5309", "5315"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "oom-kill"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952584984879720.service",
+    "mainPID": 5421,
+    "observedSecondsSinceStartReply": 46.927,
+    "sampledPeakBytes": 8884224,
+    "sampleCount": 2,
+    "knownPIDs": ["5421"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952635127875530.service",
+    "mainPID": 5540,
+    "observedSecondsSinceStartReply": 58.016,
+    "sampledPeakBytes": 66887680,
+    "sampleCount": 119,
+    "knownPIDs": ["5540", "5560", "5567"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "RuntimeMaxSec"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952697923938540.service",
+    "mainPID": 5649,
+    "observedSecondsSinceStartReply": 48.461,
+    "sampledPeakBytes": 8867840,
+    "sampleCount": 2,
+    "knownPIDs": ["5649"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-5051-1794952749526187840.service",
+    "mainPID": 5742,
+    "observedSecondsSinceStartReply": 58.755,
+    "sampledPeakBytes": 67125248,
+    "sampleCount": 133,
+    "knownPIDs": ["5742", "5762", "5768"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "RuntimeMaxSec"
+  },
+  {
+    "unit": "programmable-notes-preview-5810-1794952818257242300.service",
+    "mainPID": 5873,
+    "observedSecondsSinceStartReply": 43.263,
+    "sampledPeakBytes": 8974336,
+    "sampleCount": 2,
+    "knownPIDs": ["5873"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-6352-1794953033283383370.service",
+    "mainPID": 6405,
+    "observedSecondsSinceStartReply": 43.491,
+    "sampledPeakBytes": 67391488,
+    "sampleCount": 7,
+    "knownPIDs": ["6405", "6457", "6463"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  },
+  {
+    "unit": "programmable-notes-preview-6352-1794953080762386310.service",
+    "mainPID": 6533,
+    "observedSecondsSinceStartReply": 42.581,
+    "sampledPeakBytes": 67497984,
+    "sampleCount": 3,
+    "knownPIDs": ["6533", "6553", "6559"],
+    "noLiveKnownDescendants": true,
+    "journalCause": "explicit Stop / window close (see journal)"
+  }
+]
