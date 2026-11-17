@@ -28,15 +28,24 @@ try {
   await new Promise((resolve) => setTimeout(resolve, 500));
   console.log('Iframe self-navigation blocked by app policy:', !navigation);
   failed ||= navigation;
+  let loopEntered = false;
+  page.on('console', (message) => {
+    if (message.text() === 'pn-loop-entered') loopEntered = true;
+  });
   await page.getByLabel('Open files').setInputFiles({
     name: 'loop.mdx',
     mimeType: 'text/plain',
     buffer: Buffer.from(
-      'export function Loop(){while(true){} return null}\n\n<Loop />',
+      'export function Loop(){console.log("pn-loop-entered");while(true){} return null}\n\n<Loop />',
     ),
   });
-  // Allow compilation and loop entry. Node timers are independent of the renderer.
-  await new Promise((resolve) => setTimeout(resolve, 2500));
+  // Observe loop entry before measuring; a fixed delay can produce a false pass.
+  for (let attempt = 0; attempt < 100 && !loopEntered; attempt++)
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  if (!loopEntered)
+    throw new Error(
+      'Loop entry was not observed; availability result is inconclusive',
+    );
   const responsive = await Promise.race([
     page
       .evaluate(() => globalThis.document.title)

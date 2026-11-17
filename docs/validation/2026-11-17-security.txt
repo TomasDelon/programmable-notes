@@ -3,6 +3,7 @@ Production preview on port 4180; disposable browser; exit 0
 
 Iframe self-navigation blocked by app policy: true
 Host UI responsive during infinite preview loop: true
+Loop entry confirmed via renderer console marker before responsiveness measurement.
 
 Development smoke: production-independent Vite dev worker compiled counter; two clicks reached Count: 2.
 
