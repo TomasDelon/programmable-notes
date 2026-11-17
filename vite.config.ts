@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    conditions: ['worker', 'module', 'browser', 'development|production'],
+  },
   plugins: [
-    { ...mdx(), enforce: 'pre' },
+    { ...mdx({ include: '**/src/**/*.mdx' }), enforce: 'pre' },
     react({ include: /\.(jsx|tsx|mdx)$/ }),
   ],
   test: {

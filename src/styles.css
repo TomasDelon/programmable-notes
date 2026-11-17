@@ -2,13 +2,43 @@
   font-family: system-ui, sans-serif;
   color-scheme: light dark;
 }
-
 body {
   margin: 0;
 }
-
 main {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 2rem;
+  padding: 1.25rem;
+}
+nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-block: 1rem;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.source-editor,
+iframe {
+  border: 1px solid #888;
+  min-width: 0;
+  height: 65vh;
+  width: 100%;
+  box-sizing: border-box;
+}
+.cm-editor {
+  height: 100%;
+}
+.cm-scroller {
+  overflow: auto;
+}
+pre[role='alert'] {
+  white-space: pre-wrap;
+  color: #b13232;
+}
+@media (max-width: 800px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
 }

@@ -4,7 +4,7 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 
 ## Status
 
-Toolchain bootstrap only. The page is a minimal React/MDX placeholder; editor behavior, storage, document execution, and desktop packaging await the technical handoff. CodeMirror is installed and exercised in a smoke test, without adding an editor feature.
+Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: native isolation and hard resource limits remain blockers. Visual editing is deferred.
 
 ## Principles
 
@@ -50,13 +50,16 @@ CI uses Playwright's matching downloaded browser; cloud validation uses the syst
 | `npm run test:e2e`     | Build, start a production preview, and run Chromium smoke tests            |
 | `npm run check`        | Run formatting, lint, typecheck, unit tests, and production browser checks |
 
-`test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. The browser test fails on page errors or console errors. Tests cover the React/MDX pipeline and CodeMirror state/view creation, editing transactions, and cleanup. Chromium is the baseline browser; Firefox and WebKit coverage are deferred.
+`test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. Browser integration tests exercise actual compilation, React hooks, error recovery, source fidelity, offline rebuilds and negative security probes. Intentional sandbox violations and runtime-error fixtures produce expected console errors. Chromium is the baseline browser; Firefox and WebKit coverage are deferred.
 
 ## Structure
 
 ```text
 src/
-  App.tsx             Minimal shell
+  App.tsx             Memory workspace and build scheduling
+  compiler/           Browser worker and memory-only resolver
+  editor/             CodeMirror source editing
+  preview/            Hash-CSP document and sandbox frame
   bootstrap.mdx       Trusted, build-time MDX placeholder
   main.tsx            React entry point
   styles.css          Minimal global styles
@@ -66,10 +69,11 @@ tests/
   e2e/                Playwright production smoke tests
   setup.ts            Testing Library setup and cleanup
 .github/workflows/    GitHub Actions CI
-docs/                 Bootstrap plan and future project documentation
+scripts/              Pinned runtime asset generation and security gates
+docs/                 Handoff, ADRs, implementation status and validation
 ```
 
-Vite compiles trusted repository MDX at build time. This is not an execution sandbox for user-authored documents. The handoff must define that isolation before document execution is implemented.
+Vite compiles application assets; a separate MDX/esbuild-WASM worker compiles author buffers. Generated code runs only in the opaque-origin preview. See [preview boundary and unresolved risks](docs/decisions/ADR-002-preview-isolation.md).
 
 ## CI and cloud environment
 

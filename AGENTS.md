@@ -2,7 +2,7 @@
 
 ## Current scope
 
-This repository currently contains the development toolchain and a minimal placeholder page. Wait for the technical handoff before implementing application features or choosing storage, desktop packaging, or document execution architecture.
+The technical handoff is preserved in `docs/handoff`; current implementation and limits are in `docs/IMPLEMENTATION_STATUS.md` and `docs/decisions`. MDX/React source authoring is the priority. Keep visual editing gated on the runtime and full security matrix. Treat the original research as supporting evidence, not validated decisions.
 
 Preserve the README's local-first and document-isolation principles. Build-time repository MDX is trusted source code; never treat the MDX compiler as a sandbox for untrusted documents.
 
