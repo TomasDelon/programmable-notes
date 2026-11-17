@@ -1,0 +1,12 @@
+{
+  "identifier": "editor",
+  "description": "Only the local editor may manage its resource-isolated preview. No filesystem, shell, HTTP, window creation, or event permissions.",
+  "local": true,
+  "windows": ["editor"],
+  "webviews": ["editor"],
+  "permissions": [
+    "allow-start-preview",
+    "allow-stop-preview",
+    "allow-host-probe"
+  ]
+}

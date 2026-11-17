@@ -1,3 +1,5 @@
+import { isTauri } from '@tauri-apps/api/core';
+import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 import { useEffect, useRef, useState } from 'react';
@@ -78,7 +80,11 @@ export function App() {
           const document = await previewDocument(result.code);
           if (active) {
             setHtml(document);
-            setStatus('Preview loaded — state resets on edits');
+            setStatus(
+              isTauri()
+                ? 'Compiled — requesting isolated native preview'
+                : 'Preview loaded — state resets on edits',
+            );
           }
         }
         worker?.terminate();
@@ -180,7 +186,12 @@ export function App() {
             setFiles((old) => ({ ...old, [selected]: source }))
           }
         />
-        {html && <Preview html={html} onError={setError} />}
+        {html &&
+          (isTauri() ? (
+            <NativePreview html={html} onError={setError} />
+          ) : (
+            <Preview html={html} onError={setError} />
+          ))}
       </div>
     </main>
   );

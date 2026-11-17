@@ -7,3 +7,6 @@ test-results
 package-lock.json
 
 docs/handoff
+
+**/target
+src-tauri/gen

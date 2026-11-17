@@ -35,3 +35,24 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  native-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+      - run: npm ci
+      - run: npm run build
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-policy/Cargo.toml --locked
+      - run: cargo check --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked

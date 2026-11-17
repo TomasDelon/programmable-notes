@@ -80,3 +80,7 @@ Vite compiles application assets; a separate MDX/esbuild-WASM worker compiles au
 GitHub Actions runs `npm ci`, installs Chromium and Linux libraries, then runs `npm run check` for pushes to `main` and pull requests. Browser failure artifacts are retained for seven days.
 
 Codex Cloud installation and restart instructions are saved in the environment configuration. Package downloads require `registry.npmjs.org`; Playwright downloads use `cdn.playwright.dev` and its download destinations. Git uses the platform's existing GitHub authentication. No project secrets are needed. Publication of a prepared cloud snapshot is performed through environment settings, separately from Git commits.
+
+## Experimental native security integration
+
+`npm run native:build` builds the Tauri 2 application when Rust and Linux WebKitGTK dependencies are installed. Preview uses a separate, capability-denied process under verified cgroup resource limits; unsupported resource environments refuse preview instead of falling back. `native:dev` opens the editor but preview requires an embedded-asset build. Native execution has not been validated in this cloud. Follow [NATIVE_SECURITY.md](docs/NATIVE_SECURITY.md) before using hostile documents. Visual editing remains deferred.

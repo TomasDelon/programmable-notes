@@ -47,3 +47,9 @@ That probe starts its own disposable browser server, intercepts and aborts any t
 4. Only after security passes, Spike C: uniquely mapped Markdown paragraph patches, stale-map rejection, no-op byte identity, JSX opacity, undo/redo golden tests. No broad DOM-to-MDX serialization.
 
 No custom grammar, AI, Git synchronization, marketplace, or native packaging is included in this PR.
+
+## Native security follow-up
+
+Minimal Tauri integration, a no-capability ephemeral preview child, defense-in-depth handler authorization, and a fail-closed Linux systemd/cgroup supervisor are implemented. Resource controllers are verified before sending author HTML. See [ADR-003](decisions/ADR-003-native-runtime.md) and [Linux native validation](NATIVE_SECURITY.md).
+
+Four Rust policy tests and native frontend/configuration tests run in this cloud. Native compilation is blocked by missing GLib/GTK/WebKitGTK development libraries; native driver/runtime/resource tests are NOT RUN. No release-readiness or full native security pass is claimed. Native WebDriver assertions and stress/lifetime instructions are provided for a real delegated Linux desktop. Non-Linux native previews and Vite dev-mode native preview fail closed. Browser behavior remains available and tested separately.
