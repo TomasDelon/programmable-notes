@@ -260,10 +260,17 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
     );
   }
   await expectDownload(updated);
+  const selection = page.getByLabel('Source file');
+  const editedKey = await selection.inputValue();
+  await selection.selectOption('note.mdx');
+  await expect(source).toContainText('useState');
+  await selection.selectOption(editedKey);
+  await expect(source).toContainText('Updated paragraph.');
   await source.press('Control+z');
   await expectDownload(original);
   await source.press('Control+Shift+z');
   await expectDownload(updated);
+  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
   await panel.getByRole('button', { name: 'Updated paragraph.' }).click();
   await source.fill('Different source.');
   await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();

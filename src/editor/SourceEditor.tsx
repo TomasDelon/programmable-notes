@@ -1,23 +1,35 @@
 import { useEffect, useRef } from 'react';
 import { Annotation, Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  defaultKeymap,
+  history,
+  historyField,
+  historyKeymap,
+  isolateHistory,
+} from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { javascriptLanguage } from '@codemirror/lang-javascript';
 
 import { MarkdownEditor } from './MarkdownEditor';
 import { patchMarkdown } from './markdownEdits';
-import { isolateHistory } from '@codemirror/commands';
 
 const external = Annotation.define<boolean>();
+const historyFields = { history: historyField };
+
+export type EditorHistory = Map<string, { source: string; state: unknown }>;
 
 export function SourceEditor({
   source,
   onChange,
   visual,
+  documentKey,
+  histories,
 }: {
   source: string;
   visual?: boolean;
+  documentKey?: string;
+  histories?: React.RefObject<EditorHistory>;
   onChange: (value: string) => void;
 }) {
   const element = useRef<HTMLDivElement>(null);
@@ -28,34 +40,43 @@ export function SourceEditor({
     change.current = onChange;
   }, [onChange]);
   useEffect(() => {
+    const extensions = [
+      separator.current.of(
+        EditorState.lineSeparator.of(source.includes('\r\n') ? '\r\n' : '\n'),
+      ),
+      lineNumbers(),
+      history(),
+      keymap.of([...defaultKeymap, ...historyKeymap]),
+      markdown({ defaultCodeLanguage: javascriptLanguage }),
+      EditorView.lineWrapping,
+      EditorView.contentAttributes.of({ 'aria-label': 'MDX source' }),
+      EditorView.updateListener.of((update) => {
+        if (
+          update.docChanged &&
+          !update.transactions.some((tr) => tr.annotation(external))
+        )
+          change.current(update.state.sliceDoc());
+      }),
+    ];
+    const cache = histories?.current;
+    const cached =
+      documentKey === undefined ? undefined : cache?.get(documentKey);
     const editor = new EditorView({
       parent: element.current!,
-      state: EditorState.create({
-        doc: source,
-        extensions: [
-          separator.current.of(
-            EditorState.lineSeparator.of(
-              source.includes('\r\n') ? '\r\n' : '\n',
-            ),
-          ),
-          lineNumbers(),
-          history(),
-          keymap.of([...defaultKeymap, ...historyKeymap]),
-          markdown({ defaultCodeLanguage: javascriptLanguage }),
-          EditorView.lineWrapping,
-          EditorView.contentAttributes.of({ 'aria-label': 'MDX source' }),
-          EditorView.updateListener.of((update) => {
-            if (
-              update.docChanged &&
-              !update.transactions.some((tr) => tr.annotation(external))
-            )
-              change.current(update.state.sliceDoc());
-          }),
-        ],
-      }),
+      state:
+        cached?.source === source
+          ? EditorState.fromJSON(cached.state, { extensions }, historyFields)
+          : EditorState.create({ doc: source, extensions }),
     });
     view.current = editor;
-    return () => editor.destroy();
+    return () => {
+      if (documentKey !== undefined)
+        cache?.set(documentKey, {
+          source: editor.state.sliceDoc(),
+          state: editor.state.toJSON(historyFields),
+        });
+      editor.destroy();
+    };
     // The initial buffer is applied once; subsequent changes are transactions below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

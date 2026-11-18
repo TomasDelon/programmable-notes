@@ -84,3 +84,9 @@ The Markdown panel now renders and edits simple ordered and unordered list items
 Compiler failures now report the imported source file and its line and column when the compiler provides a location. Chromium verified a TSX error on the second line of an imported module and successful preview recovery after correcting the module. The full check passed 23 unit and ten Chromium tests. Runtime exception source mapping is still pending.
 
 [ADR-006](decisions/ADR-006-draft-recovery.md) proposes separating recoverable drafts from source writes, with explicit restoration and no persisted native grants.
+
+### Undo history across source switches
+
+The editor keeps a separate in-memory history and selection for each open source. On switching back, it restores the cached history only when its document bytes match the active buffer. Closed documents are removed from the cache. The mixed MDX Chromium test now switches to a different document before undoing and redoing the visual patch, and asserts exact exported bytes both times. Local verification passed 23 unit and ten Chromium tests.
+
+The next runtime verification is the native visual edit, save and reopen path on the packaged app. Draft recovery remains a proposed follow-up and has no on-disk implementation yet.

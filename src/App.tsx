@@ -2,12 +2,12 @@ import { isTauri } from '@tauri-apps/api/core';
 import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDocuments } from './documents/useDocuments';
 import { compilerFiles, validateFiles } from './documents/workspace';
 import counter from '../docs/handoff/samples/fixtures/counter.mdx?raw';
 import imported from '../docs/handoff/samples/fixtures/widgets/ImportedCounter.tsx?raw';
-import { SourceEditor } from './editor/SourceEditor';
+import { SourceEditor, type EditorHistory } from './editor/SourceEditor';
 import { Preview } from './preview/Preview';
 import { previewDocument } from './preview/document';
 
@@ -22,6 +22,12 @@ export function App() {
     'note.mdx',
   );
   const { files, entry, selected, groups } = documents.workspace;
+  const histories = useRef<EditorHistory>(new Map());
+  useEffect(() => {
+    for (const key of histories.current.keys()) {
+      if (!Object.hasOwn(files, key)) histories.current.delete(key);
+    }
+  }, [files]);
   const buildFiles = useMemo(
     () => compilerFiles({ files, entry, groups }),
     [files, entry, groups],
@@ -232,6 +238,8 @@ export function App() {
         <SourceEditor
           visual={/\.mdx?$/.test(selected)}
           key={selected}
+          documentKey={selected}
+          histories={histories}
           source={files[selected]!}
           onChange={documents.change}
         />
