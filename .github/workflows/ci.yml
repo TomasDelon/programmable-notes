@@ -29,6 +29,8 @@ jobs:
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
       - run: npm run check
+      - name: Install walkthrough encoder
+        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: Capture the browser walkthrough
         run: |
           npm run preview -- --host 127.0.0.1 --port 4188 --strictPort > /tmp/editor-demo-server.log 2>&1 &
