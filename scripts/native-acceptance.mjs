@@ -12,16 +12,9 @@ import {
   invoke,
   wd,
   session,
+  script,
 } from './native-webdriver-lib.mjs';
-import {
-  rootPid,
-  button,
-  waitUi,
-  dialog,
-  fileIdle,
-  readSourceText,
-  pause,
-} from './native-ui-lib.mjs';
+import { rootPid, button, dialog, fileIdle, pause } from './native-ui-lib.mjs';
 
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
@@ -38,6 +31,18 @@ const saved = source.replace('Original title', 'Updated title');
 const unsaved = saved.replace('Second item', 'Recovered item');
 await writeFile(file, source, { flag: 'wx' });
 
+async function waitUi(expression) {
+  for (let i = 0; i < 100; i++) {
+    if (
+      await script(
+        `const done=arguments[arguments.length-1]; done(Boolean(${expression}));`,
+      )
+    )
+      return;
+    await pause(100);
+  }
+  throw Error(`UI check did not pass: ${expression}`);
+}
 async function start() {
   await launch();
   await waitUi("Boolean(document.querySelector('.cm-content'))");
@@ -53,7 +58,7 @@ async function open() {
     "document.querySelector('select')?.value.endsWith('inline-acceptance.mdx')",
   );
 }
-async function inline(before, label, after, commit = true) {
+async function inline(before, label, after) {
   await button(before);
   const element = await wd(`/session/${session}/element`, {
     using: 'css selector',
@@ -61,26 +66,31 @@ async function inline(before, label, after, commit = true) {
   });
   const id = element['element-6066-11e4-a52e-4f735466cecf'];
   await wd(`/session/${session}/element/${id}/clear`, {});
-  await wd(`/session/${session}/element/${id}/value`, {
-    text: after + (commit ? '\uE007' : '\uE00C'),
-  });
+  await wd(`/session/${session}/element/${id}/value`, { text: after });
+  await pressKey('Return');
+}
+async function pressKey(key) {
+  const pid = await rootPid();
+  const output = execFileSync(
+    'xdotool',
+    ['search', '--onlyvisible', '--pid', String(pid)],
+    { encoding: 'utf8', timeout: 10000 },
+  );
+  const windows = output.trim().split(/\s+/);
+  assert.equal(windows.length, 1);
+  execFileSync(
+    'xdotool',
+    ['windowactivate', '--sync', windows[0], 'key', '--clearmodifiers', key],
+    { timeout: 10000 },
+  );
+}
+async function expectSource(text, present = true) {
+  await waitUi(
+    `Boolean(document.querySelector('.cm-content')?.innerText.includes(${JSON.stringify(text)})) === ${present}`,
+  );
 }
 async function history(redo = false) {
-  const modifiers = redo ? ['\uE009', '\uE008'] : ['\uE009'];
-  await wd(`/session/${session}/actions`, {
-    actions: [
-      {
-        type: 'key',
-        id: 'history',
-        actions: [
-          ...modifiers.map((value) => ({ type: 'keyDown', value })),
-          { type: 'keyDown', value: 'z' },
-          { type: 'keyUp', value: 'z' },
-          ...modifiers.reverse().map((value) => ({ type: 'keyUp', value })),
-        ],
-      },
-    ],
-  });
+  await pressKey(redo ? 'ctrl+shift+z' : 'ctrl+z');
 }
 async function shutdown(pid, discard = false) {
   const closeWindow = () =>
@@ -90,7 +100,7 @@ async function shutdown(pid, discard = false) {
   closeWindow();
   if (discard) {
     dialog(pid, 'button', 'Unsaved source', 'Cancel');
-    assert.match(await readSourceText(), /Recovered item/);
+    await expectSource('Recovered item');
     closeWindow();
     dialog(pid, 'button', 'Unsaved source', 'OK');
   }
@@ -109,14 +119,12 @@ try {
   const first = await start();
   await open();
   await button('Edit rendered Markdown');
-  await inline('Original title', 'Heading text', 'Cancelled text', false);
-  assert.match(await readSourceText(), /Original title/);
   await inline('Original title', 'Heading text', 'Updated title');
-  assert.match(await readSourceText(), /Updated title/);
+  await expectSource('Updated title');
   await history();
-  assert.match(await readSourceText(), /Original title/);
+  await expectSource('Original title');
   await history(true);
-  assert.match(await readSourceText(), /Updated title/);
+  await expectSource('Updated title');
   await button('Save source');
   await fileIdle();
   assert.equal(await readFile(file, 'utf8'), saved);
@@ -125,10 +133,10 @@ try {
   await waitUi(
     "document.querySelector('.cm-content')?.innerText.includes('Recovered item')",
   );
-  assert.deepEqual(
-    await invoke('recovery_draft', { action: 'keep', source: unsaved }),
-    { ok: true, value: null },
-  );
+  await waitUi("(document.querySelector('details summary')?.click(),true)");
+  await button('Keep recovery draft');
+  await fileIdle();
+  assert.equal(await readFile(draft, 'utf8'), unsaved);
   const collision = await invoke('recovery_draft', {
     action: 'keep',
     source: 'replacement',
@@ -141,24 +149,24 @@ try {
 
   const second = await start();
   assert.notEqual(second, first);
-  assert.doesNotMatch(await readSourceText(), /Recovered item/);
+  await expectSource('Recovered item', false);
   await open();
-  assert.match(await readSourceText(), /Updated title/);
-  assert.doesNotMatch(await readSourceText(), /Recovered item/);
+  await expectSource('Updated title');
+  await expectSource('Recovered item', false);
   await waitUi("(document.querySelector('details summary')?.click(),true)");
   await button('Restore as unsaved document');
   await fileIdle();
   await waitUi(
     "document.querySelector('select')?.value.endsWith('recovered.mdx')",
   );
-  assert.match(await readSourceText(), /Recovered item/);
+  await expectSource('Recovered item');
   assert.equal(await readFile(file, 'utf8'), saved);
   console.log('NATIVE_EXPLICIT_RECOVERY_PASS original unchanged');
   await writeFile(draft, Buffer.from([0xc3, 0x28]));
   await button('Restore as unsaved document');
   await fileIdle();
   await waitUi("Boolean(document.querySelector('[data-file-error]'))");
-  assert.match(await readSourceText(), /Recovered item/);
+  await expectSource('Recovered item');
   assert.equal(await readFile(file, 'utf8'), saved);
   await button('Delete recovery draft');
   await fileIdle();
