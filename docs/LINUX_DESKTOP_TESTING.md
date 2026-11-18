@@ -37,3 +37,13 @@ On the recorded QEMU TCG/Xvfb stack, launch without those rendering variables fa
 In a disposable account, create a UTF-8 MDX fixture with CRLF line endings, a plain heading and paragraph, a simple list and adjacent JSX. Keep a byte copy of the original. Open the fixture through the installed application's file picker and choose **Edit rendered Markdown**. Edit one list item. Open another source and return to the fixture, then undo and redo the edit with the source editor focused.
 
 Save through the native editor, verify the disk bytes against a copy of the fixture with only the expected item text changed, and use **Reopen source**. Rebuild the preview and verify the edited list and continued React interactivity. Check that the preview has no editor capabilities using the production procedure in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). Record the package hash, WebKitGTK version, session type and result. The Chromium export and import tests cover this source path in the browser. The native graphical round trip requires its own run.
+
+## Packaged acceptance runner
+
+Use the installed .deb in a disposable Ubuntu desktop profile with a working user systemd manager and the prerequisites in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). Start the external WebKit driver and source a fresh fixture environment from `scripts/native-test-setup.mjs`. Run:
+
+```sh
+NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-acceptance.mjs
+```
+
+The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is available as `playable-editor-demo` under Artifacts on successful PR workflow runs.
