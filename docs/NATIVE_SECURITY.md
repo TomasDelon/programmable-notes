@@ -2,6 +2,32 @@
 
 This procedure is required before treating native preview as safe for hostile documents. No step may be replaced by Chromium, a missing JavaScript global, configuration inspection, or a passing mock test.
 
+## Milestone 3 production configuration
+
+The historical debug/test-feature procedure below remains useful, but does not establish production package behavior. New production work, actual results and limitations are recorded in the [2026-11-18 evidence](security-evidence/2026-11-18/README.md). Read [ADR-004](decisions/ADR-004-linux-persistence-and-production.md) for the authorized file store, actual namespace enforcement, WebKit process sandbox and residual native risks.
+
+Build/install the optimized package as described in [Linux desktop testing](LINUX_DESKTOP_TESTING.md). Start tauri-driver in the same ordinary graphical user session. Then create external test launchers (the installed binary receives no test feature or additional permission):
+
+```sh
+NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native-test-setup.mjs
+# Source the env.sh path printed by setup, then:
+. /tmp/pn-native-REPLACE/env.sh
+npm run native:test > production-ipc.log 2>&1
+npm run native:persistence:test > production-persistence.log 2>&1
+node scripts/native-lifecycle.mjs > production-lifecycle.log 2>&1
+npm run native:stress:test > production-stress.log 2>&1
+npm run native:editor:test > production-editor-cpu.log 2>&1
+npm run native:editor:test -- --pressure > production-editor-heap.log 2>&1
+```
+
+Run once per new fixture directory; persistence tests intentionally create Save As targets and should not overwrite an earlier run's files. The editor wrapper records its actual PID; the preview wrapper feeds fixed trusted HTML over stdin solely for direct ACL/profile probes. The latter is outside the supervisor and therefore never proves resource containment. Real supervised children keep automation=false; interaction uses an external OS accessibility driver. Production stress cases also inspect actual WebProcess NoNewPrivs/seccomp.
+
+The controlled heap editor test requires a rendered marker set only after two retained, touched 16 MiB allocations. Busy WebKit on this TCG stack painted that marker while its accessibility subtree remained unavailable. `scripts/native-visible-text.py` therefore observes this marker through a non-root, preview-PID/window-bound X11 screenshot and exact English OCR. It verifies process start identity, an unobscured stable EWMH client window, and exact whole-client normalized text; it cannot accept a merely high startup RSS. Openbox/EWMH and Tesseract English data are required for this X11 automation. Counter clicks still use AT-SPI. The OCR deadline is 55 seconds and never extends the 60-second preview lifetime. Wayland automation is not claimed by this procedure.
+
+The persistence suite uses real native pickers and exact UTF-8/CRLF file bytes, atomic inode replacement, mode preservation, read-only errors/retry, forged-grant refusal, external-change conflicts, cancelled dialogs, Save As, reopen and interactive source rebuilding. The editor CPU/heap suites now require actual authorized disk writes during attacks; historical Blob observations are not substituted. Lifecycle covers dirty-close cancellation and saved-source reopening after a clean application restart. Backend tests additionally cover xattrs, hardlinks, symlink/FIFO refusal and races; the native GUI save checks a real POSIX ACL. Distinguish backend tests from GUI coverage.
+
+On restricted Ubuntu, first run the strict namespace negative control: a service request can succeed while PrivateNetwork was skipped. The application must refuse before sending author input. Keep actual namespace inode, NoNewPrivs, cgroup and payload-sentinel evidence. Administrator opt-in configuration and its scope must be recorded separately; the package never installs a systemd executor exception or changes global namespace sysctls.
+
 ## Build prerequisites
 
 Use a Linux desktop with cgroup v2, a running systemd user manager, delegated cpu/memory/pids controllers, user namespaces enabled, and a graphical session. PrivateNetwork must work for user services; if this distribution cannot supply it, preview must refuse to start. Do not disable it as a workaround.
@@ -10,7 +36,7 @@ Ubuntu 24.04 example (administrative package install):
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf webkit2gtk-driver xvfb xauth xdotool python3-pyatspi dbus-user-session dbus-x11
+sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf webkit2gtk-driver xvfb xauth xdotool python3-pyatspi dbus-user-session dbus-x11 acl xdg-desktop-portal xdg-desktop-portal-gtk openbox x11-utils tesseract-ocr tesseract-ocr-eng
 # Install Rust from rustup with TLS verification intact, then:
 rustup component add rustfmt
 cargo install tauri-driver --version 2.1.0 --locked
@@ -18,6 +44,9 @@ npm ci
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo fmt --manifest-path native-policy/Cargo.toml -- --check
 npm run native:policy:test
+cargo fmt --manifest-path native-documents/Cargo.toml -- --check
+npm run native:documents:test
+# Optional legacy ACL-shell build, distinct from installed production validation:
 npm run native:build -- --debug --features custom-protocol,security-test
 cargo test --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
 ```
@@ -58,7 +87,7 @@ npm run native:editor:test -- --pressure
 
 The stress suite executes real compiled React/MDX in the production supervised child. It controls the child externally through Linux AT-SPI, matching its native PID; the child has no WebDriver automation and no testing IPC capability. Cases cover CPU throttling/Stop, the exact immediate-allocation fixture below, natural expiry, editor SIGKILL, window close and interactive recovery. Each case reports independently and any failure makes the command fail. Run one case with `npm run native:stress:test -- --case=memory` (also `cpu-stop`, `expiry`, `editor-crash`, `window-close`). OOM and expiry require the actual systemd journal cause. A disappearing renderer alone never counts as either.
 
-The editor suite launches the full application, observes the browser-WASM compiler, tests actual CodeMirror input and exact Save source Blob during a busy WebKit preview, and requests an unsaved source rebuild. The `--pressure` variant edits during a controlled growing heap and tests Stop/rebuild; it complements the separate immediate-allocation OOM fixture, which is unchanged. Blob capture verifies the save payload; it is explicitly not a native filesystem-write test. Set `NATIVE_EVIDENCE_DIR` to retain native screenshots and stress cgroup samples; stdout/stderr must also be retained.
+The current editor suite launches the full installed application using the fixture environment above, observes the browser-WASM compiler, opens a real file through the native picker, tests actual CodeMirror input and exact native disk saves under CPU or confirmed growing-heap pressure, and rebuilds additional unsaved source. The immediate-allocation OOM fixture is unchanged and remains separate. Earlier Save Blob captures are historical evidence only; the current test does not substitute a Blob for an actual write. Set `NATIVE_EVIDENCE_DIR` to retain native screenshots and cgroup samples; stdout/stderr must also be retained.
 
 ## Automated supervisor-only gates
 
@@ -129,33 +158,38 @@ As the ordinary graphical/test user, create a private authenticated Xvfb session
 
 ```sh
 export DISPLAY=:99
+export LANG=C.UTF-8
+unset WAYLAND_DISPLAY
 export XAUTHORITY="$XDG_RUNTIME_DIR/pn-Xauthority"
 touch "$XAUTHORITY"
 chmod 600 "$XAUTHORITY"
 xauth -f "$XAUTHORITY" add "$DISPLAY" . "$(mcookie)"
 Xvfb "$DISPLAY" -screen 0 1280x900x24 -nolisten tcp -auth "$XAUTHORITY" > xvfb.log 2>&1 &
+openbox > openbox.log 2>&1 &
 gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.freedesktop.DBus.Properties.Set org.a11y.Status IsEnabled '<true>'
 gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.freedesktop.DBus.Properties.Set org.a11y.Status ScreenReaderEnabled '<true>'
 ```
 
-On a software-rendered VM, llvmpipe crashed before these supported rendering switches were set. They change rendering, not sandboxing. The supervisor gets them from the user manager's environment, so exporting them only for tauri-driver is insufficient:
+Earlier headless runs encountered llvmpipe crashes before these supported rendering switches were set. They change rendering, not sandboxing. The current supervisor forwards them from the trusted editor environment through its clean allowlist, so export them before launching the editor/driver; manager-only values are not forwarded.
 
 ```sh
 export WEBKIT_DISABLE_COMPOSITING_MODE=1
 export WEBKIT_DISABLE_DMABUF_RENDERER=1
-systemctl --user set-environment WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1
+# Build/install the production package using LINUX_DESKTOP_TESTING.md first.
 tauri-driver --port 4444 > driver.log 2>&1 &
-export NATIVE_EVIDENCE_DIR="$PWD/test-results/native"
+pn_native_env=$(NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native-test-setup.mjs)
+. "$pn_native_env"
 npm run native:test > native-ipc.log 2>&1
+npm run native:persistence:test > native-persistence.log 2>&1
+npm run native:lifecycle:test > native-lifecycle.log 2>&1
+node scripts/native-environment.mjs > native-environment.log 2>&1
 npm run native:stress:test > native-stress.log 2>&1
-# For the full editor, build without the probe feature:
-npm run native:build -- --debug --features custom-protocol
 npm run native:editor:test > native-editor.log 2>&1
 npm run native:editor:test -- --pressure > native-editor-pressure.log 2>&1
 npm run native:resource:test > native-resource.log 2>&1
 ```
 
-Never set a WebKit sandbox-disable variable, remove PrivateNetwork, share the editor profile, enable production-child automation, loosen a cgroup limit or replace a failed assertion with a skip. The AT-SPI driver allows 45 seconds for slow native startup while the independent service lifetime remains 60 seconds. Keep logs from failed attempts as well as successful retries.
+Never use a WebKit sandbox-disable variable to obtain a successful application run, remove PrivateNetwork, share the editor profile, enable production-child automation, loosen a cgroup limit or replace a failed assertion with a skip. Deliberate environment-poison negative controls must prove rejection or sanitization rather than successful weakened execution. The current AT-SPI driver allows 55 seconds for slow native startup while the independent service lifetime remains 60 seconds. Its outer process timeout is 65 seconds; that cannot extend an expired service. The earlier production candidate needed about 50 seconds after the launch reply under TCG; an old 45-second test deadline failed correctly, and both immediate and deferred 55-second polling subsequently reached Count: 2. Keep logs from failed attempts as well as successful retries.
 
 ## Missing-controller negative test
 

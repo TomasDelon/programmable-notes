@@ -29,7 +29,13 @@
     "native:test": "node scripts/native-webdriver.mjs",
     "native:resource:test": "cargo run --manifest-path native-policy/Cargo.toml --locked --example resource_gates",
     "native:stress:test": "node scripts/native-stress.mjs",
-    "native:editor:test": "node scripts/native-editor.mjs"
+    "native:editor:test": "node scripts/native-editor.mjs",
+    "native:documents:test": "cargo test --manifest-path native-documents/Cargo.toml --locked",
+    "native:package": "tauri build --bundles deb --features custom-protocol -- --locked",
+    "native:persistence:test": "node scripts/native-persistence.mjs",
+    "native:wry:verify": "node scripts/verify-wry.mjs",
+    "native:package:verify": "node scripts/verify-linux-package.mjs",
+    "native:lifecycle:test": "node scripts/native-lifecycle.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

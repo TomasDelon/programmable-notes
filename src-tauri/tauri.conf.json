@@ -29,6 +29,28 @@
     }
   },
   "bundle": {
-    "active": false
+    "active": true,
+    "targets": ["deb"],
+    "category": "Utility",
+    "shortDescription": "Local MDX and React notes with isolated previews",
+    "longDescription": "Programmable Notes edits explicitly opened local Markdown and MDX source. Linux previews run in separate resource-limited services with no document filesystem authority. Experimental desktop testing build.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/256x256.png"],
+    "linux": {
+      "deb": {
+        "depends": [
+          "systemd (>= 252)",
+          "dbus-user-session",
+          "coreutils",
+          "apparmor (>= 4.0)",
+          "bubblewrap",
+          "xdg-dbus-proxy"
+        ],
+        "files": {
+          "/etc/apparmor.d/programmable-notes": "linux/programmable-notes.apparmor"
+        },
+        "postInstallScript": "linux/post-install.sh",
+        "preRemoveScript": "linux/pre-remove.sh"
+      }
+    }
   }
 }

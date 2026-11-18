@@ -7,7 +7,7 @@ import pyatspi
 pid = int(sys.argv[1])
 name = sys.argv[2]
 action = sys.argv[3] if len(sys.argv) > 3 else 'click'
-limit = time.monotonic() + 45
+limit = time.monotonic() + 55
 
 def find(node, depth=0):
     if depth > 30:

@@ -1,4 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod documents;
+use documents::{
+    close_document, confirm_discard, open_documents, reopen_document, save_document,
+    save_document_as, set_documents_dirty,
+};
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
     io::{self, Read},
@@ -8,7 +13,7 @@ use tauri::{Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 struct Host {
     child: bool,
-    supervisor: Mutex<Supervisor>,
+    supervisor: std::sync::Arc<Mutex<Supervisor>>,
 }
 #[tauri::command]
 fn host_probe(
@@ -29,21 +34,28 @@ async fn start_preview(
         return Err("Native preview requires an embedded-asset build; tauri dev cannot cross the private network boundary".into());
     }
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
-    // Blocking supervisor operations never run on the WebKit/UI thread.
-    state
-        .supervisor
-        .lock()
-        .map_err(|_| "Supervisor poisoned")?
-        .start(&executable, &html)
+    let supervisor = state.supervisor.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        supervisor
+            .lock()
+            .map_err(|_| "Supervisor poisoned".to_string())?
+            .start(&executable, &html)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 #[tauri::command]
 async fn stop_preview(window: WebviewWindow, state: tauri::State<'_, Host>) -> Result<(), String> {
     authorize(window.label(), state.child)?;
-    state
-        .supervisor
-        .lock()
-        .map_err(|_| "Supervisor poisoned")?
-        .stop()
+    let supervisor = state.supervisor.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        supervisor
+            .lock()
+            .map_err(|_| "Supervisor poisoned".to_string())?
+            .stop()
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 fn allowed_navigation(url: &tauri::Url) -> bool {
     let local = matches!(
@@ -87,9 +99,30 @@ fn main() {
         context.config_mut().app.security.csp = None;
         context.config_mut().app.security.dev_csp = None;
     }
-    let app=tauri::Builder::default()
-        .manage(Host{child,supervisor:Mutex::new(Supervisor::default())})
-        .invoke_handler(tauri::generate_handler![start_preview,stop_preview,host_probe])
+    let mut builder = tauri::Builder::default()
+        .manage(Host {
+            child,
+            supervisor: std::sync::Arc::new(Mutex::new(Supervisor::default())),
+        })
+        .invoke_handler(tauri::generate_handler![
+            start_preview,
+            stop_preview,
+            host_probe,
+            open_documents,
+            save_document,
+            save_document_as,
+            reopen_document,
+            close_document,
+            confirm_discard,
+            set_documents_dirty
+        ]);
+    if !child {
+        builder = builder
+            .plugin(tauri_plugin_dialog::init())
+            .manage(std::sync::Arc::new(documents::Documents::default()))
+            .on_window_event(documents::close_requested);
+    }
+    let app=builder
         .setup(move |app| {
             let label=if child {"preview"} else {"editor"};
             let url=WebviewUrl::App(if child || editor_probe {"native-preview.html"} else {"index.html"}.into());

@@ -14,7 +14,14 @@ it('restricts the entire configured capability union to the editor and registere
   expect(cap.remote).toBeUndefined();
   expect(cap.local).toBe(true);
   expect(cap.permissions.sort()).toEqual([
+    'allow-close-document',
+    'allow-confirm-discard',
     'allow-host-probe',
+    'allow-open-documents',
+    'allow-reopen-document',
+    'allow-save-document',
+    'allow-save-document-as',
+    'allow-set-documents-dirty',
     'allow-start-preview',
     'allow-stop-preview',
   ]);

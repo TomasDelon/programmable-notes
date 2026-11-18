@@ -42,6 +42,7 @@ pub struct Document {
     pub revision: String,
     pub name: String,
     pub logical_path: String,
+    pub display_path: String,
     pub source: String,
     pub durability_warning: bool,
 }
@@ -147,6 +148,7 @@ impl Store {
                 revision: revision.clone(),
                 name,
                 logical_path,
+                display_path: file.path.to_string_lossy().into_owned(),
                 source,
                 durability_warning: false,
             };
@@ -212,6 +214,7 @@ impl Store {
             id: id.clone(),
             revision: revision.clone(),
             logical_path: name.clone(),
+            display_path: pending.file.path.to_string_lossy().into_owned(),
             name,
             source: source.into(),
             durability_warning: !durable,
@@ -260,6 +263,7 @@ impl Store {
                 .unwrap()
                 .into(),
             logical_path: grant.logical_path.clone(),
+            display_path: grant.file.path.to_string_lossy().into_owned(),
             source,
             durability_warning: false,
         })

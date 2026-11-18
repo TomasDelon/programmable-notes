@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reopen-document"
+description = "Enables the reopen_document command without any pre-configured scope."
+commands.allow = ["reopen_document"]
+
+[[permission]]
+identifier = "deny-reopen-document"
+description = "Denies the reopen_document command without any pre-configured scope."
+commands.deny = ["reopen_document"]

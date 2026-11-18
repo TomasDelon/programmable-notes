@@ -6,6 +6,7 @@ await build({
     resolveDir: process.cwd(),
   },
   bundle: true,
+  minify: true,
   format: 'iife',
   platform: 'browser',
   define: { 'process.env.NODE_ENV': '"production"' },

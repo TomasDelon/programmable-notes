@@ -273,6 +273,19 @@ impl InnerWebView {
         }
       }
     };
+    // Programmable Notes requires WebKit's process sandbox as well as native
+    // capability/resource isolation. GTK contexts otherwise default it off.
+    if std::env::var_os("WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS").is_some() {
+      return Err(Error::Io(std::io::Error::new(std::io::ErrorKind::PermissionDenied,
+        "Refusing a WebKit sandbox-disabling environment")));
+    }
+    if !web_context.context().is_sandbox_enabled() {
+      web_context.context().set_sandbox_enabled(true);
+    }
+    if !web_context.context().is_sandbox_enabled() {
+      return Err(Error::Io(std::io::Error::new(std::io::ErrorKind::PermissionDenied,
+        "WebKit process sandbox is unavailable")));
+    }
     if let Some(proxy_setting) = &attributes.proxy_config {
       let proxy_uri = match proxy_setting {
         ProxyConfig::Http(endpoint) => format!("http://{}:{}", endpoint.host, endpoint.port),

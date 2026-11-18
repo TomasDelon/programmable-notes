@@ -25,6 +25,12 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - Unit tests live in `tests/unit`; browser tests live in `tests/e2e`. Add meaningful tests when implementing behavior. Keep browser and unit test discovery separate.
 - Keep changes focused and avoid committing caches, `dist/`, test results, or reports.
 
+## Native Linux work
+
+Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before changing native authority or packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native document paths come only from editor-side OS dialogs; renderer commands use opaque grants/revisions. Never add a generic filesystem permission for preview code.
+
+Actual native validation requires a disposable full-system Linux desktop/VM with systemd, cgroup delegation, working namespaces and WebKitGTK. Compilation and package inspection do not prove runtime behavior. Keep production child automation/inspector disabled, resource limits fixed and failed observations in the dated evidence. WebDriver changes WebKit's networking configuration; verify normal production namespace/seccomp behavior separately from automated ACL probes. No public release or PR readiness change is implied by a passing local suite.
+
 ## Code conventions
 
 Use TypeScript with strict checks and functional React components. Keep code close to its tests and follow ESLint and Prettier configuration. Keep the scaffold small; create additional directories and abstractions only when the handoff needs them.

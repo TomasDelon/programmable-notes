@@ -12,3 +12,6 @@ docs/handoff
 src-tauri/gen
 
 src-tauri/vendor
+
+# Preserve raw runtime evidence bytes and producer checksums.
+docs/security-evidence/**/raw

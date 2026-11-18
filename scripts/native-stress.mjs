@@ -11,6 +11,7 @@ import {
   systemctl,
   artifact,
 } from './native-webdriver-lib.mjs';
+import { button, waitUi } from './native-ui-lib.mjs';
 await preflight();
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const output = process.env.NATIVE_EVIDENCE_DIR || 'test-results/native';
@@ -63,6 +64,12 @@ async function sample(root) {
     try {
       row[field] = (await readFile(`${root}/${field}`, 'utf8')).trim();
     } catch (error) {
+      if (error.code === 'ENODEV') {
+        // kernfs can deactivate an opened controller file during unit removal.
+        // An indeterminate sample is never evidence of an empty cgroup: retry
+        // until a later sample proves emptiness/removal and known PIDs are gone.
+        return { ...row, observerTransient: true, members: {} };
+      }
       if (error.code !== 'ENOENT') throw error;
     }
   }
@@ -95,13 +102,15 @@ async function start(code) {
   assert.equal(first['memory.swap.max'], '0');
   assert.equal(first['pids.max'], '128');
   assert.equal(first['cpu.max'], '25000 100000');
-  return { unit, root, pid, started: Date.now(), samples: [first] };
+  const target = { unit, root, pid, started: Date.now(), samples: [first] };
+  await sandbox(target);
+  return target;
 }
 function ui(target, name, action = 'click') {
   const response = execFileSync(
     'python3',
     ['scripts/native-atspi.py', String(target.pid), name, action],
-    { encoding: 'utf8', timeout: 50000 },
+    { encoding: 'utf8', timeout: 65000 },
   );
   console.log('NATIVE_UI', response.trim());
 }
@@ -110,6 +119,10 @@ async function stopped(target, seconds = 75) {
   while (Date.now() < deadline) {
     const row = await sample(target.root);
     target.samples.push(row);
+    if (row.observerTransient) {
+      await pause(100);
+      continue;
+    }
     if (!row['cgroup.procs']) {
       const known = Object.assign(
         {},
@@ -180,6 +193,45 @@ async function recover(label) {
   await stopped(valid, 5);
   console.log('RECOVERY_PASS', label);
 }
+async function launchEditor() {
+  await launch(process.env.NATIVE_PREVIEW_WRAPPER ? [] : ['--security-editor']);
+  if (process.env.NATIVE_PREVIEW_WRAPPER) {
+    await waitUi(`Boolean(document.querySelector('.cm-content'))`);
+    await button('Stop preview');
+    assert.equal((await invoke('stop_preview')).ok, true);
+  }
+}
+async function sandbox(target) {
+  const deadline = Date.now() + 45000;
+  while (Date.now() < deadline) {
+    const row = await sample(target.root);
+    target.samples.push(row);
+    for (const pid of Object.keys(row.members || {})) {
+      try {
+        const comm = (await readFile(`/proc/${pid}/comm`, 'utf8')).trim();
+        if (!comm.startsWith('WebKitWeb')) continue;
+        const status = await readFile(`/proc/${pid}/status`, 'utf8');
+        assert.match(status, /NoNewPrivs:\s+1/);
+        assert.match(status, /Seccomp:\s+2/);
+        console.log(
+          'WEBKIT_SANDBOX',
+          JSON.stringify({
+            unit: target.unit,
+            pid,
+            comm,
+            seccomp: 2,
+            noNewPrivileges: true,
+          }),
+        );
+        return;
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
+    await pause(100);
+  }
+  throw Error('No sandboxed WebKit process appeared before lifetime');
+}
 const requested = process.argv
   .find((arg) => arg.startsWith('--case='))
   ?.slice(7);
@@ -202,7 +254,7 @@ async function runCase(name, task) {
   }
 }
 try {
-  await launch(['--security-editor']);
+  await launchEditor();
   await runCase('cpu-stop', async () => {
     const loop = await start(cpu);
     ui(loop, 'Arm CPU loop');
@@ -275,7 +327,7 @@ try {
     } catch {
       /* The editor was deliberately killed; only session cleanup may fail. */
     }
-    await launch(['--security-editor']);
+    await launchEditor();
     await recover('Independent preview expiry after editor SIGKILL');
   });
   await runCase('window-close', async () => {

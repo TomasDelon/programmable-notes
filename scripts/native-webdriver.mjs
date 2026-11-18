@@ -12,6 +12,7 @@ import {
   systemctl,
   artifact,
   session,
+  binary,
 } from './native-webdriver-lib.mjs';
 await preflight();
 function denied(result) {
@@ -26,7 +27,12 @@ const counter = await artifact(
   await readFile('docs/handoff/samples/fixtures/counter.mdx', 'utf8'),
 );
 try {
-  await launch(['--security-editor']);
+  const production = Boolean(process.env.NATIVE_PREVIEW_WRAPPER);
+  await launch(production ? [] : ['--security-editor']);
+  if (production)
+    await script(
+      `const done=arguments[arguments.length-1];const timer=setInterval(()=>{const b=Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Stop preview');if(b){clearInterval(timer);b.click();done(true)}},100);`,
+    );
   const hostResult = await invoke('host_probe');
   console.log('IPC_EDITOR', JSON.stringify(hostResult));
   assert.deepEqual(hostResult, {
@@ -107,7 +113,10 @@ try {
     'PASS: editor positive IPC control, resource-unit limits and full-group Stop',
   );
   await close();
-  await launch(['--security-probe']);
+  await launch(
+    production ? [] : ['--security-probe'],
+    process.env.NATIVE_PREVIEW_WRAPPER || binary,
+  );
   const isolatedStorage = await wd(`/session/${session}/execute/sync`, {
     script: "return localStorage.getItem('pn-native-validation-secret');",
     args: [],
@@ -115,12 +124,34 @@ try {
   assert.equal(isolatedStorage, null);
   console.log('PRIVATE_STORAGE', 'editor canary absent from incognito preview');
   // Commands exist in this very binary; denial is not inferred from missing APIs.
-  for (const command of ['host_probe', 'start_preview', 'stop_preview'])
-    denied(await invoke(command, { html: counter }));
+  for (const command of [
+    'host_probe',
+    'start_preview',
+    'stop_preview',
+    'open_documents',
+    'save_document',
+    'save_document_as',
+    'reopen_document',
+    'close_document',
+    'confirm_discard',
+    'set_documents_dirty',
+  ])
+    denied(
+      await invoke(command, {
+        html: counter,
+        id: 'forged',
+        revision: 'forged',
+        source: 'malicious overwrite',
+        name: 'note.mdx',
+        dirty: false,
+        busy: false,
+      }),
+    );
   for (const command of [
     'plugin:fs|read_file',
     'plugin:shell|execute',
     'plugin:http|fetch',
+    'plugin:dialog|open',
   ]) {
     const result = await invoke(command, {
       path: '/etc/passwd',
@@ -160,6 +191,25 @@ try {
     `const done=arguments[arguments.length-1];const result={};for(const [key,fn] of Object.entries({parent:()=>parent.document.title,storage:()=>parent.localStorage.getItem('secret')})){try{fn();result[key]='allowed';}catch{result[key]='denied';}}done(result);`,
   );
   assert.deepEqual(boundary, { parent: 'denied', storage: 'denied' });
+  const fetchBoundary = await script(
+    `const done=arguments[arguments.length-1];const violations=[];
+ const listener=e=>violations.push({directive:e.effectiveDirective,blocked:e.blockedURI});
+ addEventListener('securitypolicyviolation',listener);
+ Promise.all(['http://127.0.0.1:9/native-security-probe','file:///etc/passwd'].map(async url=>{
+   try { const r=await fetch(url);return {url,denied:false,text:await r.text()}; }
+   catch { return {url,denied:true}; }
+ })).then(results=>setTimeout(()=>{removeEventListener('securitypolicyviolation',listener);done({results,violations});},200));`,
+  );
+  assert.ok(
+    fetchBoundary.results.every((result) => result.denied),
+    'Author context fetched network or local filesystem content',
+  );
+  assert.ok(
+    fetchBoundary.violations.some((value) => value.directive === 'connect-src'),
+    'No actual WebKit connect-src violation observed',
+  );
+  console.log('WEBKIT_AUTHOR_FETCH_DENIED', JSON.stringify(fetchBoundary));
+
   console.log(
     'PASS: preview native ACL denial, absent privileged plugins, real WebKitGTK React counter and iframe DOM/storage denial',
   );

@@ -19,6 +19,9 @@ pub const PROPERTIES: &[&str] = &[
     "OOMPolicy=kill",
     "NoNewPrivileges=yes",
     "PrivateNetwork=yes",
+    "LimitCORE=0",
+    "UMask=0077",
+    "UnsetEnvironment=WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS WEBKIT_INSPECTOR_SERVER LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT GCONV_PATH GTK_MODULES GTK3_MODULES GTK_PATH GIO_EXTRA_MODULES GDK_PIXBUF_MODULE_FILE",
 ];
 pub fn authorize(label: &str, child: bool) -> Result<(), String> {
     if label == "editor" && !child {
@@ -44,6 +47,10 @@ pub fn run_args(unit: &str, executable: &Path) -> Vec<String> {
     args.extend(PROPERTIES.iter().map(|p| format!("--property={p}")));
     args.extend([
         "--".into(),
+        "/usr/bin/env".into(),
+        "-i".into(),
+        "TAURI_WEBVIEW_AUTOMATION=false".into(),
+        "TAURI_AUTOMATION=false".into(),
         executable.to_string_lossy().into_owned(),
         "--preview-child".into(),
     ]);
@@ -80,6 +87,61 @@ pub fn verify_values(memory: &str, swap: &str, cpu: &str, tasks: &str) -> Result
         return Err("Effective cgroup limits exceed preview policy".into());
     }
     Ok(())
+}
+pub fn verify_runtime_identity(
+    editor_net: &str,
+    preview_net: &str,
+    editor_status: &str,
+    preview_status: &str,
+) -> Result<(), String> {
+    if !editor_net.starts_with("net:[")
+        || !preview_net.starts_with("net:[")
+        || editor_net == preview_net
+    {
+        return Err("Preview network namespace is not isolated; systemd may have silently skipped PrivateNetwork".into());
+    }
+    let uid = |status: &str| {
+        status
+            .lines()
+            .find(|l| l.starts_with("Uid:"))
+            .and_then(|line| line.split_whitespace().nth(2))
+            .map(str::to_owned)
+    };
+    let own = uid(editor_status).ok_or("Cannot verify editor user")?;
+    if own == "0" || uid(preview_status).as_ref() != Some(&own) {
+        return Err("Preview must run as the same non-root desktop user".into());
+    }
+    if !preview_status
+        .lines()
+        .any(|line| line.split_whitespace().collect::<Vec<_>>() == ["NoNewPrivs:", "1"])
+    {
+        return Err("Preview NoNewPrivileges is not active".into());
+    }
+    Ok(())
+}
+fn verify_process(unit: &str) -> Result<(), String> {
+    let out = Command::new("systemctl")
+        .args(["--user", "show", "--property=MainPID", "--value", unit])
+        .output()
+        .map_err(|e| e.to_string())?;
+    let pid = String::from_utf8_lossy(&out.stdout)
+        .trim()
+        .parse::<u32>()
+        .map_err(|_| "Cannot verify preview PID")?;
+    if pid == 0 {
+        return Err("Preview process is not active".into());
+    }
+    let read = |p: String| {
+        std::fs::read_to_string(p).map_err(|e| format!("Cannot verify process policy: {e}"))
+    };
+    let own_net = std::fs::read_link("/proc/self/ns/net").map_err(|e| e.to_string())?;
+    let child_net = std::fs::read_link(format!("/proc/{pid}/ns/net")).map_err(|e| e.to_string())?;
+    verify_runtime_identity(
+        &own_net.to_string_lossy(),
+        &child_net.to_string_lossy(),
+        &read("/proc/self/status".into())?,
+        &read(format!("/proc/{pid}/status"))?,
+    )
 }
 fn verify_cgroup(unit: &str) -> Result<(), String> {
     let output = Command::new("systemctl")
@@ -163,7 +225,7 @@ impl Supervisor {
             std::process::id()
         );
         let mut args = run_args(&unit, executable);
-        let index = args.len() - 3;
+        let index = args.len() - 2;
         let graphics = [
             "DISPLAY",
             "WAYLAND_DISPLAY",
@@ -177,9 +239,17 @@ impl Supervisor {
         .filter_map(|name| {
             std::env::var(name)
                 .ok()
-                .map(|value| format!("--setenv={name}={value}"))
+                .map(|value| format!("{name}={value}"))
         });
-        args.splice(index..index, graphics);
+        let render = [
+            "WEBKIT_DISABLE_COMPOSITING_MODE",
+            "WEBKIT_DISABLE_DMABUF_RENDERER",
+        ]
+        .into_iter()
+        .filter_map(|name| {
+            (std::env::var(name).ok().as_deref() == Some("1")).then(|| format!("{name}=1"))
+        });
+        args.splice(index..index, graphics.chain(render));
         let mut child = Command::new("systemd-run")
             .args(args)
             .stdin(Stdio::piped())
@@ -200,7 +270,8 @@ impl Supervisor {
                     .map_err(|e| e.to_string())?
                     .success()
                 {
-                    return verify_cgroup(&unit);
+                    verify_cgroup(&unit)?;
+                    return verify_process(&unit);
                 }
                 if self
                     .child
@@ -234,6 +305,45 @@ impl Supervisor {
 mod tests {
     use super::*;
     #[test]
+    fn runtime_identity_refuses_silent_namespace_fallback_and_privileges() {
+        let status = "Uid:\t1000\t1000\t1000\t1000\nNoNewPrivs:\t1\n";
+        assert!(verify_runtime_identity("net:[1]", "net:[2]", status, status).is_ok());
+        assert!(verify_runtime_identity("net:[1]", "net:[1]", status, status).is_err());
+        assert!(verify_runtime_identity(
+            "net:[1]",
+            "net:[2]",
+            status,
+            &status.replace("NoNewPrivs:\t1", "NoNewPrivs:\t0")
+        )
+        .is_err());
+        assert!(verify_runtime_identity(
+            "net:[1]",
+            "net:[2]",
+            status,
+            &status.replace("1000", "0")
+        )
+        .is_err());
+    }
+    #[test]
+    fn service_environment_cannot_disable_sandbox_or_enable_inspection() {
+        let args = run_args("test.service", Path::new("/usr/bin/programmable-notes"));
+        let unset = args
+            .iter()
+            .find(|a| a.starts_with("--property=UnsetEnvironment="))
+            .expect("Service environment not sanitized");
+        for name in [
+            "WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS",
+            "WEBKIT_INSPECTOR_SERVER",
+            "LD_PRELOAD",
+            "LD_LIBRARY_PATH",
+            "GTK_MODULES",
+            "GIO_EXTRA_MODULES",
+        ] {
+            assert!(unset.split(['=', ' ']).any(|v| v == name));
+        }
+        assert!(args.iter().any(|a| a == "--property=LimitCORE=0"));
+    }
+    #[test]
     fn effective_limits_must_be_bounded_and_no_weaker_than_policy() {
         assert!(verify_values("536870912", "0", "25000 100000", "128").is_ok());
         assert!(verify_values("1000", "0", "10000 100000", "8").is_ok());
@@ -266,8 +376,8 @@ mod tests {
             assert!(args.contains(&format!("--property={property}")));
         }
         assert_eq!(
-            &args[args.len() - 3..],
-            ["--", "/opt/notes app/bin", "--preview-child"]
+            &args[args.len() - 2..],
+            ["/opt/notes app/bin", "--preview-child"]
         );
         assert!(args.contains(&"--wait".into()));
         assert!(args.contains(&"--setenv=TAURI_WEBVIEW_AUTOMATION=false".into()));

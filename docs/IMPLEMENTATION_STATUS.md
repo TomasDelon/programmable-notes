@@ -1,59 +1,52 @@
-# MDX engine validation and next milestone
+# Programmable Notes implementation status
 
-Baseline: `f531ddf`; development branch `feat/mdx-react-engine`. The original handoff is preserved under `docs/handoff` as supporting specifications/research, not proof that its architectural suggestions work. Historical claims about Rust esbuild, generic TS syntax in MDX, native isolation from missing globals, and generic inverse React editing are not adopted.
+Development branch: `feat/mdx-react-engine`, draft PR #1. Milestone 3 builds on `0275bdc`. The original handoff under `docs/handoff` remains supporting specifications/research, not proof that every proposed technique works. No visual editing, custom Markdown grammar, AI, marketplace or Git synchronization is implemented.
 
-## Acceptance matrix
+## Working foundation
 
-| Criterion                                                      | Result / evidence                                                                       |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Real MDX inline hooks, events, two-click counter               | Passed in Chromium production preview                                                   |
-| Unsaved CodeMirror text changes preview                        | Passed                                                                                  |
-| Local imported TSX, including newly opened modules             | Passed                                                                                  |
-| Pinned clsx package                                            | Passed; no runtime package fetch/installation                                           |
-| Syntax error and runtime crash recovery                        | Passed, source remains editable                                                         |
-| Rapid edits / outdated build cancellation                      | Passed latest-heading and Stop regression                                               |
-| Save/download/reopen and mixed-source bytes                    | Passed UTF-8 fixtures; CRLF no-op save regression                                       |
-| Parent DOM/storage, popup, top navigation, fetch, resource CSP | Passed Chromium negative tests                                                          |
-| Forged host message                                            | Ignored in browser test                                                                 |
-| Self-navigation                                                | Initial child-only policy failed; parent frame-src restriction passed retained probe    |
-| Infinite-loop parent responsiveness                            | Observed responsive in disposable Chromium probe; not a portable resource limit         |
-| High-memory pressure / hard quotas                             | Passed actual Linux WebKit heap cgroup OOM at 512 MiB; CPU 25%, swap 0, pids 128        |
-| Native Tauri IPC/capability scopes and Linux WebKitGTK         | Passed actual registered-command denial, private storage, Counter and DOM/storage tests |
-| TypeScript inside MDX                                          | Unsupported; use imported TSX                                                           |
-| Full MDX source-map composition/runtime symbolication          | Not implemented                                                                         |
-| Visual editing (Spike C)                                       | Deferred until complete A/B gates pass                                                  |
-| GitHub-hosted CI                                               | Not inferred from local runs                                                            |
+Users edit real unsaved MDX in CodeMirror, including JSX, React imports, hooks, state and events. A browser worker compiles memory-backed files; the preview executes the result in an opaque-origin sandbox with a hash CSP. Explicitly selected TSX/JS modules and pinned clsx are supported without runtime package installation. Inline TypeScript syntax in MDX is unsupported; use imported TSX.
 
-## Reproduce
+The Linux desktop uses a separate unprivileged preview process, not another privileged editor webview. The editor alone can authorize local source files through native pickers, save atomically, Save As, reopen, close sources and confirm dirty-window closure. File commands accept unpredictable grants/revisions, never renderer-supplied authorization paths. Unselected neighbors are not imported automatically. Conflicts, read-only errors, cancellation and edits during asynchronous operations preserve source. UTF-8, Unicode, CRLF, mode and POSIX ACL preservation have real disk evidence.
 
-Use Node from `.nvmrc`; `npm ci`. `npm run dev` and `npm run build` generate the pinned preview runtime before Vite starts. `npm run check` runs format/lint/typecheck/unit/browser integration. In this cloud, export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`; CI uses Playwright's matching browser.
+Milestone 3 adds an optimized Debian testing package without test features. Actual Ubuntu/WebKitGTK testing targets the installed production executable. [Desktop installation](LINUX_DESKTOP_TESTING.md), [production boundary and persistence decision](decisions/ADR-004-linux-persistence-and-production.md), and [exact dated evidence](security-evidence/2026-11-18/README.md) record artifact hashes, source inputs, failures, successful repeats and precise scope. The earlier [2026-11-17 record](security-evidence/2026-11-17/README.md) remains historical debug/test-feature evidence.
 
-The additional bounded security gate requires a production build and preview on port 4180:
+## Security findings addressed
 
-```sh
-npm run build
-npm run preview -- --host 127.0.0.1 --port 4180 --strictPort
-# In another shell:
-node scripts/security-gates.mjs
-```
+- systemd can silently skip PrivateNetwork yet start successfully. The supervisor now verifies the actual network namespace, same non-root UID and NoNewPrivs before delivering author HTML, alongside effective cgroup files. Strict namespace and missing-CPU-controller negative controls reject before payload delivery.
+- WebKitGTK normal and ephemeral contexts defaulted to process sandbox disabled. The documented two-file Wry fork now explicitly requires sandboxing before creating a view and rejects a sandbox-disable environment. Original upstream source/hash comparison and actual WebProcess namespace/seccomp checks are retained.
+- Inherited manager environment could enable inspection, injection or weaker sandbox behavior. Services use a clean graphical/locale allowlist, explicit pre-exec injection-variable removal, automation false, core limit zero and umask 0077. A real preload-constructor/secret/inspector poison test passed.
+- Late compiler initialization and stale editor/close callbacks could start outdated work or discard later input. Demonstrated failing regressions now pass; newer source is retained independently of saved snapshots and released grants.
 
-That probe starts its own disposable browser server, intercepts and aborts any test navigation before external egress, tests the policy invariant, then probes an infinite-loop document and kills its browser process. It exits nonzero on navigation escape, host unresponsiveness, or probe error. It does not test high-memory exhaustion. Retain test logs with the PR; browser traces on failures are generated under ignored test-results.
+WebDriver itself deliberately enables inspector networking in WebKit. Automated direct IPC probes therefore do not prove ordinary production network sandboxing. Actual supervised children have inspector absent/automation false and pass the unchanged strict observer; non-automated desktop results are recorded separately.
 
-## Next milestone, in order
+## Executed checks
 
-1. Finish Linux production-security review and release-build/desktop validation using the retained native matrix. The cloud VM now proves core native IPC and resource behavior, not broad compromised-native-code containment or distribution readiness. Keep hostile-document shipping gated on that review.
-2. Native/browser workspace adapter: explicit file authorization, nested module selection, atomic save, dirty state, close/reopen recovery, encoding/line-ending policy, independent file undo histories.
-3. Compose MDX source maps, source-located runtime diagnostics, typed-source policy, performance budgets and lazy compiler loading.
-4. Only after security passes, Spike C: uniquely mapped Markdown paragraph patches, stale-map rejection, no-op byte identity, JSX opacity, undo/redo golden tests. No broad DOM-to-MDX serialization.
+| Layer                                   | Result                                                                                                                                                                                       |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format, ESLint, strict TypeScript       | Passed in `npm run check`                                                                                                                                                                    |
+| Vitest                                  | 20 tests passed across 8 files                                                                                                                                                               |
+| Chromium production browser integration | 5 tests passed: real MDX/TSX/hooks, unsaved editing, errors, source fidelity, Stop and negative security probes                                                                              |
+| Additional bounded Chromium gates       | Navigation blocked; host responsive during observed iframe loop; no portable browser quota claim                                                                                             |
+| Rust policy                             | 6 tests passed                                                                                                                                                                               |
+| Rust native documents                   | 18 real-filesystem tests passed, also repeated as guest UID 1000                                                                                                                             |
+| Rust native app                         | Embedded-root/navigation regression passed                                                                                                                                                   |
+| Production native IPC/WebKit            | Registered-command denial, profile separation, Counter at `Count: 2`, parent DOM/storage denial, actual network/file connect-src violations passed                                           |
+| Production native filesystem/lifecycle  | Real dialogs, atomic bytes/metadata, permission/conflict recovery, dirty-close cancellation, clean shutdown and fresh-process reopen passed                                                  |
+| Production resource cases               | CPU throttling, whole-group Stop, 512 MiB OOM, fixed 60-second expiry, editor SIGKILL backstop and window-close recovery passed individually with known-PID cleanup and interactive rebuilds |
+| Native edit/save under attacks          | Exact actual disk save passed during CPU loop (3,502 ms) and confirmed growing heap (4,675 ms, 239→382 MiB), followed by unsaved interactive rebuilds                                        |
+| Optimized package                       | Built, inspected and installed; exact runtime/compatibility scope in dated evidence                                                                                                          |
+| Hosted GitHub CI                        | Latest status unavailable: REST/GraphQL API calls return Forbidden; no pass inferred from local checks                                                                                       |
 
-No custom grammar, AI, Git synchronization, marketplace, or native packaging is included in this PR.
+The initial combined resource invocation failed its observer during cgroup removal after three cases passed. ENODEV now causes an indeterminate-sample retry, never an empty-group inference; the crash and close cases passed targeted repeats. The growing-heap accessibility marker was visibly rendered but unavailable to the busy AX bridge. A PID-bound exact screenshot/OCR observer passed without changing the fixture or resource policy. Failed attempts remain retained.
 
-## Native security follow-up
+CI now checks the native file store and app tests, Wry source provenance and optimized package inspection, and uploads a temporary Debian testing artifact. It does not run or claim the full-system desktop matrix. Reproduce native checks with [NATIVE_SECURITY.md](NATIVE_SECURITY.md); ordinary cargo check is compilation evidence only.
 
-Minimal Tauri integration, a no-capability ephemeral preview child, defense-in-depth handler authorization, and a fail-closed Linux systemd/cgroup supervisor are implemented. Resource controllers are verified before sending author HTML. See [ADR-003](decisions/ADR-003-native-runtime.md) and [Linux native validation](NATIVE_SECURITY.md).
+## Limits and next milestone
 
-Actual Linux native validation ran in a task-local full Ubuntu 24.04 VM with WebKitGTK 2.52.6, systemd 255.4 and delegated cgroup v2. The outer cloud container could not supply those boundaries directly. Native link/build, actual Tauri ACL denial (with editor positive control), incognito profile separation, interactive WebKit Counter, CPU throttling, whole-group Stop, cgroup OOM, fixed lifetime expiry, editor SIGKILL backstop, window-close recovery and missing-controller refusal now have real evidence. See the [dated logs and matrix](security-evidence/2026-11-17/README.md) for exact scope, failures, binaries and outstanding gates.
+The current security scope is untrusted document JavaScript inside the recorded browser/OS boundaries, not arbitrary compromised-native-code containment. Session DBus, authenticated X11, browser/native vulnerabilities, devices and deliberate cgroup escape after native compromise remain risks. Hardened Ubuntu requires an explicitly reviewed administrator namespace policy for systemd; the package installs only its own application profile and never changes global restrictions or installs the executor opt-in.
 
-Validation found and fixed two native issues: Wry’s discarded automation flag in an incognito context (a documented minimal source fork preserves the private profile), and rejection of Tauri’s empty-path editor root URL. Production children explicitly force automation off. The full embedded editor compiles MDX in WebKit; actual CodeMirror edits and exact Save Blob bytes passed under CPU and growing-heap pressure, followed by interactive unsaved Counter rebuilds. Native disk writing remains untested. Resource policy, permissions and CSP were not relaxed.
+Physical GPU, Wayland and other distributions remain untested. Software rendering passed normal desktop checks, also with the additional AppArmor unconfined restriction enabled. Default rendering failed on the headless QEMU/Xvfb Mesa stack with llvmpipe segfaults; use the documented supported rendering variables. Exact outcomes and coverage are in the dated record. Non-Linux resource/persistence backends fail closed. The fixed 60-second preview lifetime is prototype policy and requires explicit rebuild for longer sessions.
 
-Local verification includes format/lint/strict TypeScript, six Vitest tests, five Chromium browser tests, four Rust policy tests and the native app navigation regression. CI at baseline `ad9e6fd` passed according to the user; current CI is not inferred from local checks. Non-Linux native preview and Vite native-preview mode still fail closed. Optimized release packaging, native filesystem writes and broader OS threat review remain unverified. No visual editing, custom Markdown syntax or deferred product features were started.
+There is no autosave/crash draft journal. A noncooperating same-user filesystem writer can race the final conflict check/rename; directory-fsync uncertainty is reported after commit but that failure branch has not been fault-injected. Full source-map composition, source-located runtime diagnostics and independent per-file undo histories remain deferred.
+
+Recommended next milestone: target Ubuntu desktop acceptance on physical GPU and Wayland, tighter distribution-specific namespace integration, and reproducible native runtime CI. Keep PR #1 draft; no merge/public release/readiness change. Visual editing remains deferred.

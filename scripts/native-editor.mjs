@@ -2,7 +2,15 @@
 import assert from 'node:assert/strict';
 import process from 'node:process';
 import { execFileSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import {
+  rootPid,
+  dialog,
+  fileIdle,
+  appendSource,
+  visiblePreviewText,
+} from './native-ui-lib.mjs';
 import {
   preflight,
   launch,
@@ -23,7 +31,7 @@ const source = await readFile(
 const pressure = process.argv.includes('--pressure');
 const attack = await artifact(
   pressure
-    ? `import {useEffect} from 'react'\n\nexport function Pressure() { useEffect(()=>{const retained=[];const timer=setInterval(()=>{const block=new Uint8Array(16*1024*1024);block.fill(1);retained.push(block)},500);return()=>clearInterval(timer)},[]);return <p>Native memory pressure</p> }\n\n<Pressure />`
+    ? `import {useEffect,useState} from 'react'\n\nexport function Pressure() { const [active,setActive]=useState(false);useEffect(()=>{const retained=[];const timer=setInterval(()=>{const block=new Uint8Array(16*1024*1024);block.fill(1);retained.push(block);if(retained.length===2)setActive(true)},500);return()=>clearInterval(timer)},[]);return <button disabled>{active?'Heap pressure active':'Starting heap pressure'}</button> }\n\n<Pressure />`
     : `import {useState} from 'react'\n\nexport function Loop() { const [armed,setArmed]=useState(false); return <button onClick={()=>{setArmed(true);setTimeout(()=>{while(true){}},3000)}}>{armed?'CPU loop armed':'Arm CPU loop'}</button> }\n\n<Loop />`,
 );
 function ui(pid, name, action = 'click') {
@@ -32,7 +40,7 @@ function ui(pid, name, action = 'click') {
     execFileSync(
       'python3',
       ['scripts/native-atspi.py', String(pid), name, action],
-      { encoding: 'utf8', timeout: 50000 },
+      { encoding: 'utf8', timeout: 65000 },
     ).trim(),
   );
 }
@@ -42,12 +50,13 @@ async function button(name) {
     [name],
   ).then((value) => assert.equal(value, true));
 }
-// Observe the real Save source handler's exact Blob, without inventing a native
-// filesystem permission or treating an intercepted download as a disk-write test.
-async function savedBlob() {
-  return script(
-    `const done=arguments[arguments.length-1];const create=URL.createObjectURL,click=HTMLAnchorElement.prototype.click;let blob;try{URL.createObjectURL=value=>{blob=value;return 'blob:native-validation'};HTMLAnchorElement.prototype.click=()=>{};Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source').click();}finally{URL.createObjectURL=create;HTMLAnchorElement.prototype.click=click;}if(!blob)return done({error:'No source Blob'});blob.text().then(done);`,
-  );
+// The only grant comes from the real native picker. Verify actual disk bytes.
+const file = join(process.env.NATIVE_FIXTURE_DIR || '', 'attack-edit.mdx');
+assert.ok(process.env.NATIVE_FIXTURE_DIR, 'Run native-test-setup first');
+async function savedSource() {
+  await button('Save source');
+  await fileIdle();
+  return readFile(file, 'utf8');
 }
 async function empty(root) {
   for (let i = 0; i < 50; i++) {
@@ -55,6 +64,10 @@ async function empty(root) {
       if (!(await readFile(`${root}/cgroup.procs`, 'utf8')).trim()) return;
     } catch (error) {
       if (error.code === 'ENOENT') return;
+      if (error.code === 'ENODEV') {
+        await pause(100); // Indeterminate teardown read; require a fresh proof.
+        continue;
+      }
       throw error;
     }
     await pause(100);
@@ -73,7 +86,11 @@ try {
   const compiled = initial.status?.startsWith('Compiled') && !initial.alert;
   await button('Stop preview');
   assert.equal((await invoke('stop_preview')).ok, true);
-  assert.equal(await savedBlob(), source);
+  await writeFile(file, source);
+  await button('Open files');
+  dialog(await rootPid(), 'choose', 'Open documents and modules', file);
+  await fileIdle();
+  assert.equal(await savedSource(), source);
   const reply = await invoke('start_preview', { html: attack });
   assert.equal(reply.ok, true, JSON.stringify(reply));
   const editorPid = reply.value.match(/^programmable-notes-preview-(\d+)-/)[1];
@@ -81,7 +98,20 @@ try {
     pid = Number(systemctl('show', '--property=MainPID', '--value', unit));
   const group = systemctl('show', '--property=ControlGroup', '--value', unit),
     root = `/sys/fs/cgroup${group}`;
+  console.log(
+    'NATIVE_ATTACK_STARTED',
+    JSON.stringify({
+      unit,
+      pid,
+      root,
+      mode: pressure ? 'heap' : 'CPU',
+      time: Date.now(),
+    }),
+  );
   if (pressure) {
+    // This marker is set only after two retained, touched allocations; browser
+    // startup RSS alone is not proof that the author pressure fixture executed.
+    visiblePreviewText(pid, 'Heap pressure active');
     const deadline = Date.now() + 55000;
     while (
       Number(await readFile(`${root}/memory.current`, 'utf8')) <
@@ -130,15 +160,18 @@ try {
     text: marker.slice(1),
   });
   await pause(100);
-  assert.equal(await savedBlob(), source + marker);
+  assert.equal(await savedSource(), source + marker);
   const responseMs = Date.now() - begin;
-  assert.ok(responseMs < 5000, `Editor edit/Save Blob stalled ${responseMs}ms`);
+  assert.ok(
+    responseMs < 5000,
+    `Editor edit/native disk save stalled ${responseMs}ms`,
+  );
   const after = await readFile(`${root}/cpu.stat`, 'utf8');
   const memoryAfter = Number(await readFile(`${root}/memory.current`, 'utf8'));
   if (pressure) {
     assert.ok(
       memoryAfter > memoryBefore,
-      'No heap growth during edit/Save Blob',
+      'No heap growth during edit/native disk save',
     );
     assert.ok(memoryAfter <= 536870912, 'Memory limit exceeded');
   }
@@ -161,7 +194,7 @@ try {
     'No real throttling during source edit',
   );
   console.log(
-    'EDITOR_EDIT_SAVE_BLOB',
+    'EDITOR_EDIT_SAVE_DISK',
     JSON.stringify({
       unit,
       mode: pressure ? 'retained heap pressure' : 'CPU loop',
@@ -171,7 +204,7 @@ try {
       before,
       after,
       exactSource: true,
-      nativeDiskWriteTested: false,
+      nativeDiskWriteTested: true,
     }),
   );
   await button('Stop preview');
@@ -179,8 +212,10 @@ try {
   // explicitly invoke the same Stop handler as a positive native termination control.
   assert.equal((await invoke('stop_preview')).ok, true);
   await empty(root);
-  assert.equal(await savedBlob(), source + marker);
+  assert.equal(await savedSource(), source + marker);
   console.log('EDITOR_SOURCE_RETAINED_AFTER_STOP');
+  await appendSource('<button>NATIVE_UNSAVED_REBUILD</button>');
+  assert.equal(await readFile(file, 'utf8'), source + marker);
   await button('Rebuild preview');
   const rebuilt = await script(
     `const done=arguments[arguments.length-1];const deadline=Date.now()+30000;const timer=setInterval(()=>{const status=document.querySelector('[role=status]')?.textContent;if(status?.startsWith('Compiled')||status==='Build timed out'||status==='Build failed'||Date.now()>deadline){clearInterval(timer);done({status,alert:document.querySelector('[role=alert]')?.textContent||null});}},100);`,
@@ -219,6 +254,8 @@ try {
   ui(rebuiltPid, 'Count: 0');
   ui(rebuiltPid, 'Count: 1');
   ui(rebuiltPid, 'Count: 2', 'find');
+  ui(rebuiltPid, 'NATIVE_UNSAVED_REBUILD', 'find');
+  assert.equal(await readFile(file, 'utf8'), source + marker);
   const rebuiltGroup = systemctl(
     'show',
     '--property=ControlGroup',
@@ -227,11 +264,16 @@ try {
   );
   await button('Stop preview');
   await empty(`/sys/fs/cgroup${rebuiltGroup}`);
-  assert.equal(await savedBlob(), source + marker);
+  assert.equal(await readFile(file, 'utf8'), source + marker);
+  // Explicitly discard only this disposable unsaved fixture after proving it
+  // rendered without a disk write, so normal dirty-close protection stays on.
+  await button('Reopen source');
+  dialog(await rootPid(), 'button', 'Unsaved source', 'OK');
+  await fileIdle();
   console.log(
     'NATIVE_EDITOR_PASS',
     pressure ? 'heap pressure' : 'CPU loop',
-    'compiler, unsaved rebuild, governed counter, source edit/Save Blob under attack',
+    'compiler, unsaved rebuild, governed counter, source edit/native disk save under attack',
   );
 } finally {
   try {

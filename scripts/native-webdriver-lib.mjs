@@ -36,10 +36,10 @@ async function wd(path, body, method = 'POST') {
   if (!response.ok) throw Error(JSON.stringify(json));
   return json.value;
 }
-async function launch(args = []) {
+async function launch(args = [], application = binary) {
   const result = await wd('/session', {
     capabilities: {
-      alwaysMatch: { 'tauri:options': { application: binary, args } },
+      alwaysMatch: { 'tauri:options': { application, args } },
     },
   });
   session = result.sessionId;
@@ -79,6 +79,7 @@ async function artifact(source) {
     },
     bundle: true,
     write: false,
+    minify: true,
     format: 'iife',
     platform: 'browser',
     define: { 'process.env.NODE_ENV': '"production"' },
@@ -97,4 +98,5 @@ export {
   systemctl,
   artifact,
   session,
+  binary,
 };

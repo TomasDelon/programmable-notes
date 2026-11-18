@@ -38,7 +38,7 @@ jobs:
 
   native-check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 45
     env:
       CARGO_BUILD_JOBS: 2
     steps:
@@ -55,4 +55,15 @@ jobs:
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
       - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
-      - run: cargo check --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
+      - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - run: cargo test --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
+      - run: npm run native:wry:verify
+      - run: npm run native:package
+      - name: Inspect production package (does not claim runtime validation)
+        run: node scripts/verify-linux-package.mjs "src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-desktop-testing-deb
+          path: src-tauri/target/release/bundle/deb/*.deb
+          retention-days: 7

@@ -4,7 +4,7 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 
 ## Status
 
-Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: the recorded Linux native isolation/resource tests pass, while production security review and packaging remain open. Visual editing is deferred.
+Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. The Linux desktop build adds native picker-authorized opening, atomic saving and reopening. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: the prior Linux native isolation/resource tests passed, and Milestone 3 production validation has its own [evidence record](docs/security-evidence/2026-11-18/README.md). Visual editing is deferred.
 
 ## Principles
 
@@ -58,6 +58,7 @@ CI uses Playwright's matching downloaded browser; cloud validation uses the syst
 src/
   App.tsx             Memory workspace and build scheduling
   compiler/           Browser worker and memory-only resolver
+  documents/          Workspace snapshots and native grant-backed persistence
   editor/             CodeMirror source editing
   preview/            Hash-CSP document and sandbox frame
   bootstrap.mdx       Trusted, build-time MDX placeholder
@@ -68,6 +69,9 @@ tests/
   unit/               Vitest and jsdom toolchain smoke tests
   e2e/                Playwright production smoke tests
   setup.ts            Testing Library setup and cleanup
+src-tauri/            Native editor, unprivileged preview shell and Linux packaging
+native-documents/     Capability-scoped atomic source-file store
+native-policy/        Fail-closed Linux resource supervisor
 .github/workflows/    GitHub Actions CI
 scripts/              Pinned runtime asset generation and security gates
 docs/                 Handoff, ADRs, implementation status and validation
@@ -84,3 +88,9 @@ Codex Cloud installation and restart instructions are saved in the environment c
 ## Experimental native security integration
 
 `npm run native:build` builds the Tauri 2 application when Rust and Linux WebKitGTK dependencies are installed. Preview uses a separate, capability-denied process under verified cgroup resource limits; unsupported resource environments refuse preview instead of falling back. `native:dev` opens the editor but preview requires an embedded-asset build. Real Linux WebKitGTK IPC and cgroup stress validation ran in a full cloud VM; retained logs and outstanding gates are linked from [NATIVE_SECURITY.md](docs/NATIVE_SECURITY.md). Repeat its procedure on the target Linux stack before considering hostile-document use. Visual editing remains deferred.
+
+## Linux desktop testing
+
+`npm run native:package` builds an optimized Debian package without test features. Follow [installation and desktop checks](docs/LINUX_DESKTOP_TESTING.md). Native source files are authorized through OS pickers; document code receives no filesystem capability. Conflicts, read-only errors and cancelled dialogs preserve the editor buffer. No autosave or crash draft recovery is implemented. The native preview requires actual network namespaces and delegated cgroup controllers and fails closed when unavailable.
+
+CI builds and inspects the package and uploads a temporary testing artifact. It does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.
