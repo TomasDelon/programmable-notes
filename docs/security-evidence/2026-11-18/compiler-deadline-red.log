@@ -1,0 +1,40 @@
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/compiler-deadline.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/compiler-deadline.test.tsx (1 test | 1 failed) 91ms
+   × a late WASM initialization cannot resume compilation after its deadline 90ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/compiler-deadline.test.tsx > a late WASM initialization cannot resume compilation after its deadline
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ tests/unit/compiler-deadline.test.tsx:51:30
+     49|     await Promise.resolve();
+     50|   });
+     51|   expect(worker.created).not.toHaveBeenCalled();
+       |                              ^
+     52|   expect(worker.posted).not.toHaveBeenCalled();
+     53| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  00:06:30
+   Duration  1.90s (environment 50%, transform 37%, setup 6%, tests 5%, import 2%)
+

@@ -1,0 +1,15 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_DIALOG {"pid": 12258, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/attack-edit.mdx"}
+NATIVE_UI {"pid": 12379, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 12379, "button": "CPU loop armed", "action": "find", "passed": true}
+EDITOR_EDIT_SAVE_DISK {"unit":"programmable-notes-preview-12258-1794964495930993100.service","mode":"CPU loop","memoryBefore":66031616,"memoryAfter":65871872,"responseMs":3502,"before":"usage_usec 12748885\nuser_usec 9844089\nsystem_usec 2904796\ncore_sched.force_idle_usec 0\nnr_periods 523\nnr_throttled 503\nthrottled_usec 83844554\nnr_bursts 0\nburst_usec 0\n","after":"usage_usec 13517581\nuser_usec 10597934\nsystem_usec 2919647\ncore_sched.force_idle_usec 0\nnr_periods 558\nnr_throttled 538\nthrottled_usec 90217124\nnr_bursts 0\nburst_usec 0\n","exactSource":true,"nativeDiskWriteTested":true}
+EDITOR_SOURCE_RETAINED_AFTER_STOP
+NATIVE_EDITOR_REBUILD {"status":"Compiled — requesting isolated native preview","alert":null}
+NATIVE_UI {"pid": 12492, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 12492, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 12492, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI {"pid": 12492, "button": "NATIVE_UNSAVED_REBUILD", "action": "find", "passed": true}
+NATIVE_DIALOG {"pid": 12258, "title": "Unsaved source", "action": "button", "argument": "OK"}
+NATIVE_EDITOR_PASS CPU loop compiler, unsaved rebuild, governed counter, source edit/native disk save under attack

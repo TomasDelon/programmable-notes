@@ -1,0 +1,209 @@
+{"elapsedMs": 333, "command": ["uname", "-a"]}
+Linux pn-m3-guest 6.8.0-149-generic #149-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:21:10 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+{"elapsedMs": 396, "command": ["dpkg-query", "-W", "programmable-notes", "libwebkit2gtk-4.1-0", "webkit2gtk-driver", "libgtk-3-0t64", "systemd", "bubblewrap", "xdg-dbus-proxy"]}
+bubblewrap	0.9.0-1ubuntu0.3
+libgtk-3-0t64:amd64	3.24.41-4ubuntu1.3
+libwebkit2gtk-4.1-0:amd64	2.52.6-0ubuntu0.24.04.2
+programmable-notes	0.1.0
+systemd	255.4-1ubuntu8.18
+webkit2gtk-driver	2.52.6-0ubuntu0.24.04.2
+xdg-dbus-proxy	0.1.5-1ubuntu0.2
+
+{"elapsedMs": 540, "command": ["/usr/sbin/sysctl", "kernel.unprivileged_userns_clone", "kernel.apparmor_restrict_unprivileged_userns", "kernel.apparmor_restrict_unprivileged_unconfined"]}
+kernel.unprivileged_userns_clone = 1
+kernel.apparmor_restrict_unprivileged_userns = 1
+kernel.apparmor_restrict_unprivileged_unconfined = 1
+
+{"elapsedMs": 1150, "command": ["python3", "/usr/local/lib/assert-webkit-sandbox.py", "--app-pid", "16960", "--timeout", "35"]}
+{
+  "app": {
+    "pid": 16960,
+    "ppid": 1,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "no_new_privs": 0,
+    "seccomp": 0,
+    "seccomp_filters": 0,
+    "apparmor": "programmable-notes (unconfined)",
+    "cgroup": "0::/user.slice/user-0.slice/session-296.scope",
+    "namespaces": {
+      "mnt": "mnt:[4026531841]",
+      "net": "net:[4026531840]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "cgroup": "cgroup:[4026531835]"
+    }
+  },
+  "web_processes": [
+    {
+      "pid": 16993,
+      "ppid": 16992,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "cmdline": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 15",
+      "uid": 1000,
+      "no_new_privs": 1,
+      "seccomp": 2,
+      "seccomp_filters": 1,
+      "apparmor": "programmable-notes (unconfined)",
+      "cgroup": "0::/user.slice/user-0.slice/session-296.scope",
+      "namespaces": {
+        "mnt": "mnt:[4026532259]",
+        "net": "net:[4026532262]",
+        "pid": "pid:[4026532261]",
+        "user": "user:[4026532319]",
+        "uts": "uts:[4026532260]",
+        "ipc": "ipc:[4026531839]",
+        "cgroup": "cgroup:[4026531835]"
+      }
+    }
+  ],
+  "errors": [],
+  "passed": true
+}
+PASS: installed app WebKit sandbox process assertion
+
+{"elapsedMs": 4904, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 5404, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 5836, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 6313, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 6770, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 7216, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 7645, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 8111, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 8655, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 9128, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 9890, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 10414, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 10968, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 11406, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 11896, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 12421, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 12920, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 13418, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 14181, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 14758, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 15408, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 15865, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 16371, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 16887, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 17667, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 18258, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 18833, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 19309, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 19794, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+
+{"elapsedMs": 20276, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+programmable-notes-preview-16960-1794969312417284980.service loaded inactive dead start /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child
+
+{"elapsedMs": 20811, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+programmable-notes-preview-16960-1794969312417284980.service loaded activating start start /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child
+
+{"elapsedMs": 21246, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+programmable-notes-preview-16960-1794969312417284980.service loaded activating start start /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child
+
+{"elapsedMs": 21696, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "list-units", "--all", "--no-legend", "--plain", "programmable-notes-preview-16960-*"]}
+programmable-notes-preview-16960-1794969312417284980.service loaded active running /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child
+
+{"elapsedMs": 21959, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "show", "--property=MainPID", "--value", "programmable-notes-preview-16960-1794969312417284980.service"]}
+17099
+
+{"elapsedMs": 22239, "command": ["python3", "/usr/local/lib/assert-webkit-sandbox.py", "--app-pid", "17099", "--timeout", "35"]}
+{
+  "app": {
+    "pid": 17099,
+    "ppid": 450,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes --preview-child",
+    "uid": 1000,
+    "no_new_privs": 1,
+    "seccomp": 0,
+    "seccomp_filters": 0,
+    "apparmor": "programmable-notes (unconfined)",
+    "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-16960-1794969312417284980.service",
+    "namespaces": {
+      "mnt": "mnt:[4026532376]",
+      "net": "net:[4026532321]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026532320]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "cgroup": "cgroup:[4026531835]"
+    }
+  },
+  "web_processes": [
+    {
+      "pid": 17147,
+      "ppid": 17146,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "cmdline": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 18",
+      "uid": 1000,
+      "no_new_privs": 1,
+      "seccomp": 2,
+      "seccomp_filters": 1,
+      "apparmor": "programmable-notes (unconfined)",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-16960-1794969312417284980.service",
+      "namespaces": {
+        "mnt": "mnt:[4026532384]",
+        "net": "net:[4026532387]",
+        "pid": "pid:[4026532386]",
+        "user": "user:[4026532442]",
+        "uts": "uts:[4026532385]",
+        "ipc": "ipc:[4026531839]",
+        "cgroup": "cgroup:[4026531835]"
+      }
+    }
+  ],
+  "errors": [],
+  "passed": true
+}
+PASS: installed app WebKit sandbox process assertion
+
+{"elapsedMs": 36485, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "python3", "/opt/pn/final-desktop/native-atspi.py", "17099", "Count: 0", "click"]}
+{"pid": 17099, "button": "Count: 0", "action": "click", "passed": true}
+
+{"elapsedMs": 73862, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "python3", "/opt/pn/final-desktop/native-atspi.py", "17099", "Count: 1", "click"]}
+{"pid": 17099, "button": "Count: 1", "action": "click", "passed": true}
+
+{"elapsedMs": 75959, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "python3", "/opt/pn/final-desktop/native-atspi.py", "17099", "Count: 2", "find"]}
+{"pid": 17099, "button": "Count: 2", "action": "find", "passed": true}
+
+{"elapsedMs": 77877, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "is-active", "--quiet", "programmable-notes-preview-16960-1794969312417284980.service"]}
+
+{"elapsedMs": 78143, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "python3", "/opt/pn/final-desktop/native-close-window.py", "16960"]}
+{"pid": 16960, "window": 10485763, "sent": "WM_DELETE_WINDOW"}
+
+{"elapsedMs": 79898, "command": ["runuser", "-u", "ubuntu", "--", "env", "-i", "HOME=/home/ubuntu", "USER=ubuntu", "LOGNAME=ubuntu", "PATH=/opt/node/bin:/usr/local/bin:/usr/bin:/bin", "LANG=C.UTF-8", "DISPLAY=:99", "XAUTHORITY=/run/user/1000/pn-Xauthority", "XDG_RUNTIME_DIR=/run/user/1000", "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus", "XDG_SESSION_TYPE=x11", "XDG_CURRENT_DESKTOP=Openbox", "WEBKIT_DISABLE_COMPOSITING_MODE=1", "WEBKIT_DISABLE_DMABUF_RENDERER=1", "systemctl", "--user", "show", "--property=ControlGroup", "--value", "programmable-notes-preview-16960-1794969312417284980.service"]}
+
+

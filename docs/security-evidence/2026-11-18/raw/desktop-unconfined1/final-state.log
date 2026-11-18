@@ -1,0 +1,12 @@
+Wed Nov 18 02:37:16 UTC 2026
+kernel.unprivileged_userns_clone = 1
+kernel.apparmor_restrict_unprivileged_userns = 1
+kernel.apparmor_restrict_unprivileged_unconfined = 1
+b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83  /usr/bin/programmable-notes
+3729c1ec82ab5384de6553afab455a236ce90096dac9c0e6cb65c133c10e18b3  /etc/apparmor.d/unprivileged_userns
+131408b8ef50eddbf551258dab52a35ea2a466bbb143cccaee96307bdf851e7f  /etc/apparmor.d/programmable-notes
+2504441b7f3847619c4e9f66b614497d73c827856c59c8fb55338e39b90036e4  /etc/apparmor.d/pn-m3-systemd-executor
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+To show all installed unit files use 'systemctl list-unit-files'.

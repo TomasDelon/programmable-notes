@@ -1,0 +1,30 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_DIALOG {"pid": 14574, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/attack-edit.mdx"}
+NATIVE_ATTACK_STARTED {"unit":"programmable-notes-preview-14574-1794966595916823920.service","pid":14697,"root":"/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-14574-1794966595916823920.service","mode":"heap","time":1794966598252}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-visible-text.py 14697 Heap pressure active /tmp/pn-native-zZyvzb/evidence
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at visiblePreviewText (file:///opt/pn/project/scripts/native-ui-lib.mjs:94:5)
+    at file:///opt/pn/project/scripts/native-editor.mjs:114:5
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    `{"pid": 14697, "expectedText": "Heap pressure active", "passed": false, "evidenceDirectory": "/tmp/pn-native-zZyvzb/evidence/visible-14697-1794966599476537930", "identity": {"pid": 14697, "startTicks": "916810", "exe": "/usr/bin/programmable-notes"}, "placement": {"window": 14680067, "originalGeometry": [2, 315, 800, 600], "requestedOrigin": [0, 0]}, "error": "Command '['tesseract', '/tmp/pn-native-zZyvzb/evidence/visible-14697-1794966599476537930/latest.png', 'stdout', '-l', 'eng', '--psm', '11']' timed out after 1.9781987200003641 seconds", "elapsedMs": 55029, "attemptCount": 15}\n`,
+    ''
+  ],
+  pid: 14708,
+  stdout: `{"pid": 14697, "expectedText": "Heap pressure active", "passed": false, "evidenceDirectory": "/tmp/pn-native-zZyvzb/evidence/visible-14697-1794966599476537930", "identity": {"pid": 14697, "startTicks": "916810", "exe": "/usr/bin/programmable-notes"}, "placement": {"window": 14680067, "originalGeometry": [2, 315, 800, 600], "requestedOrigin": [0, 0]}, "error": "Command '['tesseract', '/tmp/pn-native-zZyvzb/evidence/visible-14697-1794966599476537930/latest.png', 'stdout', '-l', 'eng', '--psm', '11']' timed out after 1.9781987200003641 seconds", "elapsedMs": 55029, "attemptCount": 15}\n`,
+  stderr: ''
+}
+
+Node.js v24.22.1

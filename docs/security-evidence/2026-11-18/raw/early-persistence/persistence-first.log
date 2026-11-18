@@ -1,0 +1,23 @@
+NATIVE_DIALOG {"pid": 5162, "title": "Open documents and modules", "action": "cancel", "argument": ""}
+PICKER_CANCEL_PASS
+NATIVE_DIALOG {"pid": 5162, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-tjKqmX/note.mdx"}
+EDITOR_FORGED_GRANT_DENIED {"error":"Unknown document authorization","ok":false}
+NATIVE_ATOMIC_SAVE_PASS {"path":"/tmp/pn-native-tjKqmX/note.mdx","utf8CrlfExact":true,"mode":"0640","replacedInode":true}
+READ_ONLY_RECOVERY_PASS
+NATIVE_DIALOG {"pid": 5162, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 5162, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-tjKqmX/saved-as.mdx"}
+node:internal/fs/promises:1345
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '/tmp/pn-native-tjKqmX/saved-as.mdx'
+    at async open (node:internal/fs/promises:1345:25)
+    at async readFile (node:internal/fs/promises:2003:14)
+    at async file:///opt/pn/project/scripts/native-persistence.mjs:117:16 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/tmp/pn-native-tjKqmX/saved-as.mdx'
+}
+
+Node.js v24.22.1

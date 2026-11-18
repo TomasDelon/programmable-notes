@@ -1,0 +1,44 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_DIALOG {"pid": 12706, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/attack-edit.mdx"}
+Traceback (most recent call last):
+  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Heap pressure active for PID 12827
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-atspi.py 12827 Heap pressure active find
+Traceback (most recent call last):
+  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Heap pressure active for PID 12827
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/project/scripts/native-editor.mjs:34:5)
+    at file:///opt/pn/project/scripts/native-editor.mjs:98:5
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Heap pressure active for PID 12827\n'
+  ],
+  pid: 12838,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Heap pressure active for PID 12827\n'
+}
+
+Node.js v24.22.1

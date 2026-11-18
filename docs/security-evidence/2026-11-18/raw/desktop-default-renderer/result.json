@@ -1,0 +1,39 @@
+{
+  "mode": "no-renderer-flags",
+  "started": "2026-11-18 02:07:52 UTC",
+  "expectedBinarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "passed": false,
+  "binarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "editor": {
+    "pid": 16032,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "startTicks": "1024570",
+    "environment": {
+      "WEBKIT_INSPECTOR_SERVER": null,
+      "TAURI_WEBVIEW_AUTOMATION": null,
+      "TAURI_AUTOMATION": null,
+      "WEBKIT_DISABLE_COMPOSITING_MODE": null,
+      "WEBKIT_DISABLE_DMABUF_RENDERER": null
+    },
+    "namespaces": {
+      "net": "net:[4026531840]",
+      "mnt": "mnt:[4026531841]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]"
+    },
+    "cgroup": "0::/user.slice/user-0.slice/session-277.scope"
+  },
+  "editorWebProcessPids": [
+    16081
+  ],
+  "editorSandboxPass": true,
+  "error": "No governed default Counter observed",
+  "previewActiveBeforeRootClose": false,
+  "rootClosed": true,
+  "previewGroupEmptyAfterRootClose": true,
+  "knownWebProcessesExited": true,
+  "normalCloseStoppedActivePreview": false,
+  "elapsedMs": 66801
+}

@@ -1,0 +1,20 @@
+NATIVE_DIALOG {"pid": 8959, "title": "Open documents and modules", "action": "cancel", "argument": ""}
+PICKER_CANCEL_PASS
+NATIVE_DIALOG {"pid": 8959, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/note.mdx"}
+EDITOR_FORGED_GRANT_DENIED {"error":"Unknown document authorization","ok":false}
+NATIVE_ATOMIC_SAVE_PASS {"path":"/tmp/pn-native-zZyvzb/note.mdx","utf8CrlfExact":true,"mode":"0640","posixAclPreserved":true,"replacedInode":true}
+READ_ONLY_RECOVERY_PASS
+NATIVE_DIALOG {"pid": 8959, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  3 (X_GetWindowAttributes)
+  Resource id in failed request:  0x201cc6
+  Serial number of failed request:  523
+  Current serial number in output stream:  524
+NATIVE_DIALOG {"pid": 8959, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/saved-as.mdx"}
+CONFLICT_SAVE_AS_PASS
+REOPEN_PASS
+NATIVE_UI {"pid": 9124, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9124, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9124, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI {"pid": 9124, "button": "X", "action": "find", "passed": true}
+NATIVE_PERSISTENCE_PASS actual picker, atomic disk writes, permission/conflict/cancel/reopen, interactive release preview

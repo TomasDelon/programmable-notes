@@ -1,0 +1,51 @@
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963255393477550.service","pid":"9491","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 9437, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9437, "button": "CPU loop armed", "action": "find", "passed": true}
+WEBKIT_CPU {"unit":"programmable-notes-preview-9367-1794963255393477550.service","usage_usec":774808,"elapsed_ms":3054,"throttled_periods":31,"editor_response_ms":471}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963309547271050.service","pid":"9624","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 9585, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9585, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9585, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963361266974850.service","pid":"9730","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PRESSURE_UNIT programmable-notes-preview-9367-1794963361266974850.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963415323627500.service","pid":"9839","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 9800, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9800, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9800, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Memory-pressure termination
+CASE_PASS memory
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963465533398630.service","pid":"9931","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 9892, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9892, "button": "CPU loop armed", "action": "find", "passed": true}
+EXPIRY_UNIT programmable-notes-preview-9367-1794963465533398630.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963528321146230.service","pid":"10051","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 9998, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9998, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 9998, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Native loop lifetime expiry
+CASE_PASS expiry
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-9367-1794963577457244750.service","pid":"10145","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 10107, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 10107, "button": "CPU loop armed", "action": "find", "passed": true}
+EDITOR_KILLED {"editorPid":9367,"unit":"programmable-notes-preview-9367-1794963577457244750.service"}
+CASE_FAIL editor-crash Error: ENODEV: no such device, read
+    at async readFileHandle (node:internal/fs/promises:1261:24)
+    at async sample (file:///opt/pn/project/scripts/native-stress.mjs:65:21)
+    at async stopped (file:///opt/pn/project/scripts/native-stress.mjs:114:17)
+    at async file:///opt/pn/project/scripts/native-stress.mjs:313:5
+    at async runCase (file:///opt/pn/project/scripts/native-stress.mjs:234:5)
+    at async file:///opt/pn/project/scripts/native-stress.mjs:301:3 {
+  errno: -19,
+  code: 'ENODEV',
+  syscall: 'read'
+}
+CASE_FAIL window-close Error: {"value":{"error":"invalid session id","message":"","stacktrace":""}}
+    at wd (file:///opt/pn/project/scripts/native-webdriver-lib.mjs:36:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async start (file:///opt/pn/project/scripts/native-stress.mjs:85:17)
+    at async file:///opt/pn/project/scripts/native-stress.mjs:324:20
+    at async runCase (file:///opt/pn/project/scripts/native-stress.mjs:234:5)
+    at async file:///opt/pn/project/scripts/native-stress.mjs:323:3
+WEBKIT_STRESS_FAILED [ 'editor-crash', 'window-close' ]
