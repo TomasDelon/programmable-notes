@@ -90,3 +90,7 @@ Compiler failures now report the imported source file and its line and column wh
 The editor keeps a separate in-memory history and selection for each open source. On switching back, it restores the cached history only when its document bytes match the active buffer. Closed documents are removed from the cache. The mixed MDX Chromium test now switches to a different document before undoing and redoing the visual patch, and asserts exact exported bytes both times. Local verification passed 23 unit and ten Chromium tests.
 
 The next runtime verification is the native visual edit, save and reopen path on the packaged app. Draft recovery remains a proposed follow-up and has no on-disk implementation yet.
+
+### Preview recovery and edit authority
+
+A failed compiler WASM download used to leave a rejected promise cached until reload. A Chromium regression reproduced this by aborting the request, then clearing the fault and asking the editor to rebuild. The editor now drops failed initialization and clears its obsolete timeout, allowing a rebuild without discarding editor state. The security regression also sends a forged edit from the real preview frame and compares the subsequently exported source byte-for-byte.

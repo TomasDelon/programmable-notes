@@ -13,7 +13,12 @@ import { previewDocument } from './preview/document';
 
 let wasm: Promise<WebAssembly.Module> | undefined;
 function compilerModule() {
-  return (wasm ??= WebAssembly.compileStreaming(fetch(wasmURL)));
+  return (wasm ??= WebAssembly.compileStreaming(fetch(wasmURL)).catch(
+    (error: unknown) => {
+      wasm = undefined;
+      throw error;
+    },
+  ));
 }
 
 export function App() {
@@ -72,6 +77,7 @@ export function App() {
       try {
         wasmModule = await compilerModule();
       } catch (error) {
+        clearTimeout(timeout);
         if (active) {
           setError(String(error));
           setStatus('Build failed');

@@ -31,3 +31,9 @@ They must be available to the editor process. Run an additional test without the
 Production security automation and exact evidence are linked from [NATIVE_SECURITY.md](NATIVE_SECURITY.md). Package inspection, cargo check and a successful install are not runtime security passes.
 
 On the recorded QEMU TCG/Xvfb stack, launch without those rendering variables failed with Mesa llvmpipe thread segfaults before the editor could create a preview. The same installed binary passed the complete normal-desktop Counter/shutdown check with both variables set to 1. This is a documented compatibility limit of the tested virtual display/graphics stack; physical GPU and Wayland behavior has not been validated. Keep sandboxing enabled when reproducing or investigating it.
+
+## Visual editing smoke test
+
+In a disposable account, create a UTF-8 MDX fixture with CRLF line endings, a plain heading and paragraph, a simple list and adjacent JSX. Keep a byte copy of the original. Open the fixture through the installed application's file picker and choose **Edit rendered Markdown**. Edit one list item. Open another source and return to the fixture, then undo and redo the edit with the source editor focused.
+
+Save through the native editor, verify the disk bytes against a copy of the fixture with only the expected item text changed, and use **Reopen source**. Rebuild the preview and verify the edited list and continued React interactivity. Check that the preview has no editor capabilities using the production procedure in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). Record the package hash, WebKitGTK version, session type and result. The Chromium export and import tests cover this source path in the browser. The native graphical round trip requires its own run.

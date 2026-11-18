@@ -75,9 +75,7 @@ test('sandbox denies DOM, storage, network, resources, popup, top navigation and
     if (r.url().includes('probe.invalid') || r.url().includes('127.0.0.1:9'))
       requests.push(r.url());
   });
-  await open(
-    page,
-    `export function Probe(){
+  const probeSource = `export function Probe(){
  const [result,setResult]=React.useState('waiting');
  return <button onClick={async()=>{const r={};
  for(const [k,f] of Object.entries({dom:()=>parent.document.title,storage:()=>parent.localStorage.secret,ownStorage:()=>localStorage.secret,native:()=>window.__TAURI_INTERNALS__.invoke('plugin:fs|read_file',{path:'/etc/passwd'}),popup:()=>{if(!window.open('https://probe.invalid')) throw Error();},top:()=>{top.location.href='https://probe.invalid';}})){try{f();r[k]='allowed';}catch{r[k]='denied';}}
@@ -85,13 +83,14 @@ test('sandbox denies DOM, storage, network, resources, popup, top navigation and
  const image=new Image();image.src='https://probe.invalid/pixel';document.body.append(image);
  const script=document.createElement('script');script.src='https://probe.invalid/evil.js';document.body.append(script);
  parent.postMessage({type:'save',path:'/etc/passwd',content:'bad'},'*');
+ parent.postMessage({type:'apply-markdown-edit',from:0,to:6,text:'Changed'},'*');
  setResult(JSON.stringify(r));}}>Probe {result}</button>;
 }
 
 import * as React from 'react'
 
-<Probe />`,
-  );
+<Probe />`;
+  await open(page, probeSource);
   const button = page.frameLocator('iframe').getByRole('button');
   await expect(button).toContainText('waiting', { timeout: 20000 });
   await button.click();
@@ -118,6 +117,11 @@ import * as React from 'react'
     window.postMessage({ type: 'preview-error', message: 'forged' }, '*'),
   );
   await expect(page.getByRole('alert')).toHaveCount(0);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
+    probeSource,
+  );
 });
 test('original handoff malicious fixture is confined', async ({ page }) => {
   await page.goto('/');
@@ -367,5 +371,18 @@ test('compiler diagnostics identify the syntax error in the imported file', asyn
     );
   await expect(
     page.frameLocator('iframe').getByText('Recovered import'),
+  ).toBeVisible();
+});
+
+test('rebuild retries after a transient compiler download failure', async ({
+  page,
+}) => {
+  await page.route('**/*.wasm', (route) => route.abort());
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveText('Build failed');
+  await page.unroute('**/*.wasm');
+  await page.getByRole('button', { name: 'Rebuild preview' }).click();
+  await expect(
+    page.frameLocator('iframe').getByRole('button', { name: 'Count: 0' }),
   ).toBeVisible();
 });
