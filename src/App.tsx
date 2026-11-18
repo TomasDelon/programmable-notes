@@ -230,6 +230,7 @@ export function App() {
       {error && <pre role="alert">{error}</pre>}
       <div className="workspace">
         <SourceEditor
+          visual={/\.mdx?$/.test(selected)}
           key={selected}
           source={files[selected]!}
           onChange={documents.change}

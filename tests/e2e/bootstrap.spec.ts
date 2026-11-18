@@ -234,3 +234,39 @@ test('browser import preserves a UTF-8 BOM and refuses malformed UTF-8', async (
   await expect(page.locator('[data-file-error]')).toContainText('UTF-8');
   await expect(page.getByLabel('Source file')).toHaveValue(/encoded\.mdx$/);
 });
+
+test('paragraph edits preserve mixed MDX bytes and support exact undo and redo', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    "import React from 'react'\r\n\r\nEditable paragraph.\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* keep comment */}\r\n";
+  await open(page, original, 'visual.mdx');
+  await page.getByRole('button', { name: 'Edit rendered paragraphs' }).click();
+  const panel = page.getByRole('region', { name: 'Paragraph editing' });
+  await expect(panel.getByRole('button', { name: 'Nested JSX' })).toHaveCount(
+    0,
+  );
+  await panel.getByRole('button', { name: 'Editable paragraph.' }).click();
+  await panel.getByLabel('Paragraph text').fill('Updated paragraph.');
+  await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  const updated = original.replace('Editable paragraph.', 'Updated paragraph.');
+  async function expectDownload(expected: string) {
+    const pending = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Save source' }).click();
+    expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
+      expected,
+    );
+  }
+  await expectDownload(updated);
+  await source.press('Control+z');
+  await expectDownload(original);
+  await source.press('Control+Shift+z');
+  await expectDownload(updated);
+  await panel.getByRole('button', { name: 'Updated paragraph.' }).click();
+  await source.fill('Different source.');
+  await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();
+  await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
+  await expectDownload('Different source.');
+});

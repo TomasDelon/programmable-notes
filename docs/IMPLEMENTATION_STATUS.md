@@ -64,3 +64,9 @@ Default graphics crashing in QEMU/Xvfb is a compatibility failure. Affected conf
 - Verified that draft PR #1 pointed to `35ff1f9` at the start of this turn. Both GitHub GraphQL and the commit-specific REST check-runs endpoint returned Forbidden, including after an approved retry. The hosted gate for Spike C remains unverified.
 - Advanced the independent source fidelity work. A Chromium regression reproduced silent UTF-8 BOM loss on browser import and download. The browser now retains the BOM and rejects malformed UTF-8 before updating the workspace, matching the native store's encoding policy.
 - Resume by checking Actions for `35ff1f9` and the current PR head. Once verified green, implement the paragraph-only editor patch transaction and its mixed-source, stale-revision, and undo/redo tests before widening the supported syntax. For crash recovery, investigate separate draft snapshots that can be inspected and explicitly restored without writing through existing file grants.
+
+### First visual editing slice
+
+Both GitHub Actions jobs passed for `5ecd906`. The earlier run for `35ff1f9` was cancelled. The editor now offers a separate rendered paragraph panel with source-checked CodeMirror patches. Chromium verified editing, exact downloaded bytes, undo/redo and stale-source rejection alongside the existing runtime and security tests. A focused unit test additionally checks no-op edits and rejection of unsupported syntax.
+
+Next, extend the browser regression to reopen a downloaded mixed document and add narrowly mapped ATX heading support. Lists need separate handling for indentation and continuation lines. See [ADR-005](decisions/ADR-005-paragraph-editing.md).
