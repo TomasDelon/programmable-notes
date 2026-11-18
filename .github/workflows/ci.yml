@@ -26,6 +26,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Generate preview runtime for tests
+        run: npm run prepare:runtime
       - run: npm run check
       - uses: actions/upload-artifact@v4
         if: failure()
