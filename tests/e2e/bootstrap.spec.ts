@@ -213,3 +213,24 @@ test('new workspace TSX imports work offline; CRLF no-op save and Stop cancellat
   await page.waitForTimeout(1500);
   await expect(page.locator('iframe')).toHaveCount(0);
 });
+
+test('browser import preserves a UTF-8 BOM and refuses malformed UTF-8', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = '\uFEFF# Encoded\r\n\r\nCafé\r\n';
+  await open(page, original, 'encoded.mdx');
+  await expect(page.getByLabel('Source file')).toHaveValue(/encoded\.mdx$/);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  const download = await pending;
+  expect(readFileSync((await download.path())!)).toEqual(Buffer.from(original));
+
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'invalid.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from([0xc3, 0x28]),
+  });
+  await expect(page.locator('[data-file-error]')).toContainText('UTF-8');
+  await expect(page.getByLabel('Source file')).toHaveValue(/encoded\.mdx$/);
+});

@@ -31,3 +31,7 @@ The Debian package installs an AppArmor 4 namespace opt-in attached only to `/us
 ## Scope and residual risk
 
 Document JavaScript is contained by iframe/CSP, Tauri ACL/handler checks, WebKit's process sandbox, and the supervised service. This is not a complete hostile-native-code sandbox: same-user DBus and authenticated X11, WebKit NetworkProcess privileges, native/browser vulnerabilities, device/GPU access and cgroup migration after a native compromise remain risks. No claim of arbitrary native escape resistance is made. Production testing is a prerequisite for serious desktop testing, not approval to ship hostile-document execution broadly. Physical GPU, Wayland, other distributions and non-Linux resource backends require separate validation.
+
+## Browser import encoding
+
+Browser imports decode file bytes as strict UTF-8 and retain a leading byte order mark in the source buffer. Malformed files reject the entire selection before workspace mutation. This matches the native source store's UTF-8 policy and preserves bytes for no-op downloads and future source range patches.

@@ -96,9 +96,19 @@ export function useDocuments(
       const docs = [];
       for (const file of Array.from(list)) {
         if (file.size > 500000) throw Error('File exceeds 500 KB limit.');
+        const bytes = await file.arrayBuffer();
+        let source: string;
+        try {
+          source = new TextDecoder('utf-8', {
+            fatal: true,
+            ignoreBOM: true,
+          }).decode(bytes);
+        } catch {
+          throw Error(`File is not valid UTF-8: ${file.name}`);
+        }
         docs.push({
           logicalPath: file.webkitRelativePath || file.name,
-          source: await file.text(),
+          source,
         });
       }
       setWorkspace(addDocuments(current.current, docs));
