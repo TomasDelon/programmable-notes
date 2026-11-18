@@ -54,6 +54,8 @@ pub struct Saved {
 }
 
 #[cfg(target_os = "linux")]
+pub mod draft;
+#[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
 use linux::AuthorizedFile;

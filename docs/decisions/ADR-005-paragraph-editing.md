@@ -13,3 +13,7 @@ The panel also edits literal text in ATX headings. The text node supplies the ra
 ## Simple lists
 
 A root list is eligible when every item contains just a single-line literal paragraph. The panel uses an ordered or unordered list with the original start number. The patch excludes the list marker and indentation, and the candidate must reparse in the same list. Nested, multiline, loose and task lists remain in source mode.
+
+## Inline editing
+
+Selecting supported rendered text opens a single-line field in the same paragraph, heading or list item. Enter submits an editor-owned transaction and Escape discards the field contents. The separate React preview remains interactive and isolated. It cannot select ranges, supply edits or initiate saves.

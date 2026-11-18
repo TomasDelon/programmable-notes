@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod documents;
 use documents::{
-    close_document, confirm_discard, open_documents, reopen_document, save_document,
-    save_document_as, set_documents_dirty,
+    close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
+    save_document, save_document_as, set_documents_dirty,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -114,7 +114,8 @@ fn main() {
             reopen_document,
             close_document,
             confirm_discard,
-            set_documents_dirty
+            set_documents_dirty,
+            recovery_draft
         ]);
     if !child {
         builder = builder

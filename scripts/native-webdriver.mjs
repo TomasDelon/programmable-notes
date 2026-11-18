@@ -135,10 +135,12 @@ try {
     'close_document',
     'confirm_discard',
     'set_documents_dirty',
+    'recovery_draft',
   ])
     denied(
       await invoke(command, {
         html: counter,
+        action: 'restore',
         id: 'forged',
         revision: 'forged',
         source: 'malicious overwrite',

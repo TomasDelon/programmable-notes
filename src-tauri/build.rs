@@ -11,6 +11,7 @@ fn main() {
             "close_document",
             "confirm_discard",
             "set_documents_dirty",
+            "recovery_draft",
         ]),
     ))
     .expect("Tauri ACL/configuration build failed");

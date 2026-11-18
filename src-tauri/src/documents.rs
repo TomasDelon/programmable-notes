@@ -278,3 +278,35 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
             });
     }
 }
+
+#[tauri::command]
+pub async fn recovery_draft(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    action: String,
+    source: Option<String>,
+) -> Result<Option<String>, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = Operation::new(docs);
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            let root = app.path().app_data_dir().map_err(|e| e.to_string())?;
+            std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+            native_documents::draft::recovery_draft(
+                &root.join("recovery"),
+                &action,
+                source.as_deref(),
+            )
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (app, action, source);
+            Err("Native recovery currently requires Linux".into())
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}

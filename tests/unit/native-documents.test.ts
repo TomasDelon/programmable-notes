@@ -3,6 +3,7 @@ import { renderHook, act, cleanup } from '@testing-library/react';
 import { useDocuments } from '../../src/documents/useDocuments';
 const api = vi.hoisted(() => ({
   open: vi.fn(),
+  draft: vi.fn(),
   save: vi.fn(),
   saveAs: vi.fn(),
   reopen: vi.fn(),
@@ -48,6 +49,19 @@ async function opened() {
   return hook;
 }
 describe('native document UI state (mocked OS transport, not native security proof)', () => {
+  it('restores an explicit draft without inheriting the original file grant', async () => {
+    const h = await opened();
+    api.draft.mockResolvedValue('# Recovered\r\n');
+    await act(async () => h.result.current.nativeDraft('restore'));
+    const { workspace, dirty } = h.result.current;
+    expect(workspace.files[workspace.selected]).toBe('# Recovered\r\n');
+    expect(workspace.bindings[workspace.selected]).toBeUndefined();
+    expect(workspace.bindings['opened-1/local.mdx']?.id).toBe('grant');
+    expect(workspace.files['opened-1/local.mdx']).toBe('disk original');
+    expect(dirty).toBe(true);
+    expect(api.save).not.toHaveBeenCalled();
+  });
+
   it('a queued editor callback cannot overwrite a newly selected document', async () => {
     const h = renderHook(() =>
       useDocuments({ 'note.mdx': 'example' }, 'note.mdx'),

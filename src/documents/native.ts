@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { NativeDocument } from './workspace';
 export const nativeDocuments = {
+  draft: (action: 'keep' | 'restore' | 'delete', source?: string) =>
+    invoke<string | null>('recovery_draft', { action, source }),
   open: () => invoke<NativeDocument[]>('open_documents'),
   save: (id: string, revision: string, source: string) =>
     invoke<{ revision: string; durable: boolean }>('save_document', {

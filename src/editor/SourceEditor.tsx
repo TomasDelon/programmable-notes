@@ -93,7 +93,6 @@ export function SourceEditor({
   }, [source]);
   return (
     <div>
-      <div className="source-editor" ref={element} />
       {visual && (
         <MarkdownEditor
           source={source}
@@ -127,6 +126,7 @@ export function SourceEditor({
           }}
         />
       )}
+      <div className="source-editor" ref={element} />
     </div>
   );
 }

@@ -106,7 +106,7 @@ section[aria-label='Markdown editing'] {
   background: var(--surface);
 }
 section[aria-label='Markdown editing'] {
-  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
   padding: 1rem;
 }
 .rendered-text,

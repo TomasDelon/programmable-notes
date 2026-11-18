@@ -247,6 +247,29 @@ export function App() {
         </pre>
       )}
       {error && <pre role="alert">{error}</pre>}
+      {documents.native && (
+        <details>
+          <summary>Recovery draft</summary>
+          <button
+            disabled={documents.busy || !/\.mdx?$/.test(selected)}
+            onClick={() => void documents.nativeDraft('keep')}
+          >
+            Keep recovery draft
+          </button>
+          <button
+            disabled={documents.busy}
+            onClick={() => void documents.nativeDraft('restore')}
+          >
+            Restore as unsaved document
+          </button>
+          <button
+            disabled={documents.busy}
+            onClick={() => void documents.nativeDraft('delete')}
+          >
+            Delete recovery draft
+          </button>
+        </details>
+      )}
       {!documents.native && (
         <BrowserDraft
           documentKey={selected}

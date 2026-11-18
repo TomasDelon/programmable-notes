@@ -90,6 +90,32 @@ export function useDocuments(
       setWorkspace(next);
     });
   }
+  async function nativeDraft(action: 'keep' | 'restore' | 'delete') {
+    await operation(async () => {
+      if (!native)
+        throw Error('Native draft recovery requires the desktop editor.');
+      const state = current.current;
+      const source = await nativeDocuments.draft(
+        action,
+        action === 'keep' ? state.files[state.selected] : undefined,
+      );
+      if (action === 'restore') {
+        if (source === null) throw Error('No recovery draft is stored.');
+        const next = addDocuments(current.current, [
+          { logicalPath: 'recovered.mdx', source },
+        ]);
+        delete next.saved[next.selected];
+        setWorkspace(next);
+        setFileNotice('Recovery draft opened as an unsaved document.');
+      } else {
+        setFileNotice(
+          action === 'keep'
+            ? 'Recovery draft stored.'
+            : 'Recovery draft deleted.',
+        );
+      }
+    });
+  }
   async function restoreBrowserDraft(name: string, source: string) {
     await operation(async () => {
       if (native) throw Error('Browser drafts are unavailable on desktop.');
@@ -282,6 +308,7 @@ export function useDocuments(
     openNative,
     openBrowser,
     restoreBrowserDraft,
+    nativeDraft,
     save,
     reopen,
     close,
