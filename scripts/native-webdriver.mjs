@@ -149,6 +149,27 @@ try {
         busy: false,
       }),
     );
+  for (const action of [
+    'list',
+    'append',
+    'restore-version',
+    'delete-version',
+    'migrate',
+  ]) {
+    denied(
+      await invoke('recovery_draft', {
+        action,
+        file: '../original.mdx',
+        input: {
+          documentId: 'a'.repeat(32),
+          name: 'note.mdx',
+          parent: null,
+          baseline: null,
+          source: 'must never reach recovery storage',
+        },
+      }),
+    );
+  }
   for (const command of [
     'plugin:fs|read_file',
     'plugin:shell|execute',

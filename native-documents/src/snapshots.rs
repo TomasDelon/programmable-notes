@@ -58,6 +58,7 @@ pub struct RecordError {
     pub message: String,
 }
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Inventory {
     pub capacity_exceeded: bool,
     pub snapshots: Vec<Snapshot>,

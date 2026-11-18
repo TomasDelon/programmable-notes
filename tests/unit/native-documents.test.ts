@@ -4,6 +4,7 @@ import { useDocuments } from '../../src/documents/useDocuments';
 const api = vi.hoisted(() => ({
   open: vi.fn(),
   draft: vi.fn(),
+  restoreSnapshot: vi.fn(),
   save: vi.fn(),
   saveAs: vi.fn(),
   reopen: vi.fn(),
@@ -195,4 +196,43 @@ describe('native document UI state (mocked OS transport, not native security pro
     ).toBe('2');
     expect(h.result.current.dirty).toBe(false);
   });
+});
+
+it('restores a version as a new dirty source without reusing the original grant', async () => {
+  const h = await opened();
+  api.restoreSnapshot.mockResolvedValue({
+    name: 'local.mdx',
+    source: '\uFEFF# Recovered\r\n',
+  });
+  await act(async () =>
+    h.result.current.restoreNativeVersion('opaque-version'),
+  );
+  const state = h.result.current.workspace;
+  expect(state.files[state.selected]).toBe('\uFEFF# Recovered\r\n');
+  expect(state.bindings[state.selected]).toBeUndefined();
+  expect(state.files['opened-1/local.mdx']).toBe('disk original');
+  expect(state.bindings['opened-1/local.mdx']?.id).toBe('grant');
+  expect(h.result.current.dirty).toBe(true);
+  expect(api.save).not.toHaveBeenCalled();
+});
+
+it('a delayed version restore preserves edits made to the open original meanwhile', async () => {
+  const h = await opened();
+  const pending = deferred<{ name: string; source: string }>();
+  api.restoreSnapshot.mockReturnValue(pending.promise);
+  let restoring!: Promise<void>;
+  act(() => {
+    restoring = h.result.current.restoreNativeVersion('opaque-version');
+  });
+  act(() => h.result.current.change('new unsaved original edits'));
+  await act(async () => {
+    pending.resolve({ name: 'local.mdx', source: 'earlier version' });
+    await restoring;
+  });
+  expect(h.result.current.workspace.files['opened-1/local.mdx']).toBe(
+    'new unsaved original edits',
+  );
+  expect(
+    h.result.current.workspace.files[h.result.current.workspace.selected],
+  ).toBe('earlier version');
 });

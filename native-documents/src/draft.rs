@@ -31,6 +31,7 @@ pub fn recovery_draft(
     {
         return Err("Recovery directory must be private and owned by the editor user".into());
     }
+    let _lock = crate::snapshots::Recovery::open(directory)?;
     let path = directory.join("recovered.mdx");
     let mut store = Store::default();
     match action {

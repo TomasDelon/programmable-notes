@@ -1,6 +1,6 @@
 # ADR-008 — Immutable, bounded native recovery
 
-Status: implementation in progress. No automatic writes enabled yet.
+Status: backend and manual native UI implemented and tested. No automatic writes enabled yet.
 
 Recovery is separate from original documents and their grants. Use immutable,
 versioned records in the existing private recovery directory. Each record carries

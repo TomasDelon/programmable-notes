@@ -14,7 +14,7 @@ The optimized Debian package is a testing artifact, not a public release. Instal
 
 On Ubuntu with restricted user namespaces, review the [production boundary decision](decisions/ADR-004-linux-persistence-and-production.md) and dated infrastructure procedure. A systemd executor namespace opt-in is an administrator decision outside the package. Never set a global namespace-restriction sysctl to zero to satisfy this test.
 
-Use Open files to authorize `.mdx` and its explicitly selected source modules together. Save writes only that grant; Save As opens another native chooser. External changes cause a conflict. Preserve local edits with Save As, or explicitly Reopen source to discard them after confirmation. Files are UTF-8 and preserve CRLF bytes. There is no autosave/crash draft recovery. Read-only files remain unchanged on error.
+Use Open files to authorize `.mdx` and its explicitly selected source modules together. Save writes only that grant; Save As opens another native chooser. External changes cause a conflict. Preserve local edits with Save As, or explicitly Reopen source to discard them after confirmation. Files are UTF-8 and preserve CRLF bytes. Recovery draft offers bounded versioned snapshots and explicit unsaved-buffer restoration after restart. Automatic background recovery is not yet enabled. Read-only files remain unchanged on error.
 
 In a disposable desktop account, test normal launch and two Counter clicks, edit/rebuild, native file open/save/reopen, cancelled pickers, external modification conflict, read-only retry, dirty window-close cancellation, clean shutdown and a fresh launch. Verify exact disk bytes, not only a UI toast. Preview expires after 60 seconds by policy; rebuild explicitly.
 

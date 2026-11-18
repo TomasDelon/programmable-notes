@@ -1,0 +1,9 @@
+NATIVE_DIALOG {"pid": 707, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-X7JLOQ/recovery-original.mdx"}
+NATIVE_VERSIONS_EXACT_CRLF_AND_NO_ORIGINAL_WRITE_PASS
+NATIVE_DIALOG {"pid": 707, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 707, "title": "Unsaved source", "action": "button", "argument": "OK"}
+NATIVE_VERSION_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 882, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 882, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-X7JLOQ/restored-version.mdx"}
+NATIVE_RESTORE_UNSAVED_SAVE_AS_CANCEL_AND_EXACT_SAVE_PASS
+NATIVE_CORRUPT_VERSION_REFUSAL_VALID_OLDER_RECOVERY_AND_EXPLICIT_DELETE_PASS

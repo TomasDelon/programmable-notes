@@ -137,3 +137,16 @@ exact-disk-byte, mode-preservation and restart/recovery acceptance suite in the
 disposable Ubuntu/WebKitGTK VM. See the [exact build and scope](security-evidence/2026-11-18-unified-ux/README.md).
 The browser suite now has 18 tests and the unit suite 26. Native UI acceptance
 stops preview execution; native IPC/resource evidence is distinguished separately.
+
+### Versioned native recovery (P0)
+
+The desktop now discovers immutable recovery versions, keeps manual snapshots,
+restores a selected version into a separate dirty buffer, and explicitly removes
+unneeded or damaged versions. Records carry an opaque document identity,
+baseline digest, parent revision, generation, schema and integrity hash. Legacy
+single-copy controls remain and migration preserves the old bytes. No new Tauri
+permission was added. The store retains five versions per document within global
+record/byte limits; failed writes never delete an earlier version to free space.
+See ADR-008 and the 2026-11-19 recovery-store/recovery-ui evidence for real ENOSPC,
+crash-state regression fixtures, installed-package restart and IPC-denial results.
+Automatic background snapshots remain the next implementation slice.

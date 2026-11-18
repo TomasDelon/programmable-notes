@@ -90,6 +90,19 @@ export function useDocuments(
       setWorkspace(next);
     });
   }
+  async function restoreNativeVersion(file: string) {
+    await operation(async () => {
+      if (!native)
+        throw Error('Native draft recovery requires the desktop editor.');
+      const restored = await nativeDocuments.restoreSnapshot(file);
+      const next = addDocuments(current.current, [
+        { logicalPath: restored.name, source: restored.source },
+      ]);
+      delete next.saved[next.selected];
+      setWorkspace(next);
+      setFileNotice('Recovery version opened as a separate unsaved document.');
+    });
+  }
   async function nativeDraft(action: 'keep' | 'restore' | 'delete') {
     await operation(async () => {
       if (!native)
@@ -309,6 +322,7 @@ export function useDocuments(
     openBrowser,
     restoreBrowserDraft,
     nativeDraft,
+    restoreNativeVersion,
     save,
     reopen,
     close,

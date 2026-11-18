@@ -75,6 +75,13 @@ jobs:
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
       - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - name: Verify recovery under real ENOSPC on a disposable tmpfs
+        run: |
+          pn_recovery_fs=$(mktemp -d)
+          sudo mount -t tmpfs -o "size=2M,uid=$(id -u),gid=$(id -g),mode=0700" tmpfs "$pn_recovery_fs"
+          trap 'sudo umount "$pn_recovery_fs"; rmdir "$pn_recovery_fs"' EXIT
+          PN_RECOVERY_SMALL_FS="$pn_recovery_fs" cargo test --manifest-path native-documents/Cargo.toml --locked --test snapshots -- --ignored --exact real_enospc_preserves_previous_snapshot --nocapture | tee /tmp/recovery-enospc.log
+          rg -F 'test real_enospc_preserves_previous_snapshot ... ok' /tmp/recovery-enospc.log
       - run: cargo test --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
       - run: npm run native:wry:verify
       - run: npm run native:package

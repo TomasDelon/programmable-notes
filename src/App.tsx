@@ -1,3 +1,4 @@
+import { RecoveryHistory } from './documents/RecoveryHistory';
 import { BrowserDraft } from './documents/BrowserDraft';
 import { isTauri } from '@tauri-apps/api/core';
 import { NativePreview } from './preview/NativePreview';
@@ -291,6 +292,16 @@ export function App() {
       {documents.native && (
         <details>
           <summary>Recovery draft</summary>
+          <RecoveryHistory
+            documentKey={selected}
+            name={selected.split('/').pop()!}
+            source={files[selected]!}
+            baseline={documents.workspace.saved[selected]}
+            displayPath={documents.workspace.bindings[selected]?.displayPath}
+            busy={documents.busy}
+            restore={documents.restoreNativeVersion}
+          />
+          <p>Legacy single-copy controls (kept for migration):</p>
           <button
             disabled={documents.busy || !/\.mdx?$/.test(selected)}
             onClick={() => void documents.nativeDraft('keep')}

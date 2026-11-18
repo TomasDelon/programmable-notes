@@ -50,3 +50,26 @@ The backend is not yet exposed to the editor. Next action: extend the existing
 editor-only `recovery_draft` command with typed version operations, retain legacy
 operations, add discovery/manual restore UI and tests, then implement debounced
 native recovery without coupling it to original-file saves. Keep PR #1 draft.
+
+## P0 integration in verification
+
+Backend checkpoint pushed as `b776d57` after design/progress checkpoint `45d3c95`.
+The existing editor-only recovery command now supports typed version operations
+without a new capability. Discovery/manual snapshots and explicit restore are
+implemented; restore creates a new dirty buffer without inheriting a grant.
+Legacy operations share the new advisory lock. CI adds a real ENOSPC tmpfs gate.
+
+The optimized installed package passed `scripts/native-recovery.mjs` in the VM:
+exact BOM/CRLF versions, actual process restart/discovery, Save As cancellation,
+separate exact save, corruption refusal, older recovery, explicit deletion and
+unchanged original bytes. Evidence and exact runtime-source hashes are in
+`docs/security-evidence/2026-11-19-recovery-ui`. Native denial of the new actions
+and the final repository check are running. Next action after they pass: commit
+P0 integration, update draft PR #1, then begin P1 debounced automatic snapshots
+for all modified buffers with single-flight writes and visible failure handling.
+
+P0 integration verification completed: repository check passed 30 unit and 18
+Chromium tests; locked native-documents passed 34 normal tests (plus the
+separately proven ENOSPC case). Native IPC denial passed for all new recovery
+actions. Source review found no remaining important issue. P0 integration is
+ready to commit. Next executable milestone remains P1 automatic recovery.

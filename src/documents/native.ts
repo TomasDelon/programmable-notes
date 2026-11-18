@@ -1,6 +1,25 @@
 import { invoke } from '@tauri-apps/api/core';
+import type {
+  SnapshotInput,
+  RecoveryInventory,
+  SnapshotWritten,
+  RecoverySnapshot,
+} from './recovery';
 import type { NativeDocument } from './workspace';
 export const nativeDocuments = {
+  snapshots: () =>
+    invoke<RecoveryInventory>('recovery_draft', { action: 'list' }),
+  snapshot: (input: SnapshotInput) =>
+    invoke<SnapshotWritten>('recovery_draft', { action: 'append', input }),
+  restoreSnapshot: (file: string) =>
+    invoke<{ name: string; source: string }>('recovery_draft', {
+      action: 'restore-version',
+      file,
+    }),
+  deleteSnapshot: (file: string) =>
+    invoke<void>('recovery_draft', { action: 'delete-version', file }),
+  migrateRecovery: () =>
+    invoke<RecoverySnapshot | null>('recovery_draft', { action: 'migrate' }),
   draft: (action: 'keep' | 'restore' | 'delete', source?: string) =>
     invoke<string | null>('recovery_draft', { action, source }),
   open: () => invoke<NativeDocument[]>('open_documents'),

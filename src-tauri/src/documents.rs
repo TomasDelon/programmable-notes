@@ -286,7 +286,9 @@ pub async fn recovery_draft(
     host: tauri::State<'_, Host>,
     action: String,
     source: Option<String>,
-) -> Result<Option<String>, String> {
+    input: Option<serde_json::Value>,
+    file: Option<String>,
+) -> Result<serde_json::Value, String> {
     let docs = editor(&app, &window, &host)?;
     let operation = Operation::new(docs);
     tauri::async_runtime::spawn_blocking(move || {
@@ -295,15 +297,31 @@ pub async fn recovery_draft(
         {
             let root = app.path().app_data_dir().map_err(|e| e.to_string())?;
             std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-            native_documents::draft::recovery_draft(
-                &root.join("recovery"),
-                &action,
-                source.as_deref(),
-            )
+            let directory = root.join("recovery");
+            if matches!(action.as_str(), "keep"|"restore"|"delete") {
+                return serde_json::to_value(native_documents::draft::recovery_draft(&directory,&action,source.as_deref())?).map_err(|e|e.to_string());
+            }
+            let mut recovery = native_documents::snapshots::Recovery::open(&directory)?;
+            let value = match action.as_str() {
+                "list" => serde_json::to_value(recovery.list()?),
+                "append" => {
+                    let input: native_documents::snapshots::Input = serde_json::from_value(input.ok_or("Missing snapshot input")?).map_err(|e|e.to_string())?;
+                    serde_json::to_value(recovery.append(input)?)
+                },
+                "restore-version" => {
+                    let file = file.ok_or("Missing version identifier")?;
+                    let snapshot = recovery.list()?.snapshots.into_iter().find(|s|s.file == file).ok_or("Recovery version is unavailable or damaged")?;
+                    Ok(serde_json::json!({"name":snapshot.metadata.name,"source":recovery.restore(&file)?}))
+                },
+                "delete-version" => { recovery.remove(&file.ok_or("Missing version identifier")?)?; Ok(serde_json::Value::Null) },
+                "migrate" => serde_json::to_value(recovery.migrate_legacy()?),
+                _ => return Err("Unknown recovery action".into()),
+            };
+            value.map_err(|e:serde_json::Error|e.to_string())
         }
         #[cfg(not(target_os = "linux"))]
         {
-            let _ = (app, action, source);
+            let _ = (app, action, source, input, file);
             Err("Native recovery currently requires Linux".into())
         }
     })
