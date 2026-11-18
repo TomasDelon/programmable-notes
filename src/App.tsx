@@ -243,6 +243,7 @@ export function App() {
       {error && <pre role="alert">{error}</pre>}
       {!documents.native && (
         <BrowserDraft
+          documentKey={selected}
           name={selected.split('/').pop()!}
           source={files[selected]!}
           busy={documents.busy}

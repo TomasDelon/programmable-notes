@@ -98,3 +98,7 @@ A failed compiler WASM download used to leave a rejected promise cached until re
 ### Explicit browser draft recovery
 
 The browser can keep one local copy of a Markdown source and restore it into a new unsaved buffer after reload. Existing documents and native grants are untouched. The controls explain where the bytes are stored and provide explicit deletion. This is a manual snapshot. Native recovery and automatic snapshots remain open under ADR-006.
+
+### Opt-in browser draft updates
+
+Automatic updates can be enabled for one open Markdown document. They write a separate browser snapshot after a short pause in typing, and pause while another source is selected. Recovery still requires an explicit action and creates an unsaved buffer. Native draft persistence remains open.

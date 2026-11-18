@@ -412,3 +412,29 @@ test('explicit browser draft survives reload and restores into a separate buffer
   await page.getByRole('button', { name: 'Restore local draft' }).click();
   await expect(page.getByText('No local draft is stored.')).toBeVisible();
 });
+
+test('automatic drafts require opt-in and track only the selected source', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await open(page, '# Draft\r\n', 'autosave.mdx');
+  const selection = page.getByLabel('Source file');
+  await expect(selection).toHaveValue(/autosave\.mdx$/);
+  await page.getByText('Browser draft', { exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Enable automatic drafts for this document' })
+    .click();
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.fill('Latest draft.');
+  await expect(page.getByText('Draft updated in this browser.')).toBeVisible();
+  await selection.selectOption('note.mdx');
+  await source.fill('Different document.');
+  await page.getByRole('button', { name: 'Restore local draft' }).click();
+  await expect(source).toHaveText('Latest draft.');
+  await expect(page.getByText('Unsaved changes')).toBeVisible();
+  await expect(
+    page.getByRole('button', {
+      name: 'Enable automatic drafts for this document',
+    }),
+  ).toBeVisible();
+});
