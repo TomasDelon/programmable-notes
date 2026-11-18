@@ -33,3 +33,15 @@ it('preserves ATX markers, spacing and closing markers', () => {
     ),
   ).toBeNull();
 });
+
+it('preserves list markers and refuses complex list blocks', () => {
+  const source =
+    '3.   First item\r\n4. Second item\r\n\r\n- Outer\r\n  - Nested\r\n';
+  const items = editableMarkdown(source);
+  expect(items.map((item) => item.text)).toEqual(['First item', 'Second item']);
+  expect(items[0]?.list).toMatchObject({ ordered: true, start: 3 });
+  expect(patchMarkdown(source, items[0]!, 'Updated item')).toBe(
+    source.replace('First item', 'Updated item'),
+  );
+  expect(patchMarkdown(source, items[0]!, '10. New nesting')).toBeNull();
+});

@@ -74,3 +74,7 @@ Next, extend the browser regression to reopen a downloaded mixed document and ad
 ### ATX headings and browser round trip
 
 Both hosted checks passed at `47206c1`. The Markdown panel now supports plain ATX heading text. The browser regression saves the edited bytes, reloads the app, imports the downloaded file and checks the rendered heading. The unit tests cover marker preservation, Setext exclusion and rejection of stale ranges.
+
+### Simple list items
+
+The Markdown panel now renders and edits simple ordered and unordered list items while preserving their markers, spacing and original numbering. The Chromium test checks the rebuilt preview and exact downloaded bytes. The unit test also checks nested-list exclusion and rejects a replacement that would introduce nested syntax. Local verification passed 23 unit and nine Chromium tests.

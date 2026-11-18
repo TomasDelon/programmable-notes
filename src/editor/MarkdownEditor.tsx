@@ -23,7 +23,23 @@ export function MarkdownEditor({
     () => (shown ? editableMarkdown(source) : []),
     [shown, source],
   );
-  const label = edit?.range.headingDepth ? 'Heading' : 'Paragraph';
+  const label = edit?.range.list
+    ? 'List item'
+    : edit?.range.headingDepth
+      ? 'Heading'
+      : 'Paragraph';
+  function editButton(range: MarkdownRange) {
+    return (
+      <button
+        onClick={() => {
+          setError('');
+          setEdit({ source, range, value: range.text });
+        }}
+      >
+        {range.text}
+      </button>
+    );
+  }
   return (
     <section aria-label="Markdown editing">
       <button
@@ -37,22 +53,28 @@ export function MarkdownEditor({
       </button>
       {shown && (
         <>
-          {ranges.map((range) => {
+          {ranges.map((range, index) => {
+            if (range.list) {
+              const list = range.list;
+              if (ranges[index - 1]?.list === list) return null;
+              let end = index + 1;
+              while (ranges[end]?.list === list) end++;
+              const List = list.ordered ? 'ol' : 'ul';
+              return (
+                <List
+                  key={list.from}
+                  start={list.ordered ? list.start : undefined}
+                >
+                  {ranges.slice(index, end).map((item) => (
+                    <li key={item.from}>{editButton(item)}</li>
+                  ))}
+                </List>
+              );
+            }
             const Block = range.headingDepth
               ? (`h${range.headingDepth}` as const)
               : 'p';
-            return (
-              <Block key={range.from}>
-                <button
-                  onClick={() => {
-                    setError('');
-                    setEdit({ source, range, value: range.text });
-                  }}
-                >
-                  {range.text}
-                </button>
-              </Block>
-            );
+            return <Block key={range.from}>{editButton(range)}</Block>;
           })}
           {edit && (
             <form

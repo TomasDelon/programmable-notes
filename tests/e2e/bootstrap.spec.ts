@@ -303,3 +303,27 @@ test('an edited heading can be downloaded and reopened without rewriting its mar
       .getByRole('heading', { name: 'New title', level: 2 }),
   ).toBeVisible();
 });
+
+test('the rendered list editor patches only a simple item', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = '- First item\r\n- Second item\r\n\r\n<div>Opaque</div>\r\n';
+  await open(page, original, 'list.mdx');
+  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await panel
+    .getByRole('list')
+    .getByRole('button', { name: 'Second item' })
+    .click();
+  await panel.getByLabel('List item text').fill('Updated item');
+  await panel.getByRole('button', { name: 'Apply list item edit' }).click();
+  await expect(
+    page.frameLocator('iframe').getByText('Updated item'),
+  ).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
+    original.replace('Second item', 'Updated item'),
+  );
+});
