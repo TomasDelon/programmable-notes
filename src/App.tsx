@@ -1,3 +1,4 @@
+import { BrowserDraft } from './documents/BrowserDraft';
 import { isTauri } from '@tauri-apps/api/core';
 import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
@@ -240,6 +241,14 @@ export function App() {
         </pre>
       )}
       {error && <pre role="alert">{error}</pre>}
+      {!documents.native && (
+        <BrowserDraft
+          name={selected.split('/').pop()!}
+          source={files[selected]!}
+          busy={documents.busy}
+          restore={documents.restoreBrowserDraft}
+        />
+      )}
       <div className="workspace">
         <SourceEditor
           visual={/\.mdx?$/.test(selected)}

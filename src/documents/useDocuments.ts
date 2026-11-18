@@ -90,6 +90,16 @@ export function useDocuments(
       setWorkspace(next);
     });
   }
+  async function restoreBrowserDraft(name: string, source: string) {
+    await operation(async () => {
+      if (native) throw Error('Browser drafts are unavailable on desktop.');
+      const next = addDocuments(current.current, [
+        { logicalPath: name, source },
+      ]);
+      delete next.saved[next.selected];
+      setWorkspace(next);
+    });
+  }
   async function openBrowser(list: FileList | null) {
     if (!list?.length) return;
     await operation(async () => {
@@ -271,6 +281,7 @@ export function useDocuments(
     fileNotice,
     openNative,
     openBrowser,
+    restoreBrowserDraft,
     save,
     reopen,
     close,

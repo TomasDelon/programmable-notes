@@ -386,3 +386,29 @@ test('rebuild retries after a transient compiler download failure', async ({
     page.frameLocator('iframe').getByRole('button', { name: 'Count: 0' }),
   ).toBeVisible();
 });
+
+test('explicit browser draft survives reload and restores into a separate buffer', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const draft = '# Draft\r\n\r\nKeep this text.\r\n';
+  await open(page, draft, 'draft.mdx');
+  const selection = page.getByLabel('Source file');
+  await expect(selection).toHaveValue(/draft\.mdx$/);
+  await page.getByText('Browser draft', { exact: true }).click();
+  await page.getByRole('button', { name: 'Keep local draft' }).click();
+  await expect(page.getByText('Draft stored in this browser.')).toBeVisible();
+  await page.reload();
+  await expect(selection).toHaveValue('note.mdx');
+  await page.getByText('Browser draft', { exact: true }).click();
+  await page.getByRole('button', { name: 'Restore local draft' }).click();
+  await expect(selection).toHaveValue(/draft\.mdx$/);
+  await expect(page.getByText('Unsaved changes')).toBeVisible();
+  await expect(selection.locator('option[value="note.mdx"]')).toHaveCount(1);
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(draft);
+  await page.getByRole('button', { name: 'Delete local draft' }).click();
+  await page.getByRole('button', { name: 'Restore local draft' }).click();
+  await expect(page.getByText('No local draft is stored.')).toBeVisible();
+});
