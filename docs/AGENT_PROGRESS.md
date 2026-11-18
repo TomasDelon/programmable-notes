@@ -35,3 +35,18 @@ Baseline executed on `ebb2a25`: `npm run check` passed (26 unit, 18 Chromium),
 and locked native-documents tests passed (2 legacy recovery, 18 file-store tests).
 The reference ZIP SHA-256 is
 `2f19880457645e25633f30766711992a561d1476663ac8ab5a5c662a04c0e328`.
+
+## P0 backend checkpoint
+
+Immutable snapshot store implemented in `native-documents/src/snapshots.rs`.
+Tests: 14 new normal snapshot tests, 2 legacy recovery tests and 18 file-store
+tests pass; the additional ignored ENOSPC test passed separately on an actual
+2 MiB disposable Ubuntu tmpfs. `npm run check` passed (26 unit, 18 Chromium).
+Independent review findings on crash headroom and legacy temporary files were
+reproduced/fixed and regression-tested. Exact evidence is under
+`docs/security-evidence/2026-11-19-recovery-store`.
+
+The backend is not yet exposed to the editor. Next action: extend the existing
+editor-only `recovery_draft` command with typed version operations, retain legacy
+operations, add discovery/manual restore UI and tests, then implement debounced
+native recovery without coupling it to original-file saves. Keep PR #1 draft.

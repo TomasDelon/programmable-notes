@@ -293,3 +293,6 @@ impl Store {
         Err(Error::UnknownGrant)
     }
 }
+
+#[cfg(target_os = "linux")]
+pub mod snapshots;
