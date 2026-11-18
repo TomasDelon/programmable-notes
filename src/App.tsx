@@ -134,12 +134,16 @@ export function App() {
   }, [buildFiles, entry, revision, stopped]);
   return (
     <main>
-      <h1>Programmable Notes</h1>
-      <p role="note">
-        Experimental Linux desktop preview. Native isolation is validated on the
-        documented Linux stack; production security review remains limited. Use
-        trusted documents while desktop testing continues.
-      </p>
+      <header className="app-header">
+        <h1>Programmable Notes</h1>
+      </header>
+      {documents.native && (
+        <p className="native-note" role="note">
+          Experimental Linux desktop preview. Native isolation is validated on
+          the documented Linux stack; production security review remains
+          limited. Use trusted documents while desktop testing continues.
+        </p>
+      )}
       <nav>
         {documents.native ? (
           <button
@@ -208,7 +212,7 @@ export function App() {
           Rebuild preview
         </button>
       </nav>
-      <label>
+      <label className="source-picker">
         Source file{' '}
         <select
           aria-label="Source file"
@@ -217,7 +221,9 @@ export function App() {
         >
           {Object.keys(files).map((path) => (
             <option key={path} value={path}>
-              {documents.workspace.bindings[path]?.name || path}
+              {documents.workspace.bindings[path]?.name ||
+                path.replace(/^opened-\d+\//, '')}
+              {files[path] !== documents.workspace.saved[path] ? ' •' : ''}
             </option>
           ))}
         </select>

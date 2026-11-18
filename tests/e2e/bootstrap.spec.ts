@@ -253,7 +253,7 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   );
   await panel.getByRole('button', { name: 'Editable paragraph.' }).click();
   await panel.getByLabel('Paragraph text').fill('Updated paragraph.');
-  await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();
+  await panel.getByLabel('Paragraph text').press('Enter');
   const source = page.getByRole('textbox', { name: 'MDX source' });
   const updated = original.replace('Editable paragraph.', 'Updated paragraph.');
   async function expectDownload(expected: string) {
@@ -276,10 +276,12 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   await expectDownload(updated);
   await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
   await panel.getByRole('button', { name: 'Updated paragraph.' }).click();
-  await source.fill('Different source.');
-  await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();
+  await source.fill(updated.replace('Updated paragraph.', 'Different source.'));
+  await panel.getByLabel('Paragraph text').press('Enter');
   await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
-  await expectDownload('Different source.');
+  await expectDownload(
+    updated.replace('Updated paragraph.', 'Different source.'),
+  );
 });
 
 test('an edited heading can be downloaded and reopened without rewriting its markers', async ({
@@ -295,7 +297,7 @@ test('an edited heading can be downloaded and reopened without rewriting its mar
     .getByRole('button')
     .click();
   await panel.getByLabel('Heading text').fill('New title');
-  await panel.getByRole('button', { name: 'Apply heading edit' }).click();
+  await panel.getByLabel('Heading text').press('Enter');
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source' }).click();
   const bytes = readFileSync((await (await pending).path())!);
@@ -328,7 +330,7 @@ test('the rendered list editor patches only a simple item', async ({
     .getByRole('button', { name: 'Second item' })
     .click();
   await panel.getByLabel('List item text').fill('Updated item');
-  await panel.getByRole('button', { name: 'Apply list item edit' }).click();
+  await panel.getByLabel('List item text').press('Enter');
   await expect(
     page.frameLocator('iframe').getByText('Updated item'),
   ).toBeVisible();

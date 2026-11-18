@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { editableMarkdown, type MarkdownRange } from './markdownEdits';
 
 export function MarkdownEditor({
@@ -23,14 +23,47 @@ export function MarkdownEditor({
     () => (shown ? editableMarkdown(source) : []),
     [shown, source],
   );
-  const label = edit?.range.list
-    ? 'List item'
-    : edit?.range.headingDepth
-      ? 'Heading'
-      : 'Paragraph';
-  function editButton(range: MarkdownRange) {
+  const focusInput = useCallback(
+    (input: HTMLInputElement | null) => input?.focus(),
+    [],
+  );
+  function editableText(range: MarkdownRange) {
+    const label = range.list
+      ? 'List item'
+      : range.headingDepth
+        ? 'Heading'
+        : 'Paragraph';
+    if (edit?.range.from === range.from) {
+      return (
+        <input
+          className="inline-markdown"
+          aria-label={`${label} text`}
+          value={edit.value}
+          ref={focusInput}
+          onChange={(event) => setEdit({ ...edit, value: event.target.value })}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return;
+            if (event.key === 'Escape') {
+              setEdit(undefined);
+              setError('');
+            } else if (event.key === 'Enter') {
+              event.preventDefault();
+              if (apply(edit.source, edit.range, edit.value)) {
+                setEdit(undefined);
+                setError('');
+              } else {
+                setError(
+                  `${label} changed or contains unsupported syntax. Reopen it to retry.`,
+                );
+              }
+            }
+          }}
+        />
+      );
+    }
     return (
       <button
+        className="rendered-text"
         onClick={() => {
           setError('');
           setEdit({ source, range, value: range.text });
@@ -53,6 +86,9 @@ export function MarkdownEditor({
       </button>
       {shown && (
         <>
+          <p className="edit-hint">
+            Select text to edit it. Enter applies the change. Escape cancels.
+          </p>
           {ranges.map((range, index) => {
             if (range.list) {
               const list = range.list;
@@ -66,7 +102,7 @@ export function MarkdownEditor({
                   start={list.ordered ? list.start : undefined}
                 >
                   {ranges.slice(index, end).map((item) => (
-                    <li key={item.from}>{editButton(item)}</li>
+                    <li key={item.from}>{editableText(item)}</li>
                   ))}
                 </List>
               );
@@ -74,44 +110,8 @@ export function MarkdownEditor({
             const Block = range.headingDepth
               ? (`h${range.headingDepth}` as const)
               : 'p';
-            return <Block key={range.from}>{editButton(range)}</Block>;
+            return <Block key={range.from}>{editableText(range)}</Block>;
           })}
-          {edit && (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (apply(edit.source, edit.range, edit.value)) {
-                  setEdit(undefined);
-                  setError('');
-                } else {
-                  setError(
-                    `${label} changed or contains unsupported syntax. Select it again to retry.`,
-                  );
-                }
-              }}
-            >
-              <label>
-                {label} text
-                <input
-                  value={edit.value}
-                  onChange={(event) =>
-                    setEdit({ ...edit, value: event.target.value })
-                  }
-                  required
-                />
-              </label>
-              <button>Apply {label.toLowerCase()} edit</button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEdit(undefined);
-                  setError('');
-                }}
-              >
-                Cancel
-              </button>
-            </form>
-          )}
           {error && <p role="alert">{error}</p>}
         </>
       )}
