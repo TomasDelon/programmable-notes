@@ -242,8 +242,8 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   const original =
     "import React from 'react'\r\n\r\nEditable paragraph.\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* keep comment */}\r\n";
   await open(page, original, 'visual.mdx');
-  await page.getByRole('button', { name: 'Edit rendered paragraphs' }).click();
-  const panel = page.getByRole('region', { name: 'Paragraph editing' });
+  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
   await expect(panel.getByRole('button', { name: 'Nested JSX' })).toHaveCount(
     0,
   );
@@ -269,4 +269,37 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   await panel.getByRole('button', { name: 'Apply paragraph edit' }).click();
   await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
   await expectDownload('Different source.');
+});
+
+test('an edited heading can be downloaded and reopened without rewriting its markers', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = '##   Original title  ##\r\n\r\nUnchanged paragraph.\r\n';
+  await open(page, original, 'heading.mdx');
+  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await panel
+    .getByRole('heading', { name: 'Original title', level: 2 })
+    .getByRole('button')
+    .click();
+  await panel.getByLabel('Heading text').fill('New title');
+  await panel.getByRole('button', { name: 'Apply heading edit' }).click();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  const bytes = readFileSync((await (await pending).path())!);
+  expect(bytes).toEqual(
+    Buffer.from(original.replace('Original title', 'New title')),
+  );
+  await page.reload();
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'reopened.mdx',
+    mimeType: 'text/plain',
+    buffer: bytes,
+  });
+  await expect(
+    page
+      .frameLocator('iframe')
+      .getByRole('heading', { name: 'New title', level: 2 }),
+  ).toBeVisible();
 });

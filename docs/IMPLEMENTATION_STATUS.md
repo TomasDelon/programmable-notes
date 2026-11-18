@@ -70,3 +70,7 @@ Default graphics crashing in QEMU/Xvfb is a compatibility failure. Affected conf
 Both GitHub Actions jobs passed for `5ecd906`. The earlier run for `35ff1f9` was cancelled. The editor now offers a separate rendered paragraph panel with source-checked CodeMirror patches. Chromium verified editing, exact downloaded bytes, undo/redo and stale-source rejection alongside the existing runtime and security tests. A focused unit test additionally checks no-op edits and rejection of unsupported syntax.
 
 Next, extend the browser regression to reopen a downloaded mixed document and add narrowly mapped ATX heading support. Lists need separate handling for indentation and continuation lines. See [ADR-005](decisions/ADR-005-paragraph-editing.md).
+
+### ATX headings and browser round trip
+
+Both hosted checks passed at `47206c1`. The Markdown panel now supports plain ATX heading text. The browser regression saves the edited bytes, reloads the app, imports the downloaded file and checks the rendered heading. The unit tests cover marker preservation, Setext exclusion and rejection of stale ranges.

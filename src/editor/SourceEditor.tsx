@@ -5,8 +5,8 @@ import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { javascriptLanguage } from '@codemirror/lang-javascript';
 
-import { ParagraphEditor } from './ParagraphEditor';
-import { patchParagraph } from './paragraphs';
+import { MarkdownEditor } from './MarkdownEditor';
+import { patchMarkdown } from './markdownEdits';
 import { isolateHistory } from '@codemirror/commands';
 
 const external = Annotation.define<boolean>();
@@ -74,7 +74,7 @@ export function SourceEditor({
     <div>
       <div className="source-editor" ref={element} />
       {visual && (
-        <ParagraphEditor
+        <MarkdownEditor
           source={source}
           apply={(snapshot, range, replacement) => {
             const editor = view.current;
@@ -84,7 +84,7 @@ export function SourceEditor({
               editor.state.sliceDoc() !== snapshot
             )
               return false;
-            const next = patchParagraph(snapshot, range, replacement);
+            const next = patchMarkdown(snapshot, range, replacement);
             if (next === null) return false;
             if (next !== snapshot) {
               const separator = editor.state.lineBreak;
