@@ -108,3 +108,9 @@ Automatic updates can be enabled for one open Markdown document. They write a se
 The document chooser marks dirty sources, and the workspace uses responsive source and preview panes. Select rendered Markdown text to edit it in place. Enter applies a checked source patch and Escape cancels. The desktop can retain one explicit recovery copy, restore it into a separate unsaved document and delete it explicitly. The native recovery store is tested directly on Linux. Native graphical recovery and inline-edit verification remain separate runtime checks.
 
 For a browser demo, run `npm ci` and `npm run build`. Start `npm run preview -- --host 127.0.0.1 --port 4188 --strictPort`, then run `node scripts/demo-editor.mjs` in a second terminal. The script exercises the React counter, edits a paragraph inline, verifies the rebuilt preview and checks the downloaded source. Screenshots and the resulting MDX go to `.cache/editor-demo/`. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` if using a system Chromium.
+
+### Packaged Linux acceptance
+
+The optimized package built from `622dfb2` passed native inline edit, undo/redo, exact disk save, dirty-close cancellation, restart, reopen and explicit recovery checks in Ubuntu/WebKitGTK. The preview was denied the recovery command. Source, binary hashes, failed test-driver attempts and scope are in the [packaged acceptance evidence](security-evidence/2026-11-18-packaged-editor/README.md).
+
+The next slice adds plain Setext heading edits and tests concurrent native recovery creation. Automatic multi-version native recovery remains open.

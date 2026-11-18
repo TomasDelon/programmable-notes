@@ -34,3 +34,33 @@ fn recovery_uses_one_private_copy_and_never_replaces_an_existing_draft() {
     assert_eq!(fs::read_to_string(original).unwrap(), "original");
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn concurrent_snapshots_never_replace_the_winner() {
+    use std::sync::Barrier;
+    let root = std::env::temp_dir().join(format!("pn-draft-race-{}", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let directory = root.join("draft");
+    let barrier = Barrier::new(2);
+    let (first, second) = std::thread::scope(|scope| {
+        let attempt = |text| {
+            barrier.wait();
+            recovery_draft(&directory, "keep", Some(text))
+        };
+        let first = scope.spawn(move || attempt("first"));
+        let second = scope.spawn(move || attempt("second"));
+        (first.join().unwrap(), second.join().unwrap())
+    });
+    let winner = match (first, second) {
+        (Ok(_), Err(_)) => "first",
+        (Err(_), Ok(_)) => "second",
+        _ => panic!("exactly one concurrent snapshot must succeed"),
+    };
+    assert_eq!(
+        recovery_draft(&directory, "restore", None)
+            .unwrap()
+            .as_deref(),
+        Some(winner)
+    );
+    fs::remove_dir_all(root).unwrap();
+}

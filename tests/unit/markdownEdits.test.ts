@@ -6,7 +6,7 @@ import {
 
 it('limits patches to literal root paragraphs and preserves surrounding bytes', () => {
   const source =
-    'Heading\r\n=======\r\n\r\nA plain paragraph.\r\n\r\n<div>JSX</div>\r\n\r\n*Formatted*\r\n';
+    '*Heading*\r\n=======\r\n\r\nA plain paragraph.\r\n\r\n<div>JSX</div>\r\n\r\n*Formatted*\r\n';
   const [range] = editableMarkdown(source);
   expect(editableMarkdown(source)).toHaveLength(1);
   expect(patchMarkdown(source, range!, range!.text)).toBe(source);
@@ -44,4 +44,13 @@ it('preserves list markers and refuses complex list blocks', () => {
     source.replace('First item', 'Updated item'),
   );
   expect(patchMarkdown(source, items[0]!, '10. New nesting')).toBeNull();
+});
+
+it('patches Setext text without touching the underline or adjacent JSX', () => {
+  const source = 'Original title\r\n--------------  \r\n\r\n<Widget />\r\n';
+  const [heading] = editableMarkdown(source);
+  expect(heading).toMatchObject({ text: 'Original title', headingDepth: 2 });
+  expect(patchMarkdown(source, heading!, 'New title')).toBe(
+    source.replace('Original title', 'New title'),
+  );
 });

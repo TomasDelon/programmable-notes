@@ -440,3 +440,35 @@ test('automatic drafts require opt-in and track only the selected source', async
     }),
   ).toBeVisible();
 });
+
+test('Setext inline editing cancels with Escape and preserves the underline on save', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = 'Original title\r\n======\r\n\r\n<em>Opaque JSX</em>\r\n';
+  await open(page, original, 'setext.mdx');
+  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  const heading = panel.getByRole('heading', {
+    name: 'Original title',
+    level: 1,
+  });
+  const inline = panel.getByRole('textbox', { name: 'Heading text' });
+  await heading.getByRole('button').click();
+  await inline.fill('Discarded title');
+  await inline.press('Escape');
+  await expect(heading).toBeVisible();
+  await heading.getByRole('button').click();
+  await inline.fill('New title');
+  await inline.press('Enter');
+  await expect(
+    page
+      .frameLocator('iframe')
+      .getByRole('heading', { name: 'New title', level: 1 }),
+  ).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source' }).click();
+  expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
+    original.replace('Original title', 'New title'),
+  );
+});

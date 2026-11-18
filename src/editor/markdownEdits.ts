@@ -66,7 +66,13 @@ export function editableMarkdown(source: string): MarkdownRange[] {
         return start === from && node.position?.end.offset === to
           ? [{ from, to, text }]
           : [];
-      if (!/^#{1,6}[ \t]+$/.test(source.slice(start, from))) return [];
+      const atx = /^#{1,6}[ \t]+$/.test(source.slice(start, from));
+      const setext =
+        start === from &&
+        /^[ \t]*\r?\n {0,3}(?:=+|-+)[ \t]*$/.test(
+          source.slice(to, node.position?.end.offset),
+        );
+      if (!atx && !setext) return [];
       return [{ from, to, text, headingDepth: node.depth }];
     });
   } catch {

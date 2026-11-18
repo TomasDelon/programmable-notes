@@ -8,7 +8,7 @@ The panel neither takes selection from the preview nor executes document code. J
 
 ## ATX headings
 
-The panel also edits literal text in ATX headings. The text node supplies the range, so opening hashes, separator spaces and optional closing hashes stay outside the patch. The candidate must reparse at the same heading depth. Setext headings and formatted heading text remain in source mode.
+The panel also edits literal text in ATX headings. The text node supplies the range, so opening hashes, separator spaces and optional closing hashes stay outside the patch. The candidate must reparse at the same heading depth. Formatted heading text remains in source mode.
 
 ## Simple lists
 
@@ -17,3 +17,5 @@ A root list is eligible when every item contains just a single-line literal para
 ## Inline editing
 
 Selecting supported rendered text opens a single-line field in the same paragraph, heading or list item. Enter submits an editor-owned transaction and Escape discards the field contents. The separate React preview remains interactive and isolated. It cannot select ranges, supply edits or initiate saves.
+
+A plain, single-line Setext title is also eligible when the parser reports a heading and the original underline matches the supported marker shape. The underline and surrounding whitespace remain outside the patch.
