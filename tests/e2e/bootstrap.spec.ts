@@ -327,3 +327,38 @@ test('the rendered list editor patches only a simple item', async ({
     original.replace('Second item', 'Updated item'),
   );
 });
+
+test('compiler diagnostics identify the syntax error in the imported file', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByLabel('Open files').setInputFiles([
+    {
+      name: 'diagnostics.mdx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from("import Widget from './Broken'\n\n<Widget />"),
+    },
+    {
+      name: 'Broken.tsx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(
+        'export default function Widget() {\n  const value = ;\n  return <p>{value}</p>;\n}',
+      ),
+    },
+  ]);
+  await expect(page.getByRole('alert')).toContainText(/Broken\.tsx:2:17:/);
+  const selection = page.getByLabel('Source file');
+  const module = await selection
+    .locator('option')
+    .filter({ hasText: 'Broken.tsx' })
+    .getAttribute('value');
+  await selection.selectOption(module!);
+  await page
+    .getByRole('textbox', { name: 'MDX source' })
+    .fill(
+      'export default function Widget() { return <p>Recovered import</p>; }',
+    );
+  await expect(
+    page.frameLocator('iframe').getByText('Recovered import'),
+  ).toBeVisible();
+});

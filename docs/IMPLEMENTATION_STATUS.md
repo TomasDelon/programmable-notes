@@ -78,3 +78,9 @@ Both hosted checks passed at `47206c1`. The Markdown panel now supports plain AT
 ### Simple list items
 
 The Markdown panel now renders and edits simple ordered and unordered list items while preserving their markers, spacing and original numbering. The Chromium test checks the rebuilt preview and exact downloaded bytes. The unit test also checks nested-list exclusion and rejects a replacement that would introduce nested syntax. Local verification passed 23 unit and nine Chromium tests.
+
+### Compiler diagnostics and recovery design
+
+Compiler failures now report the imported source file and its line and column when the compiler provides a location. Chromium verified a TSX error on the second line of an imported module and successful preview recovery after correcting the module. The full check passed 23 unit and ten Chromium tests. Runtime exception source mapping is still pending.
+
+[ADR-006](decisions/ADR-006-draft-recovery.md) proposes separating recoverable drafts from source writes, with explicit restoration and no persisted native grants.

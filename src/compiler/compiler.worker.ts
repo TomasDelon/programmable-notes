@@ -64,11 +64,36 @@ self.onmessage = async ({
               async (args) => {
                 const source = files[args.path]!;
                 if (/\.mdx?$/.test(args.path)) {
-                  const compiled = await compile(
-                    { value: source, path: args.path },
-                    { development: false },
-                  );
-                  return { contents: String(compiled), loader: 'js' };
+                  try {
+                    const compiled = await compile(
+                      { value: source, path: args.path },
+                      { development: false },
+                    );
+                    return { contents: String(compiled), loader: 'js' };
+                  } catch (error) {
+                    const diagnostic = error as {
+                      message?: string;
+                      line?: number;
+                      column?: number;
+                    };
+                    return {
+                      errors: [
+                        {
+                          text: diagnostic.message || String(error),
+                          location: diagnostic.line
+                            ? {
+                                file: args.path,
+                                line: diagnostic.line,
+                                column: Math.max(
+                                  0,
+                                  (diagnostic.column ?? 1) - 1,
+                                ),
+                              }
+                            : undefined,
+                        },
+                      ],
+                    };
+                  }
                 }
                 return {
                   contents: source,
@@ -86,14 +111,18 @@ self.onmessage = async ({
     });
     self.postMessage({ id, code: result.outputFiles[0]!.text });
   } catch (error) {
-    const e = error as { message?: string; line?: number; column?: number };
+    const failure = error as Partial<esbuild.BuildFailure>;
+    const errors = failure.errors?.slice(0, 8).map(({ text, location }) => {
+      const file = location?.file.replace(/^workspace:/, '') || entry;
+      return location?.line
+        ? `${file}:${location.line}:${location.column + 1}: ${text}`
+        : `${file}: ${text}`;
+    });
     self.postMessage({
       id,
-      error:
-        `${entry}${e.line ? `:${e.line}:${e.column}` : ''}: ${e.message || String(error)}`.slice(
-          0,
-          8000,
-        ),
+      error: (
+        errors?.join('\n') || `${entry}: ${failure.message || String(error)}`
+      ).slice(0, 8000),
     });
   }
 };
