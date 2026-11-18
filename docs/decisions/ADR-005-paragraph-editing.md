@@ -19,3 +19,10 @@ A root list is eligible when every item contains just a single-line literal para
 Selecting supported rendered text opens a single-line field in the same paragraph, heading or list item. Enter submits an editor-owned transaction and Escape discards the field contents. The separate React preview remains interactive and isolated. It cannot select ranges, supply edits or initiate saves.
 
 A plain, single-line Setext title is also eligible when the parser reports a heading and the original underline matches the supported marker shape. The underline and surrounding whitespace remain outside the patch.
+
+## Unified workspace update
+
+ADR-007 replaces the separate panel presentation with Source/Split/Visual modes.
+The validator now accepts literal punctuation and soft multiline text using
+parser round trips. The revision, context and untouched-byte guarantees above
+remain required; the original single-line allowlist is historical.

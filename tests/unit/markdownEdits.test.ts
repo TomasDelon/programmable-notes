@@ -44,6 +44,7 @@ it('preserves list markers and refuses complex list blocks', () => {
     source.replace('First item', 'Updated item'),
   );
   expect(patchMarkdown(source, items[0]!, '10. New nesting')).toBeNull();
+  expect(patchMarkdown(source, items[0]!, 'First\n  - Nested')).toBeNull();
 });
 
 it('patches Setext text without touching the underline or adjacent JSX', () => {
@@ -53,4 +54,33 @@ it('patches Setext text without touching the underline or adjacent JSX', () => {
   expect(patchMarkdown(source, heading!, 'New title')).toBe(
     source.replace('Original title', 'New title'),
   );
+});
+
+it('accepts literal punctuation and multiline CRLF text while rejecting syntax changes', () => {
+  const source =
+    "import X from './X'\r\n\r\nBudget: €20 (approx.); email a@b.test / 50% + tax.\r\nSecond line.\r\n\r\n<X value={{a: 1}} />\r\n";
+  const [range] = editableMarkdown(source);
+  expect(range?.text).toContain('Second line.');
+  const replacement = 'New: £30 (50%); café / test + ok.\nAnother line.';
+  expect(patchMarkdown(source, range!, replacement)).toBe(
+    source.replace(range!.text, replacement.replace(/\n/g, '\r\n')),
+  );
+  for (const unsafe of [
+    '<X />',
+    '{alert(1)}',
+    'First\n\nAnother paragraph',
+    'First\n- List',
+    '**bold**',
+    '[link](file:///etc/passwd)',
+    'Text\u0000bad',
+  ]) {
+    expect(patchMarkdown(source, range!, unsafe)).toBeNull();
+  }
+  expect(
+    patchMarkdown(
+      source + 'changed',
+      { ...range!, from: range!.from + 1 },
+      'Other',
+    ),
+  ).toBeNull();
 });

@@ -246,7 +246,7 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   const original =
     "import React from 'react'\r\n\r\nEditable paragraph.\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* keep comment */}\r\n";
   await open(page, original, 'visual.mdx');
-  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Markdown editing' });
   await expect(panel.getByRole('button', { name: 'Nested JSX' })).toHaveCount(
     0,
@@ -267,6 +267,7 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   const selection = page.getByLabel('Source file');
   const editedKey = await selection.inputValue();
   await selection.selectOption('note.mdx');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
   await expect(source).toContainText('useState');
   await selection.selectOption(editedKey);
   await expect(source).toContainText('Updated paragraph.');
@@ -274,14 +275,12 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
   await expectDownload(original);
   await source.press('Control+Shift+z');
   await expectDownload(updated);
-  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
   await panel.getByRole('button', { name: 'Updated paragraph.' }).click();
-  await source.fill(updated.replace('Updated paragraph.', 'Different source.'));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await panel.getByLabel('Paragraph text').press('Enter');
   await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
-  await expectDownload(
-    updated.replace('Updated paragraph.', 'Different source.'),
-  );
+  await expectDownload(original);
 });
 
 test('an edited heading can be downloaded and reopened without rewriting its markers', async ({
@@ -290,7 +289,7 @@ test('an edited heading can be downloaded and reopened without rewriting its mar
   await page.goto('/');
   const original = '##   Original title  ##\r\n\r\nUnchanged paragraph.\r\n';
   await open(page, original, 'heading.mdx');
-  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Markdown editing' });
   await panel
     .getByRole('heading', { name: 'Original title', level: 2 })
@@ -323,7 +322,7 @@ test('the rendered list editor patches only a simple item', async ({
   await page.goto('/');
   const original = '- First item\r\n- Second item\r\n\r\n<div>Opaque</div>\r\n';
   await open(page, original, 'list.mdx');
-  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Markdown editing' });
   await panel
     .getByRole('list')
@@ -331,6 +330,7 @@ test('the rendered list editor patches only a simple item', async ({
     .click();
   await panel.getByLabel('List item text').fill('Updated item');
   await panel.getByLabel('List item text').press('Enter');
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
   await expect(
     page.frameLocator('iframe').getByText('Updated item'),
   ).toBeVisible();
@@ -447,7 +447,7 @@ test('Setext inline editing cancels with Escape and preserves the underline on s
   await page.goto('/');
   const original = 'Original title\r\n======\r\n\r\n<em>Opaque JSX</em>\r\n';
   await open(page, original, 'setext.mdx');
-  await page.getByRole('button', { name: 'Edit rendered Markdown' }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Markdown editing' });
   const heading = panel.getByRole('heading', {
     name: 'Original title',
@@ -461,6 +461,7 @@ test('Setext inline editing cancels with Escape and preserves the underline on s
   await heading.getByRole('button').click();
   await inline.fill('New title');
   await inline.press('Enter');
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
   await expect(
     page
       .frameLocator('iframe')
@@ -471,4 +472,113 @@ test('Setext inline editing cancels with Escape and preserves the underline on s
   expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
     original.replace('Original title', 'New title'),
   );
+});
+
+for (const viewport of [
+  { width: 1440, height: 1000 },
+  { width: 820, height: 1180 },
+  { width: 390, height: 844 },
+]) {
+  test(`unified modes preserve React state and lossless multiline edits at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    const counter = page
+      .frameLocator('iframe')
+      .getByRole('button', { name: /^Count:/ });
+    await counter.click();
+    await expect(counter).toHaveText('Count: 1');
+    await expect(
+      page.getByRole('region', { name: 'Markdown editing' }),
+    ).toHaveCount(0);
+    await page.getByRole('button', { name: 'Visual', exact: true }).click();
+    await expect(page.locator('iframe')).toBeHidden();
+    await expect(
+      page.getByRole('textbox', { name: 'MDX source' }),
+    ).toBeHidden();
+    await page.getByRole('button', { name: 'Source', exact: true }).click();
+    await expect(
+      page.getByRole('textbox', { name: 'MDX source' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Split', exact: true }).click();
+    await expect(counter).toHaveText('Count: 1');
+    const original =
+      '## Notes\r\n\r\nBudget: €20 (approx.); 50% + tax.\r\n\r\n<div><span>Opaque JSX</span></div>\r\n';
+    await open(page, original, 'punctuation.mdx');
+    await page.getByRole('button', { name: 'Visual', exact: true }).click();
+    const panel = page.getByRole('region', { name: 'Markdown editing' });
+    await panel.getByRole('button', { name: 'Budget:', exact: false }).click();
+    const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+    await field.fill('Revised: €30 (approx.); 75% + tax.');
+    await field.press('Shift+Enter');
+    await field.press('End');
+    // fill also exercises browser paste containing soft line breaks.
+    await field.fill(
+      'Revised: €30 (approx.); 75% + tax.\nSecond line / preserved.',
+    );
+    await field.press('Enter');
+    await expect(panel.getByRole('button', { name: /Revised:/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    await expect(panel.getByRole('button', { name: /Budget:/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Redo', exact: true }).click();
+    const waiting = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    const bytes = readFileSync((await (await waiting).path())!);
+    expect(bytes.toString()).toBe(
+      original.replace(
+        'Budget: €20 (approx.); 50% + tax.',
+        'Revised: €30 (approx.); 75% + tax.\r\nSecond line / preserved.',
+      ),
+    );
+    await page.reload();
+    await page.getByLabel('Open files').setInputFiles({
+      name: 'reopened.mdx',
+      mimeType: 'text/plain',
+      buffer: bytes,
+    });
+    await expect(
+      page.getByRole('textbox', { name: 'MDX source' }),
+    ).toContainText('Second line / preserved.');
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  });
+}
+
+test('pending visual input survives mode changes and rejects a changed source revision', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await open(page, 'Original paragraph.\n\n<Widget />\n', 'revision.mdx');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Original paragraph.', exact: true })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Pending edit.');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await page
+    .getByRole('textbox', { name: 'MDX source' })
+    .fill('External paragraph.\n\n<Widget />\n');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await expect(field).toHaveValue('Pending edit.');
+  await field.press('Enter');
+  await expect(
+    page.getByRole('region', { name: 'Markdown editing' }).getByRole('alert'),
+  ).toContainText('Paragraph changed');
+  await field.press('Escape');
+  await expect(
+    page.getByRole('button', { name: 'External paragraph.', exact: true }),
+  ).toBeFocused();
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await page
+    .getByRole('textbox', { name: 'MDX source' })
+    .fill('Visible text.\n\n<Broken');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await expect(page.getByRole('note')).toContainText('No safe visual mapping');
 });

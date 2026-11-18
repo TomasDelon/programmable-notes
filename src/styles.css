@@ -136,3 +136,183 @@ section[aria-label='Markdown editing'] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* The workspace has one editor surface; runtime output is visible only in Split. */
+main {
+  max-width: 100rem;
+  padding: 1.25rem 2rem 2rem;
+}
+.app-header h1 {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.3rem;
+}
+.document-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-block: 0.75rem;
+  border-block: 1px solid var(--stroke);
+}
+.source-picker {
+  flex: 1;
+}
+.source-picker select {
+  flex: 1;
+  max-width: 30rem;
+}
+.mode-picker {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 0.6rem;
+  background: var(--stroke);
+}
+.mode-picker button {
+  border: 0;
+  background: transparent;
+}
+.mode-picker button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 1px 3px #0002;
+}
+.build-status {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin-bottom: 0.25rem;
+}
+[aria-label='Document status'] {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+.workspace {
+  gap: 0;
+  border: 1px solid var(--stroke);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+.workspace.mode-source,
+.workspace.mode-visual {
+  grid-template-columns: minmax(0, 1fr);
+}
+.editor-pane,
+.preview-pane {
+  min-width: 0;
+}
+.preview-pane {
+  border-left: 1px solid var(--stroke);
+}
+.pane-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--stroke);
+  opacity: 0.75;
+}
+.source-editor,
+iframe {
+  border: 0;
+  border-radius: 0;
+  height: 65vh;
+  min-height: 24rem;
+  display: block;
+}
+section[aria-label='Markdown editing'] {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 2rem clamp(1rem, 6vw, 6rem);
+  min-height: 60vh;
+  max-width: 52rem;
+  margin-inline: auto;
+  line-height: 1.7;
+}
+section[aria-label='Markdown editing'] h1 {
+  font-size: 2.2rem;
+}
+.rendered-text {
+  display: block;
+  width: 100%;
+  white-space: pre-wrap;
+  line-height: inherit;
+}
+.inline-markdown {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  line-height: inherit;
+  min-height: 1.7em;
+}
+.edit-hint {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+.opaque-block {
+  border: 1px dashed var(--stroke);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  margin-block: 1rem;
+  font-size: 0.8rem;
+}
+.opaque-block pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 18rem;
+  overflow: auto;
+}
+nav input[type='file'] {
+  max-width: 15rem;
+  font-size: 0.8rem;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 800px) {
+  main {
+    padding: 0.75rem;
+  }
+  .workspace.mode-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .preview-pane {
+    border-left: 0;
+    border-top: 1px solid var(--stroke);
+  }
+  .document-bar {
+    gap: 0.65rem;
+  }
+  .source-picker {
+    flex-basis: 100%;
+  }
+  section[aria-label='Markdown editing'] {
+    padding: 1.25rem;
+  }
+  nav {
+    gap: 0.35rem;
+  }
+  nav button {
+    font-size: 0.8rem;
+  }
+}
+.file-open {
+  position: relative;
+  border: 1px solid var(--stroke);
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+.file-open input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-open:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

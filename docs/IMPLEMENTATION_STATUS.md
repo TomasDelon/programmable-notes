@@ -1,6 +1,6 @@
 # Programmable Notes implementation status
 
-Development branch: `feat/mdx-react-engine`, draft PR #1. Milestone 3 builds on `0275bdc`. The original handoff under `docs/handoff` remains supporting specifications/research, not proof that every proposed technique works. The visual editor supports plain paragraphs, ATX headings and simple lists. Custom Markdown grammar, AI, marketplace and Git synchronization remain deferred.
+Development branch: `feat/mdx-react-engine`, draft PR #1. Milestone 3 builds on `0275bdc`. The original handoff under `docs/handoff` remains supporting specifications/research, not proof that every proposed technique works. The unified Source/Split/Visual workspace supports literal paragraphs (including soft multiline text), ATX and Setext headings, and simple lists. Custom Markdown grammar, AI, marketplace and Git synchronization remain deferred.
 
 ## Working foundation
 
@@ -114,3 +114,20 @@ For a browser demo, run `npm ci` and `npm run build`. Start `npm run preview -- 
 The optimized package built from `622dfb2` passed native inline edit, undo/redo, exact disk save, dirty-close cancellation, restart, reopen and explicit recovery checks in Ubuntu/WebKitGTK. The preview was denied the recovery command. Source, binary hashes, failed test-driver attempts and scope are in the [packaged acceptance evidence](security-evidence/2026-11-18-packaged-editor/README.md).
 
 The next slice adds plain Setext heading edits and tests concurrent native recovery creation. Automatic multi-version native recovery remains open.
+
+### Unified editing workspace
+
+The default Split view contains source and live React output, without a duplicate
+Markdown panel. Source shows CodeMirror alone; Visual shows trusted, editable
+Markdown with collapsed opaque source blocks. Mode switching keeps browser React
+state intact. Actual code changes still restart the isolated runtime as described
+in ADR-007. Explicit Undo/Redo buttons work in either editing mode, and focus
+returns to the edited block after Enter/Escape. Shift+Enter supports soft breaks.
+Literal punctuation and multiline CRLF patches use the same revision and parser
+validation as the original source-preserving editor. Untrusted frame messages
+still cannot change source, select edit spans or authorize file operations.
+
+The former CI timeout was in OS ffmpeg installation after successful application
+checks. Walkthrough recording now uses Playwright's encoder and has no apt step.
+Current UX validation and limitations are recorded in docs/ux-evidence/README.md;
+prior packaged acceptance remains historical evidence for its exact package hash.

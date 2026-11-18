@@ -8,7 +8,11 @@ import { useDocuments } from './documents/useDocuments';
 import { compilerFiles, validateFiles } from './documents/workspace';
 import counter from '../docs/handoff/samples/fixtures/counter.mdx?raw';
 import imported from '../docs/handoff/samples/fixtures/widgets/ImportedCounter.tsx?raw';
-import { SourceEditor, type EditorHistory } from './editor/SourceEditor';
+import {
+  SourceEditor,
+  type EditorCommands,
+  type EditorHistory,
+} from './editor/SourceEditor';
 import { Preview } from './preview/Preview';
 import { previewDocument } from './preview/document';
 
@@ -28,6 +32,10 @@ export function App() {
     'note.mdx',
   );
   const { files, entry, selected, groups } = documents.workspace;
+  const [mode, setMode] = useState<'source' | 'split' | 'visual'>('split');
+  const workspaceMode =
+    mode === 'visual' && !/\.mdx?$/.test(selected) ? 'source' : mode;
+  const editorCommands = useRef<EditorCommands>(null);
   const histories = useRef<EditorHistory>(new Map());
   useEffect(() => {
     for (const key of histories.current.keys()) {
@@ -112,7 +120,7 @@ export function App() {
             setStatus(
               isTauri()
                 ? 'Compiled — requesting isolated native preview'
-                : 'Preview loaded — state resets on edits',
+                : 'Preview ready',
             );
           }
         }
@@ -133,7 +141,20 @@ export function App() {
     };
   }, [buildFiles, entry, revision, stopped]);
   return (
-    <main>
+    <main
+      onKeyDown={(event) => {
+        const target = event.target as HTMLElement;
+        if (
+          (event.ctrlKey || event.metaKey) &&
+          event.key.toLowerCase() === 'z' &&
+          !target.closest('input,textarea,[contenteditable="true"]')
+        ) {
+          event.preventDefault();
+          if (event.shiftKey) editorCommands.current?.redo();
+          else editorCommands.current?.undo();
+        }
+      }}
+    >
       <header className="app-header">
         <h1>Programmable Notes</h1>
       </header>
@@ -144,7 +165,7 @@ export function App() {
           limited. Use trusted documents while desktop testing continues.
         </p>
       )}
-      <nav>
+      <nav aria-label="Document actions">
         {documents.native ? (
           <button
             disabled={documents.busy}
@@ -153,7 +174,7 @@ export function App() {
             Open files
           </button>
         ) : (
-          <label>
+          <label className="file-open">
             Open files{' '}
             <input
               aria-label="Open files"
@@ -212,23 +233,43 @@ export function App() {
           Rebuild preview
         </button>
       </nav>
-      <label className="source-picker">
-        Source file{' '}
-        <select
-          aria-label="Source file"
-          value={selected}
-          onChange={(e) => documents.select(e.target.value)}
-        >
-          {Object.keys(files).map((path) => (
-            <option key={path} value={path}>
-              {documents.workspace.bindings[path]?.name ||
-                path.replace(/^opened-\d+\//, '')}
-              {files[path] !== documents.workspace.saved[path] ? ' •' : ''}
-            </option>
+      <div className="document-bar">
+        <label className="source-picker">
+          Source file{' '}
+          <select
+            aria-label="Source file"
+            value={selected}
+            onChange={(e) => documents.select(e.target.value)}
+          >
+            {Object.keys(files).map((path) => (
+              <option key={path} value={path}>
+                {documents.workspace.bindings[path]?.name ||
+                  path.replace(/^opened-\d+\//, '')}
+                {files[path] !== documents.workspace.saved[path] ? ' •' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="mode-picker" role="group" aria-label="Workspace mode">
+          {(['source', 'split', 'visual'] as const).map((value) => (
+            <button
+              key={value}
+              aria-pressed={workspaceMode === value}
+              disabled={value === 'visual' && !/\.mdx?$/.test(selected)}
+              onClick={() => setMode(value)}
+            >
+              {value[0]!.toUpperCase() + value.slice(1)}
+            </button>
           ))}
-        </select>
-      </label>
-      <p role="status">{status}</p>
+        </div>
+        <div role="group" aria-label="Edit history">
+          <button onClick={() => editorCommands.current?.undo()}>Undo</button>
+          <button onClick={() => editorCommands.current?.redo()}>Redo</button>
+        </div>
+      </div>
+      <p className="build-status" role="status">
+        {status}
+      </p>
       {documents.native && documents.workspace.bindings[selected] && (
         <p aria-label="Native document">
           File: {documents.workspace.bindings[selected]!.displayPath}
@@ -279,21 +320,25 @@ export function App() {
           restore={documents.restoreBrowserDraft}
         />
       )}
-      <div className="workspace">
+      <div className={`workspace mode-${workspaceMode}`}>
         <SourceEditor
-          visual={/\.mdx?$/.test(selected)}
+          visual={workspaceMode === 'visual'}
+          commandsRef={editorCommands}
           key={selected}
           documentKey={selected}
           histories={histories}
           source={files[selected]!}
           onChange={documents.change}
         />
-        {html &&
-          (isTauri() ? (
-            <NativePreview html={html} onError={setError} />
-          ) : (
-            <Preview html={html} onError={setError} />
-          ))}
+        <div className="preview-pane" hidden={workspaceMode !== 'split'}>
+          <div className="pane-title">Live React preview</div>
+          {html &&
+            (isTauri() ? (
+              <NativePreview html={html} onError={setError} />
+            ) : (
+              <Preview html={html} onError={setError} />
+            ))}
+        </div>
       </div>
     </main>
   );

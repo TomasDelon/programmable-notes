@@ -8,7 +8,7 @@ export interface MarkdownRange {
   list?: { from: number; ordered: boolean; start: number };
 }
 
-const plain = /^[\p{L}\p{M}\p{N} ,.!?'"’–—]+$/u;
+const plain = /^[\P{Cc}\t\r\n]+$/u;
 const processor = createProcessor();
 
 export function editableMarkdown(source: string): MarkdownRange[] {
@@ -46,7 +46,12 @@ export function editableMarkdown(source: string): MarkdownRange[] {
           const marker = source.slice(start, from);
           if (!/^(?:[-+*]|[0-9]{1,9}[.)])[ \t]+$/.test(marker)) return;
           const text = source.slice(from, to);
-          if (text !== child.value || !plain.test(text)) return;
+          if (
+            text.replace(/\r\n/g, '\n') !==
+              child.value.replace(/\r\n/g, '\n') ||
+            !plain.test(text)
+          )
+            return;
           return { from, to, text, list };
         });
         return items.every((item) => item !== undefined) ? items : [];
@@ -61,7 +66,11 @@ export function editableMarkdown(source: string): MarkdownRange[] {
       if (from === undefined || to === undefined || start === undefined)
         return [];
       const text = source.slice(from, to);
-      if (text !== child.value || !plain.test(text)) return [];
+      if (
+        text.replace(/\r\n/g, '\n') !== child.value.replace(/\r\n/g, '\n') ||
+        !plain.test(text)
+      )
+        return [];
       if (node.type === 'paragraph')
         return start === from && node.position?.end.offset === to
           ? [{ from, to, text }]
@@ -106,6 +115,8 @@ export function patchMarkdown(
     return null;
   if (text === range.text) return source;
   if (!plain.test(text) || text.trim() !== text) return null;
+  // New lines inherit this document's line ending; untouched spans remain exact.
+  text = text.replace(/\r?\n/g, source.includes('\r\n') ? '\r\n' : '\n');
   const next = source.slice(0, range.from) + text + source.slice(range.to);
   return editableMarkdown(next).some(
     (node) =>
@@ -116,4 +127,18 @@ export function patchMarkdown(
   )
     ? next
     : null;
+}
+
+/** Only parser-owned root positions are used. Opaque blocks are displayed as text. */
+export function markdownBlocks(source: string) {
+  if (source.length > 500_000) return [];
+  try {
+    return processor.parse(source).children.flatMap((node) => {
+      const from = node.position?.start.offset;
+      const to = node.position?.end.offset;
+      return from === undefined || to === undefined ? [] : [{ from, to }];
+    });
+  } catch {
+    return [];
+  }
 }

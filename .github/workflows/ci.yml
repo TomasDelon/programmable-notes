@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +29,6 @@ jobs:
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
       - run: npm run check
-      - name: Install walkthrough encoder
-        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
       - name: Capture the browser walkthrough
         run: |
           npm run preview -- --host 127.0.0.1 --port 4188 --strictPort > /tmp/editor-demo-server.log 2>&1 &
@@ -38,7 +36,6 @@ jobs:
           trap 'kill "$server" || true' EXIT
           curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4188/ -o /dev/null
           node scripts/demo-editor.mjs
-          ffmpeg -loglevel error -framerate 1/2 -pattern_type glob -i '.cache/editor-demo/0*.png' -vf 'scale=1200:-2,format=yuv420p' -r 24 -movflags +faststart .cache/editor-demo/walkthrough.mp4
           tar -czf .cache/editor-demo/browser-build.tar.gz -C dist .
           printf '%s\n' 'Extract browser-build.tar.gz and serve that directory over HTTP with python3 -m http.server 8000 --bind 127.0.0.1. Open http://127.0.0.1:8000 in Chromium.' > .cache/editor-demo/README.txt
       - uses: actions/upload-artifact@v4

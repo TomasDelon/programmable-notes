@@ -7,6 +7,8 @@ import {
   historyField,
   historyKeymap,
   isolateHistory,
+  undo,
+  redo,
 } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
 import { javascriptLanguage } from '@codemirror/lang-javascript';
@@ -17,6 +19,8 @@ import { patchMarkdown } from './markdownEdits';
 const external = Annotation.define<boolean>();
 const historyFields = { history: historyField };
 
+export type EditorCommands = { undo: () => void; redo: () => void } | null;
+
 export type EditorHistory = Map<string, { source: string; state: unknown }>;
 
 export function SourceEditor({
@@ -25,7 +29,9 @@ export function SourceEditor({
   visual,
   documentKey,
   histories,
+  commandsRef,
 }: {
+  commandsRef?: React.RefObject<EditorCommands>;
   source: string;
   visual?: boolean;
   documentKey?: string;
@@ -69,12 +75,22 @@ export function SourceEditor({
           : EditorState.create({ doc: source, extensions }),
     });
     view.current = editor;
+    if (commandsRef)
+      commandsRef.current = {
+        undo: () => {
+          undo(editor);
+        },
+        redo: () => {
+          redo(editor);
+        },
+      };
     return () => {
       if (documentKey !== undefined)
         cache?.set(documentKey, {
           source: editor.state.sliceDoc(),
           state: editor.state.toJSON(historyFields),
         });
+      if (commandsRef) commandsRef.current = null;
       editor.destroy();
     };
     // The initial buffer is applied once; subsequent changes are transactions below.
@@ -92,9 +108,10 @@ export function SourceEditor({
       });
   }, [source]);
   return (
-    <div>
-      {visual && (
+    <div className="editor-pane">
+      <div hidden={!visual}>
         <MarkdownEditor
+          active={visual === true}
           source={source}
           apply={(snapshot, range, replacement) => {
             const editor = view.current;
@@ -115,18 +132,29 @@ export function SourceEditor({
               editor.dispatch({
                 changes: {
                   from,
-                  to: from + range.text.length,
-                  insert: replacement,
+                  to:
+                    from +
+                    snapshot
+                      .slice(range.from, range.to)
+                      .split(separator)
+                      .join('\n').length,
+                  insert: next.slice(
+                    range.from,
+                    next.length - (snapshot.length - range.to),
+                  ),
                 },
                 annotations: isolateHistory.of('full'),
               });
-              editor.focus();
+              if (!visual) editor.focus();
             }
             return true;
           }}
         />
-      )}
-      <div className="source-editor" ref={element} />
+      </div>
+      <div hidden={visual}>
+        <div className="pane-title">Source</div>
+        <div className="source-editor" ref={element} />
+      </div>
     </div>
   );
 }
