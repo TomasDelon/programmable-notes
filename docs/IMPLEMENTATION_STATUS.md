@@ -131,3 +131,9 @@ The former CI timeout was in OS ffmpeg installation after successful application
 checks. Walkthrough recording now uses Playwright's encoder and has no apt step.
 Current UX validation and limitations are recorded in docs/ux-evidence/README.md;
 prior packaged acceptance remains historical evidence for its exact package hash.
+
+The installed optimized build from `e0689a9` passed the unified-mode, multiline,
+exact-disk-byte, mode-preservation and restart/recovery acceptance suite in the
+disposable Ubuntu/WebKitGTK VM. See the [exact build and scope](security-evidence/2026-11-18-unified-ux/README.md).
+The browser suite now has 18 tests and the unit suite 26. Native UI acceptance
+stops preview execution; native IPC/resource evidence is distinguished separately.

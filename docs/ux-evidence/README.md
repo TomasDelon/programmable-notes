@@ -24,3 +24,9 @@ undo/redo, stale revisions, pending input, mapping failure guidance and existing
 sandbox negative probes. It does not certify physical GPU/Wayland behavior or
 preserve arbitrary React state across code edits. The independent demo review
 was not present among the files available in this session.
+
+Verified hosted demo for `e0689a9`: [download the complete browser/demo artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/44363697100/artifacts/14454384093).
+The corresponding `check` job passed, including the recording script. Artifacts
+expire after 30 days; a fresh CI run regenerates them. Native acceptance and IPC
+results for the optimized installed app are recorded in the
+[dated Linux evidence](../security-evidence/2026-11-18-unified-ux/README.md).
