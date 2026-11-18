@@ -73,3 +73,22 @@ Chromium tests; locked native-documents passed 34 normal tests (plus the
 separately proven ENOSPC case). Native IPC denial passed for all new recovery
 actions. Source review found no remaining important issue. P0 integration is
 ready to commit. Next executable milestone remains P1 automatic recovery.
+
+## P0 complete; P1 implementation in progress
+
+P0 integration is committed/pushed as `99b4955`, with installed restart and new
+action IPC-denial evidence. CI browser checks passed; native CI stopped in the
+new ENOSPC step with exit 127. The verification guard used `rg`; detailed log
+download is blocked here. Replacing only that guard with portable `grep` retains
+the actual ENOSPC test and proves the named test ran. Local ENOSPC output matches
+the unchanged literal guard; no assertion or permission was relaxed.
+
+P1 code is under validation: two-second global idle debounce for all dirty
+buffers, one in-flight batch, queued-source coalescing, explicit pause/resume and
+error-induced pause. Recovery identity is now per open buffer/session, so two
+buffers/app instances for the same path cannot prune each other's unsaved
+history. Old records remain readable and are not rewritten. Six controller tests
+and the complete repository check pass (34 unit, 18 Chromium). The optimized
+P1 package is installed; actual automatic snapshot/restart/retention testing is
+running. Next action: inspect that log, run native disk-full pause/resume, then
+commit P1 with evidence and update draft PR #1.
