@@ -39,6 +39,12 @@ preservation passed actual browser export/reopen and installed native disk/resta
 recovery acceptance. [ADR010](decisions/ADR-010-multiline-quote-editing.md) and
 [exact scope, initial failure and driver regression controls](security-evidence/2026-11-19-multiline-quotes/README.md).
 
+Expanded opaque blocks now offer **Show in Source** on the trusted surface. It
+focuses the exact original offset without modifying source or restarting React.
+Captured document/revision checks and pending/busy guards prevent stale navigation
+or discarded inline text. Preview messages cannot authorize navigation or edits.
+[Browser and installed acceptance](security-evidence/2026-11-19-opaque-source-navigation/README.md).
+
 Patches validate the full captured source revision, parser-owned spans, text and
 block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
 indenting imports/JSX or changing compilation. [Red/green and installed validation](security-evidence/2026-11-19-leading-bom/README.md).
@@ -251,8 +257,8 @@ multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
 screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: add revision-checked navigation from opaque visual source blocks to their
-exact Source location, without reverse editing JSX or discarding pending text.
+Next: investigate bounded long-document rendering and preserve current exact
+Source navigation, opaque JSX and pending-input guards.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

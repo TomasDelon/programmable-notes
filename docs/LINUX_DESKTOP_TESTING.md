@@ -145,3 +145,14 @@ The external GTK driver now re-queries a transient X_GetGeometry BadDrawable rac
 within its original deadline. Test `native-dialog-regression.py --query-fault-once`
 and `--query-fault-persistent`: one recovers; persistent query errors must still
 refuse dismissal. [Actual native results and failed first final-close observation](security-evidence/2026-11-19-multiline-quotes/README.md).
+
+## Opaque block Source navigation
+
+Use a fresh disposable fixture and run
+`NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-fidelity.mjs --mixed-eol --quotes --multiline-quotes --source-navigation`.
+This retains the complete editing/recovery suite. A rejected pending inline edit
+must disable Show in Source; after Escape the trusted action focuses the opaque
+JSX's original source offset. An actual keyboard space, Save, Undo/Redo and exact
+disk comparison verify the caret and unchanged unrelated bytes/mode0640. No
+preview message or document JSX may authorize this action or file operations.
+[Exact production package, results and limits](security-evidence/2026-11-19-opaque-source-navigation/README.md).

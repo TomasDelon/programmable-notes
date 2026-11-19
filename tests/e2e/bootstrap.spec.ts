@@ -1384,3 +1384,94 @@ test('multiline quote text keeps every prefix and physical ending through no-op,
   await counter.click();
   await expect(counter).toHaveText('Quote counter 1');
 });
+
+test('opaque source navigation is explicit, revision-checked and byte preserving without preview authority', async ({
+  page,
+}) => {
+  const source =
+    '\uFEFFimport React from "react"\r\n\r\nexport function JumpCounter(){const[n,setN]=React.useState(0);return <button onClick={()=>setN(n+1)}>Jump counter {n}</button>}\r\n\r\n<JumpCounter />\r\n\r\nBefore café 😀 \u2028 literal.\nMixed physical LF.\r\n\r\n<section data-target="source-jump"><span>Opaque JSX target</span></section>\r\n';
+  await page.goto('/');
+  await open(page, source, 'source-navigation.mdx');
+  const counter = page
+    .frameLocator('iframe')
+    .getByRole('button', { name: /Jump counter/ });
+  await expect(counter).toHaveText('Jump counter 0');
+  await counter.click();
+  await expect(counter).toHaveText('Jump counter 1');
+  await page
+    .frameLocator('iframe')
+    .locator('body')
+    .evaluate(() =>
+      parent.postMessage(
+        { type: 'show-source', offset: 0, source: 'forged' },
+        '*',
+      ),
+    );
+  await expect(
+    page.getByRole('button', { name: 'Split', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await expect(panel.locator('[data-target="source-jump"]')).toHaveCount(0);
+  const block = panel
+    .locator('details.opaque-block')
+    .filter({ hasText: 'Opaque JSX target' });
+  await block.locator('summary').click();
+  const show = block.getByRole('button', { name: 'Show in Source' });
+  await show.click({ timeout: 5000 });
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(editor).toBeVisible();
+  await expect(editor).toBeFocused();
+  await expect(
+    page.getByRole('button', { name: 'Source', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  async function savedBytes() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  }
+  expect(await savedBytes()).toEqual(Buffer.from(source));
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await expect(counter).toHaveText('Jump counter 1');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await block.locator('summary').click();
+  await show.focus();
+  await show.press('Enter');
+  await expect(editor).toBeFocused();
+  await page.keyboard.insertText(' ');
+  const changed = source.replace(
+    '<section data-target',
+    ' <section data-target',
+  );
+  expect(await savedBytes()).toEqual(Buffer.from(changed));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await savedBytes()).toEqual(Buffer.from(source));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await savedBytes()).toEqual(Buffer.from(changed));
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await block.locator('summary').click();
+  await panel.getByRole('button', { name: /Before café/ }).click();
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Keep this pending value.');
+  await expect(show).toBeDisabled();
+  await page
+    .frameLocator('iframe')
+    .locator('body')
+    .evaluate(() =>
+      parent.postMessage(
+        { type: 'show-source', offset: 0, source: 'forged' },
+        '*',
+      ),
+    );
+  await expect(field).toHaveValue('Keep this pending value.');
+  await expect(
+    page.getByRole('button', { name: 'Visual', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await field.press('Escape');
+  await expect(show).toBeEnabled();
+  await show.click();
+  await expect(editor).toBeFocused();
+  expect(await savedBytes()).toEqual(Buffer.from(changed));
+});

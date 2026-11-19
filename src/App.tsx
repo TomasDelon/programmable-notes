@@ -79,14 +79,16 @@ export function App() {
       source: string;
     }[]
   >([]);
-  const pendingLocation = useRef<{ offset: number; source: string } | null>(
-    null,
-  );
+  const pendingLocation = useRef<
+    | { file: string; offset: number; source: string }
+    | { newNote: true; offset: 0; source: '' }
+    | null
+  >(null);
   const [navigation, setNavigation] = useState(0);
   useEffect(() => {
     const target = pendingLocation.current;
     pendingLocation.current = null;
-    if (target)
+    if (target && ('newNote' in target || target.file === selected))
       editorCommands.current?.revealSource(target.offset, target.source);
   }, [navigation, selected, workspaceMode]);
   const [status, setStatus] = useState('Waiting');
@@ -263,7 +265,7 @@ export function App() {
             documents.newNote();
             setError('');
             setLocations([]);
-            pendingLocation.current = { offset: 0, source: '' };
+            pendingLocation.current = { newNote: true, offset: 0, source: '' };
             setMode('source');
             setNavigation((value) => value + 1);
           }}
@@ -505,6 +507,16 @@ export function App() {
         <SourceEditor
           busy={documents.busy}
           onPendingChange={setPendingVisual}
+          onShowSource={(offset, snapshot) => {
+            if (documentActionsBlocked || files[selected] !== snapshot) return;
+            pendingLocation.current = {
+              file: selected,
+              offset,
+              source: snapshot,
+            };
+            setMode('source');
+            setNavigation((value) => value + 1);
+          }}
           visual={workspaceMode === 'visual'}
           commandsRef={editorCommands}
           key={selected}

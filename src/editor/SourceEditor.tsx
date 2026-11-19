@@ -36,6 +36,7 @@ export function SourceEditor({
   commandsRef,
   busy,
   onPendingChange,
+  onShowSource,
 }: {
   commandsRef?: React.RefObject<EditorCommands>;
   source: string;
@@ -45,6 +46,7 @@ export function SourceEditor({
   onChange: (value: string) => void;
   busy?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onShowSource?: (offset: number, snapshot: string) => void;
 }) {
   const element = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
@@ -136,6 +138,7 @@ export function SourceEditor({
         <MarkdownEditor
           busy={busy}
           onPendingChange={onPendingChange}
+          onShowSource={onShowSource}
           active={visual === true}
           source={source}
           apply={(snapshot, range, replacement) => {

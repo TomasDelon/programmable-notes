@@ -69,3 +69,18 @@ visual input. Save/reopen/recovery notices capture a document key and exact sour
 a delayed completion cannot claim that another selected source or newer text was
 saved. This does not authorize any operation or change native grants. See the
 [actual browser/native regression evidence](../security-evidence/2026-11-19-document-status/README.md).
+
+## Opaque block Source navigation
+
+Expanded read-only blocks offer Show in Source on the trusted editing surface.
+The action captures only the parser-owned offset and full current source. App
+checks document identity and revision; CodeMirror checks the full source again
+and validates/converts the original raw offset before selecting and focusing it.
+Navigation changes no source, history, file grant or preview lifecycle. An
+unapplied inline draft or busy file operation disables the action. Preview
+messages cannot invoke it; JSX stays escaped and opaque.
+
+This is a fallback to ordinary source authoring, not a reverse-editing contract.
+The private callback is never exposed through native IPC or the preview message
+protocol. Existing compiler navigation also captures document identity, preventing
+a queued location from being applied to another selected document.

@@ -29,6 +29,7 @@ await assert.rejects(lstat(draft), { code: 'ENOENT' });
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
 const mixedEol = process.argv.includes('--mixed-eol');
 const quotes = process.argv.includes('--quotes');
+const sourceNavigation = process.argv.includes('--source-navigation');
 const multilineQuotes = process.argv.includes('--multiline-quotes');
 assert.ok(!multilineQuotes || quotes, '--multiline-quotes requires --quotes');
 const multilineBefore =
@@ -436,6 +437,66 @@ try {
     await fileIdle();
     assert.equal(await readFile(file, 'utf8'), saved);
     console.log('NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS');
+  }
+  if (sourceNavigation) {
+    const target = '<div><span>Nested JSX</span></div>';
+    const writtenParagraph = mixedEol
+      ? paragraph.replace('A paragraph: 50% + tax.', 'Updated: 75% + tax.')
+      : replacement.replace(/\n/g, '\r\n');
+    await inline(writtenParagraph, 'Paragraph text', '<Unsafe />', false);
+    await waitUi(`document.querySelector('textarea')?.value==='<Unsafe />'`);
+    const locate = `Array.from(document.querySelectorAll('details.opaque-block')).find(d=>d.querySelector('pre')?.textContent===${JSON.stringify(target)})`;
+    assert.equal(
+      await script(
+        `const done=arguments[arguments.length-1];const d=${locate};if(!d)return done(false);if(!d.open)d.querySelector('summary').click();done(d.querySelector('button')?.disabled===true);`,
+      ),
+      true,
+    );
+    const field = await wd(`/session/${session}/element`, {
+      using: 'css selector',
+      value: 'textarea',
+    });
+    await wd(
+      `/session/${session}/element/${field['element-6066-11e4-a52e-4f735466cecf']}/click`,
+      {},
+    );
+    await pressKey('Escape');
+    await waitUi(`!document.querySelector('textarea')`);
+    assert.equal(
+      await script(
+        `const done=arguments[arguments.length-1];const d=${locate};const b=d?.querySelector('button');if(!b||b.disabled||b.textContent!=='Show in Source')return done(false);b.click();done(true);`,
+      ),
+      true,
+    );
+    await waitUi(
+      `document.querySelector('[aria-label="MDX source"]')===document.activeElement && !document.querySelector('.source-editor').parentElement.hidden`,
+    );
+    assert.equal(await readFile(file, 'utf8'), saved);
+    await pressKey('space');
+    await waitUi(
+      `document.querySelector('[aria-label="Document status"]')?.textContent==='Unsaved changes'`,
+    );
+    const spaced = saved.replace(target, ' ' + target);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), spaced);
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), saved);
+    await history(true);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), spaced);
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), saved);
+    assert.equal((await stat(file)).mode & 0o777, 0o640);
+    await button('Visual');
+    console.log(
+      'NATIVE_OPAQUE_SOURCE_JUMP_PENDING_GUARD_EXACT_CARET_BYTES_UNDO_REDO_PASS',
+    );
   }
   await inline('Second item', 'List item text', 'Recovered item');
   await waitUi(

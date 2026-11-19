@@ -11,11 +11,13 @@ export function MarkdownEditor({
   apply,
   busy = false,
   onPendingChange,
+  onShowSource,
 }: {
   source: string;
   active: boolean;
   busy?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onShowSource?: (offset: number, snapshot: string) => void;
   apply: (
     snapshot: string,
     range: MarkdownRange,
@@ -140,6 +142,19 @@ export function MarkdownEditor({
             <details className="opaque-block" key={block.from}>
               <summary>Source block · read only</summary>
               <pre>{source.slice(block.from, block.to)}</pre>
+              {onShowSource && (
+                <button
+                  disabled={busy || pending}
+                  onClick={() => {
+                    if (busy || pending) return;
+                    setEdit(undefined);
+                    setError('');
+                    onShowSource(block.from, source);
+                  }}
+                >
+                  Show in Source
+                </button>
+              )}
             </details>
           );
         return (

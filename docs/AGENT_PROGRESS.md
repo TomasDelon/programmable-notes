@@ -1282,3 +1282,27 @@ then bounded opaque-block Source navigation via existing revealSource offset/ful
 snapshot checks. Native fd151c78…/package287692f1… remains exact recorded baseline.
 Latest checked hosted34dc906 zero-step CI refusal is account billing; verify latest
 head again, never label local success hosted-green. Keep all known native failures.
+
+## 2026-11-19 — opaque block Source navigation verified
+
+Baseca99097; trusted expanded blocks now focus their exact original Source caret.
+Full snapshot/document identity and CodeMirror guards, pending/busy refusal, no
+source/history/grant change and no preview message authority. Unit/browser RED
+then GREEN; read-only review no Important/Critical issues. Full check77unit/32
+Chromium passed; Rust7policy/36ordinarydocuments/1Tauri boundary passed,4ignored
+fault tests not rerun,3Rustfmt checks passed.
+
+Optimized package2002734b… / installed ELF46f65e87… passed full native fidelity
+--mixed-eol --quotes --multiline-quotes --source-navigation: actual counter, old
+editing gates, pending refusal/Escape/Sourcejump/real keyboard exact disk caret,
+Undo/Redo/mode0640, dirty-close Cancel/OK, real restart, explicit unsaved recovery,
+invalid-data/delete and original unchanged. Independent IPC passed sameELF with
+separate production policy/effective-limit/Stop and automated ACL/Counter/CSP scopes.
+All150 tracked shipping sources/config/vendor/locks/defaults match builder.
+Evidence2026-11-19-opaque-source-navigation includes raw logs/hashes/syntheticMDX.
+
+Next: commit/push/update draftPR, check exact hosted result, then investigate
+large-document reliability in bounded steps. Existing downloadable ZIP remains
+engine34dc906, not this new action. Baseca99097 hosted run44532919827 refused both
+zero-step jobs for billing. Preserve earlier native SIGSEGV/startup/blank/memory
+acceptance failures; no security readiness or complete new pressure-matrix claim.

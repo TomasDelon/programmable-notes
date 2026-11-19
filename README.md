@@ -14,7 +14,8 @@ trusted in-place Markdown editing. Literal paragraphs, headings, simple lists
 and quoted paragraphs support checked, undoable text patches. Explicit multiline
 quotes keep their line count, every marker and each original LF/CRLF ending;
 use Source to change structure. React, formatted and ambiguous blocks remain
-opaque. See the [workspace decision](docs/decisions/ADR-007-unified-workspace.md)
+opaque; expand a read-only block and choose **Show in Source** to focus its
+original position without changing the document. See the [workspace decision](docs/decisions/ADR-007-unified-workspace.md)
 and [quote contract](docs/decisions/ADR-010-multiline-quote-editing.md).
 
 This remains experimental and is not approved for hostile documents or production
