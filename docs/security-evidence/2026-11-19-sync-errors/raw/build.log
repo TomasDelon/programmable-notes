@@ -1,0 +1,3 @@
+   Compiling native-documents v0.1.0 (/accept-build/native-documents)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.64s
+  Executable tests/process_crash.rs (native-documents/target/debug/build/native-documents/42f43e91df075d61/out/process_crash-42f43e91df075d61)

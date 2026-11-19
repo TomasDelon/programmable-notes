@@ -364,3 +364,27 @@ directory-sync error reports uncertainty without pruning prior valid snapshots.
 Keep production code free of failpoints; explicitly distinguish syscall fault
 injection from physical filesystem/power-loss evidence. Native blank-preview
 startup remains unresolved and hosted CI remains account-billing blocked.
+
+## 2026-11-19 — recovery fsync error paths
+
+Unbound-note acceptance is committed/pushed as d47f30d; PR #1 remains draft. The
+next milestone adds tests only, with no production behavior/permission change.
+External own-child ptrace skips the selected fsync and returns EIO at file sync,
+publication directory sync and retention directory sync. All three Ubuntu cases
+passed, validating prior raw bytes before repair, correct durable/warning state,
+exact restoration, no original writes and a successful explicit retry. The four
+existing real writer SIGKILL stages passed again on the final test binary. Normal
+backend suite passed 35 tests; fault/crash tests are executed separately.
+
+Three UI transport-boundary cases cover warnings and null-warning uncertainty:
+visible health, automatic pause, no implicit restoration, exact source and explicit
+restore remain. A React act fixture initially prevented its own DOM commit; await
+transport completion before asserting the DOM. No application change was needed.
+Read-only review found no concrete issue. Evidence: 2026-11-19-sync-errors. CI has
+an explicit three-stage gated command, but hosted startup remains billing-blocked.
+
+Next: commit/push verified error-path coverage, update draft PR, then reproduce
+potential loss of uncommitted inline text on document switching/close/save. Keep
+source patches explicit, and never let preview messages authorize edits. If the
+loss is reproducible, add the smallest trusted-editor guard and dirty-close
+protection, preserving mode switching and current source/recovery semantics.

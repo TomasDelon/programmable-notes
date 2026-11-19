@@ -68,7 +68,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 45 unit and 23 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 48 unit and 23 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
@@ -116,7 +116,11 @@ Recovery can lag within debounce or unfinished writes. Checksums detect corrupti
 not hostile same-user rewriting. Advisory locks coordinate cooperating instances;
 a noncooperating same-user writer can race the final original-file conflict check
 and rename. Actual process-kill tests do not prove storage power-loss durability.
-Directory-fsync failure reporting after publication has not been fault-injected.
+External own-child syscall injection now verifies file-fsync failure,
+publication-directory uncertainty and retention-directory warnings without
+production failpoints. Prior bytes, exact restoration and explicit retry passed
+in the disposable Ubuntu VM; this is error-path validation, not real disk failure
+or power-loss evidence. [Executed scope](security-evidence/2026-11-19-sync-errors/README.md).
 Snapshot capacity exhaustion requires explicit cleanup. These constrain durability
 claims, not permission to continue editor-side source-preserving work.
 

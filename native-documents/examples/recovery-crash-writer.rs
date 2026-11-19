@@ -29,16 +29,24 @@ fn main() {
         std::io::Error::last_os_error()
     );
     assert_eq!(unsafe { libc::raise(libc::SIGSTOP) }, 0);
-    Recovery::open(&root)
-        .unwrap()
-        .append(Input {
-            document_id: "a".repeat(32),
-            name: "note.mdx".into(),
-            baseline: None,
-            parent: Some(parent),
-            source: "x".repeat(500_000),
-        })
-        .unwrap();
+    let written = Recovery::open(&root).unwrap().append(Input {
+        document_id: "a".repeat(32),
+        name: "note.mdx".into(),
+        baseline: None,
+        parent: Some(parent),
+        source: "x".repeat(500_000),
+    });
+    if std::env::var_os("PN_REPORT_SYNC_RESULT").is_some() {
+        println!(
+            "{}",
+            match written {
+                Ok(written) => serde_json::json!({"ok": true, "written": written}),
+                Err(error) => serde_json::json!({"ok": false, "error": error}),
+            }
+        );
+        return;
+    }
+    written.unwrap();
     panic!("The parent should kill this process at the selected syscall boundary");
 }
 #[cfg(not(target_os = "linux"))]

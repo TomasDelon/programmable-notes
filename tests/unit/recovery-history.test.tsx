@@ -308,3 +308,93 @@ it('keeps independent recovery lineages when an already snapshotted buffer share
   expect(api.snapshot.mock.calls[1]?.[0].parent).toBeNull();
   expect(stored).toHaveLength(2);
 });
+
+it.each([
+  {
+    durable: false,
+    warning: 'Published but durability uncertain: I/O error',
+    errorText: 'Published but durability uncertain',
+  },
+  {
+    durable: true,
+    warning: 'Snapshot saved; retention cleanup failed: I/O error',
+    errorText: 'Snapshot saved; retention cleanup failed',
+  },
+  {
+    durable: false,
+    warning: null,
+    errorText: 'Snapshot publication could not be confirmed durable',
+  },
+])(
+  'keeps a published version restorable but pauses automatic writes on $errorText',
+  async ({ durable, warning, errorText }) => {
+    vi.useFakeTimers();
+    vi.stubGlobal('crypto', webcrypto);
+    let published = false;
+    api.snapshots.mockImplementation(async () => ({
+      snapshots: published ? [version] : [],
+      errors: [],
+      capacityExceeded: false,
+    }));
+    api.snapshot.mockImplementation(async () => {
+      published = true;
+      return { snapshot: version, durable, warning };
+    });
+    const restore = vi.fn().mockResolvedValue(undefined);
+    const health = vi.fn();
+    render(
+      <RecoveryHistory
+        documentKey="a.mdx"
+        name="a.mdx"
+        source={'\uFEFF# Unsaved\r\n😀'}
+        busy={false}
+        restore={restore}
+        onHealth={health}
+        candidates={[
+          {
+            documentKey: 'a.mdx',
+            name: 'a.mdx',
+            source: '\uFEFF# Unsaved\r\n😀',
+            baseline: 'saved',
+          },
+        ]}
+      />,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Keep versioned snapshot' }),
+    );
+    await act(async () => {
+      await vi.waitFor(() => expect(api.snapshots).toHaveBeenCalledTimes(2));
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(errorText);
+    expect(
+      screen.getByRole('button', { name: 'Resume automatic recovery' }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Restore selected version' }),
+    ).toBeEnabled();
+    expect(health).toHaveBeenLastCalledWith({
+      message: expect.stringContaining(errorText),
+      error: true,
+    });
+    expect(restore).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000);
+    });
+    expect(api.snapshot).toHaveBeenCalledTimes(1);
+    expect(api.snapshot.mock.calls[0]?.[0].source).toBe(
+      '\uFEFF# Unsaved\r\n😀',
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Restore selected version' }),
+    );
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(restore).toHaveBeenCalledWith('opaque-version'),
+      );
+    });
+  },
+);

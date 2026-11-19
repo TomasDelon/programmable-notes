@@ -1,8 +1,10 @@
 #![cfg(all(target_os = "linux", target_arch = "x86_64"))]
-//! Real SIGKILL at syscall boundaries, without production failpoints or mocks.
+//! Own-child syscall validation: real SIGKILL and explicit injected fsync errors.
+//! Production storage code has no failpoints; injected errors are not real disk failures.
 use native_documents::snapshots::{Input, Recovery};
 use std::{
     fs,
+    io::Read,
     os::unix::process::ExitStatusExt,
     path::PathBuf,
     process::{Child, Command, Stdio},
@@ -20,6 +22,7 @@ impl Fixture {
         self.0.join("recovery")
     }
 }
+
 impl Drop for Fixture {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).unwrap();
@@ -170,5 +173,192 @@ fn process_crashes_preserve_durable_recovery_at_each_publication_stage() {
             .to_string_lossy()
             .starts_with(".pending-")));
         println!("REAL_PROCESS_CRASH_PASS stage={stage} prior_version_retained=true incomplete_records_exposed=false");
+    }
+}
+
+#[test]
+#[ignore = "requires a disposable Linux x86_64 environment permitting own-child ptrace"]
+fn sync_failures_preserve_recovery_and_report_publication_state() {
+    for stage in ["file", "publication", "retention"] {
+        let fixture = Fixture::new(&format!("sync-{stage}"));
+        let directory = fixture.directory();
+        let original = fixture.0.join("original.mdx");
+        fs::write(&original, "\u{feff}# Never overwrite\r\nCafé 😀\r\n").unwrap();
+        let mut prior = Vec::new();
+        let mut parent = None;
+        for n in 1..=5 {
+            let result = Recovery::open(&directory)
+                .unwrap()
+                .append(input(format!("# Prior {n}\r\nCafé 😀\r\n"), parent))
+                .unwrap();
+            assert!(result.durable);
+            parent = Some(result.snapshot.id.clone());
+            let file = result.snapshot.file;
+            prior.push((file.clone(), fs::read(directory.join(file)).unwrap()));
+        }
+        let child = Command::new(
+            std::env::var_os("PN_CRASH_WRITER_BINARY")
+                .expect("Build and provide the main-thread validation writer"),
+        )
+        .env("PN_CRASH_ROOT", &directory)
+        .env("PN_CRASH_PARENT", parent.unwrap())
+        .env("PN_REPORT_SYNC_RESULT", "1")
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+        let mut child = OwnedChild(child, false);
+        let pid: libc::pid_t = child.0.id().try_into().unwrap();
+        let status = wait(pid);
+        child.1 = libc::WIFEXITED(status) || libc::WIFSIGNALED(status);
+        assert!(libc::WIFSTOPPED(status));
+        assert_eq!(libc::WSTOPSIG(status), libc::SIGSTOP);
+        trace(
+            libc::PTRACE_SETOPTIONS,
+            pid,
+            (libc::PTRACE_O_TRACESYSGOOD | libc::PTRACE_O_EXITKILL) as usize as *mut libc::c_void,
+        );
+        let (mut published, mut directory_syncs, mut awaiting_exit, mut injected) =
+            (false, 0, false, false);
+        for _ in 0..5000 {
+            trace(libc::PTRACE_SYSCALL, pid, std::ptr::null_mut());
+            let status = wait(pid);
+            child.1 = libc::WIFEXITED(status) || libc::WIFSIGNALED(status);
+            if child.1 {
+                assert!(libc::WIFEXITED(status));
+                assert_eq!(libc::WEXITSTATUS(status), 0);
+                break;
+            }
+            assert!(libc::WIFSTOPPED(status));
+            assert_eq!(libc::WSTOPSIG(status), libc::SIGTRAP | 0x80);
+            let mut registers: libc::user_regs_struct = unsafe { std::mem::zeroed() };
+            trace(
+                libc::PTRACE_GETREGS,
+                pid,
+                (&mut registers as *mut libc::user_regs_struct).cast(),
+            );
+            if awaiting_exit {
+                // The selected syscall was skipped, rather than synced and then
+                // relabeled. Return EIO to the real, unchanged library call.
+                assert_eq!(registers.orig_rax, u64::MAX);
+                assert_eq!(registers.rax as i64, -(libc::ENOSYS as i64));
+                registers.rax = (-(libc::EIO as i64)) as u64;
+                trace(
+                    libc::PTRACE_SETREGS,
+                    pid,
+                    (&mut registers as *mut libc::user_regs_struct).cast(),
+                );
+                awaiting_exit = false;
+                injected = true;
+                continue;
+            }
+            let syscall = registers.orig_rax as i64;
+            let result = registers.rax as i64;
+            if syscall == libc::SYS_renameat2 && result == 0 {
+                published = true;
+            }
+            if injected || syscall != libc::SYS_fsync || result != -(libc::ENOSYS as i64) {
+                continue;
+            }
+            let fd = fs::read_link(format!("/proc/{pid}/fd/{}", registers.rdi)).unwrap();
+            let pending = fd
+                .file_name()
+                .is_some_and(|n| n.to_string_lossy().starts_with(".pending-"));
+            let directory_sync = published && fd == directory;
+            if directory_sync {
+                directory_syncs += 1;
+            }
+            let selected = match stage {
+                "file" => pending && !published,
+                "publication" => directory_sync && directory_syncs == 1,
+                "retention" => directory_sync && directory_syncs == 2,
+                _ => unreachable!(),
+            };
+            if selected {
+                registers.orig_rax = u64::MAX;
+                trace(
+                    libc::PTRACE_SETREGS,
+                    pid,
+                    (&mut registers as *mut libc::user_regs_struct).cast(),
+                );
+                awaiting_exit = true;
+            }
+        }
+        assert!(
+            child.1 && injected && !awaiting_exit,
+            "fault not completed: {stage}"
+        );
+        let mut response = String::new();
+        child
+            .0
+            .stdout
+            .take()
+            .unwrap()
+            .read_to_string(&mut response)
+            .unwrap();
+        let result: serde_json::Value = serde_json::from_str(&response).unwrap();
+        if stage == "file" {
+            assert_eq!(result["ok"], false);
+            assert!(result["error"]
+                .as_str()
+                .unwrap()
+                .contains("Input/output error"));
+        } else {
+            assert_eq!(result["ok"], true);
+            assert_eq!(result["written"]["durable"], stage == "retention");
+            let warning = result["written"]["warning"].as_str().unwrap();
+            assert!(warning.contains(if stage == "publication" {
+                "durability uncertain"
+            } else {
+                "retention cleanup failed"
+            }));
+            assert!(warning.contains("Input/output error"));
+        }
+        // Observe the unmodified directory before reopening can repair retention.
+        let records = fs::read_dir(&directory)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            records.iter().filter(|f| f.ends_with(".pnrec")).count(),
+            if stage == "publication" { 6 } else { 5 }
+        );
+        assert!(records.iter().all(|f| !f.starts_with(".pending-")));
+        for (index, (file, bytes)) in prior.iter().enumerate() {
+            if stage == "retention" && index == 0 {
+                assert!(!directory.join(file).exists());
+            } else {
+                assert_eq!(fs::read(directory.join(file)).unwrap(), *bytes);
+            }
+        }
+        let mut store = Recovery::open(&directory).unwrap();
+        let inventory = store.list().unwrap();
+        assert!(inventory.errors.is_empty());
+        assert_eq!(inventory.snapshots.len(), 5);
+        assert_eq!(
+            store.restore(&prior[4].0).unwrap(),
+            "# Prior 5\r\nCafé 😀\r\n"
+        );
+        let head = &inventory.snapshots[0];
+        assert_eq!(
+            head.metadata.generation,
+            if stage == "file" { 5 } else { 6 }
+        );
+        if stage != "file" {
+            assert_eq!(store.restore(&head.file).unwrap(), "x".repeat(500_000));
+        }
+        let retry = store
+            .append(input("# Explicit retry\r\n".into(), Some(head.id.clone())))
+            .unwrap();
+        assert!(retry.durable);
+        assert!(retry.warning.is_none());
+        assert_eq!(
+            store.restore(&retry.snapshot.file).unwrap(),
+            "# Explicit retry\r\n"
+        );
+        assert_eq!(
+            fs::read_to_string(original).unwrap(),
+            "\u{feff}# Never overwrite\r\nCafé 😀\r\n"
+        );
+        println!("INJECTED_SYNC_ERROR_PASS stage={stage} selected_fsync_skipped=true prior_records_verified=true explicit_retry=true");
     }
 }

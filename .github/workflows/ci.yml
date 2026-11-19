@@ -90,6 +90,13 @@ jobs:
           cargo build --manifest-path native-documents/Cargo.toml --locked --example recovery-crash-writer
           PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact process_crashes_preserve_durable_recovery_at_each_publication_stage --nocapture | tee /tmp/recovery-crash.log
           grep -F 'REAL_PROCESS_CRASH_PASS stage=durable' /tmp/recovery-crash.log
+      - name: Verify recovery sync error reporting (external syscall injection)
+        shell: bash
+        run: |
+          PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact sync_failures_preserve_recovery_and_report_publication_state --nocapture | tee /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=file ' /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=publication ' /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=retention ' /tmp/recovery-sync-errors.log
       - run: cargo test --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
       - run: npm run native:wry:verify
       - run: npm run native:package
