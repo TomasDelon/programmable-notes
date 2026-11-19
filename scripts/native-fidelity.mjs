@@ -33,6 +33,7 @@ const allowedFlags = new Set([
   '--source-navigation',
   '--visual-budget',
   '--same-names',
+  '--extension-case',
 ]);
 assert.ok(
   [...flags].every((flag) => allowedFlags.has(flag)),
@@ -50,7 +51,10 @@ const draft = join(
   'dev.programmablenotes.app/recovery/recovered.mdx',
 );
 await assert.rejects(lstat(draft), { code: 'ENOENT' });
-const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
+const filename = flags.has('--extension-case')
+  ? 'fidelity-acceptance.MdX'
+  : 'fidelity-acceptance.mdx';
+const file = join(process.env.NATIVE_FIXTURE_DIR, filename);
 const mixedEol = flags.has('--mixed-eol');
 const quotes = flags.has('--quotes');
 const sourceNavigation = flags.has('--source-navigation');
@@ -179,7 +183,7 @@ async function open() {
   dialog(await rootPid(), 'choose', 'Open documents and modules', file);
   await fileIdle();
   await waitUi(
-    "document.querySelector('select')?.value.endsWith('fidelity-acceptance.mdx')",
+    `document.querySelector('select')?.value.endsWith(${JSON.stringify(filename)})`,
   );
 }
 async function inline(before, label, after, applied = true) {

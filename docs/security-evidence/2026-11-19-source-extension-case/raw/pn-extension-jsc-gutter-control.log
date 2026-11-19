@@ -1,0 +1,2 @@
+{"phase": "evaluate", "sourceSha256": "77bfb781be2f41d20ace02e2ddd9691815619d2006ed2a64da80c5cfbeebba6b", "jscEnvironment": {}}
+{"scope": "pure JSC control, no DOM/Tauri or isolation acceptance", "result": {"calls": 200000, "observed": 200000, "finalFrom": 64, "finalValueNull": true}}

@@ -1,3 +1,4 @@
+import { isMdxSource, javascriptLoader } from '../sourceTypes';
 import { compile } from '@mdx-js/mdx';
 import * as esbuild from 'esbuild-wasm';
 import { resolveFile } from './resolve';
@@ -65,7 +66,7 @@ self.onmessage = async ({
               { filter: /.*/, namespace: 'workspace' },
               async (args) => {
                 const source = files[args.path]!;
-                if (/\.mdx?$/.test(args.path)) {
+                if (isMdxSource(args.path)) {
                   try {
                     const compiled = await compile(
                       { value: source, path: args.path },
@@ -108,11 +109,7 @@ self.onmessage = async ({
                 }
                 return {
                   contents: source,
-                  loader: args.path.endsWith('tsx')
-                    ? 'tsx'
-                    : args.path.endsWith('ts')
-                      ? 'ts'
-                      : 'jsx',
+                  loader: javascriptLoader(args.path),
                 };
               },
             );

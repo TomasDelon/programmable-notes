@@ -1519,3 +1519,55 @@ choose boundedcorrection preserving exact paths/bytes and narrow file formats;
 no wholepathcasefold or new filesystemauthority. Ifunsupported bydesign, make
 rejectionexplicit ratherthanrenderinganotherdocument. Keep currentreviewengine54
 immutable and all nativeJSC/startup/memory/billing limitationsvisible.
+
+## 2026-11-19 — source extension consistency, verification in progress
+
+Base40e253c. Reproduced real uppercase MDX retaining another entry. Shared frontend
+extension classifiers and native ASCII spelling policy now preserve exact full
+paths/module keys, source bytes and existing six formats. Native filters include
+those spellings; unsupported browser files reject before reading. Workspace,
+browser, native store/snapshot regressions added; no capabilities or path IPC.
+First fullcheck94unit/36Chromium and39ordinary documentRust+7policy tests passed.
+Read-onlyreview no Critical/Important; additional extension-only wrong-case and
+simultaneous case-distinct TSX browser controls added, final fullcheck pending.
+
+OptimizedDebian3c0b8347…/ELFff7d4bab… built/inspected/installed,151shipping files
+matchbuilder. Fullnative first attempt failed during headingUndo after actual
+.MdXpicker/React/unchangedsave/modes, repeated-name anddense gates passed. Trusted
+WebKitWebProcess41070 logged internal DFG->FTL tier-up diagnostic then vanished;
+Root41039 survived. Independently originaltitle/bytes/mode0640 preserved. Owned
+Root cleaned with verifiedPID/start/exehash SIGTERM. No JIT/policy changes; not
+proven same cause as earlierSIGSEGV. Rawfailure +journal/cleanup retained in
+2026-11-19-source-extension-case. Same-command bounded fresh-fixture repeat running
+Root41563, /tmp/pn-extension-native-fidelity-repeat.log, exec20929. Allfailure
+outcomes remain failures even if repeat succeeds. Installed source remains frozen.
+
+Next exact action: finish repeat, independentIPC on exactELF; finalfullcheck
+(aftertest-onlyreviewcontrols anddocformatting), retain source/helper parity and
+native results, commit/push/update draftPR. BaseCI44557795559 bothjobs0steps same
+billingannotation. Currentdownloadreview immutableengine54, resource6e3015/1,
+JSC/startup/blank/GPU limitations remain. Do not claim production readiness.
+
+## 2026-11-19 — source extension verification checkpoint
+
+Finalfullcheck94unit/37matchingChromium passed, including wrong extension-only
+import case and simultaneous Widget.TSX/Widget.tsx compiler identities.39ordinary
+RustDocument and7policy passed. Optimized3c0b8347…/ELFff7d4bab… installed;151shipping
+inputs and fullbundleSHA matchbuilder. IndependentnativeIPC exited0 exactELF.
+Samebinary complete lowercase --all-earlier-flags command exited0 all disk/history/
+mode/quotes/navigation/dirtyclose/restart/legacyrecovery/invaliddelete gates.
+Short uppercase --extension-case command exited0 all ordinaryfidelity/restart/
+recovery gates. The two fulluppercase primed commands remain exit1 atheadingUndo,
+with trustedJSCDFG->FTL diagnostics. Static32bit sourcehash matches CodeMirror
+advanceCursor guttercandidate; puredefaultJSC200000calls exited0, notrootcausefix.
+AllownedfailureRoots cleanedwithidentitychecks, successfulRoots exitednormally.
+No JIT/security/deadline/limits changes. Currentevidence distinguishes allscopes.
+
+Next: commit/push/update draftPR/check exacthostCI. Thenextend existing native
+automatic-recovery observer with strict --extension-case mode (mutuallyexclusive
+with --new-notes so coveragecannot silentlydiffer), failunknownargsbeforepreflight/
+fixturewrites; assert mixedcase snapshotmetadata, originalpreservation, real
+SIGKILL/restart/explicitunsavedrestore/cancelledandactualSaveAs tocase-preserving
+filename. Productionapp/binaryunchanged. AddrealnegativeCLItests, preserveoldgates,
+runfullcheck andactualordinaryUIDnativeacceptance. ContinueJSC investigationas
+separateunresolvedreleaseblocker; no speculativeproductionengineworkaround.

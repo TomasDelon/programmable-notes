@@ -1,3 +1,4 @@
+import { isMdxSource } from '../sourceTypes';
 export interface NativeDocument {
   id: string;
   revision: string;
@@ -103,7 +104,7 @@ export function addDocuments(
       };
   }
   validateFiles(files);
-  const entry = [...keys].find((key) => /\.mdx?$/.test(key)) || state.entry;
+  const entry = [...keys].find((key) => isMdxSource(key)) || state.entry;
   return {
     ...state,
     files,
@@ -160,7 +161,7 @@ export function removeDocument(state: Workspace, key: string): Workspace {
   if (!first) throw Error('Keep at least one source open.');
   const entry =
     state.entry === key
-      ? Object.keys(files).find((k) => /\.mdx?$/.test(k)) || first
+      ? Object.keys(files).find((k) => isMdxSource(k)) || first
       : state.entry;
   return {
     ...state,

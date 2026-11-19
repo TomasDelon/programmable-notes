@@ -144,3 +144,20 @@ it('rejects empty, unknown and inherited source names without changing dirty byt
     '# Keep dirty café 😀.\r\n',
   );
 });
+
+it('rejects unsupported file formats before reading while retaining the active buffer', async () => {
+  const hook = renderHook(() =>
+    useDocuments({ 'note.mdx': '# Retain' }, 'note.mdx'),
+  );
+  const file = new File(['# Not implicitly supported'], 'note.EXE');
+  const read = vi.spyOn(file, 'arrayBuffer');
+  const before = hook.result.current.workspace;
+  await act(() =>
+    hook.result.current.openBrowser([file] as unknown as FileList),
+  );
+  expect(read).not.toHaveBeenCalled();
+  expect(hook.result.current.workspace).toBe(before);
+  expect(hook.result.current.fileError).toContain(
+    'supported Markdown or source module',
+  );
+});

@@ -93,3 +93,13 @@ source or inherited property. Invalid values retain the entire current state.
 Visible options include list-position ordinals to distinguish repeated filenames;
 ordinals can change on close and never become source keys, grants or persistent
 identities. Existing source/history and pending-inline guards remain authoritative.
+
+## Source extension case
+
+Classify ASCII case variants of the existing Markdown, MDX, TS, TSX, JS and JSX
+extensions consistently across entry selection, compiler loaders, visual editing,
+browser imports and drafts. Preserve the complete original path, source bytes and
+filename. Virtual imports remain case-sensitive; mixed-case modules require their
+exact explicit filenames, and extensionless resolution retains its existing
+lowercase candidate order. Never lowercase an entire path or package specifier.
+Unsupported browser selections reject before reading any selected file.

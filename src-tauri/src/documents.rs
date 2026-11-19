@@ -64,15 +64,14 @@ pub async fn open_documents(
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         let _dialog = Dialog::acquire(&docs)?;
+        let extensions = native_documents::source_extension_variants();
+        let extension_refs: Vec<&str> = extensions.iter().map(String::as_str).collect();
         let Some(selected) = app
             .dialog()
             .file()
             .set_parent(&window)
             .set_title("Open documents and modules")
-            .add_filter(
-                "MDX and source modules",
-                &["mdx", "md", "tsx", "ts", "jsx", "js"],
-            )
+            .add_filter("MDX and source modules", &extension_refs)
             .blocking_pick_files()
         else {
             return Ok(Vec::new());
@@ -127,11 +126,13 @@ pub async fn save_document_as(
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         let _dialog = Dialog::acquire(&docs)?;
+        let extensions = native_documents::source_extension_variants();
+        let extension_refs: Vec<&str> = extensions.iter().map(String::as_str).collect();
         let suggestion = std::path::Path::new(&name)
             .file_name().and_then(|n| n.to_str()).unwrap_or("note.mdx");
         let Some(selected) = app.dialog().file().set_parent(&window)
             .set_title("Save source as").set_file_name(suggestion)
-            .add_filter("MDX and source modules", &["mdx", "md", "tsx", "ts", "jsx", "js"])
+            .add_filter("MDX and source modules", &extension_refs)
             .blocking_save_file() else { return Ok(None); };
         let path = selected.into_path().map_err(|_| "Only local source files are supported")?;
         #[cfg(target_os = "linux")]

@@ -1690,3 +1690,126 @@ test('same-named sources have distinct visible choices and retain separate exact
   await choose(secondKey);
   expect(await exported()).toEqual(Buffer.from(second));
 });
+
+test('mixed-case MDX and explicit TSX imports select the correct entry without folding file identities', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const source =
+    '\uFEFFimport { Widget } from "./Widget.TSX"\r\n\r\n# Mixed-case note\r\n\r\nA literal paragraph.\r\n\r\n<Widget />\r\n';
+  const module =
+    'import {useState} from "react"; export function Widget(){const[n,setN]=useState<number>(0);const label: string="Upper module";return <button onClick={()=>setN(n+1)}>{label} {n}</button>}';
+  await page.getByLabel('Open files').setInputFiles([
+    { name: 'Note.MdX', mimeType: 'text/plain', buffer: Buffer.from(source) },
+    { name: 'Widget.TSX', mimeType: 'text/plain', buffer: Buffer.from(module) },
+  ]);
+  await expect(page.getByLabel('Source file')).toHaveValue(/Note\.MdX$/);
+  const counter = page
+    .frameLocator('iframe')
+    .getByRole('button', { name: /Upper module/ });
+  await expect(counter).toHaveText('Upper module 0');
+  await counter.click();
+  await expect(counter).toHaveText('Upper module 1');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Markdown editing' })
+    .getByRole('button', { name: 'A literal paragraph.', exact: true })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Edited literal paragraph.');
+  await field.press('Enter');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(
+      source.replace('A literal paragraph.', 'Edited literal paragraph.'),
+    ),
+  );
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  for (const wrongPath of ['./widget.TSX', './Widget.tsx']) {
+    await editor.fill(source.replace('./Widget.TSX', wrongPath));
+    await expect(page.getByRole('alert')).toContainText(
+      'Missing workspace module',
+    );
+  }
+  await editor.fill(source);
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await expect(counter).toHaveText('Upper module 0');
+  const draftSource =
+    '\uFEFF# Draft uppercase\r\n\r\nRecovered bytes café 😀.\r\n';
+  await open(page, draftSource, 'Draft.MDX');
+  await expect(
+    page
+      .frameLocator('iframe')
+      .getByRole('heading', { name: 'Draft uppercase' }),
+  ).toBeVisible();
+  const draftKey = await page.getByLabel('Source file').inputValue();
+  await page.getByText('Browser draft', { exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Keep local draft', exact: true })
+    .click();
+  await expect(
+    page.getByText('Draft stored in this browser.', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await editor.fill('# Keep this other unsaved buffer.');
+  await page
+    .getByRole('button', { name: 'Restore local draft', exact: true })
+    .click();
+  await expect(page.getByLabel('Source file')).not.toHaveValue(draftKey);
+  await expect(page.getByLabel('Source file')).toHaveValue(/Draft\.MDX$/);
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Unsaved changes',
+  );
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await expect(
+    page
+      .frameLocator('iframe')
+      .getByRole('heading', { name: 'Draft uppercase' }),
+  ).toBeVisible();
+  const restored = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  const restoredFile = await restored;
+  expect(restoredFile.suggestedFilename()).toBe('Draft.MDX');
+  expect(readFileSync((await restoredFile.path())!)).toEqual(
+    Buffer.from(draftSource),
+  );
+});
+
+test('case-distinct TSX modules compile independently in the same browser selection', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const source =
+    'import {Widget as Upper} from "./Widget.TSX"\nimport {Widget as Lower} from "./Widget.tsx"\n\n<Upper />\n\n<Lower />\n';
+  await page.getByLabel('Open files').setInputFiles([
+    { name: 'Case.mdx', mimeType: 'text/plain', buffer: Buffer.from(source) },
+    {
+      name: 'Widget.TSX',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(
+        'export function Widget(){const value: string="Exact upper module"; return <p>{value}</p>}',
+      ),
+    },
+    {
+      name: 'Widget.tsx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(
+        'export function Widget(){const value: string="Exact lower module"; return <p>{value}</p>}',
+      ),
+    },
+  ]);
+  const preview = page.frameLocator('iframe');
+  await expect(
+    preview.getByText('Exact upper module', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    preview.getByText('Exact lower module', { exact: true }),
+  ).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(source),
+  );
+});

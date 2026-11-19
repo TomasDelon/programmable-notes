@@ -1,3 +1,4 @@
+import { isMdxSource } from '../sourceTypes';
 import { useEffect, useState } from 'react';
 import { validateFiles } from './workspace';
 
@@ -69,7 +70,7 @@ export function BrowserDraft({
         typeof draft !== 'object' ||
         !('name' in draft) ||
         typeof draft.name !== 'string' ||
-        !/^[^/\\]+\.mdx?$/.test(draft.name) ||
+        !/^[^/\\]+\.mdx?$/i.test(draft.name) ||
         !('source' in draft) ||
         typeof draft.source !== 'string'
       )
@@ -92,13 +93,13 @@ export function BrowserDraft({
         separate unsaved document.
       </p>
       <button
-        disabled={busy || !/\.mdx?$/.test(name)}
+        disabled={busy || !isMdxSource(name)}
         onClick={() => perform('keep')}
       >
         Keep local draft
       </button>
       <button
-        disabled={busy || (!autosave && !/\.mdx?$/.test(name))}
+        disabled={busy || (!autosave && !isMdxSource(name))}
         onClick={() => {
           if (autosave) {
             setAutosave(undefined);

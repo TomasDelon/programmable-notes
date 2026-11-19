@@ -4,6 +4,33 @@ use std::{
     fmt,
     path::{Path, PathBuf},
 };
+const SOURCE_EXTENSIONS: [&str; 6] = ["mdx", "md", "tsx", "ts", "jsx", "js"];
+pub(crate) fn supported_source_extension(extension: &str) -> bool {
+    SOURCE_EXTENSIONS
+        .iter()
+        .any(|allowed| extension.eq_ignore_ascii_case(allowed))
+}
+/// Picker spellings only; original selected paths and names are never folded.
+pub fn source_extension_variants() -> Vec<String> {
+    SOURCE_EXTENSIONS
+        .iter()
+        .flat_map(|extension| {
+            (0..(1usize << extension.len())).map(move |mask| {
+                extension
+                    .bytes()
+                    .enumerate()
+                    .map(|(index, byte)| {
+                        char::from(if mask & (1 << index) == 0 {
+                            byte
+                        } else {
+                            byte.to_ascii_uppercase()
+                        })
+                    })
+                    .collect()
+            })
+        })
+        .collect()
+}
 pub const MAX_SOURCE_BYTES: usize = 500_000;
 pub const MAX_DOCUMENTS: usize = 32;
 pub const MAX_TOTAL_BYTES: usize = 8 * 1024 * 1024;

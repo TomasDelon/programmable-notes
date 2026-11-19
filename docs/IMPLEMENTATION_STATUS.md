@@ -171,8 +171,8 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 63 unit and 28 Chromium tests passed.                                                                                                                                                             |
-| Native document backend            | 36 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 94 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
+| Native document backend            | 39 ordinary Rust tests passed; four infrastructure-only cases are excluded from that count. Earlier 15 snapshot tests were repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                  |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
 | Automatic native recovery          | Real independent histories, retention, restart, discovery, explicit restore/save, GUI ENOSPC/pause/Resume and original Save while recovery storage was full. [Evidence](security-evidence/2026-11-19-automatic-recovery/README.md).      |
@@ -295,8 +295,28 @@ checks are independent of native acceptance.
 
 Native fidelity flags now fail closed on unknown options before prerequisites
 or fixture creation ([live refusal evidence](security-evidence/2026-11-19-fidelity-options/README.md)).
-Next: investigate uppercase source-extension handling without changing source
-paths, file formats or authority. The portable review is remote-verified
+ASCII case variants of the existing six source extensions now share consistent
+entry, compiler-loader, visual/draft and native-file handling. Original paths,
+module identities, filenames and source bytes retain exact case; wrong-case
+imports still fail. Unsupported browser formats reject before reading. Native
+snapshot names and picker filters follow the same narrow format policy.
+[Verification and native failure evidence](security-evidence/2026-11-19-source-extension-case/README.md).
+
+The new production package ff7d4bab… passed actual `.MdX` picker/React/unchanged
+save/mode checks, then two fresh-fixture full fidelity commands failed at the same heading Undo.
+WebKitWebProcess logged an internal DFG-to-FTL tier-up diagnostic and disappeared
+while the Root survived. Original bytes/mode were independently preserved. The
+bounded repeat retained the same internal diagnostic; no JIT or sandbox setting was changed,
+and no general native crash fix is claimed. The same binary passed the full lowercase control and the shorter uppercase
+editing/history/save/restart/recovery command. Both failed primed combinations
+remain failures. The diagnostic code hash matches a CodeMirror gutter-loop
+candidate; pure default-JSC calls did not reproduce it. No exclusive cause or
+identity with the earlier SIGSEGV is established.
+
+Independent IPC passed on this exact ELF; the complete malicious-pressure
+matrix was not repeated. Next: exercise uppercase-named versioned automatic
+recovery and explicit Save As across a real process restart, while preserving
+these native renderer failures for bounded investigation. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner

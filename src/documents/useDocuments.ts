@@ -1,3 +1,4 @@
+import { isMdxSource, isSupportedSource } from '../sourceTypes';
 import {
   useCallback,
   useEffect,
@@ -184,6 +185,12 @@ export function useDocuments(
       if (Object.keys(existing).length + list.length > MAX_FILES)
         throw Error('Workspace exceeds 32 files; close unused sources.');
       const selectedFiles = Array.from(list);
+      if (
+        selectedFiles.some(
+          (file) => !isSupportedSource(file.webkitRelativePath || file.name),
+        )
+      )
+        throw Error('Select a supported Markdown or source module file.');
       if (selectedFiles.some((file) => file.size > MAX_FILE_BYTES))
         throw Error('File exceeds 500 KB limit.');
       validateFiles(existing);
@@ -356,7 +363,7 @@ export function useDocuments(
         ? {
             ...next,
             selected: key,
-            entry: /\.mdx?$/.test(key) ? key : next.entry,
+            entry: isMdxSource(key) ? key : next.entry,
           }
         : next,
     );

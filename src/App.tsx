@@ -1,3 +1,4 @@
+import { isMdxSource } from './sourceTypes';
 import { RecoveryHistory } from './documents/RecoveryHistory';
 import { BrowserDraft } from './documents/BrowserDraft';
 import { isTauri, invoke } from '@tauri-apps/api/core';
@@ -39,7 +40,7 @@ export function App() {
   const documentActionsBlocked = documents.busy || pendingVisual;
   const [mode, setMode] = useState<'source' | 'split' | 'visual'>('split');
   const workspaceMode =
-    mode === 'visual' && !/\.mdx?$/.test(selected) ? 'source' : mode;
+    mode === 'visual' && !isMdxSource(selected) ? 'source' : mode;
   const editorCommands = useRef<EditorCommands>(null);
   const histories = useRef<EditorHistory>(new Map());
   useEffect(() => {
@@ -381,7 +382,7 @@ export function App() {
             <button
               key={value}
               aria-pressed={workspaceMode === value}
-              disabled={value === 'visual' && !/\.mdx?$/.test(selected)}
+              disabled={value === 'visual' && !isMdxSource(selected)}
               onClick={() => setMode(value)}
             >
               {value[0]!.toUpperCase() + value.slice(1)}
@@ -476,7 +477,7 @@ export function App() {
           />
           <p>Legacy single-copy controls (kept for migration):</p>
           <button
-            disabled={documentActionsBlocked || !/\.mdx?$/.test(selected)}
+            disabled={documentActionsBlocked || !isMdxSource(selected)}
             onClick={() => void documents.nativeDraft('keep')}
           >
             Keep recovery draft

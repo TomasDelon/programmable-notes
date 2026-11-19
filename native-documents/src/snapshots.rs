@@ -99,7 +99,7 @@ fn valid_name(name: &str) -> bool {
         && !name.contains(['/', '\\', '\0'])
         && name.chars().all(|c| !c.is_control())
         && name.rsplit_once('.').is_some_and(|(stem, extension)| {
-            !stem.is_empty() && matches!(extension, "md" | "mdx" | "tsx" | "ts" | "jsx" | "js")
+            !stem.is_empty() && crate::supported_source_extension(extension)
         })
 }
 fn record_name(name: &str) -> bool {

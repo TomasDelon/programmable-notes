@@ -92,6 +92,7 @@ it('accepts the full supported fidelity flag set before reporting missing native
         '--source-navigation',
         '--visual-budget',
         '--same-names',
+        '--extension-case',
       ],
       {
         encoding: 'utf8',

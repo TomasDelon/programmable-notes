@@ -1,0 +1,914 @@
+{
+  "scope": "shipping sources/config/locks/vendor/default fixtures; not a hermetic-build claim",
+  "baseHead": "40e253c001ff66abaf72b2c84a2573008987db01",
+  "checked": 151,
+  "mismatches": [],
+  "files": [
+    {
+      "path": "docs/handoff/samples/fixtures/counter.mdx",
+      "host": "4a6fe448fe7ea3436b845a3372160e17e85b51e1e78aa7fbfab9b134c96ca742",
+      "builder": "4a6fe448fe7ea3436b845a3372160e17e85b51e1e78aa7fbfab9b134c96ca742",
+      "equal": true
+    },
+    {
+      "path": "docs/handoff/samples/fixtures/widgets/ImportedCounter.tsx",
+      "host": "89f74687c888fdaa0490d86eb36d74c9b61b35b9c6324ae30592f9b12c69031f",
+      "builder": "89f74687c888fdaa0490d86eb36d74c9b61b35b9c6324ae30592f9b12c69031f",
+      "equal": true
+    },
+    {
+      "path": "index.html",
+      "host": "094263e13544ee9dcc53d0e81721a4d04c6a4110c7a4b0704f236b34c892cdac",
+      "builder": "094263e13544ee9dcc53d0e81721a4d04c6a4110c7a4b0704f236b34c892cdac",
+      "equal": true
+    },
+    {
+      "path": "native-documents/Cargo.lock",
+      "host": "9fd32e7568c99ef28f882318abd67fa19df309834a1b83e4b240d9adcaadc198",
+      "builder": "9fd32e7568c99ef28f882318abd67fa19df309834a1b83e4b240d9adcaadc198",
+      "equal": true
+    },
+    {
+      "path": "native-documents/Cargo.toml",
+      "host": "24004ba6a5b90f357d89d76e34e4275b58bd3febdaf1b2e519afada0872ffad5",
+      "builder": "24004ba6a5b90f357d89d76e34e4275b58bd3febdaf1b2e519afada0872ffad5",
+      "equal": true
+    },
+    {
+      "path": "native-documents/src/draft.rs",
+      "host": "e50b72a7f968e8aa7f93d7d26952c228ea3e54c1365b39e04b7a6b6ee0619174",
+      "builder": "e50b72a7f968e8aa7f93d7d26952c228ea3e54c1365b39e04b7a6b6ee0619174",
+      "equal": true
+    },
+    {
+      "path": "native-documents/src/lib.rs",
+      "host": "c7a64bc9afabbc1b22c494753d9106a828523aa119db1186d3ed30da234cf646",
+      "builder": "c7a64bc9afabbc1b22c494753d9106a828523aa119db1186d3ed30da234cf646",
+      "equal": true
+    },
+    {
+      "path": "native-documents/src/linux.rs",
+      "host": "c2b161ac30548e65bc3d2ac1da898f26c7dce898821f61d9c99ccd471e08523d",
+      "builder": "c2b161ac30548e65bc3d2ac1da898f26c7dce898821f61d9c99ccd471e08523d",
+      "equal": true
+    },
+    {
+      "path": "native-documents/src/snapshots.rs",
+      "host": "ea36f10972ebbf76c1470a5961daa462bd756d006fe1dda2b7d7c2bcb41cebce",
+      "builder": "ea36f10972ebbf76c1470a5961daa462bd756d006fe1dda2b7d7c2bcb41cebce",
+      "equal": true
+    },
+    {
+      "path": "native-policy/Cargo.lock",
+      "host": "69a505f6a687bf92a89ced321a26f196d1bb510e9e48fbb5d575612b07a5a8e8",
+      "builder": "69a505f6a687bf92a89ced321a26f196d1bb510e9e48fbb5d575612b07a5a8e8",
+      "equal": true
+    },
+    {
+      "path": "native-policy/Cargo.toml",
+      "host": "3bbae240cf180577867cf98106d8cfaa60df99daad792083ae7cf8000515eeea",
+      "builder": "3bbae240cf180577867cf98106d8cfaa60df99daad792083ae7cf8000515eeea",
+      "equal": true
+    },
+    {
+      "path": "native-policy/src/lib.rs",
+      "host": "cbfaf63fb4879b063a5ed557149a10134c3a841ba73350b808420e1d9417e061",
+      "builder": "cbfaf63fb4879b063a5ed557149a10134c3a841ba73350b808420e1d9417e061",
+      "equal": true
+    },
+    {
+      "path": "package-lock.json",
+      "host": "5a084edd950b406cbecfb50cef635dd5af42383255472307a56e1f8f59711fd2",
+      "builder": "5a084edd950b406cbecfb50cef635dd5af42383255472307a56e1f8f59711fd2",
+      "equal": true
+    },
+    {
+      "path": "scripts/runtime.mjs",
+      "host": "8b3c69f61968216f30b54b2cdc184cb5d8d9d43bd6204e8705c956827c3354c1",
+      "builder": "8b3c69f61968216f30b54b2cdc184cb5d8d9d43bd6204e8705c956827c3354c1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/Cargo.lock",
+      "host": "4a9537c9ddbe7899db4127e050770130a9ceb1203b547f8c80971488d3aa004a",
+      "builder": "4a9537c9ddbe7899db4127e050770130a9ceb1203b547f8c80971488d3aa004a",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/Cargo.toml",
+      "host": "6aafc18e7af713e7e811ede03fb9c5662626cda5b2639902795a27bc98e5b780",
+      "builder": "6aafc18e7af713e7e811ede03fb9c5662626cda5b2639902795a27bc98e5b780",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/build.rs",
+      "host": "a2607381911168a22971502a39f4a3194daf23e41a7bb525e7848680941b2707",
+      "builder": "a2607381911168a22971502a39f4a3194daf23e41a7bb525e7848680941b2707",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/capabilities/editor.json",
+      "host": "eea0b22a3dda9c0233abc8659a17a83ab9a6858045e06240e722acb826744719",
+      "builder": "eea0b22a3dda9c0233abc8659a17a83ab9a6858045e06240e722acb826744719",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/128x128.png",
+      "host": "0065e446d06881d181e07379c8dd2f5d89994622b1e63042aa348ea84def62e2",
+      "builder": "0065e446d06881d181e07379c8dd2f5d89994622b1e63042aa348ea84def62e2",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/256x256.png",
+      "host": "7b0e2745cff807633c057e9995b00527132506357cc2ba556682706a0cac24b1",
+      "builder": "7b0e2745cff807633c057e9995b00527132506357cc2ba556682706a0cac24b1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/32x32.png",
+      "host": "883954eab27d3d2076e9efed1541ad2b8df59f3a189e0eac380fde2dcf567d5e",
+      "builder": "883954eab27d3d2076e9efed1541ad2b8df59f3a189e0eac380fde2dcf567d5e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/icon.ico",
+      "host": "48318788a0dcdd9473ae8f6cef45e8ffee9d3de49ca645ef15b7a4eb31f562eb",
+      "builder": "48318788a0dcdd9473ae8f6cef45e8ffee9d3de49ca645ef15b7a4eb31f562eb",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/icon.png",
+      "host": "40903b9bfc38208fd7e78bb56f1a0de97bc620d38035a330d04824977d047116",
+      "builder": "40903b9bfc38208fd7e78bb56f1a0de97bc620d38035a330d04824977d047116",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/icons/source.svg",
+      "host": "ee027ad6fa74bf461b89e404173586cdfd55f930722564dd7ee757645e8d587f",
+      "builder": "ee027ad6fa74bf461b89e404173586cdfd55f930722564dd7ee757645e8d587f",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/linux/post-install.sh",
+      "host": "23bdc10e2300da3b99e3de3da4aca3f423e93aa4e7a3e5bbd0486751c7c9a1a5",
+      "builder": "23bdc10e2300da3b99e3de3da4aca3f423e93aa4e7a3e5bbd0486751c7c9a1a5",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/linux/pre-remove.sh",
+      "host": "bfe36abc628661bdaf6566fa814b0fbc8b4ff905fa75f8c0dbc9da855af90b9a",
+      "builder": "bfe36abc628661bdaf6566fa814b0fbc8b4ff905fa75f8c0dbc9da855af90b9a",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/linux/programmable-notes.apparmor",
+      "host": "131408b8ef50eddbf551258dab52a35ea2a466bbb143cccaee96307bdf851e7f",
+      "builder": "131408b8ef50eddbf551258dab52a35ea2a466bbb143cccaee96307bdf851e7f",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/close_document.toml",
+      "host": "845e0d469a805af5873f31d57a434d1abf954a75d570bf67273fef3725dc1484",
+      "builder": "845e0d469a805af5873f31d57a434d1abf954a75d570bf67273fef3725dc1484",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/confirm_discard.toml",
+      "host": "73a564d7c50de9022107132c81296c57da33a2fd75ce84e6f917ddc73ebdb2fe",
+      "builder": "73a564d7c50de9022107132c81296c57da33a2fd75ce84e6f917ddc73ebdb2fe",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/host_probe.toml",
+      "host": "e307a4455cf14f59113b581f321157e8451f077994c3f944d057e29ff25dd305",
+      "builder": "e307a4455cf14f59113b581f321157e8451f077994c3f944d057e29ff25dd305",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/open_documents.toml",
+      "host": "db0e48d64583e611a94fc4780b847221bd35440fc4b2949ad8c484151cfd5804",
+      "builder": "db0e48d64583e611a94fc4780b847221bd35440fc4b2949ad8c484151cfd5804",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/preview_connection_active.toml",
+      "host": "cba505cce10b6850b7ac56e400adbea1762aa1312dcdb4c113c988901c47f9c7",
+      "builder": "cba505cce10b6850b7ac56e400adbea1762aa1312dcdb4c113c988901c47f9c7",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/recovery_draft.toml",
+      "host": "037a69b75ef9537311183f1913fa8f777b1c31faf5dbd31ffe14ac321cce94cc",
+      "builder": "037a69b75ef9537311183f1913fa8f777b1c31faf5dbd31ffe14ac321cce94cc",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/reopen_document.toml",
+      "host": "0e2baee88f8eaf1365a19897a49aa939eae76a6e94abf4221ef620d3b0cb6a70",
+      "builder": "0e2baee88f8eaf1365a19897a49aa939eae76a6e94abf4221ef620d3b0cb6a70",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/save_document.toml",
+      "host": "3cfce585edef432815438d69c69ae94f272d56b8afbd0ac4a4f6aa1ff9293aa1",
+      "builder": "3cfce585edef432815438d69c69ae94f272d56b8afbd0ac4a4f6aa1ff9293aa1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/save_document_as.toml",
+      "host": "b1fdb43b22cc2ac225161d250c8c210799a48e3fc85a33a4af6b69b379a9969e",
+      "builder": "b1fdb43b22cc2ac225161d250c8c210799a48e3fc85a33a4af6b69b379a9969e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/set_documents_dirty.toml",
+      "host": "35747892b48ccf27649c4c23f64b0e554ca74d3348f9ce7042332056a9754afa",
+      "builder": "35747892b48ccf27649c4c23f64b0e554ca74d3348f9ce7042332056a9754afa",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/start_preview.toml",
+      "host": "569624b1fa451dedd0f6bc41f1ad29682ecb6f4421c5069c839fc5b6cf7637bf",
+      "builder": "569624b1fa451dedd0f6bc41f1ad29682ecb6f4421c5069c839fc5b6cf7637bf",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/permissions/autogenerated/stop_preview.toml",
+      "host": "026d0aeac99065bda089fb0c8f6980c9ddfa557ccd226b4862d3e6783065ef20",
+      "builder": "026d0aeac99065bda089fb0c8f6980c9ddfa557ccd226b4862d3e6783065ef20",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/src/documents.rs",
+      "host": "2e4e9117123f90b2531432aa88d21d46238756a0635a7af83ba455b2ee097edd",
+      "builder": "2e4e9117123f90b2531432aa88d21d46238756a0635a7af83ba455b2ee097edd",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/src/downloads.rs",
+      "host": "34371225fd678ea8f5cbb5bdb47217476b5d053b265fdb325644721dad5d5855",
+      "builder": "34371225fd678ea8f5cbb5bdb47217476b5d053b265fdb325644721dad5d5855",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/src/main.rs",
+      "host": "34a4aaa25dbc4ca0b6316800fa2035cb439990480926802a81ec389ec11a17fb",
+      "builder": "34a4aaa25dbc4ca0b6316800fa2035cb439990480926802a81ec389ec11a17fb",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/tauri.conf.json",
+      "host": "f27d803b59bacf86f1656b77b86b65b975a5d7f9182442089f7b8985f767b9f7",
+      "builder": "f27d803b59bacf86f1656b77b86b65b975a5d7f9182442089f7b8985f767b9f7",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/.cargo/audit.toml",
+      "host": "26f5e627f768cce1687f4460d56a18b4725817d5ae392dfd154541ef39c40e3b",
+      "builder": "26f5e627f768cce1687f4460d56a18b4725817d5ae392dfd154541ef39c40e3b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/.cargo/config.toml",
+      "host": "0c9559057a73238c99857c7bc3b58243306ebcfe3dcc4c90027da2502186eb11",
+      "builder": "0c9559057a73238c99857c7bc3b58243306ebcfe3dcc4c90027da2502186eb11",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/.cargo_vcs_info.json",
+      "host": "261a52ce6c175f67bedb4c4568730199aff8f772ddbe3b433075d1ff1e72c0f7",
+      "builder": "261a52ce6c175f67bedb4c4568730199aff8f772ddbe3b433075d1ff1e72c0f7",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/.gitignore",
+      "host": "dadf1c3dd73d49c9bce82d54a2a141e2712ab11df1d97b0d6ae99bb591ff440c",
+      "builder": "dadf1c3dd73d49c9bce82d54a2a141e2712ab11df1d97b0d6ae99bb591ff440c",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/.license_template",
+      "host": "9aca48869404894538e54a881bcc2ece2142a709b665ced1fd2d284ae7c44595",
+      "builder": "9aca48869404894538e54a881bcc2ece2142a709b665ced1fd2d284ae7c44595",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/CHANGELOG.md",
+      "host": "028f245fe6bb3706a15e371d5ecdffa273e6a46e1c0fd7b1f36e77acda5a2276",
+      "builder": "028f245fe6bb3706a15e371d5ecdffa273e6a46e1c0fd7b1f36e77acda5a2276",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/Cargo.toml",
+      "host": "a4df9b6934fbd2ed9752ed15e2c6208e81a9a26aeb7ebff930ba6ce109f01fe8",
+      "builder": "a4df9b6934fbd2ed9752ed15e2c6208e81a9a26aeb7ebff930ba6ce109f01fe8",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/Cargo.toml.orig",
+      "host": "0dbf4adaed816dfc27384805517420ccabb266d3583556428883cbb48df164f9",
+      "builder": "0dbf4adaed816dfc27384805517420ccabb266d3583556428883cbb48df164f9",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/LICENSE-APACHE",
+      "host": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "builder": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/LICENSE-MIT",
+      "host": "ef88893533af22ffbb68ceef0724ba1389518df26165a34f3c99ad30b884df4f",
+      "builder": "ef88893533af22ffbb68ceef0724ba1389518df26165a34f3c99ad30b884df4f",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/LICENSE.spdx",
+      "host": "26235c41e314fb0da35b33b2bb5bcbc4dd523839f8eeca52efcd43586f441fb5",
+      "builder": "26235c41e314fb0da35b33b2bb5bcbc4dd523839f8eeca52efcd43586f441fb5",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/MOBILE.md",
+      "host": "7e4311eb2128c6605b51b3f4c3578f8e49c2595ada41986a8bc09bf20950fd08",
+      "builder": "7e4311eb2128c6605b51b3f4c3578f8e49c2595ada41986a8bc09bf20950fd08",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/PROGRAMMABLE_NOTES_PATCH.md",
+      "host": "a7d53f4b67d995ad7f5b45ae9a9f17e483eb4b6f67fbdb4871de471746ca321d",
+      "builder": "a7d53f4b67d995ad7f5b45ae9a9f17e483eb4b6f67fbdb4871de471746ca321d",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/README.md",
+      "host": "cfa18c4d0e5a72d02b71e28c381de76d870d2adac8acf7b077071a5431ee536d",
+      "builder": "cfa18c4d0e5a72d02b71e28c381de76d870d2adac8acf7b077071a5431ee536d",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/SECURITY.md",
+      "host": "84ed305e72c0348770feb82dacd98478ad7fc024eedd29e9e9794025f8e04bfe",
+      "builder": "84ed305e72c0348770feb82dacd98478ad7fc024eedd29e9e9794025f8e04bfe",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/build.rs",
+      "host": "689c618b57d95f2d9e4578744c8126615d93c5624d9b3747af20650e577ccb1b",
+      "builder": "689c618b57d95f2d9e4578744c8126615d93c5624d9b3747af20650e577ccb1b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/async_custom_protocol.rs",
+      "host": "69304ca4cf9cf6e7ea513c62e14f2af06272c95fef76e920ecd0eff946239b27",
+      "builder": "69304ca4cf9cf6e7ea513c62e14f2af06272c95fef76e920ecd0eff946239b27",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/cookies.rs",
+      "host": "ef2f4464f9fa5c536e17f3f9ff46f557e99ad6e3aa5e46e37d53ae96f50a412f",
+      "builder": "ef2f4464f9fa5c536e17f3f9ff46f557e99ad6e3aa5e46e37d53ae96f50a412f",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_protocol.rs",
+      "host": "6b45e6ad1ba7b9b86a679065fd58a9339daa2a1d85760a95ad1cb8f52d80ed37",
+      "builder": "6b45e6ad1ba7b9b86a679065fd58a9339daa2a1d85760a95ad1cb8f52d80ed37",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_protocol/index.html",
+      "host": "86a935667a25d8cc7d4ccbff68b6067c702efc6bc435dc62ce46a498a87678e7",
+      "builder": "86a935667a25d8cc7d4ccbff68b6067c702efc6bc435dc62ce46a498a87678e7",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_protocol/script.js",
+      "host": "6e08b96e8e1e0a3acb924a4ea63d45f45544ed82b253b8b9e33aace1e323656e",
+      "builder": "6e08b96e8e1e0a3acb924a4ea63d45f45544ed82b253b8b9e33aace1e323656e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_protocol/subpage.html",
+      "host": "39a21e00664d114f7d6a0c841be473deb0c5e142712decb711377e86c48afd51",
+      "builder": "39a21e00664d114f7d6a0c841be473deb0c5e142712decb711377e86c48afd51",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_protocol/wasm.wasm",
+      "host": "2cb1a33779de77d7cc016d934f91262b0984ec695e1f8dda9ba3c33725f5ef1b",
+      "builder": "2cb1a33779de77d7cc016d934f91262b0984ec695e1f8dda9ba3c33725f5ef1b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/custom_titlebar.rs",
+      "host": "2cea5714dfcaefee33b1f189fe0f0caa5b8d646285ee1842e5be5691ac8806ba",
+      "builder": "2cea5714dfcaefee33b1f189fe0f0caa5b8d646285ee1842e5be5691ac8806ba",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/gtk_multiwebview.rs",
+      "host": "6f5f4b388e645db45a18f7ed9266b3bcf52a8fa083dbcd9e21b60ac36d35d806",
+      "builder": "6f5f4b388e645db45a18f7ed9266b3bcf52a8fa083dbcd9e21b60ac36d35d806",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/gtk_opengl.rs",
+      "host": "749fd3f3c1e9e8e2f36f23f056e0b54efc4341e4e9b0a424806dc37d57936c03",
+      "builder": "749fd3f3c1e9e8e2f36f23f056e0b54efc4341e4e9b0a424806dc37d57936c03",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/multiwebview.rs",
+      "host": "ed7084e36721efa615a33533d454788896f98118f6019805333e865fa473ee81",
+      "builder": "ed7084e36721efa615a33533d454788896f98118f6019805333e865fa473ee81",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/multiwindow.rs",
+      "host": "2bfdf4f95794af2de5929b78b464b4d08062bb3a10200ab5d945fee0e1ff2c44",
+      "builder": "2bfdf4f95794af2de5929b78b464b4d08062bb3a10200ab5d945fee0e1ff2c44",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/permission_handler.rs",
+      "host": "4ce919e92462170937ef0b1f20f18e7e91f68c85160aad021b1449e00f19fc25",
+      "builder": "4ce919e92462170937ef0b1f20f18e7e91f68c85160aad021b1449e00f19fc25",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/reparent.rs",
+      "host": "9ad2e4b46eeab665bee9cfb19f8407f5f5fd7cce34cb010d56e043ff36c6a534",
+      "builder": "9ad2e4b46eeab665bee9cfb19f8407f5f5fd7cce34cb010d56e043ff36c6a534",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/simple.rs",
+      "host": "dd060533de836fae76add7185a6c41a7577271aed7cb38e6e55d612512a75c09",
+      "builder": "dd060533de836fae76add7185a6c41a7577271aed7cb38e6e55d612512a75c09",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/streaming.rs",
+      "host": "2b7ba171bda541166aab6926601904cc49a43c63f894165e619249e501e8d122",
+      "builder": "2b7ba171bda541166aab6926601904cc49a43c63f894165e619249e501e8d122",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/streaming/index.html",
+      "host": "7eb6977535c62e269b91f85ea6fd5e2ac0da4e8afd33d925e6ffeebe2f1b31d3",
+      "builder": "7eb6977535c62e269b91f85ea6fd5e2ac0da4e8afd33d925e6ffeebe2f1b31d3",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/transparent.rs",
+      "host": "0f1f428e5ae771725b886108fa595892b5d3303146d761e86c31d700920eee08",
+      "builder": "0f1f428e5ae771725b886108fa595892b5d3303146d761e86c31d700920eee08",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/wgpu.rs",
+      "host": "af20bbceb87b097d66388895575322f6d709f7e0388cbd4c59cd6d61f5157a40",
+      "builder": "af20bbceb87b097d66388895575322f6d709f7e0388cbd4c59cd6d61f5157a40",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/window_border.rs",
+      "host": "3caaf470a8872c6bb3c3b37275f20a661df40f27873f59c0dfa4836331abe5e9",
+      "builder": "3caaf470a8872c6bb3c3b37275f20a661df40f27873f59c0dfa4836331abe5e9",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/examples/winit.rs",
+      "host": "fd1263474c2dd3057beeab2d3e582f6d35df8b049c37655d86a4ddba5c4b94cd",
+      "builder": "fd1263474c2dd3057beeab2d3e582f6d35df8b049c37655d86a4ddba5c4b94cd",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/renovate.json",
+      "host": "32cf3c60bb8d28e5bb05d6564f413edcf8440261de9c6d9e2882f948a61a26a2",
+      "builder": "32cf3c60bb8d28e5bb05d6564f413edcf8440261de9c6d9e2882f948a61a26a2",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/rustfmt.toml",
+      "host": "355f303583e15d1518e0c89eeaf2a4034bcc7c2a292087dfc17d00dc8173a5fd",
+      "builder": "355f303583e15d1518e0c89eeaf2a4034bcc7c2a292087dfc17d00dc8173a5fd",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/binding.rs",
+      "host": "eb628d35d0515cc6f7d4189387a2a57b50040cc233bb3ebd7d4a82983db4e94c",
+      "builder": "eb628d35d0515cc6f7d4189387a2a57b50040cc233bb3ebd7d4a82983db4e94c",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/Ipc.kt",
+      "host": "02502f453b8b3749a4375d587c62837c1ce7f38bba8e259b9417dda8b23c258e",
+      "builder": "02502f453b8b3749a4375d587c62837c1ce7f38bba8e259b9417dda8b23c258e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/Logger.kt",
+      "host": "6ef1209ea4a45ef236fd4e2b0d1c2b086bc99ddb31a4e1d9da171f45c06a51fe",
+      "builder": "6ef1209ea4a45ef236fd4e2b0d1c2b086bc99ddb31a4e1d9da171f45c06a51fe",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/PermissionHelper.kt",
+      "host": "15fbd8ac2606c9f930cfd047a1074cedec286b7257e2a644e5caa45fdcab74e4",
+      "builder": "15fbd8ac2606c9f930cfd047a1074cedec286b7257e2a644e5caa45fdcab74e4",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/Rust.kt",
+      "host": "ed069b83c5d9acfd6ce241ff25797362ba3d058cf7356a713165d5f5bc506deb",
+      "builder": "ed069b83c5d9acfd6ce241ff25797362ba3d058cf7356a713165d5f5bc506deb",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/RustWebChromeClient.kt",
+      "host": "5e225fc1a85e769e4a666b7cd47946356e742190060803ecb31a12a68bf1ce06",
+      "builder": "5e225fc1a85e769e4a666b7cd47946356e742190060803ecb31a12a68bf1ce06",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/RustWebView.kt",
+      "host": "47fd957ed1c1d3f9e2ccb33b07499217710ada99bfc0bc6e9d0acb8535ec408b",
+      "builder": "47fd957ed1c1d3f9e2ccb33b07499217710ada99bfc0bc6e9d0acb8535ec408b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/RustWebViewClient.kt",
+      "host": "822d673093b71da012b9ae15eb740e2de5976e5cfe2cac0b86cf9c1208657d7a",
+      "builder": "822d673093b71da012b9ae15eb740e2de5976e5cfe2cac0b86cf9c1208657d7a",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/WryActivity.kt",
+      "host": "ca1e7c6a29cbac1886ea955feb6783553f28118de3cd56769f47b6932992921e",
+      "builder": "ca1e7c6a29cbac1886ea955feb6783553f28118de3cd56769f47b6932992921e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/kotlin/proguard-wry.pro",
+      "host": "4c56b98a0e741bb964b3daad163cfd80e713e7076f4ac6851e0a276c815d1887",
+      "builder": "4c56b98a0e741bb964b3daad163cfd80e713e7076f4ac6851e0a276c815d1887",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/main_pipe.rs",
+      "host": "6997df01a12a36d6eace24cc447ca3b9586f65c8da868018b847571876aad10c",
+      "builder": "6997df01a12a36d6eace24cc447ca3b9586f65c8da868018b847571876aad10c",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/android/mod.rs",
+      "host": "57bbd039d526f28b2b43b79b52c1a6b01cc4bb29aab54a263a19c2d92f33f934",
+      "builder": "57bbd039d526f28b2b43b79b52c1a6b01cc4bb29aab54a263a19c2d92f33f934",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/custom_protocol_workaround.rs",
+      "host": "509ab2ad8c8aadc5746f277d97ae5588bbdd701a6f0bca32f674328d466768b5",
+      "builder": "509ab2ad8c8aadc5746f277d97ae5588bbdd701a6f0bca32f674328d466768b5",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/error.rs",
+      "host": "c5f87180fbc75aa39c447af529dc949d87cf74436b5d449416e54859f71d9b64",
+      "builder": "c5f87180fbc75aa39c447af529dc949d87cf74436b5d449416e54859f71d9b64",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/inject_initialization_scripts.rs",
+      "host": "841aa0089a7eac7734db8578910648beae018e0a4e2919a823d5ffdd12d2e587",
+      "builder": "841aa0089a7eac7734db8578910648beae018e0a4e2919a823d5ffdd12d2e587",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/lib.rs",
+      "host": "8aedf7a6044639ad8ad4d446829d3928c8cb037bd6fdb5e7fe5c6b72ddf1ee70",
+      "builder": "8aedf7a6044639ad8ad4d446829d3928c8cb037bd6fdb5e7fe5c6b72ddf1ee70",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/permissions.rs",
+      "host": "4d933418850508a0423cdbe45fd091d0f8eeb3ccab06c9ee70dbf354032552ea",
+      "builder": "4d933418850508a0423cdbe45fd091d0f8eeb3ccab06c9ee70dbf354032552ea",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/proxy.rs",
+      "host": "c72606d68787704fa91088d81f6b495fc05ce92ba77845339819b4d0c004a8f0",
+      "builder": "c72606d68787704fa91088d81f6b495fc05ce92ba77845339819b4d0c004a8f0",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/util.rs",
+      "host": "5f1b64eab6c81dea1c6ce7f955d2a7888b368ef9fcbe574bb1187e4046135e98",
+      "builder": "5f1b64eab6c81dea1c6ce7f955d2a7888b368ef9fcbe574bb1187e4046135e98",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/web_context.rs",
+      "host": "dd9912d669f3a5de10aeda7b8e1361751a1137a602385d31964439f101773aac",
+      "builder": "dd9912d669f3a5de10aeda7b8e1361751a1137a602385d31964439f101773aac",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webkitgtk/drag_drop.rs",
+      "host": "e3e52b6c32543c7e415244766a4a9da1decb028b50ccaaf3d981f8566acc8ed8",
+      "builder": "e3e52b6c32543c7e415244766a4a9da1decb028b50ccaaf3d981f8566acc8ed8",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webkitgtk/mod.rs",
+      "host": "eff5a44ea76b8840494e78cc4795b7d4990f55fc2aa32d9bd1bc865976bb7907",
+      "builder": "eff5a44ea76b8840494e78cc4795b7d4990f55fc2aa32d9bd1bc865976bb7907",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webkitgtk/synthetic_mouse_events.rs",
+      "host": "e928ecad26924d354db0bd769d3d525da36cde17ed6cee95ca78029d9ee54c8d",
+      "builder": "e928ecad26924d354db0bd769d3d525da36cde17ed6cee95ca78029d9ee54c8d",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webkitgtk/web_context.rs",
+      "host": "423bc918f4421f79f9bcca6e5bfd3530b39a3100536f7a6e83140d26dd40ac65",
+      "builder": "423bc918f4421f79f9bcca6e5bfd3530b39a3100536f7a6e83140d26dd40ac65",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webview2/drag_drop.rs",
+      "host": "5579665b388781e6c274c8a298e146c1d2416349eed1dac8dec8b98bfcc84fc1",
+      "builder": "5579665b388781e6c274c8a298e146c1d2416349eed1dac8dec8b98bfcc84fc1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webview2/mod.rs",
+      "host": "349c93924dd696b1204b468377814315e63336450dfa6b94f83a675cbbb68aa3",
+      "builder": "349c93924dd696b1204b468377814315e63336450dfa6b94f83a675cbbb68aa3",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/webview2/util.rs",
+      "host": "460a9762502ae0d04632f19bcd2c18a64d93b8578dcf6dd5eaaeed7f6700e278",
+      "builder": "460a9762502ae0d04632f19bcd2c18a64d93b8578dcf6dd5eaaeed7f6700e278",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/document_title_changed_observer.rs",
+      "host": "1a549cb2ef34ed21b0c43b30b96494ebd270225df4fe46c256f1cdcccff15c28",
+      "builder": "1a549cb2ef34ed21b0c43b30b96494ebd270225df4fe46c256f1cdcccff15c28",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/mod.rs",
+      "host": "f20048d06e0098d25eee0c549eb7fe26b20d041ada2fe1daf7771125fd44a7b8",
+      "builder": "f20048d06e0098d25eee0c549eb7fe26b20d041ada2fe1daf7771125fd44a7b8",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/url_scheme_handler.rs",
+      "host": "7c4d420f88c0faa1a6edbe7a4c03037e5ca133e3f3765445acfdfffd9cc62a1a",
+      "builder": "7c4d420f88c0faa1a6edbe7a4c03037e5ca133e3f3765445acfdfffd9cc62a1a",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_download_delegate.rs",
+      "host": "4bccb4cbd037a5b704c1ce6633ef64614cf9340cb930285bccc63a6846dfe8dd",
+      "builder": "4bccb4cbd037a5b704c1ce6633ef64614cf9340cb930285bccc63a6846dfe8dd",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_navigation_delegate.rs",
+      "host": "910165f5234cef00bf32f2164423998473644d1e9af2d2624452af08cc5a6803",
+      "builder": "910165f5234cef00bf32f2164423998473644d1e9af2d2624452af08cc5a6803",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_web_view.rs",
+      "host": "62e1cf69ca97b0c0c6f368939d1c19c34de45e6d33f271dfa2fff3f20dd5201e",
+      "builder": "62e1cf69ca97b0c0c6f368939d1c19c34de45e6d33f271dfa2fff3f20dd5201e",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_web_view_delegate.rs",
+      "host": "c9b134859f730a9f7bf40657dd7ef021825b21dbb545f5add2be6341236dfc9b",
+      "builder": "c9b134859f730a9f7bf40657dd7ef021825b21dbb545f5add2be6341236dfc9b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_web_view_parent.rs",
+      "host": "bf92ae18560a56ee0821f4d74da543ac499f91b4fcaefa076225ed317437085a",
+      "builder": "bf92ae18560a56ee0821f4d74da543ac499f91b4fcaefa076225ed317437085a",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/class/wry_web_view_ui_delegate.rs",
+      "host": "763a973bee9d1f0004eb1d096556acc9e8ee1114975620f5d0660724c70fb7e1",
+      "builder": "763a973bee9d1f0004eb1d096556acc9e8ee1114975620f5d0660724c70fb7e1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/download.rs",
+      "host": "0d6ed2562fbf1fec2afe1a474a5a45c0bb4cbbdcecdb491a88efed5409a1f6d9",
+      "builder": "0d6ed2562fbf1fec2afe1a474a5a45c0bb4cbbdcecdb491a88efed5409a1f6d9",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/drag_drop.rs",
+      "host": "d0ab5dea78c705133f17137fe570161abd45d978f0d3d9b1ed4ba0c191845cc0",
+      "builder": "d0ab5dea78c705133f17137fe570161abd45d978f0d3d9b1ed4ba0c191845cc0",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/ios/WKWebView.rs",
+      "host": "6948d0428e07f94c3a54192a450f64cea4b4d145adbf14cf4c918f1dc65c96cc",
+      "builder": "6948d0428e07f94c3a54192a450f64cea4b4d145adbf14cf4c918f1dc65c96cc",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/ios/mod.rs",
+      "host": "03823ce7c572f1ed345ae4ef6ec63e8ce4df1f0a7d3ad0efebb36dd6a7c18dd1",
+      "builder": "03823ce7c572f1ed345ae4ef6ec63e8ce4df1f0a7d3ad0efebb36dd6a7c18dd1",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/mod.rs",
+      "host": "c377d33c2408bcb2d2fbe987b3d000dae5f3325f467ea98192f9dbf0fc0bb7d0",
+      "builder": "c377d33c2408bcb2d2fbe987b3d000dae5f3325f467ea98192f9dbf0fc0bb7d0",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/navigation.rs",
+      "host": "09c4cbd12f94ba7ed50c08c377bc5d350f915e1a66b9b8126cc2f61f788dac0b",
+      "builder": "09c4cbd12f94ba7ed50c08c377bc5d350f915e1a66b9b8126cc2f61f788dac0b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/proxy.rs",
+      "host": "af9b9ef830b2528d0be667ce899fd33997a615002f2904dafe90d3195ed821b9",
+      "builder": "af9b9ef830b2528d0be667ce899fd33997a615002f2904dafe90d3195ed821b9",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/synthetic_mouse_events.rs",
+      "host": "1a59d449b985266c58a296cb2bf40fb40fb1e37e27ccae40042253d7faad432b",
+      "builder": "1a59d449b985266c58a296cb2bf40fb40fb1e37e27ccae40042253d7faad432b",
+      "equal": true
+    },
+    {
+      "path": "src-tauri/vendor/wry/src/wkwebview/util.rs",
+      "host": "c7be7b4421d3d4ba06a61d39f4efc3ada0eb3e2d691078aa842c3ae76f95e755",
+      "builder": "c7be7b4421d3d4ba06a61d39f4efc3ada0eb3e2d691078aa842c3ae76f95e755",
+      "equal": true
+    },
+    {
+      "path": "src/App.tsx",
+      "host": "710912642d0c9b5ffdfe0df92fef718caec0660b618c7ce1867f4d1b740e23c3",
+      "builder": "710912642d0c9b5ffdfe0df92fef718caec0660b618c7ce1867f4d1b740e23c3",
+      "equal": true
+    },
+    {
+      "path": "src/bootstrap.mdx",
+      "host": "f2d3cf54a26dd971b3c5ab83ae72f650f82c2d542ea00d8218f6d8c95e1fd533",
+      "builder": "f2d3cf54a26dd971b3c5ab83ae72f650f82c2d542ea00d8218f6d8c95e1fd533",
+      "equal": true
+    },
+    {
+      "path": "src/compiler/compiler.worker.ts",
+      "host": "d9fae6410cf169c8c8c7f6a0c9273603fc8a71ed29a1f76810e92f14b7537486",
+      "builder": "d9fae6410cf169c8c8c7f6a0c9273603fc8a71ed29a1f76810e92f14b7537486",
+      "equal": true
+    },
+    {
+      "path": "src/compiler/resolve.ts",
+      "host": "7a6abd3db0d38dddfe127e883afb05422a52a6b823d53933957eb6f7c5850d43",
+      "builder": "7a6abd3db0d38dddfe127e883afb05422a52a6b823d53933957eb6f7c5850d43",
+      "equal": true
+    },
+    {
+      "path": "src/compiler/sourceLocation.ts",
+      "host": "68f1c7c4b871b1d6a7ff6e91aba27fdbbc0b77d006047854a43b840c59939446",
+      "builder": "68f1c7c4b871b1d6a7ff6e91aba27fdbbc0b77d006047854a43b840c59939446",
+      "equal": true
+    },
+    {
+      "path": "src/documents/BrowserDraft.tsx",
+      "host": "2fe4ee896c4e505314b5c05076606de1d0bc881fb8d72058fed1b1507deb4c9d",
+      "builder": "2fe4ee896c4e505314b5c05076606de1d0bc881fb8d72058fed1b1507deb4c9d",
+      "equal": true
+    },
+    {
+      "path": "src/documents/RecoveryHistory.tsx",
+      "host": "fb9163cb6cb24c1008a2a4d5585cb6727ee5f5a1f8d7055ffe81f286c5154802",
+      "builder": "fb9163cb6cb24c1008a2a4d5585cb6727ee5f5a1f8d7055ffe81f286c5154802",
+      "equal": true
+    },
+    {
+      "path": "src/documents/native.ts",
+      "host": "5d17d3ab57a2fa60315691e2093599bc66389e28b265408c58abb51ce75f895d",
+      "builder": "5d17d3ab57a2fa60315691e2093599bc66389e28b265408c58abb51ce75f895d",
+      "equal": true
+    },
+    {
+      "path": "src/documents/recovery.ts",
+      "host": "df0627af3fc5e4922cafd8bc898368ac9c099c72eaee5928248165130c776979",
+      "builder": "df0627af3fc5e4922cafd8bc898368ac9c099c72eaee5928248165130c776979",
+      "equal": true
+    },
+    {
+      "path": "src/documents/useDocuments.ts",
+      "host": "1ca75a53372427dd5d7d084a7e7d11c543aab418a665914bb8d680f8fde334ee",
+      "builder": "1ca75a53372427dd5d7d084a7e7d11c543aab418a665914bb8d680f8fde334ee",
+      "equal": true
+    },
+    {
+      "path": "src/documents/workspace.ts",
+      "host": "a4dac9d5050b5fa5f92aad499b7ef7a6d8dd394c9972f0bbd4b2a24c5b41d3fd",
+      "builder": "a4dac9d5050b5fa5f92aad499b7ef7a6d8dd394c9972f0bbd4b2a24c5b41d3fd",
+      "equal": true
+    },
+    {
+      "path": "src/editor/MarkdownEditor.tsx",
+      "host": "400addbe01422c3e73f40e268428ed977f882e25da5f9da5250b49590584c4ba",
+      "builder": "400addbe01422c3e73f40e268428ed977f882e25da5f9da5250b49590584c4ba",
+      "equal": true
+    },
+    {
+      "path": "src/editor/SourceEditor.tsx",
+      "host": "b749f409f377ec2d44cb348f27a1635598463477acd41a6889290c00a52fa953",
+      "builder": "b749f409f377ec2d44cb348f27a1635598463477acd41a6889290c00a52fa953",
+      "equal": true
+    },
+    {
+      "path": "src/editor/markdownEdits.ts",
+      "host": "48119702f02f69fc535d163b2c5edd676d6ef2cfd90d434862b006b4ea1df830",
+      "builder": "48119702f02f69fc535d163b2c5edd676d6ef2cfd90d434862b006b4ea1df830",
+      "equal": true
+    },
+    {
+      "path": "src/main.tsx",
+      "host": "62d88961cac980d2c8c993630d38e5bcf8bad97893a56740d9f275f957075804",
+      "builder": "62d88961cac980d2c8c993630d38e5bcf8bad97893a56740d9f275f957075804",
+      "equal": true
+    },
+    {
+      "path": "src/preview/NativePreview.tsx",
+      "host": "1c97f95f1a2c8fc391c185ea18552550a3ecc2f3d8094d20a8d35640cde84fc1",
+      "builder": "1c97f95f1a2c8fc391c185ea18552550a3ecc2f3d8094d20a8d35640cde84fc1",
+      "equal": true
+    },
+    {
+      "path": "src/preview/Preview.tsx",
+      "host": "a9db6dd71d99155d7f81876fde8ffca72b18de3b3a638a2960cca338dff1e91f",
+      "builder": "a9db6dd71d99155d7f81876fde8ffca72b18de3b3a638a2960cca338dff1e91f",
+      "equal": true
+    },
+    {
+      "path": "src/preview/document.ts",
+      "host": "4c7120d63dd5017c6ff1be5917bc4d41f33596166362cdd9102f2b5c4afc115c",
+      "builder": "4c7120d63dd5017c6ff1be5917bc4d41f33596166362cdd9102f2b5c4afc115c",
+      "equal": true
+    },
+    {
+      "path": "src/preview/native-operations.ts",
+      "host": "4958c006a9d38f686d56adde8e31c09460c1635bbd61b4431931c37556345fa3",
+      "builder": "4958c006a9d38f686d56adde8e31c09460c1635bbd61b4431931c37556345fa3",
+      "equal": true
+    },
+    {
+      "path": "src/styles.css",
+      "host": "26f9892d84a074f15af61a12d0b0c1a1535c9ff7cb6e0649108839a909c8cf22",
+      "builder": "26f9892d84a074f15af61a12d0b0c1a1535c9ff7cb6e0649108839a909c8cf22",
+      "equal": true
+    },
+    {
+      "path": "src/vite-env.d.ts",
+      "host": "6efd986bd0820dc2bc712671ef3f4ff3c377e03b1cf71ced3862c58a894ac93b",
+      "builder": "6efd986bd0820dc2bc712671ef3f4ff3c377e03b1cf71ced3862c58a894ac93b",
+      "equal": true
+    },
+    {
+      "path": "tsconfig.json",
+      "host": "7060f56872b3691cf549b2d6d1657726af1b8c536a7ddcf2e61208e7b9e24d7b",
+      "builder": "7060f56872b3691cf549b2d6d1657726af1b8c536a7ddcf2e61208e7b9e24d7b",
+      "equal": true
+    },
+    {
+      "path": "vite.config.ts",
+      "host": "b29ac7baf3109dbe35ac3f13f0e742ee55369d0931be056227648071c126d64a",
+      "builder": "b29ac7baf3109dbe35ac3f13f0e742ee55369d0931be056227648071c126d64a",
+      "equal": true
+    },
+    {
+      "path": "src/sourceTypes.ts",
+      "host": "6dc22d991e4d718b2675ee5f565af7e79ff15079f94ecc96e826b1977688ccb8",
+      "builder": "6dc22d991e4d718b2675ee5f565af7e79ff15079f94ecc96e826b1977688ccb8",
+      "equal": true
+    }
+  ]
+}

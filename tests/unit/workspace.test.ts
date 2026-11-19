@@ -122,3 +122,20 @@ describe('authorized document workspace', () => {
     ).toThrow(/8 MiB/);
   });
 });
+
+it('selects the first MDX entry regardless of extension spelling while preserving case-distinct file keys', () => {
+  const initial = initialWorkspace(
+    { 'original.mdx': '# Original' },
+    'original.mdx',
+  );
+  const state = addDocuments(initial, [
+    { logicalPath: 'Note.MdX', source: '# Upper-case extension' },
+    { logicalPath: 'Note.mdx', source: '# Lower-case extension' },
+  ]);
+  expect(state.entry).toBe('opened-1/Note.MdX');
+  expect(state.selected).toBe('opened-1/Note.MdX');
+  expect(compilerFiles(state)).toEqual({
+    'opened-1/Note.MdX': '# Upper-case extension',
+    'opened-1/Note.mdx': '# Lower-case extension',
+  });
+});

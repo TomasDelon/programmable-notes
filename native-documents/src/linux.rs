@@ -102,7 +102,7 @@ impl AuthorizedFile {
             ));
         }
         let extension = path.extension().and_then(OsStr::to_str).unwrap_or("");
-        if !matches!(extension, "mdx" | "md" | "tsx" | "ts" | "jsx" | "js") {
+        if !crate::supported_source_extension(extension) {
             return Err(Error::Rejected(
                 "Select a supported Markdown or source module file",
             ));

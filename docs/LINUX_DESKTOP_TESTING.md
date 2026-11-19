@@ -187,3 +187,14 @@ The fidelity runner rejects unknown options and `--multiline-quotes` without
 `--quotes` before prerequisite checks or fixture creation. A typo is an error,
 never an implicit omission of the optional gate. [Live-infrastructure refusal
 control and unit checks](security-evidence/2026-11-19-fidelity-options/README.md).
+
+## Mixed-case source extensions
+
+Append `--extension-case` to the fresh-fixture fidelity command to run the core
+MDX/runtime, visual patches, exact saves, history, restart and explicit recovery
+checks against `fidelity-acceptance.MdX`. This exercises the real picker filter and
+entry eligibility. Auxiliary repeated-name, dense and legacy recovery fixtures
+retain their existing lowercase names; this flag does not claim native multi-file
+TSX import or versioned uppercase-record GUI coverage. Rust tests separately
+exercise distinct `Note.MdX`/`Note.mdx` paths and mixed-case snapshot metadata;
+Chromium exercises exact `Widget.TSX` imports and wrong-case import refusal.

@@ -35,3 +35,14 @@ Document JavaScript is contained by iframe/CSP, Tauri ACL/handler checks, WebKit
 ## Browser import encoding
 
 Browser imports decode file bytes as strict UTF-8 and retain a leading byte order mark in the source buffer. Malformed files reject the entire selection before workspace mutation. This matches the native source store's UTF-8 policy and preserves bytes for no-op downloads and future source range patches.
+
+## Source extension spelling
+
+Native grants and versioned snapshot names accept ASCII case variants of the same
+six existing source formats. Open/Save As picker filters enumerate only those
+spellings. Paths, logical module identities, names, revisions and source bytes
+retain their exact case; unsupported formats remain rejected. This changes no
+caller authorization, path-taking IPC, capability or original-file write policy.
+Older application versions may reject newly created uppercase-named recovery
+records; no record migration or rewriting is performed. Keep the newer binary
+available when testing a downgrade.

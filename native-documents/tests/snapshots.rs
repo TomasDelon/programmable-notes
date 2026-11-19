@@ -463,3 +463,25 @@ fn finished_writer_unlocks_even_while_a_forked_child_retains_descriptors() {
         "durable before fork"
     );
 }
+
+#[test]
+fn mixed_case_snapshot_names_round_trip_without_allowing_other_formats() {
+    let f = Fixture::new("mixed-case-names");
+    let mut value = input("\u{feff}# Exact café 😀\r\n", None);
+    value.name = "Note.MdX".into();
+    let written = f.store().append(value).unwrap();
+    assert_eq!(written.snapshot.metadata.name, "Note.MdX");
+    let mut store = f.store();
+    let inventory = store.list().unwrap();
+    assert!(inventory.errors.is_empty());
+    assert_eq!(inventory.snapshots[0].metadata.name, "Note.MdX");
+    assert_eq!(
+        store.restore(&written.snapshot.file).unwrap(),
+        "\u{feff}# Exact café 😀\r\n"
+    );
+    let mut invalid = input("not an executable source", None);
+    invalid.document_id = "b".repeat(32);
+    invalid.name = "blocked.EXE".into();
+    assert!(store.append(invalid).is_err());
+    assert_eq!(store.list().unwrap().snapshots.len(), 1);
+}

@@ -325,3 +325,52 @@ fn saving_selected_hardlink_does_not_modify_an_unselected_alias() {
     assert_eq!(fs::read_to_string(p).unwrap(), "new");
     assert_eq!(fs::read_to_string(alias).unwrap(), "old");
 }
+
+#[test]
+fn mixed_case_source_extensions_preserve_distinct_paths_and_exact_bytes() {
+    let f = Fixture::new();
+    let upper = f.file("Note.MdX", "\u{feff}# Upper\r\nCafé 😀\r\n");
+    let lower = f.file("Note.mdx", "# Lower\n");
+    let module = f.file("Widget.TSX", "export const x: number = 1;\r\n");
+    fs::set_permissions(&upper, fs::Permissions::from_mode(0o640)).unwrap();
+    let mut store = Store::default();
+    let documents = store.open(&[upper.clone(), lower.clone(), module]).unwrap();
+    let first = documents.iter().find(|d| d.name == "Note.MdX").unwrap();
+    assert_eq!(first.logical_path, "Note.MdX");
+    assert_eq!(first.source, "\u{feff}# Upper\r\nCafé 😀\r\n");
+    let saved = store
+        .save(&first.id, &first.revision, "\u{feff}# Changed\r\n")
+        .unwrap();
+    assert_eq!(
+        fs::read(&upper).unwrap(),
+        "\u{feff}# Changed\r\n".as_bytes()
+    );
+    assert_eq!(fs::read(&lower).unwrap(), b"# Lower\n");
+    assert_eq!(fs::metadata(&upper).unwrap().mode() & 0o777, 0o640);
+    assert_eq!(
+        store.reopen(&first.id, &saved.revision).unwrap().name,
+        "Note.MdX"
+    );
+    let executable = f.file("blocked.EXE", "valid UTF8 is not an allowed source format");
+    assert!(store.open(&[executable.clone()]).is_err());
+    assert_eq!(
+        fs::read_to_string(executable).unwrap(),
+        "valid UTF8 is not an allowed source format"
+    );
+}
+
+#[test]
+fn picker_filters_only_accept_existing_source_formats_with_ascii_case_variants() {
+    let variants = native_documents::source_extension_variants();
+    for required in ["mdx", "MdX", "MDX", "md", "MD", "TsX", "TS", "JsX", "JS"] {
+        assert!(variants.iter().any(|extension| extension == required));
+    }
+    for extension in &variants {
+        assert!(["mdx", "md", "tsx", "ts", "jsx", "js"]
+            .contains(&extension.to_ascii_lowercase().as_str()));
+        assert!(extension.bytes().all(|byte| byte.is_ascii_alphabetic()));
+    }
+    assert!(!variants
+        .iter()
+        .any(|extension| extension == "exe" || extension == "*"));
+}
