@@ -564,3 +564,50 @@ actual probe with a trusted-editor positive control, distinguish ordinary
 supervised MDX from automation-attached outer-shell tests, and retain red/green
 proof before hardening. Do not enable automation on production supervised children,
 grant preview file APIs, or weaken CSP/navigation/resource checks.
+
+## 2026-11-19 — explicit native preview download denial
+
+Started from pushed dadf86e (PR #1 verified draft). Source review found Wry's
+permissive default download callback can choose Downloads/current directory
+independently of IPC. Production change is only a child-specific native
+on_download rejection with a shared callback; editor file grants, iframe/CSP,
+navigation, namespaces, automation and quotas are unchanged.
+
+First WebDriver anchor experiment had no working positive control and is retained
+as inconclusive. A separate real Tauri/WebKit native-API harness proved exact
+79-byte default writes; old no-handler denial failed. Shared production callback
+then passed actual request/cancellation/null-destination/no-file assertions.
+Final deliberate omitted-handler negative exited 1, recorded its unexpected
+exact write, and removed only verified owned/single-link synthetic canaries.
+The helper is not linked into the application or exposed to document code.
+
+New optimized package ed6dc732… / installed ELF 30d5f193… passed ordinary
+production-supervised MDX automatic and clicked data/Blob attempts with no canary,
+automation=false, private network and unchanged cgroup bounds. Revised observer
+first failed an undeclared timing variable after Stop (retained); corrected run
+passed cleanup 51,289.37 ms from request, strictly before earliest 60-second expiry.
+IPC regression passed registered commands/recovery/plugin denials, actual Counter
+2 and parent DOM/storage + HTTP/file denial. This does not demonstrate a prior
+iframe bypass or repeat the entire resource-stress matrix on the new ELF.
+
+Read-only review found correct production hardening and three harness issues;
+all corrected (timestamp, pipe-draining close event, safe negative canary cleanup).
+Initial/full local checks passed 56 unit / 26 Chromium, native app Rust test,
+optimized build and package inspection. Final installed persistence/shortcut
+regression passed pending/dirty-close Cancel, exact BOM/CRLF save/undo/redo/reopen,
+mode 0640, actual Ctrl+S/Shift Save As cancellation/exact separate copy and clean
+exit; screenshots retained. Evidence is 2026-11-19-native-downloads, including all
+failures and source/executable hashes. CI dadf86e run 44469361168 was refused before
+any runner/step due billing/spending-limit annotation, not tests failing.
+
+Next executable action: finish persistence, retain its log/screens, rerun final
+repository checks/format, commit/push this bounded defense and update draft PR.
+Then add meaningful actual separate-process snapshot contention/CAS coverage
+(current snapshot races use threads; lock test holds another descriptor in one
+process). Do not weaken the memory/expiry or startup gates or claim them fixed.
+
+Final full repository check passed (56 unit / 26 Chromium); final whole-tree
+format/lint, Rust formatting and diff checks also passed after retaining evidence.
+Final observer SHA checks match both actual callback runs/negative and corrected
+packaged MDX report. Source hashes match the builder; installed package/ELF match
+inspection. Commit/push now, then begin the cross-process recovery test above.

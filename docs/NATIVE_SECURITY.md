@@ -235,3 +235,39 @@ the same production limits, run `NATIVE_DISPOSABLE_PROFILE=1 node scripts/native
 with a fresh fixture env. It records accessibility timing, CPU/memory/process
 samples and verified before-expiry cleanup. It does not replace any stress gate
 or prove pixel visibility. [Executed startup comparison](security-evidence/2026-11-19-startup-probe/README.md).
+
+## Preview downloads
+
+The preview child explicitly rejects native download requests in addition to the
+iframe's absence of `allow-downloads`, its hash CSP and navigation policy. Keep
+this callback: Wry's default handler permits implicit Downloads/current-directory
+writes, independently of native IPC permission checks. The trusted editor's
+explicit document Save/Save As operations are unchanged.
+
+In a disposable Linux desktop account, build the separate native callback harness
+and run both callback and packaged-MDX tests. The helper is not a shipping app or
+an author-accessible API. Build the production package separately as described
+above; start the external driver and source a fresh fixture environment for each
+command. Use the pinned Rust dependencies and normal enabled WebKit sandbox.
+
+```sh
+cargo build --manifest-path src-tauri/Cargo.toml --locked --release \
+  --example download-policy --features custom-protocol
+NATIVE_DISPOSABLE_PROFILE=1 \
+  NATIVE_DOWNLOAD_PROBE="$PWD/src-tauri/target/release/examples/download-policy" \
+  node scripts/native-download-policy.mjs
+# Intentional negative: must exit 1, with its verified canary recorded/removed.
+NATIVE_DISPOSABLE_PROFILE=1 \
+  NATIVE_DOWNLOAD_PROBE="$PWD/src-tauri/target/release/examples/download-policy" \
+  node scripts/native-download-policy.mjs --without-deny-handler
+NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-download-sandbox.mjs
+```
+
+The callback positive control must actually write exact synthetic bytes; absence
+of a file from an attempted anchor without that control is inconclusive about the
+native callback. The packaged-MDX case requires automatic and clicked completion,
+no canaries in the tested destination directories, ordinary child automation off,
+private networking, unchanged effective cgroup bounds, editor IPC responsiveness
+and Stop cleanup before earliest expiry. It does not replace the full memory,
+CPU, expiry/crash-recovery matrix or establish a successful iframe escape.
+[Real results and failed observer attempts](security-evidence/2026-11-19-native-downloads/README.md).

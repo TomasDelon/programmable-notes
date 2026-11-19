@@ -1,0 +1,27 @@
+{
+  "scope": "Installed production supervised MDX; no child automation",
+  "prefix": "pn-mdx-download-dd4bc0dd-ef2a-44d9-825f-e7e37657a60e",
+  "observerSha256": "490b3e8e0ed9ad9ca8956cfe6b566c8906b018e929575ef4f1ec0ec899f96823",
+  "fixtureSha256": "b89e00a46155b2221725be46203e0037b7898993db4a4ba932e42eb8f52ade5f",
+  "executableSha256": "30d5f193f0d3b60b039bd202931aacc76758caa5491c6b975b72becfba6e2571",
+  "unit": "programmable-notes-preview-15625-1795069398043399330.service",
+  "group": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-15625-1795069398043399330.service",
+  "pid": 15703,
+  "privateNetwork": "net:[4026532265]",
+  "policy": {
+    "cpu.max": "25000 100000",
+    "memory.max": "536870912",
+    "memory.swap.max": "0",
+    "pids.max": "128"
+  },
+  "childCwd": "/home/ubuntu",
+  "automaticAttemptsObserved": true,
+  "userAttemptsObserved": true,
+  "scannedDirectories": [
+    "/home/ubuntu",
+    "/home/ubuntu/Downloads",
+    "/opt/pn/acceptance"
+  ],
+  "groupRemovedAfterStop": true,
+  "outcome": "pass"
+}

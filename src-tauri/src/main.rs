@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod documents;
+mod downloads;
 use documents::{
     close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
     save_document, save_document_as, set_documents_dirty,
@@ -135,6 +136,10 @@ fn main() {
                 .focused(!child)
                 .incognito(child)
                 .on_navigation(allowed_navigation);
+            if child {
+                // Native download handling is independent of IPC and iframe permissions.
+                builder=builder.on_download(downloads::deny);
+            }
             if let Some(html)=html.as_ref() {
                 let value=serde_json::to_string(html)?;
                 // The value is serialized data; it is never evaluated as document JavaScript in this shell.

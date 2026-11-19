@@ -19,3 +19,6 @@ security-test = []
 
 [patch.crates-io]
 wry = { path = "vendor/wry" }
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+webkit2gtk = "=2.0.2"

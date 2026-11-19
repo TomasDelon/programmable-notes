@@ -107,6 +107,20 @@ continued source keyboard input and normal explicit preview keyboard interaction
 with native IPC/policy denials repeated. [Red/green evidence](security-evidence/2026-11-19-native-focus/README.md).
 This is an input-focus fix, not a claim that startup reliability is resolved.
 
+## Native download boundary
+
+The preview now explicitly rejects native WebKit downloads. Pinned Wry defaults
+permit a filesystem destination independently of IPC capabilities. A separate
+real native callback harness passed an exact-write default positive control and
+cancellation with the shared production callback; omission of that callback was
+correctly rejected by the test. The installed optimized package also passed
+ordinary supervised MDX automatic/clicked data/Blob attempts with no canaries,
+unchanged effective limits/private networking and automation disabled. Strict
+Stop cleanup finished at 51.29 seconds, before earliest expiry; registered-command,
+recovery, DOM/storage, HTTP/file and Counter regressions passed. This is defense
+in depth, not a demonstrated iframe escape or a new full resource-matrix pass.
+[Exact hashes, failed probes and reproduction](security-evidence/2026-11-19-native-downloads/README.md).
+
 ## Security boundary and release blockers
 
 The browser preview uses an opaque origin, sandbox and hash CSP. Linux uses a
@@ -172,8 +186,8 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: investigate the repeated blank/startup failures in the current native
-resource matrix, retain separate containment and interactive-recovery results,
-and continue core document reliability. Bounded mapping reuse and original-source
+Next: extend actual cross-process recovery contention/CAS regression coverage,
+retain separate containment and interactive-recovery results, and investigate
+the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source
 compiler navigation passed installed acceptance. Hosted runners need owner billing
 action; physical GPU/Wayland compatibility can proceed independently.

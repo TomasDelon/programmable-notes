@@ -47,3 +47,25 @@ source typing focus merely by creating a window. The editor still starts focused
 Normal user selection and preview keyboard interaction remain supported; actual
 packaged red/green tests verify active PIDs, source input and a Space-key React
 update. This changes window behavior only, not preview capabilities or limits.
+
+## Explicit preview download denial (2026-11-19)
+
+A child webview now installs a native `on_download` rejection callback. Wry's
+pinned default handler permits a download and chooses Downloads/current directory
+without an OS Save dialog. Download processing is independent of registered IPC
+commands, so capability denial alone is insufficient for this path. The editor's
+handler and explicit native document grants are unchanged; iframe permissions,
+CSP, navigation, networking and process/resource policy are unchanged.
+
+A separate Linux callback harness triggers the real native WebKit download API:
+its default-handler positive control must write exact synthetic bytes, while the
+shared production rejection callback must receive the request, cause native
+cancellation and leave no destination/canary. A deliberate omitted-handler case
+must fail. This native API is a trusted external test operation; it is never
+exposed to document JavaScript or linked into the desktop binary.
+
+Installed supervised MDX tests separately exercise automatic and actual clicked
+data/Blob anchors, verify completion through PID-bound accessibility and inspect
+known destination directories. They do not show that an iframe can reach the
+outer native handler. This is defense in depth against permissive native handling,
+not evidence of a sandbox bypass. See [executed evidence](../security-evidence/2026-11-19-native-downloads/README.md).

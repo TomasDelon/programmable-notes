@@ -1,0 +1,20 @@
+NATIVE_DOWNLOAD_EVIDENCE /tmp/pn-native-fztglU/evidence/downloads.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The production callback did not receive/reject this request
+    at file:///opt/pn/acceptance/scripts/native-download-policy.mjs:129:16 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'libEGL warning: DRI3 error: Could not get DRI3 device\n' +
+    'libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\n' +
+    '\n' +
+    "(process:2): GLib-GObject-CRITICAL **: 06:28:49.126: g_object_ref: assertion 'G_IS_OBJECT (object)' failed\n",
+  expected: /DOWNLOAD_DENIED/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+EXPECTED_NEGATIVE_EXIT=1

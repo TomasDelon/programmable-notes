@@ -1,0 +1,5 @@
+NATIVE_UI {"pid": 16822, "button": "Automatic download attempts complete", "action": "find", "passed": true}
+NATIVE_UI {"pid": 16822, "button": "Automatic download attempts complete", "action": "click", "passed": true}
+NATIVE_UI {"pid": 16822, "button": "User download attempts complete", "action": "find", "passed": true}
+NATIVE_MDX_DOWNLOAD_EVIDENCE /tmp/pn-native-NMkKiC/evidence/mdx-downloads.json
+PASS actual automatic and clicked MDX data/Blob attempts, no download files, editor IPC and Stop
