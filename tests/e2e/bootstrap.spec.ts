@@ -1475,3 +1475,76 @@ test('opaque source navigation is explicit, revision-checked and byte preserving
   await expect(editor).toBeFocused();
   expect(await savedBytes()).toEqual(Buffer.from(changed));
 });
+
+test('browser file budgets reject selections before reads, retain dirty history and recover with an exact valid import', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  const original = await editor.innerText();
+  const dirty = '# Keep my dirty source. 😀';
+  await editor.fill(dirty);
+  const count = await page.getByLabel('Source file').locator('option').count();
+  await page.evaluate(() => {
+    const originalRead = File.prototype.arrayBuffer;
+    let reads = 0;
+    File.prototype.arrayBuffer = function () {
+      reads++;
+      return originalRead.call(this);
+    };
+    Object.defineProperty(window, 'pnTestFileReads', { get: () => reads });
+  });
+  const input = page.getByLabel('Open files');
+  await input.setInputFiles(
+    Array.from({ length: 32 }, (_, i) => ({
+      name: `too-many-${i}.mdx`,
+      mimeType: 'text/plain',
+      buffer: Buffer.from('# Never read'),
+    })),
+  );
+  await expect(page.getByRole('alert')).toContainText('32 files');
+  await expect(editor).toHaveText(dirty);
+  await expect(page.getByLabel('Source file').locator('option')).toHaveCount(
+    count,
+  );
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'pnTestFileReads')),
+  ).toBe(0);
+  await input.setInputFiles([
+    {
+      name: 'valid-first.mdx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('# Never partially import'),
+    },
+    {
+      name: 'oversized.mdx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('😀'.repeat(125_001)),
+    },
+  ]);
+  await expect(page.getByRole('alert')).toContainText('500 KB');
+  await expect(editor).toHaveText(dirty);
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'pnTestFileReads')),
+  ).toBe(0);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => editor.innerText()).toBe(original);
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await expect(editor).toHaveText(dirty);
+  const source =
+    '\uFEFF# Valid café 😀\r\n\r\nExact source.\n\r\n<div>Opaque</div>\r\n';
+  await open(page, source, 'valid-after-refusal.mdx');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'pnTestFileReads')),
+  ).toBe(1);
+  await expect(page.getByLabel('Source file').locator('option')).toHaveCount(
+    count + 1,
+  );
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(source),
+  );
+  await expect(page.getByLabel('Workspace status')).toContainText('unsaved');
+});

@@ -93,6 +93,15 @@ no automatic retries or expanded permissions. Actual injected native exec failur
 then UI retry/cgroup cleanup before expiry passed on the recorded production ELF.
 [Stop recovery, race tests and retained failures](security-evidence/2026-11-19-stop-retry/README.md).
 
+## Browser import budgets
+
+Browser Open preflights the existing workspace and selection metadata before
+reading files:32 total files,500KB each,8MiB total UTF8 bytes. Strict UTF8/BOM and
+latest-workspace validation still run after reads. Rejections preserve dirty
+buffers/history; no partial import or native authority change. Exact-limit and
+async growth regressions plus real zero-read/refusal/recovery/export passed.
+[83unit/33browser full-check evidence and scope](security-evidence/2026-11-19-browser-import-budget/README.md).
+
 ## Documents and recovery
 
 Selected dirty/save status is independent of other buffers. Dirty siblings have
@@ -264,8 +273,8 @@ multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
 screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: preflight browser Open metadata against existing workspace budgets before
-reading a large selection; preserve final asynchronous validation and dirty buffers.
+Next: investigate bounded visual parsing costs for adversarial Markdown inputs,
+without changing source fidelity or preview/native authority.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

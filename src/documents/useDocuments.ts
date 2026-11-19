@@ -15,6 +15,9 @@ import {
   removeDocument,
   validateFiles,
   createNote,
+  MAX_FILES,
+  MAX_FILE_BYTES,
+  MAX_TOTAL_BYTES,
   type Workspace,
 } from './workspace';
 export function useDocuments(
@@ -177,9 +180,23 @@ export function useDocuments(
   async function openBrowser(list: FileList | null) {
     if (!list?.length) return;
     await operation(async () => {
+      const existing = current.current.files;
+      if (Object.keys(existing).length + list.length > MAX_FILES)
+        throw Error('Workspace exceeds 32 files; close unused sources.');
+      const selectedFiles = Array.from(list);
+      if (selectedFiles.some((file) => file.size > MAX_FILE_BYTES))
+        throw Error('File exceeds 500 KB limit.');
+      validateFiles(existing);
+      const encoder = new TextEncoder();
+      const bytes =
+        Object.values(existing).reduce(
+          (total, source) => total + encoder.encode(source).byteLength,
+          0,
+        ) + selectedFiles.reduce((total, file) => total + file.size, 0);
+      if (bytes > MAX_TOTAL_BYTES)
+        throw Error('Workspace exceeds 8 MiB of source; close unused sources.');
       const docs = [];
-      for (const file of Array.from(list)) {
-        if (file.size > 500000) throw Error('File exceeds 500 KB limit.');
+      for (const file of selectedFiles) {
         const bytes = await file.arrayBuffer();
         let source: string;
         try {

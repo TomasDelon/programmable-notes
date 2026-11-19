@@ -1330,3 +1330,22 @@ reads all files before aggregate32/8MiB rejection. Preflight metadata/currentbud
 while preserving strictUTF8/BOM/finallatestworkspacechecks. Implement accepted and
 asyncgrowth tests, browser regression, fullcheck/review/evidence, then commit.
 No design replacement, permission expansion, merge/release or readiness claim.
+
+## 2026-11-19 — browser import read budgets verified
+
+Baseb9a2b73 pushed; its hosted44538616415 again refused both zero-step jobs for
+billing. Browser Open now preflights current workspace + real selection metadata
+before any read, retaining shared32file/500KB/8MiB bounds, strictUTF8/BOM and
+final latest-workspace validation.3hookRED→GREEN and2further tests passed: exact
+8MiB accepted, source growth+1byte during stalled read rejected without data loss.
+RealChromium zero-read rejection, dirtyUndo/Redo, following validimport/exactexport/
+dirtysibling passed. Initial wrong innerText-vs-textContent matcher failure retained
+and corrected to same-propertycomparison; exact bytechecks remain. Read-onlyreview
+no Important/Critical. Fullcheck83unit/33browser passed. This browser-onlypath is
+not used by installed native Open; no new native build/runtime claim.
+
+Next: commit/push/update draftPR/check exactCI head. Then investigate visual AST
+parsing cost with bounded isolated synthetic inputs before proposing any change;
+source-size bounds alone may not establish a time bound. Keep known native
+SIGSEGV/startup/memory failures and old reviewZIP34dc906 scope. No inferred
+vulnerability or security-readiness claim without executed evidence.
