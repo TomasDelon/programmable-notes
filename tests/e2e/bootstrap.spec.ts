@@ -1199,3 +1199,51 @@ test('real inline typing preserves mixed internal breaks through exact exports a
   await field.press('Escape');
   expect(await exported()).toEqual(Buffer.from(repeated));
 });
+
+test('long visual paragraphs keep a bounded scrollable input and exact source history', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
+  const paragraph = Array.from(
+    { length: 1000 },
+    (_, i) => `Line ${i}: source remains exact.`,
+  ).join('\n');
+  const source = '# Long paragraph\n\n' + paragraph + '\n\n<div>Opaque</div>\n';
+  await open(page, source, 'long.mdx');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Markdown editing' })
+    .locator('p button')
+    .first()
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await expect(field).toBeFocused();
+  expect(await field.inputValue()).toBe(paragraph);
+  const geometry = await field.evaluate((e) => ({
+    height: e.getBoundingClientRect().height,
+    viewport: innerHeight,
+    client: e.clientHeight,
+    scroll: e.scrollHeight,
+  }));
+  expect(geometry.height).toBeLessThanOrEqual(geometry.viewport * 0.75);
+  expect(geometry.scroll).toBeGreaterThan(geometry.client + 1000);
+  await field.press('Control+End');
+  expect(await field.evaluate((e) => e.scrollTop)).toBeGreaterThan(0);
+  await page.keyboard.insertText(' Tail saved.');
+  await field.press('Enter');
+  const exported = async () => {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  };
+  const expected = source.replace(paragraph, paragraph + ' Tail saved.');
+  expect(await exported()).toEqual(Buffer.from(expected));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(source));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(expected));
+});

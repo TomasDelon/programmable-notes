@@ -1,0 +1,45 @@
+Nov 19 06:48:09 pn-m3-guest programmable-no[17421]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 06:48:09 pn-m3-guest programmable-no[17421]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 06:49:35 pn-m3-guest tauri-driver[17641]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 06:49:35 pn-m3-guest tauri-driver[17641]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 06:49:57 pn-m3-guest WebKitWebProces[17673]: Error releasing name org.webkit.app-8b1e396e3de721ce5924639f61aa697973f2c6fe99d93289d1fdd64973dd2885.Sandboxed.WebProcess-3fdbc447-d316-4d61-9ae0-ff1186cf5d2d: The connection is closed
+Nov 19 06:50:03 pn-m3-guest tauri-driver[17738]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 06:50:03 pn-m3-guest tauri-driver[17738]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 06:50:20 pn-m3-guest WebKitWebProces[17769]: Error releasing name org.webkit.app-8b1e396e3de721ce5924639f61aa697973f2c6fe99d93289d1fdd64973dd2885.Sandboxed.WebProcess-d52a07e0-6487-494b-909d-f1ca1e55f05b: The connection is closed
+Nov 19 06:50:31 pn-m3-guest tauri-driver[17837]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 06:50:31 pn-m3-guest tauri-driver[17837]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 06:50:43 pn-m3-guest programmable-no[17837]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 06:50:43 pn-m3-guest programmable-no[17837]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:15:36 pn-m3-guest tauri-driver[18116]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:15:36 pn-m3-guest tauri-driver[18116]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:15:52 pn-m3-guest programmable-no[18116]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:15:52 pn-m3-guest programmable-no[18116]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:18:24 pn-m3-guest tauri-driver[18433]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:18:24 pn-m3-guest tauri-driver[18433]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:18:35 pn-m3-guest programmable-no[18433]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:18:35 pn-m3-guest programmable-no[18433]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:19:58 pn-m3-guest WebKitWebProces[18464]: Error releasing name org.webkit.app-8b1e396e3de721ce5924639f61aa697973f2c6fe99d93289d1fdd64973dd2885.Sandboxed.WebProcess-5feae422-83e6-4f55-995c-de4fe29a2a53: The connection is closed
+Nov 19 07:24:06 pn-m3-guest tauri-driver[18852]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:24:06 pn-m3-guest tauri-driver[18852]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:24:15 pn-m3-guest programmable-no[18852]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:24:15 pn-m3-guest programmable-no[18852]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:24:15 pn-m3-guest programmable-no[18852]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:24:15 pn-m3-guest programmable-no[18852]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:25:51 pn-m3-guest tauri-driver[19145]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:25:51 pn-m3-guest tauri-driver[19145]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:26:02 pn-m3-guest programmable-no[19145]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:26:02 pn-m3-guest programmable-no[19145]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 07:28:15 pn-m3-guest tauri-driver[19364]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:28:15 pn-m3-guest tauri-driver[19364]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:28:29 pn-m3-guest WebKitWebProces[19395]: Error releasing name org.webkit.app-8b1e396e3de721ce5924639f61aa697973f2c6fe99d93289d1fdd64973dd2885.Sandboxed.WebProcess-d12da362-0329-4cc9-bdae-7d6090a404b1: The connection is closed
+Nov 19 07:28:32 pn-m3-guest tauri-driver[19455]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 07:28:32 pn-m3-guest tauri-driver[19455]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 07:28:40 pn-m3-guest WebKitWebProces[19487]: Error releasing name org.webkit.app-8b1e396e3de721ce5924639f61aa697973f2c6fe99d93289d1fdd64973dd2885.Sandboxed.WebProcess-e659f73b-b1c0-4e3f-9ee9-4ad129b516f6: The connection is closed
+Nov 19 08:10:13 pn-m3-guest tauri-driver[19692]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 08:10:13 pn-m3-guest tauri-driver[19692]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 08:10:23 pn-m3-guest programmable-no[19692]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 08:10:23 pn-m3-guest programmable-no[19692]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 08:18:43 pn-m3-guest tauri-driver[19887]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 08:18:43 pn-m3-guest tauri-driver[19887]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 08:18:52 pn-m3-guest programmable-no[19887]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 08:18:52 pn-m3-guest programmable-no[19887]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed

@@ -244,6 +244,8 @@ section[aria-label='Markdown editing'] h1 {
   resize: vertical;
   line-height: inherit;
   min-height: 1.7em;
+  max-height: 60vh;
+  overflow: auto;
 }
 .edit-hint {
   opacity: 0.7;

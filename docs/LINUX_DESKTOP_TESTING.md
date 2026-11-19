@@ -92,3 +92,14 @@ existing fidelity/recovery gates and adds actual disk/history checks for a
 paragraph containing both LF and CRLF. The old installed app reproduced a real
 byte change; the source-matched fixed package passed the complete run.
 [Exact versions, failed startup attempt, disk diff and results](security-evidence/2026-11-19-internal-eol/README.md).
+
+## Long-paragraph input and native renderer reliability
+
+With a fresh fixture env, run
+`NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-long-paragraph.mjs`. It checks
+bounded native input geometry, internal scrolling, actual keyboard tail edits,
+exact BOM/mixed-ending disk bytes, undo/redo, mode 0640, positively acknowledged
+reopening and clean exit. Failures record diagnostics and clean up only the
+captured owned root process. Native renderer crashes remain unresolved;
+[all observations and exact package hashes](security-evidence/2026-11-19-long-inline/README.md)
+distinguish those from passing browser behavior.

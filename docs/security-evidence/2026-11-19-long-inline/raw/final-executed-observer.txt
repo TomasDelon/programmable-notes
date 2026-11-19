@@ -1,0 +1,221 @@
+/** Real installed editor: bounded input viewport without truncating its source. */
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { readFile, writeFile, stat } from 'node:fs/promises';
+import { join } from 'node:path';
+import process from 'node:process';
+import {
+  preflight,
+  launch,
+  close,
+  invoke,
+  script,
+} from './native-webdriver-lib.mjs';
+import {
+  rootPid,
+  waitUi,
+  button,
+  dialog,
+  fileIdle,
+  pause,
+} from './native-ui-lib.mjs';
+await preflight();
+assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
+assert.ok(process.env.NATIVE_FIXTURE_DIR && process.env.NATIVE_EVIDENCE_DIR);
+const path = join(process.env.NATIVE_FIXTURE_DIR, 'long-paragraph.mdx');
+const paragraph = Array.from(
+  { length: 1000 },
+  (_, i) => `Line ${i}: source remains exact.`,
+).join('\n');
+const source =
+  '\uFEFF# Long paragraph\r\n\r\n' +
+  paragraph +
+  '\r\n\r\n<div>Opaque</div>\r\n';
+const expected = source.replace(paragraph, paragraph + ' Tail saved.');
+await writeFile(path, source, { flag: 'wx', mode: 0o640 });
+const digest = (value) => createHash('sha256').update(value).digest('hex');
+const report = {
+  observerSha256: digest(await readFile(new URL(import.meta.url))),
+  sourceBytes: Buffer.byteLength(source),
+  sourceSha256: digest(source),
+};
+const output = join(process.env.NATIVE_EVIDENCE_DIR, 'long-paragraph.json');
+await writeFile(output, '{}\n', { flag: 'wx' });
+function keys(pid, sequence) {
+  const ids = execFileSync(
+    'xdotool',
+    ['search', '--onlyvisible', '--pid', String(pid)],
+    { encoding: 'utf8', timeout: 10000 },
+  )
+    .trim()
+    .split(/\s+/);
+  assert.equal(ids.length, 1);
+  execFileSync(
+    'xdotool',
+    ['windowactivate', '--sync', ids[0], 'key', '--clearmodifiers', sequence],
+    { timeout: 10000 },
+  );
+}
+async function disk(value) {
+  assert.equal(await readFile(path, 'utf8'), value);
+  assert.equal((await stat(path)).mode & 0o777, 0o640);
+}
+const startTick = async (pid) => {
+  const record = await readFile(`/proc/${pid}/stat`, 'utf8');
+  return record.slice(record.lastIndexOf(') ') + 2).split(' ')[19];
+};
+let ownedRoot;
+let failure;
+try {
+  await launch();
+  const pid = await rootPid();
+  report.executableSha256 = digest(await readFile(`/proc/${pid}/exe`));
+  ownedRoot = { pid, start: await startTick(pid) };
+  report.pid = pid;
+  report.startTick = ownedRoot.start;
+  await waitUi("!!document.querySelector('.cm-content')");
+  await button('Stop preview');
+  assert.equal((await invoke('stop_preview')).ok, true);
+  await button('Pause automatic recovery');
+  await button('Open files');
+  dialog(pid, 'choose', 'Open documents and modules', path);
+  await fileIdle();
+  await button('Visual');
+  await button(paragraph);
+  report.geometry = await script(
+    `const done=arguments[arguments.length-1];const e=document.querySelector('textarea[aria-label="Paragraph text"]');done(e?{height:e.getBoundingClientRect().height,viewport:innerHeight,client:e.clientHeight,scroll:e.scrollHeight,rows:e.rows,exact:e.value===arguments[0],focused:e===document.activeElement}:null);`,
+    [paragraph],
+  );
+  assert.ok(report.geometry);
+  assert.equal(report.geometry.exact, true);
+  assert.equal(report.geometry.focused, true);
+  assert.ok(
+    report.geometry.height <= report.geometry.viewport * 0.75,
+    'Inline input must fit its viewport',
+  );
+  assert.ok(report.geometry.scroll > report.geometry.client + 1000);
+  keys(pid, 'ctrl+End');
+  await waitUi(`document.querySelector('textarea')?.scrollTop>0`);
+  // Real trusted keyboard insertion; do not set textarea.value behind React.
+  execFileSync(
+    'xdotool',
+    ['type', '--clearmodifiers', '--delay', '0', ' Tail saved.'],
+    { timeout: 10000 },
+  );
+  await waitUi(
+    `document.querySelector('textarea')?.value.endsWith(' Tail saved.')`,
+  );
+  assert.equal(
+    await script(
+      `arguments[arguments.length-1](Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source').disabled);`,
+    ),
+    true,
+  );
+  await disk(source);
+  keys(pid, 'Return');
+  await fileIdle();
+  keys(pid, 'ctrl+s');
+  await waitUi(
+    `document.querySelector('[aria-label="Document status"]')?.textContent==='Saved.'`,
+  );
+  await fileIdle();
+  await disk(expected);
+  await button('Undo');
+  await button('Save source');
+  await fileIdle();
+  await disk(source);
+  await button('Redo');
+  await button('Save source');
+  await fileIdle();
+  await disk(expected);
+  await button('Reopen source');
+  await fileIdle();
+  await waitUi(
+    `document.querySelector('[aria-label="Document status"]')?.textContent==='Reopened from disk.'`,
+  );
+  assert.equal(
+    await script(
+      `const done=arguments[arguments.length-1];done(!document.querySelector('[data-file-error]')&&Array.from(document.querySelectorAll('[aria-label="Markdown editing"] p button')).some(b=>b.textContent===arguments[0]));`,
+      [paragraph + ' Tail saved.'],
+    ),
+    true,
+  );
+  await disk(expected);
+  report.actualEndTypingSaveUndoRedoReopenExact = true;
+  execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
+    timeout: 10000,
+  });
+  for (let i = 0; i < 100; i++) {
+    try {
+      process.kill(pid, 0);
+    } catch (error) {
+      if (error.code === 'ESRCH') break;
+      throw error;
+    }
+    await pause(100);
+  }
+  assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+  report.actualCleanExit = true;
+} catch (error) {
+  failure = error;
+  report.error = String(error);
+  try {
+    report.failureUi = await script(
+      `const done=arguments[arguments.length-1];done({mode:Array.from(document.querySelectorAll('[aria-label="Workspace mode"] button')).find(b=>b.getAttribute('aria-pressed')==='true')?.textContent,status:document.querySelector('[aria-label="Document status"]')?.textContent,paragraphs:document.querySelectorAll('[aria-label="Markdown editing"] p button').length,textarea:!!document.querySelector('textarea'),alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(e=>e.textContent)});`,
+    );
+  } catch (diagnosticError) {
+    report.failureUiError = String(diagnosticError);
+  }
+} finally {
+  await close().catch((error) => {
+    failure ||= error;
+    report.closeError = String(error);
+  });
+  // WebDriver deletion can leave its Rust root alive after a renderer crash.
+  // Touch only this session's captured process, never an executable-name search.
+  if (ownedRoot) {
+    try {
+      const { pid, start } = ownedRoot;
+      if ((await startTick(pid)) === start) {
+        assert.equal(await rootPid(), pid);
+        assert.equal(
+          digest(await readFile(`/proc/${pid}/exe`)),
+          report.executableSha256,
+        );
+        process.kill(pid, 'SIGTERM');
+        for (let i = 0; i < 100; i++) {
+          try {
+            if ((await startTick(pid)) !== start) break;
+          } catch (error) {
+            if (error.code === 'ENOENT' || error.code === 'ESRCH') break;
+            throw error;
+          }
+          await pause(50);
+        }
+        try {
+          assert.notEqual(
+            await startTick(pid),
+            start,
+            'Owned root did not exit',
+          );
+        } catch (error) {
+          if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
+        }
+        report.ownedRootTerminatedAfterSession = true;
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'ESRCH') {
+        failure ||= error;
+        report.cleanupError = String(error);
+      }
+    }
+  }
+  report.outcome = failure ? 'fail' : 'pass';
+  await writeFile(output, JSON.stringify(report, null, 2) + '\n');
+  console.log('NATIVE_LONG_PARAGRAPH_EVIDENCE', output);
+}
+if (failure) throw failure;
+console.log(
+  'PASS native long-paragraph bounded geometry, scrolling, actual keys and exact disk history',
+);

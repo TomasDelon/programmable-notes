@@ -810,3 +810,50 @@ and draft verified, body now describes fixed mixed endings, conservative limits,
 b45ffa6 was refused before runners/steps with the billing annotation. Continue
 with the measured long-paragraph viewport defect; no approval needed for this
 bounded editor-owned control improvement, and native/browser isolation stays intact.
+
+## 2026-11-19 — bounded long-paragraph input, native crash investigation
+
+Checkpoint on pushed2674707, uncommitted CSS/test/native observer. A1000-line
+paragraph produced a27189.5px textarea in800px browser/600px native viewports.
+Two CSS declarations cap the editor-owned input at60vh with internal scrolling;
+full63-unit/29-Chromium check passed, including actual end typing/export/history.
+Installed d37cf787… / deb ae7b10ad… measured360px/full exact text and passed actual
+keyboard/save/undo/redo/mode0640/clean close in one run. That observer called
+Reopen but did not positively check its UI acknowledgment. Strengthened observer
+15faff92… now requires exact Reopened-from-disk status plus actual rendered text.
+
+Native completion is NOT claimed: two other capped runs crashed WebKit's renderer
+at switching to Visual, before activating the textarea. Kernel confirms SIGSEGV
+(WebKit PIDs19918,20328). Driver sessions disappeared but owned Rust roots19887,
+20297 survived; only those roots were terminated after verifying fixture PID,
+UID, executable SHA and start time. No isolation/quotas/JIT settings changed.
+Unicode regex narrow/wide probes passed50 calls each. Separate pure production
+JSC mapping probes parsed two ranges/three blocks and patched successfully without
+DOM rendering. These negative diagnostics narrow investigation but do not identify
+the crash cause. Raw evidence is2026-11-19-long-inline; final strong native case
+remains failing. Next: failure-safe observer cleanup, capture sanitized renderer
+backtrace in disposable VM, retain failures and avoid speculative parser changes.
+
+Final ordinary installed run (fixture TjAf5t) passed the strengthened observer:
+360px input/full exact value, internal scroll, actual tail typing, pending-save
+block, BOM/mixed-ending exact disk/undo/redo/mode0640, acknowledged Reopen plus
+exact rendered paragraph, and actual clean process exit. Debugger diagnostic also
+passed, ending at normal renderer SIGTERM; no SIGSEGV captured under debugger.
+These passes do not resolve the two prior Visual-transition kernel SIGSEGVs.
+Read-only review found no CSS source-fidelity issue and identified lifecycle
+ESRCH cleanup races, now handled only as owned-process disappearance. Final
+repository check pending before bounded milestone commit/push. Next work remains
+actual renderer-crash narrowing; do not guess a parser change or weaken isolation.
+
+Final full repository check passed 63 unit /29 Chromium after moving cleanup out
+of finally's throw sites (lint failure fixed). Ordinary observer312af19b… actual
+strong native pass/source retained. A planned20-cycle debugger diagnostic failed
+on its FIRST Visual transition (0cycles), capturing actual unresolved SIGSEGV at
+an indirect call; PID-namespace stack warning limits symbolic interpretation.
+Observer5f3a25e9… used the new cleanup function and positively terminated its
+verified surviving Rust root. No JIT flags/sandbox/resource changes. Preserve this
+new failure; successful ordinary run is scoped evidence, not a crash fix.
+Hosted2674707 run44484732035 again had0steps and the exact billing annotation.
+Next: commit/push bounded input fix and complete evidence; update draft PR. Then
+prepare a minimal renderer reproduction/control to narrow JSC versus app/native
+without shipping speculative engine flags or changing production restrictions.

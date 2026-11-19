@@ -43,6 +43,13 @@ source or authorize saves. One bounded exact-source AST avoids repeated analysis
 all validators still run. See [ADR-005](decisions/ADR-005-paragraph-editing.md),
 [ADR-007](decisions/ADR-007-unified-workspace.md) and the mapping benchmark.
 
+Long literal inputs now use a bounded scrollable viewport without truncating text.
+Actual Chromium typing/export/history passed. Installed native geometry/disk/history
+and a debugger-observed strong reopen passed, but two other runs suffered WebKit
+renderer SIGSEGV while entering Visual. This remains an unresolved native
+reliability blocker; no parser/security change was guessed from the crashes.
+[Exact failures, diagnostics and package scope](security-evidence/2026-11-19-long-inline/README.md).
+
 ## Documents and recovery
 
 Selected dirty/save status is independent of other buffers. Dirty siblings have
