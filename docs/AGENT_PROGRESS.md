@@ -467,3 +467,22 @@ this frontend, assert protected inline input and keyboard export in the recordin
 run manifest/negative/clean-extracted checks, commit the requested review artifact
 and verify actual GitHub re-download. Keep hosted billing and native blank-startup
 limits explicit; continue safe core reliability after the delivery checkpoint.
+
+## 2026-11-19 — refreshed current review delivery
+
+Keyboard saving is committed/pushed as 94e6b15, and draft PR updated. The current
+portable browser demo was rebuilt/recorded from that frontend: protected pending
+text and actual Ctrl+S now appear in the walkthrough. Clean-extracted browser
+checks passed React, New note, trusted-key download, pending protection,
+BOM/CRLF/opaque-span exact editing/export, and offline compilation after initial
+load. All eight packaging negatives and manifest/CRC passed. Read-only review
+found no important issue. The dated ZIP/screenshots were refreshed; source frontend
+and dependencies were clean at assembly. Evidence: 2026-11-19-current-review.
+
+Next: final repository check and artifact freshness verification, commit/push
+review delivery, then re-download the GitHub blob and verify exact SHA-256 before
+updating the draft PR link. Native investigation: cached Tauri/Wry sources prove
+initialization_script is already TopFrame on Linux; per-frame reinjection is ruled
+out, not a fix. Next useful experiment compares static-button and Counter srcdoc
+under identical unchanged production limits, retaining failures and startup timing.
+Do not retry until green or infer cleanup from a timer/empty accessibility tree.

@@ -97,8 +97,8 @@ uploads the Debian testing package and browser demo but does not execute the
 full-system desktop matrix. Each dated record retains exact package/source hashes,
 failed attempts and limitations; earlier results do not certify later binaries.
 Historical Actions artifact re-download returned HTTP 403 in this cloud. The
-current PR-accessible [portable browser review ZIP](demo/README.md) was successfully
-re-downloaded through GitHub's source Blob API and its SHA-256 matched. It includes
+PR-accessible [portable browser review ZIP](demo/README.md) has dated exact-hash
+validation evidence, including source-blob download checks. It includes
 a working offline-capable build, responsive screenshots and a recorded walkthrough;
 no public release or site was published.
 

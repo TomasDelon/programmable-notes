@@ -28,7 +28,7 @@ try {
     '# Portable demo\n\nCreated from the extracted review archive.';
   await page.keyboard.insertText(source);
   const pending = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  await editor.press('Control+s');
   assert.equal(await readFile(await (await pending).path(), 'utf8'), source);
   await page.getByRole('button', { name: 'Split', exact: true }).click();
   await frame
@@ -43,8 +43,45 @@ try {
   await frame
     .getByRole('heading', { name: 'Offline portable', exact: true })
     .waitFor({ timeout: 20000 });
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('button', {
+      name: 'No build workspace or network dependency.',
+      exact: true,
+    })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Pending offline text.');
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .isEnabled(),
+    false,
+  );
+  assert.equal(await page.getByLabel('Source file').isEnabled(), false);
+  await field.press('Escape');
+  const bom =
+    '\uFEFF# Portable BOM\r\n\r\nKept paragraph.\r\n\r\n<div>Opaque</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'bom.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(bom),
+  });
+  await page
+    .getByRole('button', { name: 'Kept paragraph.', exact: true })
+    .click();
+  await field.fill('Edited portable paragraph.');
+  await field.press('Enter');
+  const saved = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await saved).path()),
+    Buffer.from(bom.replace('Kept paragraph.', 'Edited portable paragraph.')),
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_exact_download_offline_recompile',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile',
   );
 } finally {
   await browser.close();

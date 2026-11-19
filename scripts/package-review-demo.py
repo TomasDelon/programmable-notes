@@ -75,6 +75,9 @@ Open walkthrough/walkthrough.html for the recording, screenshots and actual save
 To run the browser editor, open a terminal in browser-build and run:
   python3 -m http.server 8000 --bind 127.0.0.1
 Then open http://127.0.0.1:8000 in Chromium. No Node/npm install is needed.
+In Visual mode, Enter applies text and Escape cancels it. Apply before saving.
+Focus Source, Visual or the toolbar and use Ctrl/Cmd+S to export MDX.
+Unapplied visual text stays in memory until applied.
 
 This is a local browser demo. Native filesystem permissions, WebKitGTK, cgroups,
 and Linux recovery require separate native tests. Browser CPU/memory quotas are
