@@ -292,3 +292,46 @@ it('protects unapplied trusted visual text without authorizing saves or replacin
   await act(async () => h.result.current.save());
   expect(api.save).toHaveBeenCalledWith('grant', '1', 'disk original');
 });
+
+it('binds late native save notices to their exact source and selected document', async () => {
+  const h = await opened();
+  const savedKey = h.result.current.workspace.selected;
+  act(() => h.result.current.change('captured saved source'));
+  const pending = deferred<{ revision: string; durable: boolean }>();
+  api.save.mockReturnValue(pending.promise);
+  let saving!: Promise<void>;
+  act(() => {
+    saving = h.result.current.save();
+  });
+  act(() => h.result.current.select('note.mdx'));
+  await act(async () => {
+    pending.resolve({ revision: '2', durable: true });
+    await saving;
+  });
+  expect(h.result.current.fileNotice).toBe('');
+  expect(h.result.current.workspace.saved[savedKey]).toBe(
+    'captured saved source',
+  );
+  act(() => h.result.current.select(savedKey));
+  expect(h.result.current.fileNotice).toBe('Saved.');
+  act(() => h.result.current.change('newer source not saved'));
+  expect(h.result.current.fileNotice).toBe('');
+  expect(h.result.current.dirty).toBe(true);
+  expect(api.dirty).toHaveBeenLastCalledWith(true, false);
+});
+
+it('keeps sibling close protection while exposing a selected file durability warning', async () => {
+  const h = await opened();
+  const localKey = h.result.current.workspace.selected;
+  act(() => h.result.current.select('note.mdx'));
+  act(() => h.result.current.change('unsaved sibling'));
+  act(() => h.result.current.select(localKey));
+  act(() => h.result.current.change('saved local source'));
+  api.save.mockResolvedValue({ revision: '2', durable: false });
+  await act(async () => h.result.current.save());
+  expect(h.result.current.selectedDirty).toBe(false);
+  expect(h.result.current.otherDirtyCount).toBe(1);
+  expect(h.result.current.fileNotice).toMatch(/durability/);
+  expect(h.result.current.dirty).toBe(true);
+  expect(api.dirty).toHaveBeenLastCalledWith(true, false);
+});

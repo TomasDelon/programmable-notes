@@ -422,7 +422,9 @@ test('explicit browser draft survives reload and restores into a separate buffer
   await page.getByText('Browser draft', { exact: true }).click();
   await page.getByRole('button', { name: 'Restore local draft' }).click();
   await expect(selection).toHaveValue(/draft\.mdx$/);
-  await expect(page.getByText('Unsaved changes')).toBeVisible();
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Unsaved changes',
+  );
   await expect(selection.locator('option[value="note.mdx"]')).toHaveCount(1);
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source' }).click();
@@ -450,7 +452,9 @@ test('automatic drafts require opt-in and track only the selected source', async
   await source.fill('Different document.');
   await page.getByRole('button', { name: 'Restore local draft' }).click();
   await expect(source).toHaveText('Latest draft.');
-  await expect(page.getByText('Unsaved changes')).toBeVisible();
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Unsaved changes',
+  );
   await expect(
     page.getByRole('button', {
       name: 'Enable automatic drafts for this document',
@@ -1067,4 +1071,68 @@ test('trusted save keys export exact source while synthetic, repeated and unappl
   expect(readFileSync((await (await late).path())!)).toEqual(
     Buffer.from(original + 'Unsaved tail.During read.'),
   );
+});
+
+test('selected source status stays accurate while sibling edits and save notices remain isolated', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const alpha = '# Alpha\n';
+  const beta = '# Beta unchanged\r\n';
+  await page.getByLabel('Open files').setInputFiles([
+    { name: 'alpha.mdx', mimeType: 'text/plain', buffer: Buffer.from(alpha) },
+    { name: 'beta.mdx', mimeType: 'text/plain', buffer: Buffer.from(beta) },
+  ]);
+  const selection = page.getByLabel('Source file');
+  const alphaKey = await selection.inputValue();
+  const betaKey = await selection
+    .locator('option')
+    .evaluateAll((options) =>
+      options
+        .map((o) => (o as HTMLOptionElement).value)
+        .find((key) => key.endsWith('/beta.mdx'))!,
+    );
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.fill('# Alpha unsaved\n');
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Unsaved changes',
+  );
+  await selection.selectOption(betaKey);
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Source unchanged',
+  );
+  await expect(page.getByLabel('Workspace status')).toHaveText(
+    '1 other source has unsaved changes.',
+  );
+  const exported = async () => {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  };
+  expect(await exported()).toEqual(Buffer.from(beta));
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Source download requested.',
+  );
+  await selection.selectOption(alphaKey);
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Unsaved changes',
+  );
+  await selection.selectOption(betaKey);
+  await expect(page.getByLabel('Document status')).toHaveText(
+    'Source download requested.',
+  );
+  const closePrevented = () =>
+    page.evaluate(() => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+  expect(await closePrevented()).toBe(true);
+  await selection.selectOption(alphaKey);
+  expect(await exported()).toEqual(Buffer.from('# Alpha unsaved\n'));
+  await expect(page.getByLabel('Workspace status')).toHaveCount(0);
+  expect(await closePrevented()).toBe(false);
 });

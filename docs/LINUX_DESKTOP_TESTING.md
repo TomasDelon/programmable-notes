@@ -72,3 +72,14 @@ remain unchanged. Only the test-created versions are deleted, followed by a
 verified clean process exit. The harness refuses a nonempty initial collection;
 never run it in a personal profile. These tests verify durable completed writes,
 not changes still within the debounce window or storage power loss.
+
+## Multiple-source status and close protection
+
+With a fresh fixture environment and empty recovery collection in a disposable
+profile, run `NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-document-status.mjs`.
+It opens two synthetic files through OS pickers, edits Alpha and saves/reopens Beta,
+checks selected versus aggregate status, cancels an actual dirty-window close,
+saves exact Alpha bytes, checks modes and exits cleanly. Its actual native
+screenshots/results are in [the dated record](security-evidence/2026-11-19-document-status/README.md).
+Delayed save-message races have separate mocked-transport regressions; do not call
+those native security proof.

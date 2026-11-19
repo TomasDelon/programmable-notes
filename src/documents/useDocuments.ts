@@ -34,7 +34,11 @@ export function useDocuments(
   }, [workspace, unappliedVisualEdit]);
   const [busy, setBusy] = useState(false),
     [fileError, setFileError] = useState(''),
-    [fileNotice, setFileNotice] = useState('');
+    [fileNotice, setFileNotice] = useState<{
+      key: string;
+      source: string;
+      text: string;
+    } | null>(null);
   const native = isTauri(),
     dirty = isDirty(workspace) || unappliedVisualEdit;
   // Native close protection covers all buffers, including edits during an async save.
@@ -69,7 +73,7 @@ export function useDocuments(
       running.current = true;
       setBusy(true);
       setFileError('');
-      setFileNotice('');
+      setFileNotice(null);
       try {
         await task();
       } catch (error) {
@@ -107,7 +111,7 @@ export function useDocuments(
   function newNote() {
     if (running.current || !allowDocumentOperation()) return;
     setFileError('');
-    setFileNotice('New unsaved note.');
+    setFileNotice(null);
     setWorkspace(createNote);
   }
   async function restoreNativeVersion(file: string) {
@@ -120,7 +124,11 @@ export function useDocuments(
       ]);
       delete next.saved[next.selected];
       setWorkspace(next);
-      setFileNotice('Recovery version opened as a separate unsaved document.');
+      setFileNotice({
+        key: next.selected,
+        source: next.files[next.selected]!,
+        text: 'Recovery version opened as a separate unsaved document.',
+      });
     });
   }
   async function nativeDraft(action: 'keep' | 'restore' | 'delete') {
@@ -139,13 +147,20 @@ export function useDocuments(
         ]);
         delete next.saved[next.selected];
         setWorkspace(next);
-        setFileNotice('Recovery draft opened as an unsaved document.');
+        setFileNotice({
+          key: next.selected,
+          source,
+          text: 'Recovery draft opened as an unsaved document.',
+        });
       } else {
-        setFileNotice(
-          action === 'keep'
-            ? 'Recovery draft stored.'
-            : 'Recovery draft deleted.',
-        );
+        setFileNotice({
+          key: state.selected,
+          source: state.files[state.selected]!,
+          text:
+            action === 'keep'
+              ? 'Recovery draft stored.'
+              : 'Recovery draft deleted.',
+        });
       }
     });
   }
@@ -200,7 +215,7 @@ export function useDocuments(
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         setWorkspace((next) => completeSave(next, key, source));
-        setFileNotice('Source download requested.');
+        setFileNotice({ key, source, text: 'Source download requested.' });
         return;
       }
       if (old && !asNew) {
@@ -214,11 +229,13 @@ export function useDocuments(
             old.id,
           ),
         );
-        setFileNotice(
-          saved.durable
+        setFileNotice({
+          key,
+          source,
+          text: saved.durable
             ? 'Saved.'
             : 'Saved, but crash durability could not be confirmed.',
-        );
+        });
       } else {
         const doc = await nativeDocuments.saveAs(
           old?.name || key.split('/').pop()!,
@@ -239,11 +256,13 @@ export function useDocuments(
             old?.id,
           ),
         );
-        setFileNotice(
-          doc.durabilityWarning
+        setFileNotice({
+          key,
+          source,
+          text: doc.durabilityWarning
             ? 'Saved, but crash durability could not be confirmed.'
             : 'Saved.',
-        );
+        });
         if (old) await nativeDocuments.close(old.id);
       }
     });
@@ -282,7 +301,7 @@ export function useDocuments(
           },
         };
       });
-      setFileNotice('Reopened from disk.');
+      setFileNotice({ key, source: doc.source, text: 'Reopened from disk.' });
     });
   }
   async function close() {
@@ -337,8 +356,20 @@ export function useDocuments(
     native,
     busy,
     dirty,
+    selectedDirty:
+      workspace.files[workspace.selected] !==
+      workspace.saved[workspace.selected],
+    otherDirtyCount: Object.keys(workspace.files).filter(
+      (key) =>
+        key !== workspace.selected &&
+        workspace.files[key] !== workspace.saved[key],
+    ).length,
     fileError,
-    fileNotice,
+    fileNotice:
+      fileNotice?.key === workspace.selected &&
+      fileNotice.source === workspace.files[workspace.selected]
+        ? fileNotice.text
+        : '',
     openNative,
     newNote,
     openBrowser,

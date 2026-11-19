@@ -59,3 +59,13 @@ flow as the toolbar. Shift requests Save As. Require an actual trusted keyboard
 event and retain pending/busy guards; ignore held repeats, composing and Alt input.
 Do not translate preview keyboard messages into editor/file operations. Browser
 exports and native picker/grant-backed writes keep their existing authorization.
+
+## Per-source status and aggregate close protection
+
+Selected document dirty/save status is separate from workspace dirty state. Dirty
+siblings retain their own selector markers and a separate count. Browser unload
+and native close protection continue to include every dirty buffer and pending
+visual input. Save/reopen/recovery notices capture a document key and exact source;
+a delayed completion cannot claim that another selected source or newer text was
+saved. This does not authorize any operation or change native grants. See the
+[actual browser/native regression evidence](../security-evidence/2026-11-19-document-status/README.md).

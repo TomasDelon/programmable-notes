@@ -375,10 +375,17 @@ export function App() {
           ? 'File operation in progress'
           : pendingVisual
             ? 'Unapplied visual edit'
-            : documents.dirty
+            : documents.selectedDirty
               ? 'Unsaved changes'
               : documents.fileNotice || 'Source unchanged'}
       </p>
+      {documents.otherDirtyCount > 0 && (
+        <p aria-label="Workspace status" aria-live="polite">
+          {documents.otherDirtyCount} other{' '}
+          {documents.otherDirtyCount === 1 ? 'source has' : 'sources have'}{' '}
+          unsaved changes.
+        </p>
+      )}
       {pendingVisual && (
         <p role="note">
           Visual text has not been applied. In Visual mode, press Enter to apply

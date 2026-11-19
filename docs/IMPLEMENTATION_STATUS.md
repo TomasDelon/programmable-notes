@@ -41,6 +41,14 @@ all validators still run. See [ADR-005](decisions/ADR-005-paragraph-editing.md),
 
 ## Documents and recovery
 
+Selected dirty/save status is independent of other buffers. Dirty siblings have
+a separate count; aggregate native/browser close protection still includes every
+buffer and unapplied visual input. Notices capture the exact source and document
+key, so delayed saves cannot label another or newer source saved. A selected
+file's durability warning remains available with dirty siblings. Real native
+picker/save/reopen/dirty-close and browser transport regressions passed
+([results and screenshots](security-evidence/2026-11-19-document-status/README.md)).
+
 Focus the editor workspace and use Ctrl/Cmd+S to save; Shift requests native
 Save As. Synthetic/repeated/composing input and pending/busy states cannot save.
 Browser exact-export/delayed-read and real Linux Ctrl/Shift chooser cases passed
@@ -82,7 +90,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 56 unit and 26 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 58 unit and 27 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 36 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |

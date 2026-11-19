@@ -1,0 +1,44 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-documents.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-documents.test.ts (14 tests | 1 failed) 65ms
+   × binds late native save notices to their exact source and selected document 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-documents.test.ts > binds late native save notices to their exact source and selected document
+AssertionError: expected 'Saved.' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ Saved.
+
+ ❯ tests/unit/native-documents.test.ts:311:39
+    309|     await saving;
+    310|   });
+    311|   expect(h.result.current.fileNotice).toBe('');
+       |                                       ^
+    312|   expect(h.result.current.workspace.saved[savedKey]).toBe(
+    313|     'captured saved source',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  06:43:33
+   Duration  1.26s (environment 73%, setup 10%, transform 9%, tests 6%, import 2%)
+

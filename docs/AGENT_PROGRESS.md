@@ -642,3 +642,34 @@ redesign. Refresh the portable browser artifact if frontend behavior changes.
 Final repository check passed 56 unit / 26 Chromium for this test-only milestone.
 Commit/push the verified contention checkpoint, then reproduce selected-document
 status in Chromium before changing notice ownership or aggregate dirty handling.
+
+## 2026-11-19 — selected document status correctness (in progress)
+
+9201a12 was pushed; PR #1 stays draft, backend count updated to 36 normal tests.
+New Chromium regression reproduced a clean selected Beta wrongly labelled unsaved
+because Alpha was dirty. New mocked-native transport regression reproduced a late
+Alpha save message displayed on selected Beta. Both failures are retained in /tmp.
+
+Implemented a bounded ownership fix: notices capture document key and exact source,
+selected status uses selected-source dirtiness, and a separate live count identifies
+other dirty sources. Aggregate browser/native dirty-close guards are unchanged.
+Unchanged notice text and native APIs/grants; no visual redesign or preview authority.
+Focused red/green browser and native transport tests passed. Added durability-warning
+coverage with a dirty sibling to prevent hiding a committed-save warning.
+
+Next executable actions: run full repository checks; build/install current optimized
+package; test two native files with dirty sibling, actual saves/reopen and close
+cancellation, capture evidence. Refresh portable browser walkthrough/build/ZIP and
+verify exact extracted behavior/download hashes before push. Keep hosted billing
+and existing full-resource memory/startup failures explicit; no new full-matrix pass.
+
+Selected-status milestone final checks passed 58 unit / 27 Chromium. First full
+run caught an ambiguous old Unsaved locator; strengthened it to exact named
+document status, retained failure and reran full suite green. Installed package
+8f54a264… / ELF 7ef9a9c7… passed actual two-file dirty/saved status, window-close
+Cancel, exact BOM/CRLF/mode0640 save/reopen and clean exit; separate IPC and full
+pending/keyboard native regressions also passed. No important review findings.
+Evidence is 2026-11-19-document-status. Commit source/tests/evidence now, leaving
+demo-tool changes for the following validated delivery commit. Then capture the
+committed frontend, package/verify the fresh portable ZIP and push both coherent
+commits; do not leave the prior archive described as the current frontend.
