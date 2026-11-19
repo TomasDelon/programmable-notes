@@ -319,9 +319,14 @@ mixed-case names across actual SIGKILL/restart: independent histories/retention,
 exact metadata baselines and bytes, explicit unsaved restoration, cancelled Save As
 and acknowledged exact saving to a new `.MdX` copy with mode0600. The original
 retained mode0640 and its exact source. [Executed scope and strict option controls](security-evidence/2026-11-19-uppercase-auto-recovery/README.md).
-Next: verify the committed implementation from a fresh clone with a new npm
-installation and no preexisting generated runtime. Preserve these native renderer
-failures for bounded investigation. The portable review is remote-verified
+A fresh local clone of a40ea74 passed offline locked npm installation and the
+ordinary full check from an absent runtime:96 unit/37 Chromium tests, plus39
+ordinary document Rust tests and7 policy tests in new targets. The frontend
+bundle matches the production builder exactly and tracked state remained clean.
+Wry verification passed with its explicit pinned offline archive after a DNS
+failure; no online verification pass is claimed. [Clean-checkout evidence](security-evidence/2026-11-19-clean-recovery-checkout/README.md).
+Next: retain these native renderer failures for a bounded external-debugger
+investigation on the unchanged binary. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner

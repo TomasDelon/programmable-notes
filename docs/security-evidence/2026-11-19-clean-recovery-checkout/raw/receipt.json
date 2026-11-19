@@ -1,0 +1,29 @@
+{
+  "scope": "fresh local committed clone; exact locked npm install and standalone Rust crates, not hosted CI or fresh packaged-native execution",
+  "commit": "a40ea74cdaa2fe97c889b552e188062402b8b75c",
+  "node": "v24.22.1",
+  "npm": "11.9.0",
+  "cargo": "cargo 1.100.0 (3acc79c0c 2026-11-05)",
+  "rustc": "rustc 1.100.0 (0ef1bc386 2026-11-09)",
+  "install": "npm ci --offline --cache /workspace/programmable-notes/.cache/npm --no-audit --no-fund",
+  "preInstallAbsence": [
+    "node_modules",
+    "dist",
+    ".cache/runtime.js"
+  ],
+  "runtimeAbsentAfterInstall": true,
+  "standaloneRustTargetDirectoriesPresent": [
+    true,
+    true
+  ],
+  "postVerificationTrackedStatus": "",
+  "lockfileSha256": "5a084edd950b406cbecfb50cef635dd5af42383255472307a56e1f8f59711fd2",
+  "runtimeSha256": "1ac6b2ea8eb455e25f5f03116a2bc7c6403a834eafb4c9b5593cc73dbf40f300",
+  "frontendBundleSha256": "c41526e55f1a476fde3b66ee32c1e8b1ab94b757176c107073bc66e9cf8965e9",
+  "matchesProductionBuilderBundle": true,
+  "unitPassed": 96,
+  "chromiumPassed": 37,
+  "ordinaryNativeDocumentsPassed": 39,
+  "ordinaryNativeDocumentsIgnored": 4,
+  "nativePolicyPassed": 7
+}

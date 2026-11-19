@@ -1623,3 +1623,34 @@ to verify npm ci and the full check without existing node_modules, dist or runti
 Retain exact commit/tool versions and generation/clean-status receipts. No new
 application package is needed for this observer-only milestone. Earlier primed
 renderer failures and resource5/1 remain unresolved, as does hosted billing.
+
+## 2026-11-19 — clean committed checkout verified
+
+Verified exact pushed source `a40ea74cdaa2fe97c889b552e188062402b8b75c` in
+`/tmp/pn-clean-a40ea74`, a separate local clone with no initial dependencies,
+build output or generated runtime. Offline npm ci installed372 locked packages;
+runtime remained absent until the ordinary full check's pretest hook. Full check
+passed96 unit/37 matching Chromium tests, formatting/lint/types and fresh build.
+Clean Rust targets passed39 ordinary document tests (four excluded infrastructure
+cases) and7 policy tests. Runtime and full frontend bundle hashes are recorded;
+the latter matches production builder c41526e5… exactly. Tracked state stayed clean.
+Evidence: 2026-11-19-clean-recovery-checkout.
+
+Default Wry upstream fetch failed DNS. An elevated retry had no execution receipt
+after a tool runtime reset, so it is not counted. The existing offline archive
+input passed against the cached crate with mandatory a4901191… hash and all file
+comparisons: only the two declared sandbox patches differ. No network access
+restriction or checksum was bypassed. The reset affected tool orchestration;
+source/workspace and the completed test evidence remained present.
+
+Exact hosted run44568476206 on a40ea74 refused both jobs with zero steps for
+account billing. No claim of hosted CI green or fresh native GUI/package rerun.
+The installed production ELF remains ff7d4bab… with prior successful ordinary
+uppercase/full lowercase/IPC/actual automatic recovery and two primed failures.
+
+Next: commit/push the verification documentation and update draftPR/current CI.
+Then investigate the reproducible native JSC gutter-loop failure with a bounded
+external debugger on the unchanged production binary; retain diagnostic scope,
+owned PID/start/executable checks and every failure. Do not ship speculative JIT
+or policy changes. Keep ordinary source/persistence functionality progressing
+independently when native engine/hardware infrastructure blocks an investigation.
