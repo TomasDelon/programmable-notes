@@ -1,0 +1,43 @@
+/** Diagnostic only: current browser build in native MiniBrowser, no Tauri IPC. */
+import assert from 'node:assert/strict';
+import {writeFile,readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import process from 'node:process';
+const report={scope:'MiniBrowser production frontend, no Tauri IPC',visualCycles:0};
+const out='/tmp/pn-mini-browser-control.json';
+let session,failure;
+const pause=(ms)=>new Promise(r=>setTimeout(r,ms));
+async function wd(path,body,method='POST'){
+ const r=await fetch('http://127.0.0.1:9555'+path,{method,headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(45000)});
+ const json=await r.json();if(!r.ok)throw Error(JSON.stringify(json));return json.value;
+}
+const exec=(script,args=[])=>wd(`/session/${session}/execute/sync`,{script,args});
+async function wait(condition){for(let i=0;i<300;i++){if(await exec('return ('+condition+')'))return;await pause(100);}throw Error('Condition not observed: '+condition);}
+async function button(name){assert.equal(await exec(`const b=Array.from(document.querySelectorAll('button')).find(e=>e.textContent===arguments[0]);if(!b||b.disabled)return false;b.click();return true;`,[name]),true);}
+try{
+ const r=await wd('/session',{capabilities:{alwaysMatch:{browserName:'MiniBrowser'}}});session=r.sessionId;report.capabilities=r.capabilities;
+ await wd(`/session/${session}/url`,{url:'http://127.0.0.1:9556/'});
+ await wait("!!document.querySelector('.cm-content')");
+ assert.equal(await exec("return typeof window.__TAURI_INTERNALS__"),'undefined');
+ await button('Stop preview');
+ const p=Array.from({length:1000},(_,i)=>`Line ${i}: source remains exact.`).join('\n');
+ const source='\uFEFF# Long paragraph\r\n\r\n'+p+'\r\n\r\n<div>Opaque</div>\r\n';
+ report.sourceSha256=createHash('sha256').update(source).digest('hex');
+ assert.equal(await exec(`const e=document.querySelector('input[type=file]');const d=new DataTransfer();d.items.add(new File([arguments[0]],'long-paragraph.mdx',{type:'text/plain'}));e.files=d.files;e.dispatchEvent(new Event('change',{bubbles:true}));return true;`,[source]),true);
+ await wait("document.querySelector('select')?.selectedOptions[0]?.textContent.includes('long-paragraph.mdx')");
+ await wait("!Array.from(document.querySelectorAll('button')).find(e=>e.textContent==='Save source')?.disabled");
+ for(let i=0;i<20;i++){
+  report.phase='Visual '+i;await writeFile(out,JSON.stringify(report,null,2));
+  await button('Visual');
+  await wait("!!document.querySelector('[aria-label=\"Markdown editing\"] p button')");
+  report.paragraphExact=await exec("return document.querySelector('[aria-label=\"Markdown editing\"] p button').textContent===arguments[0]",[p]);assert.equal(report.paragraphExact,true);
+  await button('Source');report.visualCycles++;
+ }
+ report.outcome='observed';
+}catch(error){failure=error;report.error=String(error);report.outcome='fail';}
+finally{
+ if(session)await wd(`/session/${session}`,undefined,'DELETE').catch(error=>{report.closeError=String(error)});
+ report.observerSha256=createHash('sha256').update(await readFile(new URL(import.meta.url))).digest('hex');
+ await writeFile(out,JSON.stringify(report,null,2)+'\n');console.log(out);
+}
+if(failure)throw failure;

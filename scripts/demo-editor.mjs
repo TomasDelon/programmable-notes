@@ -182,13 +182,53 @@ try {
     await readFile(join(output, 'lesson.mdx'), 'utf8'),
     source.replace(original, replacement),
   );
+  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
+  const longParagraph = Array.from(
+    { length: 1000 },
+    (_, i) => `Line ${i}: source remains exact.`,
+  ).join('\n');
+  const longSource =
+    '# Long paragraph\n\n' + longParagraph + '\n\n<div>Opaque</div>\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'long-note.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(longSource),
+  });
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await panel.locator('p button').first().click();
+  const longInput = panel.getByRole('textbox', { name: 'Paragraph text' });
+  assert.equal(await longInput.inputValue(), longParagraph);
+  const geometry = await longInput.evaluate((e) => ({
+    height: e.getBoundingClientRect().height,
+    viewport: e.ownerDocument.defaultView.innerHeight,
+    client: e.clientHeight,
+    scroll: e.scrollHeight,
+  }));
+  assert.ok(geometry.height <= geometry.viewport * 0.75);
+  assert.ok(geometry.scroll > geometry.client + 1000);
+  await longInput.press('Control+End');
+  assert.ok(await longInput.evaluate((e) => e.scrollTop > 0));
+  await page.keyboard.insertText(' Tail saved.');
+  assert.equal(await longInput.inputValue(), longParagraph + ' Tail saved.');
+  await page.screenshot({
+    path: join(output, '06-long-input.png'),
+    fullPage: true,
+  });
+  await longInput.press('Enter');
+  const longDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  await (await longDownload).saveAs(join(output, 'long-note.mdx'));
+  assert.equal(
+    await readFile(join(output, 'long-note.mdx'), 'utf8'),
+    longSource.replace(longParagraph, longParagraph + ' Tail saved.'),
+  );
   const video = page.video();
   await page.close();
   await video.saveAs(join(output, 'walkthrough.webm'));
   await video.delete();
   await writeFile(
     join(output, 'walkthrough.html'),
-    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
+    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson. It then edits the end of a thousand-line paragraph in a bounded scrollable input and saves exact source.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a> · <a href="long-note.mdx" download>long paragraph</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure><figure><figcaption>Full long-paragraph input with internal scrolling</figcaption><img alt="Thousand-line paragraph edited at its end without an oversized input" src="06-long-input.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
   );
 } finally {
   await browser.close();
@@ -214,10 +254,12 @@ const names = [
   '03-updated.png',
   '04-new-note.png',
   '05-dirty-sibling.png',
+  '06-long-input.png',
   'walkthrough.webm',
   'walkthrough.html',
   'lesson.mdx',
   'new-note.mdx',
+  'long-note.mdx',
   ...['desktop', 'tablet', 'mobile'].flatMap((device) => [
     `before/${device}.png`,
     ...['source', 'split', 'visual'].map((mode) => `${device}-${mode}.png`),

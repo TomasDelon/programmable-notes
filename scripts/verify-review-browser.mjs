@@ -148,8 +148,47 @@ try {
     await readFile(await (await unchanged).path()),
     Buffer.from(repeated),
   );
+  const longParagraph = Array.from(
+    { length: 1000 },
+    (_, i) => `Line ${i}: source remains exact.`,
+  ).join('\n');
+  const longSource =
+    '# Long paragraph\n\n' + longParagraph + '\n\n<div>Opaque</div>\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'long-note.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(longSource),
+  });
+  await page
+    .getByRole('region', { name: 'Markdown editing' })
+    .locator('p button')
+    .first()
+    .click();
+  assert.equal(await field.inputValue(), longParagraph);
+  assert.ok(
+    await field.evaluate(
+      (e) =>
+        e.getBoundingClientRect().height <=
+          e.ownerDocument.defaultView.innerHeight * 0.75 &&
+        e.scrollHeight > e.clientHeight + 1000,
+    ),
+  );
+  await field.press('Control+End');
+  assert.ok(await field.evaluate((e) => e.scrollTop > 0));
+  await page.keyboard.insertText(' Tail saved.');
+  await field.press('Enter');
+  const longDownload = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await longDownload).path()),
+    Buffer.from(
+      longSource.replace(longParagraph, longParagraph + ' Tail saved.'),
+    ),
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_and_ambiguous_refusal',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_and_bounded_long_input',
   );
 } finally {
   await browser.close();

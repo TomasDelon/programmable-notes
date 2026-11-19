@@ -79,10 +79,14 @@ async function cleanupOwnedRoot() {
     throw error;
   }
   assert.equal(await rootPid(), pid);
-  assert.equal(
-    digest(await readFile(`/proc/${pid}/exe`)),
-    report.executableSha256,
-  );
+  let executableSha256;
+  try {
+    executableSha256 = digest(await readFile(`/proc/${pid}/exe`));
+  } catch (error) {
+    if (gone(error)) return;
+    throw error;
+  }
+  assert.equal(executableSha256, report.executableSha256);
   try {
     if ((await startTick(pid)) !== start) return;
     process.kill(pid, 'SIGTERM');

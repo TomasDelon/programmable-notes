@@ -208,7 +208,7 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: refresh the review artifact from the fixed committed frontend and diagnose
+Next: finish delivery of the bounded-input review and diagnose
 remaining native cold-start observations without changing deadlines or isolation;
 retain separate containment and interactive-recovery results, and investigate
 the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source

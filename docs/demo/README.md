@@ -1,12 +1,12 @@
 # Downloadable editor review
 
 [Download the working review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
-(6,350,148 bytes).
+(7,024,457 bytes).
 
 This dated ZIP is the requested PR-accessible review attachment while hosted
 Actions refuses jobs because of account billing. It contains a complete browser
 build, a recorded walkthrough, before/after screenshots at desktop/tablet/mobile
-sizes and both actual saved MDX files. The source application is from `6f7d4c6`;
+sizes and all three actual saved MDX files. The source application is from `d919978`;
 these delivery-tool changes do not change its frontend. The PR remains draft.
 
 Extract into a new directory. Open `walkthrough/walkthrough.html` for the video
@@ -23,15 +23,15 @@ text before saving. Unapplied text is memory-only until applied. Native file per
 WebKitGTK, recovery and cgroups have separate Linux acceptance procedures.
 Browser CPU/memory quotas and production security readiness are not claimed.
 
-SHA-256: `c175fbe7c7cc250347512e90de668b9aa7b84392d7b60c8454c1c3a24f4d6dee`
+SHA-256: `08b7f34d80b000551b53046b3cda0996e685cb0a5295be7bac9803c1c85f59ae`
 
 The clean extracted package passed real React interaction, a new focused note,
 exact keyboard-exported bytes, protected unapplied text, BOM/CRLF/opaque JSX
-preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, and offline recompilation after initial loading. Final repository checks passed
-63 unit and 28 Chromium tests. The packager verified a complete asset/capture hash
+preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, offline recompilation after initial loading, and end typing in a bounded thousand-line input with exact export. Final repository checks passed
+63 unit and 29 Chromium tests. The packager verified a complete asset/capture hash
 manifest and CRC; eight negative fixtures rejected changed/missing/extra assets,
 changed captures, unsafe paths, symlinks and failed recordings. The ZIP contains
-its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-eol-review/README.md).
+its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-long-review/README.md).
 
 ![Current Split workspace](desktop.png)
 
@@ -40,6 +40,8 @@ its manifest and capture receipt. [Raw checks and scope](../security-evidence/20
 ![New note in Source mode](new-note.png)
 
 ![Clean selected lesson with an unsaved other source](dirty-sibling.png)
+
+![Long paragraph edited at its end](long-input.png)
 
 ![Mobile Visual mode](mobile.png)
 

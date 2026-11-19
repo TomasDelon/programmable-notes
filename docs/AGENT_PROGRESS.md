@@ -857,3 +857,44 @@ Hosted2674707 run44484732035 again had0steps and the exact billing annotation.
 Next: commit/push bounded input fix and complete evidence; update draft PR. Then
 prepare a minimal renderer reproduction/control to narrow JSC versus app/native
 without shipping speculative engine flags or changing production restrictions.
+
+Bounded input source/evidence pushed as d919978, PR head/draft verified and body
+updated. Delivery refresh now has31entries/6,810,878bytes/SHA c086cd27… from
+frontendd919978. Actual capture adds06-long-input.png and exact long-note.mdx;
+extracted build passed scrolling/tailtyping/exact export plus all preceding
+controls and8 packaging negatives. Keep frontend scope distinct from native
+crash evidence. Next: fullcheck, push delivery, remotely retrieve exactGitblob.
+
+Further native diagnostics: attempted root-only DFG-off wrapper stalled BEFORE
+Visual at File operation in progress; it never reached flag-report/cycle gates
+and is inconclusive, not a workaround/pass. Cleanup found process already gone
+between identity and /proc/exe; helper now treats disappearance at that exact
+lifecycle read as gone. App/driver production config was not changed. A separate
+MiniBrowser2.52.6 control with exact same31,935-byte source, current frontend and
+no Tauri bridge completed20Visual/Source cycles. This does not rule out engine/
+heap timing or establish Tauri as cause; five independent sessions now planned.
+
+Delivery verification caught Node-script lint globals (innerHeight inside browser
+callbacks); qualified through each element's ownerDocument.defaultView. Capture
+script hash changed, so recording/archive were regenerated and extracted checks
+repeated rather than editing receipts. Current ZIP is7,024,457bytes/31entries/
+SHA08b7f34d80b000551b53046b3cda0996e685cb0a5295be7bac9803c1c85f59ae.
+Full repository check running before commits.
+
+Native MiniBrowser comparison retained two complete20-cycle sessions. Third
+was interrupted at7cycles when owned server/driver hit their300-second limits;
+journal confirms expiry. Do not call it a pass or renderer crash. Diagnostic
+record is2026-11-19-renderer-controls. No production config/engine flags changed.
+After delivery push/re-download, next safe work: expand literal Markdown block
+coverage conservatively, starting single-line blockquotes with exact marker/
+context/candidate validation and opaque nested/JSX/formatting fallback. Keep
+existing native renderer/pressure blockers explicit; no security-readiness claim.
+
+Final current repository check passed63unit/29Chromium (43.9s browser run).
+Current extracted archive and all8integrity negatives also passed after the
+qualified viewport globals and regenerated capture. Commit/push now, verify the
+remote blob byte-for-byte, update draft PR's immutable download. Next executable
+P2 work is test-first literal single-line blockquotes: leave marker/indentation/
+line endings untouched, reject multiline/lazy/nested/formatted/JSX quotes and
+stale/forged context. Native faults remain documented and unrelated work is safe
+under the existing editor-owned authorization and sandbox boundaries.
