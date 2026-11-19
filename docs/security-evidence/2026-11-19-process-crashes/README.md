@@ -89,3 +89,13 @@ The rebuilt lock-fix package also passed the installed SIGKILL/restart suite
 (root 4542, fresh root 4673), discovery, explicit restore, Save As cancellation,
 exact separate saving, unchanged original and cleanup. The process exited normally
 after the final clean close. See `raw/desktop-sigkill-after-fix.log`.
+
+## Hosted CI availability
+
+Run [44436506110](https://github.com/TomasDelon/programmable-notes/actions/runs/44436506110)
+for `83d1e4a` failed **before either job started**. Check-run annotations report
+failed account payments or an insufficient spending limit; both jobs have no
+runner and no steps. This is an account-infrastructure blocker, not a test result.
+The account owner must resolve GitHub Billing & plans before a rerun can execute.
+The preceding `438f4b4` run 44430453610 passed both jobs. Local checks and disposable
+VM observations above were actually executed and are independent evidence.

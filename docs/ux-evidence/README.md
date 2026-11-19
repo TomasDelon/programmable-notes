@@ -30,3 +30,9 @@ The corresponding `check` job passed, including the recording script. Artifacts
 expire after 30 days; a fresh CI run regenerates them. Native acceptance and IPC
 results for the optimized installed app are recorded in the
 [dated Linux evidence](../security-evidence/2026-11-18-unified-ux/README.md).
+
+Latest pre-billing-block demo: [`438f4b4` browser build, screenshots and walkthrough](https://github.com/TomasDelon/programmable-notes/actions/runs/44430453610/artifacts/14486761171).
+The check job including recording/upload passed; artifact metadata reports it
+unexpired. Artifact download from this cloud returns HTTP 403, so a successful
+re-download is not claimed. Subsequent hosted jobs are blocked before startup by
+account billing; current local/native checks are in IMPLEMENTATION_STATUS.md.

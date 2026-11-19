@@ -170,3 +170,34 @@ unchanged original and final clean exit. All evidence is retained. A first timin
 probe of 5,000 CRLF paragraphs (193,888 UTF-16 units) measured 735–1,610 ms for
 mapping/no-op/patch/remapping. Next: a bounded exact-source AST reuse optimization
 with all validation preserved, then full regressions and a reproducible benchmark.
+
+Crash/lock milestone committed and pushed as `83d1e4a`. Its hosted CI run
+44436506110 was refused before either job started: GitHub annotations cite account
+payments/spending limit (no runner/steps). Owner billing action is required; do
+not present this as failed application tests or make speculative workflow fixes.
+Continue local/VM validation. Exact annotation is in crash evidence.
+
+## Bounded mapping reuse
+
+The reproducible 198,888-byte / 5,000-paragraph benchmark measured a warm median
+786.64 ms before and 328.15 ms after one-entry exact-source AST reuse. All source,
+context, revision and candidate checks remain. Fresh return objects isolate
+caller mutation; regression covers changed same-length revisions, invalid parses
+and rejected candidates. Read-only review found no important issue. Full check
+passed 40 unit / 19 Chromium tests. The optimized package is rebuilt and installed
+for actual WebKitGTK fidelity acceptance. Timing is not a native frame-time claim.
+
+`IMPLEMENTATION_STATUS.md` now describes current behavior rather than interleaving
+obsolete statements that recovery/visual editing/undo were still unimplemented.
+The historical records and package-specific security scope remain linked. Hosted
+CI remains blocked before startup by account billing, not application test failure.
+Next: finish native fidelity acceptance, retain evidence, commit/push and update
+PR #1 while preserving draft status; then inspect concrete source diagnostic gaps.
+
+Bounded-mapping optimized package completed real WebKitGTK acceptance: React,
+no-op BOM/CRLF save, three modes, inline patches, exact disk/mode, undo/redo,
+restart/reopen and explicit/invalid recovery. Six policy tests passed. Fresh Wry
+upstream fetch failed DNS and network escalation was cancelled; do not count it
+as a pass. Fork unchanged, last hosted verification passed at `438f4b4`.
+Evidence: `docs/performance-evidence/2026-11-19`. Next: commit/push checkpoint,
+update draft PR, then characterize mixed physical line endings before any change.

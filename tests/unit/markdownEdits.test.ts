@@ -139,3 +139,30 @@ it('does not treat Unicode separators inside metadata as physical delimiter line
   ]);
   expect(markdownBlocks(source)[0]?.to).toBe(source.lastIndexOf('---') + 4);
 });
+
+it('keeps repeated mapping results independent across revisions and malformed documents', () => {
+  const source = '## Heading\r\n\r\nOriginal body.\r\n\r\n<Widget />\r\n';
+  const [heading, body] = editableMarkdown(source);
+  const blocks = markdownBlocks(source);
+  const firstBlock = { ...blocks[0]! };
+  // Callers can mutate their returned presentation data, never the parser tree.
+  heading!.headingDepth = 6;
+  body!.text = 'Forged';
+  blocks[0]!.from = 999;
+  expect(markdownBlocks(source)[0]).toEqual(firstBlock);
+  const fresh = editableMarkdown(source)[1]!;
+  expect(fresh.text).toBe('Original body.');
+  const changed = source.replace('Original body.', 'Modified body.');
+  expect(changed.length).toBe(source.length);
+  expect(patchMarkdown(changed, fresh, 'Replacement.')).toBeNull();
+  expect(editableMarkdown('<Unclosed')).toEqual([]);
+  expect(markdownBlocks('<Unclosed')).toEqual([]);
+  expect(patchMarkdown(source, fresh, 'Replacement.')).toBe(
+    source.replace('Original body.', 'Replacement.'),
+  );
+  // A rejected candidate cannot contaminate the next valid mapping/patch.
+  expect(patchMarkdown(source, fresh, '<Widget />')).toBeNull();
+  expect(patchMarkdown(source, fresh, 'Safe again.')).toBe(
+    source.replace('Original body.', 'Safe again.'),
+  );
+});

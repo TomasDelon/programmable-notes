@@ -36,3 +36,14 @@ header falls back to Source. The editor masks the protected prefix only in its
 private AST analysis, preserving UTF-16 offsets and line endings. It never
 rewrites document bytes or changes the runtime grammar. Metadata/fences/JSX and
 Unicode are covered by exact-byte browser and installed-native tests.
+
+## Bounded parser reuse
+
+The range/block/no-op/candidate/remapping sequence repeatedly parsed identical
+source. A measured 5,000-paragraph cycle justified retaining one successful AST
+keyed by the entire bounded source string. Only this module reads the tree;
+callers get fresh projections. Different or malformed source cannot reuse a
+previous revision's mappings. No stale-source, context or candidate check is
+skipped, and no untrusted preview input is accepted. The cache has no history and
+holds at most one source/AST. Initial parsing remains synchronous; timing evidence
+is descriptive, not a portable performance guarantee.

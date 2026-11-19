@@ -10,6 +10,16 @@ export interface MarkdownRange {
 
 const plain = /^[\P{Cc}\t\r\n]+$/u;
 const processor = createProcessor();
+// One exact-source AST, shared only by this module's read-only projections.
+// Callers receive fresh ranges, never parser nodes. Public entry points retain
+// the source-size bound; revision/context/candidate validation still runs.
+let parsed:
+  | {
+      source: string;
+      end: number;
+      tree: ReturnType<typeof processor.parse>;
+    }
+  | undefined;
 
 // Front matter is opaque source, not a new MDX grammar or runtime transform.
 function metadataEnd(source: string) {
@@ -43,11 +53,14 @@ function metadataEnd(source: string) {
   return mapping ? source.length : 0;
 }
 function parsedSource(source: string) {
+  if (parsed?.source === source) return parsed;
   const end = metadataEnd(source);
   // Preserve UTF-16 offsets and line endings. No author bytes are rewritten.
   const masked =
     source.slice(0, end).replace(/[^\r\n]/g, ' ') + source.slice(end);
-  return { end, tree: processor.parse(masked) };
+  const tree = processor.parse(masked);
+  parsed = { source, end, tree };
+  return parsed;
 }
 
 export function editableMarkdown(source: string): MarkdownRange[] {
