@@ -187,8 +187,31 @@ try {
       longSource.replace(longParagraph, longParagraph + ' Tail saved.'),
     ),
   );
+  const quoteSource =
+    '\uFEFF# Quote\r\n\r\n  >\tQuoted café 😀.\r\n\r\n<div>Opaque</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'quoted.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(quoteSource),
+  });
+  await page
+    .getByRole('region', { name: 'Markdown editing' })
+    .locator('blockquote button')
+    .click();
+  await field.fill('Changed quote: café 😀.');
+  await field.press('Enter');
+  const quoteDownload = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await quoteDownload).path()),
+    Buffer.from(
+      quoteSource.replace('Quoted café 😀.', 'Changed quote: café 😀.'),
+    ),
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_and_bounded_long_input',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_and_literal_quote',
   );
 } finally {
   await browser.close();

@@ -1005,3 +1005,20 @@ feedback after successful start. Inspect actual expiry UI and supervisor handle
 lifecycle before choosing a minimal change. Do not infer stopped enforcement from
 a frontend timer, drop a retained unit handle, restart automatically, or relax
 limits. App already prunes closed-document histories; do NOT duplicate that work.
+
+Quote source f503644 pushed and PR draft/head verified; native actual results
+reported in body. Hosted44505000119 had zero steps/billing, not a code/test result.
+Fresh quote-capable review binds f503644: 7,075,909bytes/33entries/SHA
+89c78c59b4728e137ee7a8f1a2df7ac58230c0f208fc9a4b294bd5cd2b155959. Actual quote screenshot/Unicode export, extracted browser all
+core checks and8packaging negatives passed. Final repo check pending before
+delivery commit/push/re-download; no unexecuted checks called green. Next native
+session-end feedback needs plan and actual before/after expiry observation.
+
+Quote delivery final fullcheck passed65unit/30Chromium. Archive33entries /
+7,075,909bytes / SHA89c78c59b4728e137ee7a8f1a2df7ac58230c0f208fc9a4b294bd5cd2b155959
+binds committed f503644. Commit/push and re-download exact Git blob next.
+A read-only native baseline observer is now running on installed4a14f61b…:
+actual Root UI compile/React interaction through natural60-second expiry, recording
+compiler status and absent lifecycle feedback without changing any policy. Its
+/tmp/native-session-baseline.mjs and /tmp/native-session-baseline.log identify
+the pending observation; do not claim new status functionality yet.

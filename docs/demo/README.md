@@ -1,12 +1,12 @@
 # Downloadable editor review
 
 [Download the working review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
-(7,024,457 bytes).
+(7,075,909 bytes).
 
 This dated ZIP is the requested PR-accessible review attachment while hosted
 Actions refuses jobs because of account billing. It contains a complete browser
 build, a recorded walkthrough, before/after screenshots at desktop/tablet/mobile
-sizes and all three actual saved MDX files. The source application is from `d919978`;
+sizes and all four actual saved MDX files. The source application is from `f503644`;
 these delivery-tool changes do not change its frontend. The PR remains draft.
 
 Extract into a new directory. Open `walkthrough/walkthrough.html` for the video
@@ -23,15 +23,15 @@ text before saving. Unapplied text is memory-only until applied. Native file per
 WebKitGTK, recovery and cgroups have separate Linux acceptance procedures.
 Browser CPU/memory quotas and production security readiness are not claimed.
 
-SHA-256: `08b7f34d80b000551b53046b3cda0996e685cb0a5295be7bac9803c1c85f59ae`
+SHA-256: `89c78c59b4728e137ee7a8f1a2df7ac58230c0f208fc9a4b294bd5cd2b155959`
 
 The clean extracted package passed real React interaction, a new focused note,
 exact keyboard-exported bytes, protected unapplied text, BOM/CRLF/opaque JSX
-preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, offline recompilation after initial loading, and end typing in a bounded thousand-line input with exact export. Final repository checks passed
-63 unit and 29 Chromium tests. The packager verified a complete asset/capture hash
+preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, offline recompilation after initial loading, and end typing in a bounded thousand-line input with exact export, and literal quote edits retaining indentation, markers, Unicode and CRLF. Final repository checks passed
+65 unit and 30 Chromium tests. The packager verified a complete asset/capture hash
 manifest and CRC; eight negative fixtures rejected changed/missing/extra assets,
 changed captures, unsafe paths, symlinks and failed recordings. The ZIP contains
-its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-long-review/README.md).
+its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-quote-review/README.md).
 
 ![Current Split workspace](desktop.png)
 
@@ -42,6 +42,8 @@ its manifest and capture receipt. [Raw checks and scope](../security-evidence/20
 ![Clean selected lesson with an unsaved other source](dirty-sibling.png)
 
 ![Long paragraph edited at its end](long-input.png)
+
+![Literal quote edited in place](quote.png)
 
 ![Mobile Visual mode](mobile.png)
 

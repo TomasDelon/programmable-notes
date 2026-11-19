@@ -222,13 +222,36 @@ try {
     await readFile(join(output, 'long-note.mdx'), 'utf8'),
     longSource.replace(longParagraph, longParagraph + ' Tail saved.'),
   );
+  const quoteSource =
+    '\uFEFF# Quote example\r\n\r\n  >\tQuoted café 😀.\r\n\r\n<div>Opaque JSX</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'quoted-note.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(quoteSource),
+  });
+  await panel.locator('blockquote button').click();
+  const quoteInput = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await quoteInput.fill('Edited quote: café 😀 + £50.');
+  await quoteInput.press('Enter');
+  assert.equal(
+    await panel.locator('blockquote button').textContent(),
+    'Edited quote: café 😀 + £50.',
+  );
+  await page.screenshot({ path: join(output, '07-quote.png'), fullPage: true });
+  const quoteDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  await (await quoteDownload).saveAs(join(output, 'quoted-note.mdx'));
+  assert.equal(
+    await readFile(join(output, 'quoted-note.mdx'), 'utf8'),
+    quoteSource.replace('Quoted café 😀.', 'Edited quote: café 😀 + £50.'),
+  );
   const video = page.video();
   await page.close();
   await video.saveAs(join(output, 'walkthrough.webm'));
   await video.delete();
   await writeFile(
     join(output, 'walkthrough.html'),
-    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson. It then edits the end of a thousand-line paragraph in a bounded scrollable input and saves exact source.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a> · <a href="long-note.mdx" download>long paragraph</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure><figure><figcaption>Full long-paragraph input with internal scrolling</figcaption><img alt="Thousand-line paragraph edited at its end without an oversized input" src="06-long-input.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
+    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson. It then edits the end of a thousand-line paragraph in a bounded scrollable input and saves exact source. Finally it edits a literal blockquote while preserving its marker, indentation, Unicode and line endings.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a> · <a href="long-note.mdx" download>long paragraph</a> · <a href="quoted-note.mdx" download>edited quote</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure><figure><figcaption>Full long-paragraph input with internal scrolling</figcaption><img alt="Thousand-line paragraph edited at its end without an oversized input" src="06-long-input.png"></figure><figure><figcaption>Literal quote edited without rewriting its marker</figcaption><img alt="Direct quote editing preserves surrounding opaque JSX" src="07-quote.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
   );
 } finally {
   await browser.close();
@@ -255,11 +278,13 @@ const names = [
   '04-new-note.png',
   '05-dirty-sibling.png',
   '06-long-input.png',
+  '07-quote.png',
   'walkthrough.webm',
   'walkthrough.html',
   'lesson.mdx',
   'new-note.mdx',
   'long-note.mdx',
+  'quoted-note.mdx',
   ...['desktop', 'tablet', 'mobile'].flatMap((device) => [
     `before/${device}.png`,
     ...['source', 'split', 'visual'].map((mode) => `${device}-${mode}.png`),
