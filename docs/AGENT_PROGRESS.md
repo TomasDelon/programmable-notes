@@ -1500,3 +1500,22 @@ andcouldsilentlyskiprequestedoptionalcoverage. Testbothnegative+validpositive
 prerequisitecontrols, noapp/permissionschange. Existingreviewdownload16e8a3a is
 verifiedengine54c41a7, notthisnewlabelchange. Fullresource6case onolderELF6e301bce
 still5pass/1pageOOMfailure; RootJSC/startup/blank/billing limitationsremain.
+
+## 2026-11-19 — native fidelity CLI coverage guard verified
+
+Base77dedad pushed. Sixallowedflags centralized beforepreflight/files; unknown
+flags andmissingquotesdependency fail1, validfullset reachesmissingprereq2.
+UnitREDoldignoredflags→GREEN3diagnosticstests. LiveUbuntu prerequisitespositively
+confirmed, --same-name intentionallyrefusedbeforelauncherPID/fidelityfixture;
+outerverifierpassedonlyafterinnerexit1+absencechecks. No newGUI acceptanceclaim.
+Fullcheck92unit/35Chromium passed; read-onlyreview no Important/Critical.
+Evidence2026-11-19-fidelity-options includes observerhash/logs. ProductionELF4c0
+and coreacceptanceobserver2399…retainseparatescope; resource5/1older6e301 unchanged.
+
+Next: commit/push/update draftPR/check exactCI. Then investigate case handling
+forMDX/source extensions: browserpicker canaccept uppercase names whileworkspace/
+compiler/nativewhitelists currentlytestlowercase only. Reproduceactualbehavior,
+choose boundedcorrection preserving exact paths/bytes and narrow file formats;
+no wholepathcasefold or new filesystemauthority. Ifunsupported bydesign, make
+rejectionexplicit ratherthanrenderinganotherdocument. Keep currentreviewengine54
+immutable and all nativeJSC/startup/memory/billing limitationsvisible.

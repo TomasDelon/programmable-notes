@@ -182,3 +182,8 @@ independent exact disk bytes/mode0640 through Save, Undo/Redo and acknowledged
 Reopen. The Root DOM driver operates selection; unchanged reopen alone does not
 prove external modification reloading. All prior fidelity/recovery gates follow.
 [Exact package and observed results](security-evidence/2026-11-19-safe-source-selection/README.md).
+
+The fidelity runner rejects unknown options and `--multiline-quotes` without
+`--quotes` before prerequisite checks or fixture creation. A typo is an error,
+never an implicit omission of the optional gate. [Live-infrastructure refusal
+control and unit checks](security-evidence/2026-11-19-fidelity-options/README.md).

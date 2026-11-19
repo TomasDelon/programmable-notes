@@ -25,6 +25,23 @@ import {
 } from './native-webdriver-lib.mjs';
 import { rootPid, button, dialog, fileIdle, pause } from './native-ui-lib.mjs';
 
+const flags = new Set(process.argv.slice(2));
+const allowedFlags = new Set([
+  '--mixed-eol',
+  '--quotes',
+  '--multiline-quotes',
+  '--source-navigation',
+  '--visual-budget',
+  '--same-names',
+]);
+assert.ok(
+  [...flags].every((flag) => allowedFlags.has(flag)),
+  'Unknown native fidelity option',
+);
+assert.ok(
+  !flags.has('--multiline-quotes') || flags.has('--quotes'),
+  '--multiline-quotes requires --quotes',
+);
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 assert.ok(process.env.NATIVE_FIXTURE_DIR);
@@ -34,11 +51,11 @@ const draft = join(
 );
 await assert.rejects(lstat(draft), { code: 'ENOENT' });
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
-const mixedEol = process.argv.includes('--mixed-eol');
-const quotes = process.argv.includes('--quotes');
-const sourceNavigation = process.argv.includes('--source-navigation');
-const visualBudget = process.argv.includes('--visual-budget');
-const sameNames = process.argv.includes('--same-names');
+const mixedEol = flags.has('--mixed-eol');
+const quotes = flags.has('--quotes');
+const sourceNavigation = flags.has('--source-navigation');
+const visualBudget = flags.has('--visual-budget');
+const sameNames = flags.has('--same-names');
 const pairFiles = ['first', 'second'].map((name) =>
   join(process.env.NATIVE_FIXTURE_DIR, name, 'repeat.mdx'),
 );
@@ -53,8 +70,7 @@ const denseSource =
   'x' +
   ']'.repeat(50_000) +
   '\r\n';
-const multilineQuotes = process.argv.includes('--multiline-quotes');
-assert.ok(!multilineQuotes || quotes, '--multiline-quotes requires --quotes');
+const multilineQuotes = flags.has('--multiline-quotes');
 const multilineBefore =
   'Multi quote café 😀.\r\nContinuation line.\nFinal line.';
 const multilineAfter = multilineBefore

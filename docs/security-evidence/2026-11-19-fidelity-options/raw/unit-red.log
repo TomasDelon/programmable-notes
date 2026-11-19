@@ -1,0 +1,33 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-diagnostic.test.ts (3 tests | 1 failed) 1230ms
+   × refuses unknown or incomplete fidelity options before prerequisites and fixture writes 139ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-diagnostic.test.ts > refuses unknown or incomplete fidelity options before prerequisites and fixture writes
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/unit/native-diagnostic.test.ts:69:29
+     67|       );
+     68|       expect(result.error).toBeUndefined();
+     69|       expect(result.status).toBe(1);
+       |                             ^
+     70|       expect(result.stderr).toContain(message);
+     71|       expect(result.stderr).not.toContain('NOT RUN: native');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  15:34:13
+   Duration  2.32s (tests 56%, environment 37%, setup 5%, transform 2%)
+

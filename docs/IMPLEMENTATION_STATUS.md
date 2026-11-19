@@ -293,8 +293,10 @@ Source navigation, dense read-only fallback, multiline quote edits, exact export
 structural refusal, desktop/tablet/mobile screenshots and a paced 27.64-second walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: make native fidelity CLI flags fail closed on unknown options so typos
-cannot silently skip requested coverage. The portable review is remote-verified
+Native fidelity flags now fail closed on unknown options before prerequisites
+or fixture creation ([live refusal evidence](security-evidence/2026-11-19-fidelity-options/README.md)).
+Next: investigate uppercase source-extension handling without changing source
+paths, file formats or authority. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
