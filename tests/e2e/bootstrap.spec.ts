@@ -641,3 +641,45 @@ test('opaque metadata, fences and Unicode survive visual edits, stale revisions 
   });
   expect(await exported()).toEqual(Buffer.from(changed));
 });
+
+test('preserves mixed physical line endings through checked patches, source edits and undo', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    'import React from "react"\r\n\r\nFirst paragraph.\n\nSecond paragraph.\r\n\r\n<div data-value={{literal: true}}>Opaque JSX</div>\n\nLast paragraph.';
+  await open(page, original, 'mixed-endings.mdx');
+  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
+  async function exported() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  }
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await panel
+    .getByRole('button', { name: 'Last paragraph.', exact: true })
+    .click();
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Last changed.\nSoft break.');
+  await field.press('Enter');
+  const updated = original.replace(
+    'Last paragraph.',
+    'Last changed.\r\nSoft break.',
+  );
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+End');
+  await page.keyboard.insertText(' Tail.');
+  expect(await exported()).toEqual(Buffer.from(updated + ' Tail.'));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(updated));
+});

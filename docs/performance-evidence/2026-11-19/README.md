@@ -40,3 +40,14 @@ A fresh upstream Wry provenance fetch failed DNS (`EAI_AGAIN` on static.crates.i
 the network escalation was cancelled. No pass is inferred. The fork is unchanged
 and its preceding hosted CI verification passed for `438f4b4`. Hosted runners
 for the next head remain blocked by the separate account billing limitation.
+
+## Mixed line-ending transactions
+
+A separate real Chromium regression passed no-op export, a checked multiline
+patch, exact undo/redo and a subsequent source insertion in a document mixing LF
+and CRLF around imports and JSX. Unrelated bytes remained exact. Full checks then
+passed 40 unit / 20 Chromium tests. This proves byte fidelity for those operations,
+not perfect line-number presentation: CodeMirror's configured separator tracks
+CRLF while isolated LF remains literal text, so mixed-style logical gutter lines
+can differ from physical lines. A future line-model improvement must retain the
+exact-byte guarantees; normalizing documents silently is not acceptable.

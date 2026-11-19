@@ -201,3 +201,13 @@ upstream fetch failed DNS and network escalation was cancelled; do not count it
 as a pass. Fork unchanged, last hosted verification passed at `438f4b4`.
 Evidence: `docs/performance-evidence/2026-11-19`. Next: commit/push checkpoint,
 update draft PR, then characterize mixed physical line endings before any change.
+
+Mixed LF/CRLF regression passed actual checked multiline patch, exact undo/redo,
+source insertion and exports; full check passed 40 unit / 20 Chromium tests.
+CodeMirror retains mixed bytes but its gutter logical-line model differs; do not
+silently normalize source to fix presentation. Current-package native stress is
+running: CPU quota/host response passed, first recovery Counter did not become
+accessible before expiry (real blank window captured); memory OOM and subsequent
+Counter recovery passed. Keep the failed CPU case, finish other cases and repeat
+CPU independently before claiming fresh complete resource acceptance. No limits
+or observers were relaxed.

@@ -58,7 +58,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 40 unit and 19 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 40 unit and 20 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
@@ -104,7 +104,8 @@ claims, not permission to continue editor-side source-preserving work.
 Software rendering passed normal and stricter AppArmor desktop tests. Default
 llvmpipe failed on QEMU/Xvfb; physical GPU, Wayland, IME and other distributions
 remain untested compatibility targets. They do not block independent editor work.
-Non-Linux native persistence/resource backends fail closed. Full runtime exception
+Non-Linux native persistence/resource backends fail closed. Mixed line-ending bytes are preserved in tested transactions, but CodeMirror
+gutter line counts can differ from physical lines. Full runtime exception
 source-map composition remains deferred; compiler locations are available. The
 fixed 60-second preview lifetime still requires explicit rebuilding for longer
 sessions. No custom grammar, AI, marketplace, telemetry or synchronization work.
