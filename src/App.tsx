@@ -67,6 +67,24 @@ export function App() {
   });
   const [html, setHtml] = useState('');
   const [error, setError] = useState('');
+  const [locations, setLocations] = useState<
+    {
+      file: string;
+      line: number;
+      offset: number;
+      source: string;
+    }[]
+  >([]);
+  const pendingLocation = useRef<{ offset: number; source: string } | null>(
+    null,
+  );
+  const [navigation, setNavigation] = useState(0);
+  useEffect(() => {
+    const target = pendingLocation.current;
+    pendingLocation.current = null;
+    if (target)
+      editorCommands.current?.revealSource(target.offset, target.source);
+  }, [navigation, selected, workspaceMode]);
   const [status, setStatus] = useState('Waiting');
   const [stopped, setStopped] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -78,6 +96,7 @@ export function App() {
       if (active) {
         setHtml('');
         setError('');
+        setLocations([]);
         setStatus('Compiling');
       }
     });
@@ -128,9 +147,18 @@ export function App() {
           id: number;
           code?: string;
           error?: string;
+          locations?: { file: string; line: number; offset: number }[];
         };
         if (result.error) {
           setError(result.error);
+          setLocations(
+            (result.locations ?? [])
+              .filter((location) => Object.hasOwn(buildFiles, location.file))
+              .map((location) => ({
+                ...location,
+                source: buildFiles[location.file]!,
+              })),
+          );
           setStatus('Build failed');
         } else if (result.code) {
           const document = await previewDocument(result.code);
@@ -307,6 +335,22 @@ export function App() {
         </pre>
       )}
       {error && <pre role="alert">{error}</pre>}
+      {locations.map((location, index) => (
+        <button
+          key={`${location.file}:${location.line}:${index}`}
+          disabled={documents.busy || files[location.file] !== location.source}
+          onClick={() => {
+            if (files[location.file] !== location.source) return;
+            pendingLocation.current = location;
+            documents.select(location.file);
+            setMode('source');
+            setNavigation((value) => value + 1);
+          }}
+        >
+          Open {location.file.replace(/^opened-\d+\//, '')} at line{' '}
+          {location.line}
+        </button>
+      ))}
       {documents.native && recoveryHealth.message && (
         <p
           aria-label="Recovery status"

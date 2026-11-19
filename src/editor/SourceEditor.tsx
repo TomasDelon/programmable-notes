@@ -19,7 +19,11 @@ import { patchMarkdown } from './markdownEdits';
 const external = Annotation.define<boolean>();
 const historyFields = { history: historyField };
 
-export type EditorCommands = { undo: () => void; redo: () => void } | null;
+export type EditorCommands = {
+  undo: () => void;
+  redo: () => void;
+  revealSource: (offset: number, expectedSource: string) => void;
+} | null;
 
 export type EditorHistory = Map<string, { source: string; state: unknown }>;
 
@@ -82,6 +86,21 @@ export function SourceEditor({
         },
         redo: () => {
           redo(editor);
+        },
+        revealSource: (offset, expectedSource) => {
+          if (editor.state.sliceDoc() !== expectedSource) return;
+          if (
+            !Number.isSafeInteger(offset) ||
+            offset < 0 ||
+            offset > expectedSource.length
+          )
+            return;
+          const anchor = expectedSource
+            .slice(0, offset)
+            .split(editor.state.lineBreak)
+            .join('\n').length;
+          editor.dispatch({ selection: { anchor }, scrollIntoView: true });
+          editor.focus();
         },
       };
     return () => {

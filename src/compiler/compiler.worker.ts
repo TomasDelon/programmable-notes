@@ -1,6 +1,7 @@
 import { compile } from '@mdx-js/mdx';
 import * as esbuild from 'esbuild-wasm';
 import { resolveFile } from './resolve';
+import { sourceLineOffset } from './sourceLocation';
 import * as React from 'react';
 import * as jsx from 'react/jsx-runtime';
 
@@ -24,6 +25,7 @@ self.onmessage = async ({
   entry: string;
 }>) => {
   const { id, files, entry } = data;
+  const sourceLocations: { file: string; line: number; offset: number }[] = [];
   try {
     await esbuild.initialize({ wasmModule: data.wasmModule, worker: false });
     const result = await esbuild.build({
@@ -76,6 +78,15 @@ self.onmessage = async ({
                       line?: number;
                       column?: number;
                     };
+                    if (typeof diagnostic.line === 'number') {
+                      const offset = sourceLineOffset(source, diagnostic.line);
+                      if (offset !== null)
+                        sourceLocations.push({
+                          file: args.path,
+                          line: diagnostic.line,
+                          offset,
+                        });
+                    }
                     return {
                       errors: [
                         {
@@ -112,6 +123,23 @@ self.onmessage = async ({
     self.postMessage({ id, code: result.outputFiles[0]!.text });
   } catch (error) {
     const failure = error as Partial<esbuild.BuildFailure>;
+    // MDX compilation reports original locations above. Esbuild locations in
+    // generated MDX JavaScript are not original-source mappings; omit those.
+    const locations = [
+      ...sourceLocations,
+      ...(failure.errors ?? []).flatMap(({ location }) => {
+        const file = location?.file.replace(/^workspace:/, '');
+        if (
+          !file ||
+          !Object.hasOwn(files, file) ||
+          !/\.[jt]sx?$/.test(file) ||
+          !location
+        )
+          return [];
+        const offset = sourceLineOffset(files[file]!, location.line, true);
+        return offset === null ? [] : [{ file, line: location.line, offset }];
+      }),
+    ].slice(0, 8);
     const errors = failure.errors?.slice(0, 8).map(({ text, location }) => {
       const file = location?.file.replace(/^workspace:/, '') || entry;
       return location?.line
@@ -120,6 +148,7 @@ self.onmessage = async ({
     });
     self.postMessage({
       id,
+      locations,
       error: (
         errors?.join('\n') || `${entry}: ${failure.message || String(error)}`
       ).slice(0, 8000),

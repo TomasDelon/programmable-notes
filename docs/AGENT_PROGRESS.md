@@ -211,3 +211,46 @@ accessible before expiry (real blank window captured); memory OOM and subsequent
 Counter recovery passed. Keep the failed CPU case, finish other cases and repeat
 CPU independently before claiming fresh complete resource acceptance. No limits
 or observers were relaxed.
+
+## Compiler source navigation in progress
+
+The new editor-owned diagnostic actions open an existing original source at the
+compiler's physical line, using structured worker locations and captured source
+revisions. Generated MDX JS locations are excluded; preview messages cannot
+supply targets. Caret moves do not change bytes/history. The physical-line utility
+covers BOM, emoji, CR/LF/CRLF and invalid bounds. A red browser test reproduced the
+missing action; focused imported TSX and MDX navigation tests now pass, including
+exact cursor insertion/export, undo, repeated navigation and preview recovery.
+An intermediate full run failed because the old preview assertion did not switch
+back from the intentionally revealed Source mode; corrected focused tests pass.
+Next: a final full check, optimized build and installed diagnostics acceptance.
+Do not claim current uncommitted diagnostics native-tested yet.
+
+Current-package resource repeat retained its failed combined run: memory/OOM and
+expiry plus interactive recovery passed; CPU-stop recovery, editor-crash arming
+and window-close arming failed to find their expected accessible controls before
+service lifetime. Real blank preview screenshot and raw cgroup data retained.
+Independent CPU repeat is running unchanged. Do not increase limits or call the
+whole fresh matrix passing. Investigate startup/observation failures separately
+from verified containment; no capability escape was observed.
+
+Independent CPU/Stop repeat passed unchanged, with actual counter recovery. The
+independent editor-crash repeat verified SIGKILL/backstop expiry and group cleanup,
+but fresh counter startup failed again. Preserve this as a current native
+reliability blocker on QEMU TCG/Xvfb, not a passing full case or a proven security
+escape. Root cause unresolved; do not inflate lifetime or CPU allowance.
+
+Diagnostics audit caught actual esbuild handling of U+2028/U+2029 as JS line
+terminators. A red regression reproduced the mismatch. The compiler now computes
+original UTF-16 offsets with language-specific line rules; SourceEditor validates
+the captured bytes and bounded offset before selecting. No source modification
+or preview-message authority. Full final check and optimized build now running.
+
+Original-offset navigation final full check passed 42 unit / 22 Chromium tests.
+Optimized production package passed real native original-line caret, exact disk
+save/mode 0640, undo/save and clean close. Harness fixes explicitly rebuilt after
+Stop and waited for all X input before Save; both failures are retained. Review
+found no important issue. Evidence: 2026-11-19-source-navigation. Next: commit
+feature, retain the separate partial resource matrix and finish startup timing
+probes before deciding the next reliability fix. Do not claim full native security
+readiness or green hosted CI.

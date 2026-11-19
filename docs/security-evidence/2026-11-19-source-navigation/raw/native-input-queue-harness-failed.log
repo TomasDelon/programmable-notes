@@ -1,0 +1,47 @@
+NATIVE_DIALOG {"pid": 7305, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-15ak8z/syntax-location.mdx"}
+NATIVE_DIAGNOSTIC_UI_STATE {
+  status: 'Compiling',
+  buttons: [
+    'Open files',
+    'Save source',
+    'Save As',
+    'Reopen source',
+    'Close source',
+    'Stop preview',
+    'Rebuild preview',
+    'Source',
+    'Split',
+    'Visual',
+    'Undo',
+    'Redo',
+    'Resume automatic recovery',
+    'Keep versioned snapshot',
+    'Refresh recovery versions',
+    'Import legacy recovery copy',
+    'Keep recovery draft',
+    'Restore as unsaved document',
+    'Delete recovery draft'
+  ],
+  alerts: []
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '﻿# Café 😀\r\n\r\nI<Broken'
+- '﻿# Café 😀\r\n\r\nINSERT <Broken'
+                      ^
+
+    at file:///opt/pn/acceptance/scripts/native-diagnostics.mjs:60:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '﻿# Café 😀\r\n\r\nI<Broken',
+  expected: '﻿# Café 😀\r\n\r\nINSERT <Broken',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

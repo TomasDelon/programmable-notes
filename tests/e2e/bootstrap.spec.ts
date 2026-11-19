@@ -84,6 +84,7 @@ test('sandbox denies DOM, storage, network, resources, popup, top navigation and
  const script=document.createElement('script');script.src='https://probe.invalid/evil.js';document.body.append(script);
  parent.postMessage({type:'save',path:'/etc/passwd',content:'bad'},'*');
  parent.postMessage({type:'apply-markdown-edit',from:0,to:6,text:'Changed'},'*');
+ parent.postMessage({type:'compiler-diagnostics',locations:[{file:'note.mdx',line:1}]},'*');
  setResult(JSON.stringify(r));}}>Probe {result}</button>;
 }
 
@@ -117,6 +118,9 @@ import * as React from 'react'
     window.postMessage({ type: 'preview-error', message: 'forged' }, '*'),
   );
   await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: /^Open .* at line / }),
+  ).toHaveCount(0);
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source' }).click();
   expect(readFileSync((await (await pending).path())!, 'utf8')).toBe(
@@ -365,12 +369,25 @@ test('compiler diagnostics identify the syntax error in the imported file', asyn
     .locator('option')
     .filter({ hasText: 'Broken.tsx' })
     .getAttribute('value');
-  await selection.selectOption(module!);
+  await page
+    .getByRole('button', { name: 'Open Broken.tsx at line 2', exact: true })
+    .click();
+  await expect(selection).toHaveValue(module!);
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(source).toBeFocused();
+  await page.keyboard.insertText('// ');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!, 'utf8')).toBe(
+    'export default function Widget() {\n//   const value = ;\n  return <p>{value}</p>;\n}',
+  );
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await page
     .getByRole('textbox', { name: 'MDX source' })
     .fill(
       'export default function Widget() { return <p>Recovered import</p>; }',
     );
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
   await expect(
     page.frameLocator('iframe').getByText('Recovered import'),
   ).toBeVisible();
@@ -682,4 +699,63 @@ test('preserves mixed physical line endings through checked patches, source edit
   expect(await exported()).toEqual(Buffer.from(updated + ' Tail.'));
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   expect(await exported()).toEqual(Buffer.from(updated));
+});
+
+test('MDX compiler navigation uses original physical lines without changing source', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original = '# Café 😀\r\n\r\n<Broken';
+  await open(page, original, 'syntax.mdx');
+  await page
+    .getByRole('button', { name: 'Open syntax.mdx at line 3', exact: true })
+    .click();
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(source).toBeFocused();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(original),
+  );
+  // Repeating the request must work when already viewing the same source.
+  await page
+    .getByRole('button', { name: 'Open syntax.mdx at line 3', exact: true })
+    .click();
+  await source.press('Shift+End');
+  await page.keyboard.insertText('Recovered text.');
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await expect(
+    page.frameLocator('iframe').getByText('Recovered text.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('syntax.mdx');
+});
+
+test('JavaScript Unicode line terminators navigate to the original module offset', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    'export default function Widget(){\u2028 const value=;\u2029 return <p>Recovered</p>; }';
+  await page.getByLabel('Open files').setInputFiles([
+    {
+      name: 'unicode.mdx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from("import Widget from './Broken'\n\n<Widget />"),
+    },
+    {
+      name: 'Broken.tsx',
+      mimeType: 'text/plain',
+      buffer: Buffer.from(original),
+    },
+  ]);
+  await page
+    .getByRole('button', { name: 'Open Broken.tsx at line 2', exact: true })
+    .click();
+  await page.keyboard.insertText('// ');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!, 'utf8')).toBe(
+    original.replace(' const value', '//  const value'),
+  );
 });

@@ -1,0 +1,45 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run --run tests/unit/source-location.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/source-location.test.ts (2 tests | 1 failed) 8ms
+   × uses JavaScript Unicode line terminators only for original JS/TS locations 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/source-location.test.ts > uses JavaScript Unicode line terminators only for original JS/TS locations
+AssertionError: expected null to be 15 // Object.is equality
+
+- Expected:
+15
+
++ Received:
+null
+
+ ❯ tests/unit/source-location.test.ts:22:45
+     20|   const source = 'const first=1;\u2028const second=2;\u2029const bad=;…
+     21|   expect(sourceLineOffset(source, 2)).toBeNull();
+     22|   expect(sourceLineOffset(source, 2, true)).toBe(source.indexOf('const…
+       |                                             ^
+     23|   expect(sourceLineOffset(source, 3, true)).toBe(source.indexOf('const…
+     24| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  02:01:51
+   Duration  1.15s (environment 84%, setup 10%, transform 5%, tests 1%)
+
