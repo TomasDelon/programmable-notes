@@ -2,6 +2,8 @@
 mod documents;
 mod downloads;
 #[cfg(target_os = "linux")]
+mod preview_failure;
+#[cfg(target_os = "linux")]
 mod renderer_failure;
 use documents::{
     close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
@@ -166,7 +168,9 @@ fn main() {
             }
             let _window = builder.build()?;
             #[cfg(target_os = "linux")]
-            if !child {
+            if child {
+                preview_failure::install(&_window)?;
+            } else {
                 renderer_failure::install(&_window)?;
             }
             Ok(())

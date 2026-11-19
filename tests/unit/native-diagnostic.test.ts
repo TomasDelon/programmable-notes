@@ -252,3 +252,31 @@ it('rejects unsupported renderer-failure probe options before native prerequisit
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+it('rejects preview renderer probe options before native prerequisites', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-preview-probe-mode-'));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      ['scripts/native-preview-renderer.mjs', '--unknown'],
+      {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          NATIVE_BINARY: join(directory, 'missing'),
+          NATIVE_EVIDENCE_DIR: directory,
+        },
+      },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'Preview renderer probe accepts no options',
+    );
+    expect(result.stderr).not.toContain('NOT RUN: native');
+    expect(existsSync(join(directory, 'preview-renderer.json'))).toBe(false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

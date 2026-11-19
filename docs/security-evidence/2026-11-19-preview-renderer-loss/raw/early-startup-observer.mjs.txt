@@ -1,0 +1,33 @@
+/** Actual installed preview-only renderer loss. Disposable X11 profile only. */
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import process from 'node:process';
+import {preflight,launch,close,invoke,artifact,systemctl,script} from './native-webdriver-lib.mjs';
+import {rootPid,button,pause,waitUi} from './native-ui-lib.mjs';
+await preflight();assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE,'1');assert.ok(process.env.NATIVE_EVIDENCE_DIR);
+const identity=async(pid)=>({pid,startTick:(await readFile(`/proc/${pid}/stat`,'utf8')).split(') ').at(-1).split(' ')[19],executableSha256:createHash('sha256').update(await readFile(`/proc/${pid}/exe`)).digest('hex')});
+let failure;let root;let unit;let group;
+try{
+ await launch();root=await identity(await rootPid());await waitUi("Boolean(document.querySelector('.cm-content'))");await button('Stop preview');assert.equal((await invoke('stop_preview')).ok,true);
+ const html=await artifact(await readFile('docs/handoff/samples/fixtures/counter.mdx','utf8'));
+ const requested=performance.now();const result=await invoke('start_preview',{html});assert.equal(result.ok,true);unit=result.value;
+ const main=Number(systemctl('show','--property=MainPID','--value',unit));assert.ok(main>1);const preview=await identity(main);group=systemctl('show','--property=ControlGroup','--value',unit).trim();
+ await writeFile(join(process.env.NATIVE_EVIDENCE_DIR,'kill-preview-renderer.json'),JSON.stringify({root,preview,unit}),{flag:'wx'});
+ let receipt;for(let i=0;i<300;i++){try{receipt=JSON.parse(await readFile(join(process.env.NATIVE_EVIDENCE_DIR,'preview-renderer-killed.json'),'utf8'));break}catch(e){if(e.code!=='ENOENT')throw e;await pause(100)}}assert.ok(receipt);
+ assert.equal(receipt.root.pid,root.pid);assert.equal(receipt.preview.pid,main);assert.equal(receipt.signal,'SIGKILL');assert.equal(receipt.rootSurvived,true);
+ const samples=[];for(let i=0;i<10;i++){const active=await invoke('preview_connection_active');assert.equal(active.ok,true);samples.push({elapsedMs:performance.now()-requested,connectionActive:active.value});if(!active.value)break;await pause(500)}
+ const host=await invoke('host_probe');assert.equal(host.ok,true);assert.equal(await script('arguments[arguments.length-1](Boolean(document.querySelector(".cm-content")));'),true);
+ const names=spawnSync('xdotool',['search','--all','--onlyvisible','--pid',String(root.pid),'--name','^Editor stopped$'],{encoding:'utf8',timeout:8000});assert.equal(names.status,1);assert.equal(names.stderr.trim(),'');assert.equal(names.stdout.trim(),'');
+ console.log('PREVIEW_RENDERER_HEALTH_BASELINE',JSON.stringify({root,preview,unit,group,receipt,samples,rootResponsive:true,noEditorNotice:true}));
+ assert.ok(samples.at(-1).elapsedMs<55000,'Natural expiry must not satisfy renderer-loss propagation');
+ assert.equal(samples.at(-1).connectionActive,false,'Preview must promptly disconnect when its renderer is gone');
+}catch(error){failure=error}
+finally{
+ if(unit){const stop=await invoke('stop_preview').catch(error=>({ok:false,error:String(error)}));console.log('PREVIEW_HEALTH_OWNED_STOP',JSON.stringify(stop));if(!stop.ok)failure||=Error('Owned preview Stop failed');
+  if(group){let empty=false;for(let n=0;n<100;n++){try{empty=(await readFile('/sys/fs/cgroup'+group+'/cgroup.procs','utf8')).trim()==='';}catch(e){if(e.code==='ENOENT')empty=true;else if(e.code!=='ENODEV')throw e;}if(empty)break;await pause(100)}console.log('PREVIEW_HEALTH_GROUP_EMPTY',empty);if(!empty)failure||=Error('Owned preview group not empty after Stop');}}
+ await close().catch(error=>console.log('PREVIEW_HEALTH_CLOSE',String(error)));
+}
+if(failure)throw failure;

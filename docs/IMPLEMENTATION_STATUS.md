@@ -347,8 +347,24 @@ failure; no online verification pass is claimed. [Clean-checkout evidence](secur
 The namespace-correct debugger diagnostic did not reproduce the older failure;
 its instrumented pass is not a crash fix. Native termination feedback and actual
 restart recovery now passed on ELF837d2ab9… with the full fidelity suite.
-Next: validate preview-renderer loss separately from a live native connection,
-while retaining the unresolved engine/resource failures. The portable review is remote-verified
+Interactive preview-renderer loss exposed a native connection that outlived the
+dead renderer. A Linux child-only native signal now exits its own preview process;
+the editor retains Stop/manual rebuild authority and gains no child capability.
+On optimized ELFa6d00cbb…, the bounded actual counter/kill/restart/Stop probe
+passed with unchanged pre-expiry deadlines and Root responsiveness. The first
+corrected attempt missed its conservative Stop reservation and remains a failure.
+Native IPC denial and99unit/37browser checks passed. The unchanged full pressure
+matrix on this ELF passed CPU Stop, memory-fill with trustedOOM, expiry and
+window-close; it failed resident-page descendant-exit observation and editor-crash
+startup before the kill point. The first has actual trustedOOM evidence but is
+not a whole-case pass; its precise process teardown remains under investigation.
+The original full-matrix result remains four passed/two failed. Separate fresh
+targeted runs then passed resident-page strictOOM/recovery (the live-PID failure
+was not reproduced) and actual editor-SIGKILL/independent expiry/new editor/Counter2.
+These do not relabel the original failures or establish repeatability. Healthy connection
+still does not prove arbitrary React responsiveness. [ADR012](decisions/ADR-012-preview-renderer-termination.md)
+and [exact observations](security-evidence/2026-11-19-preview-renderer-loss/README.md).
+Keep the unresolved engine/resource failures explicit. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner

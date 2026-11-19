@@ -260,3 +260,28 @@ The last mode is mutually exclusive with other modes and `NATIVE_CRASH_RESTART=1
 it must not silently substitute a whole-process kill. GTK screenshot capture uses
 the existing GI/Gdk X11 stack. Native code/renderer ownership, explicit operations,
 actual package hashes and failed attempts are retained in the dated evidence.
+
+## Preview-renderer death after real interaction
+
+On a disposable full-system Ubuntu X11 profile, use a fresh fixture from
+`native-test-setup.mjs`. Start the paired external administrator helper retained
+in the [dated evidence](security-evidence/2026-11-19-preview-renderer-loss/README.md)
+with that fixture and the exact installed ELF SHA256, then run as the ordinary
+GUI user:
+
+```sh
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:preview-renderer:test
+```
+
+The helper requires the owned editor/preview PID, start tick, executable/hash,
+preview argv/cgroup and exactly one descendant WebKit process before SIGKILL.
+It never selects a process by name alone. Both sides must run in the same guest
+monotonic clock domain. This is external test administration, never an application
+capability. The probe requires real Count0→1 before the kill, connection loss
+within five seconds of the verified kill and before55s preview age, editor
+responsiveness/no editor-failure notice, Stop/group cleanup, explicit restart,
+a working fresh counter and Stop before expiry. A slow observation fails rather
+than counting lifetime expiry as crash propagation. Retain the report, helper
+receipt, unit journals and cleanup checks. Repeat native IPC and unchanged strict
+CPU/OOM/expiry regressions after changing this lifecycle; renderer disappearance
+or exit1 is not OOM proof. See ADR012 for the authority boundary.

@@ -39,7 +39,8 @@
     "pretest": "npm run prepare:runtime",
     "pretest:watch": "npm run prepare:runtime",
     "native:session:test": "node scripts/native-session-status.mjs",
-    "native:renderer:test": "node scripts/native-renderer-failure.mjs"
+    "native:renderer:test": "node scripts/native-renderer-failure.mjs",
+    "native:preview-renderer:test": "node scripts/native-preview-renderer.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

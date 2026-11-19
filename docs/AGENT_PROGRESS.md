@@ -1787,3 +1787,133 @@ identities and preserve Root responsiveness, Stop/cgroup/rebuild and no-editor-
 notice guarantees. Only implement a lifecycle correction after a real failing
 baseline; never add author privileges or relax resource/expiry checks. Keep
 JSC/startup/blank/OOM/distribution and physical hardware scopes explicit.
+
+## 2026-11-19 — preview-only renderer loss baseline
+
+HEADc798791 pushed and draftPRhead verified. Hosted run44595997317 again failed
+bothjobs before any steps: account payment/spending-limit annotation, not an
+executed test failure. No billing change or CI bypass is authorized.
+
+On current production ELF837d2ab9…/Debian7ad9debe…, actual external identity-bound
+SIGKILL of unprivileged WebKit48324 left editorRoot48205 responsive and without
+Editor stopped. The owned connection became false at18.939s from explicit start,
+well before60s expiry, after four live observations. Explicit Stop acknowledged,
+owned cgroup empty, both probe/helper exited0. No native lifecycle correction is
+justified by this baseline. Preserve connection-vs-renderer semantics.
+
+Next concrete test is running now: freshfixture/tmp/pn-native-N21dV9,
+/tmp/pn-preview-health-final.log (exec1395), paired identity helper
+/tmp/pn-preview-health-final-kill.log (exec61986). Permanent probe additionally
+requires actual counter before kill, explicit fresh preview/counter after it,
+Stop/group cleanup before expiry and original Root identity. No production code
+changes; first new unit guard RED missing script, thenGREEN8 diagnostic tests.
+Do not claim final native command pass until it completes. Retain initial raw
+baseline separately; finish read-only review, evidence, fullcheck, commit/push and
+PR update. All prior JSC/startup/resource/matrix and hardware limits remain.
+
+## 2026-11-19 — interactive preview renderer loss exposes lifecycle gap
+
+The stronger counter probe completed with a real failure on ELF837d2ab9…:
+Root48436, previewMain48514, WebKit48572. Count0→1 passed, then external verified
+SIGKILL killed only that WebKit process. Ten connection samples remained true
+from51.1–56.1s after explicit start; strict pre-expiry assertion failed. Stop
+emptied the group and Root subsequently disappeared. Earlier startup-only pass
+is retained but cannot justify the loaded/interactive case.
+
+Added minimal Linux child-only native termination callback: unexpected WebKit
+loss exits its own unprivileged Rust app, allowing existing systemd cleanup and
+connection status to work. Ignore TerminatedByApi, no dialog/plugin/IPC/capability,
+JIT or resource change. New production build inspected/installed: Debian9796ff84…
+(6,837,126bytes), ELFa6d00cbb…. Stronger final test now exec71832/helper72080,
+fixture/tmp/pn-native-Zij7Hr, /tmp/pn-preview-loss-green.log; do not claim success
+until receipt. New helper measures actual kernel-kill CLOCK_MONOTONIC, requires
+connection false<5s since kill AND<55s since start. Read-only review no remaining
+Critical/Important; identity-bound Root/group cleanup strengthened. OOM must still
+meet original trusted oom-kill oracle; callback exit1 is never OOM evidence.
+Next: finish installed counter/kill/restart/Stop, exact-binary IPC and unchanged
+resource matrix, retain every failure, fullcheck/currentRust, docs/parity/commit/
+push/draftPR. No merge/release/readiness change.
+
+## 2026-11-19 — preview failure correction acceptance checkpoint
+
+Basec798791, not yet committed. Corrected production ELFa6d00cbb… actual
+interactive kill/restart probe: first attempt failed conservative Stop-reservation
+at53.400s after fresh counter; retain as failure. Bounded repeat with identical
+helper/deadlines passed: Root49129, preview49205/WebKit49246, false connection
+1.025s after verified kill and49.017s after start, Root responsive/no Editor
+stopped, old group empty, new preview49302 Count0→1, Stop requested47.181s and
+completed before55s, bothgroups empty/Rootgone. No test threshold relaxation.
+
+Rust formatting finalized before final package. Formatted rebuild Debian2a6aa569…
+(6,837,126bytes) retains exact same tested ELFa6d00cbb… as prior Debian9796ff84…;
+finalarchive reinstalled and inspected. All153shippinginputs match builder.
+Full Node check exited0:99unit/37matchingChromium, types/lint/format/fresh build.
+HostofflineRust couldnotstart (missing cached bytes1.12.2), retained. CachedUbuntu
+builder Rust exited0:2app/39ordinarydocuments/7policy;4infraonlyignorednotpasses.
+NativeIPC on finalinstalledELF exited0 with Rootpositive, denied child commands/
+recovery/privilegedplugins, realCounter2, CSP/DOM/storage isolation, normal
+privnet/automationoff/NoNewPrivs/effectivefixedlimits/fullgroupStop.
+
+Current exact next action: finish fullsixcase unchanged native-stress on this
+ELF, exec25305, /tmp/pn-preview-failure-stress.log,
+fixture/tmp/pn-native-bRcw6e, Root49808. CPUlooprealquota/throttle/Root115ms and
+Stopbeforeexpiry observed; recoverycounter still running, so not wholecase pass
+yet. NativeGUItasksserial/nohostheavychecks. Preserve stricttrustedOOMoracle;
+exit1 is notoom. Evidence2026-11-19-preview-renderer-loss has baseline/interactive
+RED/firstcorrectedlateStop/finalrepeat+sourceparity/build/check/Rust. Need retain
+final resource JSON/journals/independent cleanup; updateADR012/status/README;
+format/diff/review/commit/push/update draftPR/exactCI. Latesthostedrun44595997317
+bothjobs0stepsbilling. No merge/release/readiness claim. Prior engine/startup/
+blank/resource/distribution/hardware risks remain even after this lifecycle fix.
+
+## 2026-11-19 — current resource matrix failures retained
+
+Fullsixcaseexec25305 still running, Root49808, fixture/tmp/pn-native-bRcw6e.
+CPU-stop, memory(stricttrustedOOM+512MiB+freshCounter2) and expiry passed.
+Resident-pages failed original stopped() historicalPIDnonZombie assertion for
+50295(bwrap) afteremptycgroup; trustedjournal independentlypasses unchangedOOM
+oracle, includesSIGKILL/Invalidargumentkillgroupwarning. LaterPIDabsent doesnot
+establishwithindeadlinecleanup. Keep failure, not yetescapeprooforharmlessrace.
+Editor-crash casefailedbeforeRootkill: ArmCPUloop inaccessible55s; unit then
+fixed60sexpiry. No currenteditorSIGKILLrecoverypass inferred. Lastwindowclose
+casecurrentlyrunning. Currentrawstdout /tmp/pn-preview-failure-stress.log.
+
+Next: finishfullcommand/JSON/independentcleanup. Then copied diagnostic
+.cache/native-stress-diagnostic.mjs (syntax+ESlintchecked) retains exactoffending
+stat/start/state/flags/PF_EXITING/cgroup/status/wchan/cmdline, monotonic time and
+1sfolllowups BEFORE original frozen-stat assertion (failurestillfails; noTestStop
+runsduringcapture). Runonlymemory-pages freshfixture/sameELF afterfullmatrix;
+retaincopyhash, completejournal, allresults. Atmostboundedrepeat forstartup-
+blockededitor-crash. Do notweakenchecksorclaimmatrixgreen. Finalfeaturecommit/
+push/draftPR/statusstillpendingthisvalidation. No furtherdevelopmentdelegation.
+
+## 2026-11-19 — preview lifecycle correction ready for commit
+
+Basec798791. FinalproductionDebian2a6aa569…/ELFa6d00cbb…,153-inputparity,
+99unit/37Chromium/fullNodecheck, Rust2app/39doc/7policy andnativeIPC passed.
+Nativecounter→ownedWebKitkill→connectionfalse1.025s→Rootresponsive→freshcounter→
+Stop47.181s beforedeadline/groupempty/Rootgone passed; firstlateStopfailurekept.
+
+Fullunchangedresourceexec25305exited1:4passed(cpuStop,memoryfillstrictOOM,
+expiry,windowclose),2failed(memorypagesinstantPIDobservation,editorcrashstartup).
+IndependentcleanupRoot49808/allunits/PID50295gone/recovery.lockonly passed;
+firstfindreadcwdobservationerrorcorrectedwithcd/tmp. FullJSON/stdout/strictOOM
+journals andkillgroupEINVALwarningretained. No6/6claim.
+
+Afterenvironmenttoolreconnection, targeteddiagnosticmemorypages completed
+CASE_PASS/WEBKIT_STRESS_PASS andstrictOOM+freshCounter2 inreport; exactsource74ea…,
+originalassert/deadlinesunchanged. NoPIDfailure reproduced. Root50983/observer50961
+absent. Wrapperexecid65912lostonreconnect; noexitreceiptinvented. Separatetargeted
+ordinaryeditorcrashrepeat actualexec21268/exitfile0 passed:Root51356SIGKILL,
+independentpreviewexpiry,newRoot51517/Counter2,bothRootsabsent. Originalfullmatrix
+failuresstillfailures. Source/runtimecallbackreviewnoCritical/Important.
+
+Nextimmediate:finaldocsformat/diff,commit/pushcurrentcorrection/update draftPR/
+exacthostedCI. Then execute2026-11-19-bounded-cleanup-observation plan:both empty
+cgroup AND historicalidentitiesdead within one original5s/75smonotonicdeadline,
+noPF_EXITINGshortcut/unexpected-errorignore/timeoutgrowth. Explicitlydocument
+changedinstantaneoussemantics; retainliveidentity/cgroup/timingobservations and
+anypossiblemigrationfinding. Deterministicnegativecontrolsfirst, thenactualnative
+matrix. Afterwardindependentoriginal-SaveprocesscrashP0plan isprepared. Keepall
+JSC/startup/distribution/physicalhardware/billinglimitations. No merge/release/
+readyforrevieworproductionsecurityclaim.

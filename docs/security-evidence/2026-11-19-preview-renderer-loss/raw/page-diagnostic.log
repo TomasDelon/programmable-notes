@@ -1,0 +1,15 @@
+NATIVE_STRESS_IDENTITY {"pid":50983,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"74ea5565ba16edb3a806ae6ad1008582b555ddea2b33e395ea28f5f3969de312","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-50983-1795117638788792240.service","pid":"51094","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-50983-1795117638788792240.service","pid":51053,"invokeMs":3461,"sandboxObservedMs":15613}
+PAGE_PRESSURE_UNIT programmable-notes-preview-50983-1795117638788792240.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-50983-1795117697438406560.service","pid":"51190","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-50983-1795117697438406560.service","pid":51150,"invokeMs":3619,"sandboxObservedMs":14509}
+NATIVE_UI {"pid": 51150, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-50983-1795117697438406560.service","pid":51150,"name":"Count: 0","action":"click","observerMs":32601,"sinceRequestMs":47113}
+NATIVE_UI {"pid": 51150, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-50983-1795117697438406560.service","pid":51150,"name":"Count: 1","action":"click","observerMs":1765,"sinceRequestMs":48879}
+NATIVE_UI {"pid": 51150, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-50983-1795117697438406560.service","pid":51150,"name":"Count: 2","action":"find","observerMs":1448,"sinceRequestMs":50330}
+RECOVERY_PASS Resident-page memory-pressure termination
+CASE_PASS memory-pages
+WEBKIT_STRESS_PASS memory-pages
