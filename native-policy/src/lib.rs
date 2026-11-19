@@ -173,6 +173,17 @@ pub struct Supervisor {
     unit: Option<String>,
 }
 impl Supervisor {
+    /// Only the owned wait connection, not renderer health or cgroup emptiness.
+    /// Keep the unit and child handles so Stop still cleans up a disconnected job.
+    pub fn connection_active(&mut self) -> Result<bool, String> {
+        match self.child.as_mut() {
+            Some(child) => child
+                .try_wait()
+                .map(|exit| exit.is_none())
+                .map_err(|e| e.to_string()),
+            None => Ok(false),
+        }
+    }
     pub fn stop(&mut self) -> Result<(), String> {
         if let Some(unit) = self.unit.as_ref() {
             // systemd owns the complete WebKit process subtree, not only the launcher PID.
@@ -389,5 +400,36 @@ mod tests {
             .start(Path::new("/nonexistent"), &"x".repeat(MAX_HTML_BYTES + 1))
             .unwrap_err()
             .contains("4 MiB"));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn connection_reads_track_real_child_without_releasing_stop_identity() {
+        let mut supervisor = Supervisor::default();
+        assert!(!supervisor.connection_active().unwrap());
+        supervisor.child = Some(
+            Command::new("/bin/cat")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::null())
+                .spawn()
+                .unwrap(),
+        );
+        assert!(supervisor.connection_active().unwrap());
+        // NUL makes any accidental control invocation fail before reaching systemd.
+        supervisor.unit = Some("retained\0cleanup-identity".into());
+        drop(supervisor.child.as_mut().unwrap().stdin.take());
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        while supervisor.connection_active().unwrap() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "Owned helper did not exit"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        // The identity was installed before the first ended result, not after it.
+        let ended = supervisor.connection_active();
+        let retained = supervisor.unit.take();
+        assert!(!ended.unwrap());
+        assert_eq!(retained.as_deref(), Some("retained\0cleanup-identity"));
+        assert!(supervisor.child.is_some());
     }
 }

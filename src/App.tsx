@@ -167,11 +167,7 @@ export function App() {
           const document = await previewDocument(result.code);
           if (active) {
             setHtml(document);
-            setStatus(
-              isTauri()
-                ? 'Compiled — requesting isolated native preview'
-                : 'Preview ready',
-            );
+            setStatus(isTauri() ? 'Compiled MDX' : 'Preview ready');
           }
         }
         worker?.terminate();

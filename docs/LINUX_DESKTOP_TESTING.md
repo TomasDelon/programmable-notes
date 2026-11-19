@@ -116,3 +116,14 @@ OS Unicode clipboard paste with exact input checks; WebKitWebDriver and X11 key
 synthesis omitted astral characters in retained probes. No direct DOM value
 setter substitutes for native editing, and no IME certification is implied.
 [Failures, controls, exact package and results](security-evidence/2026-11-19-literal-quotes/README.md).
+
+## Native connection feedback
+
+With fresh disposable fixtures, run
+`NATIVE_DISPOSABLE_PROFILE=1 npm run native:session:test`. This requires actual
+counter interaction, unchanged 60-second expiry with its journal, ended/disconnected
+feedback, manual rebuilding and interaction, then UI-only Stop/cgroup removal
+within three seconds before natural expiry. Original bytes and mode must remain
+unchanged. Direct native Stop is cleanup only, never the success oracle.
+The editor's connection status measures its owned wait handle, not renderer health
+or empty cgroups. See [exact results and failed controls](security-evidence/2026-11-19-session-status/README.md).

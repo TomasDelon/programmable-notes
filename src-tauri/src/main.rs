@@ -58,6 +58,22 @@ async fn stop_preview(window: WebviewWindow, state: tauri::State<'_, Host>) -> R
     .await
     .map_err(|e| e.to_string())?
 }
+#[tauri::command]
+async fn preview_connection_active(
+    window: WebviewWindow,
+    state: tauri::State<'_, Host>,
+) -> Result<bool, String> {
+    authorize(window.label(), state.child)?;
+    let supervisor = state.supervisor.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        supervisor
+            .lock()
+            .map_err(|_| "Supervisor poisoned".to_string())?
+            .connection_active()
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
 fn allowed_navigation(url: &tauri::Url) -> bool {
     let local = matches!(
         (url.scheme(), url.host_str(), url.port()),
@@ -108,6 +124,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             start_preview,
             stop_preview,
+            preview_connection_active,
             host_probe,
             open_documents,
             save_document,

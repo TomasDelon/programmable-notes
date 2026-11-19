@@ -1,0 +1,2 @@
+28555 execve("/usr/local/sbin/systemctl", ["systemctl", "--user", "stop", "programmable-notes-preview-28360"...], 0x7ffee7fb1198 /* 28 vars */) = -1 EIO (Input/output error) (INJECTED)
+28363 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=28555, si_uid=1000, si_status=127, si_utime=0, si_stime=0} ---

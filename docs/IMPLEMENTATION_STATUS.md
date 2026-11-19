@@ -53,6 +53,19 @@ renderer SIGSEGV while entering Visual. This remains an unresolved native
 reliability blocker; no parser/security change was guessed from the crashes.
 [Exact failures, diagnostics and package scope](security-evidence/2026-11-19-long-inline/README.md).
 
+## Native session feedback
+
+Compilation feedback is separate from the native wait connection. The editor
+reports starting, connected, ended/disconnected or unknown, with explicit manual
+rebuild guidance. One editor-only argument-free read retains supervisor cleanup
+ownership; preview capabilities remain empty. Serial polling is bounded across
+rebuilds and never restarts execution automatically. A connected wait handle does
+not prove renderer health or an empty cgroup. Installed actual counter/expiry/
+manual rebuild/UI-only Stop and unchanged-file checks passed on the recorded
+production binary. Startup/rebuild failures remain preserved and unresolved.
+See [ADR009](decisions/ADR-009-native-session-feedback.md) and
+[exact scope and failed controls](security-evidence/2026-11-19-session-status/README.md).
+
 ## Documents and recovery
 
 Selected dirty/save status is independent of other buffers. Dirty siblings have

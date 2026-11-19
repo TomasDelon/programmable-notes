@@ -46,8 +46,16 @@ try {
   });
   // Stop any initial compiler-produced session before testing a known artifact.
   assert.equal((await invoke('stop_preview')).ok, true);
+  assert.deepEqual(await invoke('preview_connection_active'), {
+    ok: true,
+    value: false,
+  });
   const started = await invoke('start_preview', { html: counter });
   assert.equal(started.ok, true, JSON.stringify(started));
+  assert.deepEqual(await invoke('preview_connection_active'), {
+    ok: true,
+    value: true,
+  });
   const unit = started.value;
   assert.match(unit, /^programmable-notes-preview-\d+-\d+\.service$/);
   const group = systemctl('show', '--property=ControlGroup', '--value', unit);
@@ -109,6 +117,10 @@ try {
   );
   assert.equal((await invoke('stop_preview')).ok, true);
   await assert.rejects(access(dir)); // cgroup must be removed, not just launcher PID.
+  assert.deepEqual(await invoke('preview_connection_active'), {
+    ok: true,
+    value: false,
+  });
   console.log(
     'PASS: editor positive IPC control, resource-unit limits and full-group Stop',
   );
@@ -128,6 +140,7 @@ try {
     'host_probe',
     'start_preview',
     'stop_preview',
+    'preview_connection_active',
     'open_documents',
     'save_document',
     'save_document_as',

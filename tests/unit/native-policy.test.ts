@@ -18,6 +18,7 @@ it('restricts the entire configured capability union to the editor and registere
     'allow-confirm-discard',
     'allow-host-probe',
     'allow-open-documents',
+    'allow-preview-connection-active',
     'allow-recovery-draft',
     'allow-reopen-document',
     'allow-save-document',

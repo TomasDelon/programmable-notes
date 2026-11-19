@@ -1,0 +1,24 @@
+/tmp/pn-native-FhoIDy
+NATIVE_DIALOG {"pid": 29604, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-FhoIDy/session-status.mdx", "dialogDismissed": true}
+NATIVE_SESSION_STATUS /tmp/pn-native-FhoIDy/evidence/fixed-stop-exec-oracle.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Stop button did not remove its cgroup within 3 seconds
++ actual - expected
+
++ undefined
+- true
+
+    at file:///opt/pn/acceptance/scripts/native-stop-exec-fixed-observer.mjs:154:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

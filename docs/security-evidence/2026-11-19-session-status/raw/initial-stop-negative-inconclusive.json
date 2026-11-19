@@ -1,0 +1,39 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "8f07f2c98510606273d6e28f7e38be282e11c811a317e9c6b689bf5c764625e5",
+  "editorPid": 27208,
+  "executableSha256": "c26f9e566ea80284e0be467394b7c76490002b3e7fc14726ba855e8b3beb7af7",
+  "unit": "programmable-notes-preview-27208-1795086050741654100.service",
+  "previewPid": 27318,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-27208-1795086050741654100.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "observedInactive": true,
+  "journal": "2026-11-19T11:00:50+00:00 pn-m3-guest systemd[446]: Starting programmable-notes-preview-27208-1795086050741654100.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...\n2026-11-19T11:00:51+00:00 pn-m3-guest systemd[446]: Started programmable-notes-preview-27208-1795086050741654100.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.\n2026-11-19T11:01:51+00:00 pn-m3-guest systemd[446]: programmable-notes-preview-27208-1795086050741654100.service: Service reached runtime time limit. Stopping.\n",
+  "after": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session ended or disconnected. Rebuild preview to run it again.",
+    "build": "Compiled MDX"
+  },
+  "rebuiltUnit": "programmable-notes-preview-27208-1795086117697312470.service",
+  "rebuiltPid": 27488,
+  "error": "Error: Command failed: python3 scripts/native-atspi.py 27488 Session count 0 click\nTraceback (most recent call last):\n  File \"/opt/pn/acceptance/scripts/native-atspi.py\", line 43, in <module>\n    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\nRuntimeError: Native accessible button not found: Session count 0 for PID 27488\n",
+  "outcome": "fail",
+  "failureUi": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  }
+}

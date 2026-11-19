@@ -1,0 +1,40 @@
+   Compiling preview-policy v0.1.0 (/workspace/programmable-notes/native-policy)
+error[E0599]: no method named `connection_active` found for struct `Supervisor` in the current scope
+   --> src/lib.rs:397:29
+    |
+171 | pub struct Supervisor {
+    | --------------------- method `connection_active` not found for this struct
+...
+397 |         assert!(!supervisor.connection_active().unwrap());
+    |                             ^^^^^^^^^^^^^^^^^ method not found in `Supervisor`
+
+error[E0599]: no method named `connection_active` found for struct `Supervisor` in the current scope
+   --> src/lib.rs:405:28
+    |
+171 | pub struct Supervisor {
+    | --------------------- method `connection_active` not found for this struct
+...
+405 |         assert!(supervisor.connection_active().unwrap());
+    |                            ^^^^^^^^^^^^^^^^^ method not found in `Supervisor`
+
+error[E0599]: no method named `connection_active` found for struct `Supervisor` in the current scope
+   --> src/lib.rs:408:26
+    |
+171 | pub struct Supervisor {
+    | --------------------- method `connection_active` not found for this struct
+...
+408 |         while supervisor.connection_active().unwrap() {
+    |                          ^^^^^^^^^^^^^^^^^ method not found in `Supervisor`
+
+error[E0599]: no method named `connection_active` found for struct `Supervisor` in the current scope
+   --> src/lib.rs:418:32
+    |
+171 | pub struct Supervisor {
+    | --------------------- method `connection_active` not found for this struct
+...
+418 |         let ended = supervisor.connection_active();
+    |                                ^^^^^^^^^^^^^^^^^ method not found in `Supervisor`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `preview-policy` (lib test) due to 4 previous errors
+warning: build failed, waiting for other jobs to finish...

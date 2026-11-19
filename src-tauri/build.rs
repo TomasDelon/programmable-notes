@@ -3,6 +3,7 @@ fn main() {
         tauri_build::AppManifest::new().commands(&[
             "start_preview",
             "stop_preview",
+            "preview_connection_active",
             "host_probe",
             "open_documents",
             "save_document",

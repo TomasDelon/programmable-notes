@@ -37,7 +37,8 @@
     "native:package:verify": "node scripts/verify-linux-package.mjs",
     "native:lifecycle:test": "node scripts/native-lifecycle.mjs",
     "pretest": "npm run prepare:runtime",
-    "pretest:watch": "npm run prepare:runtime"
+    "pretest:watch": "npm run prepare:runtime",
+    "native:session:test": "node scripts/native-session-status.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

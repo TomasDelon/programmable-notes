@@ -1,0 +1,22 @@
+/tmp/pn-native-TbvOIX
+NATIVE_DIALOG {"pid": 27968, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-TbvOIX/session-status.mdx", "dialogDismissed": true}
+NATIVE_SESSION_STATUS /tmp/pn-native-TbvOIX/evidence/old-stop-only-oracle.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+false !== true
+
+    at file:///opt/pn/acceptance/scripts/native-session-stop-only-before.mjs:133:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

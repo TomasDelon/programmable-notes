@@ -271,3 +271,16 @@ private networking, unchanged effective cgroup bounds, editor IPC responsiveness
 and Stop cleanup before earliest expiry. It does not replace the full memory,
 CPU, expiry/crash-recovery matrix or establish a successful iframe escape.
 [Real results and failed observer attempts](security-evidence/2026-11-19-native-downloads/README.md).
+
+## Connection feedback is not termination evidence
+
+`preview_connection_active` is an argument-free editor-only read. Native label/
+child authorization runs again before reading the owned `systemd-run --wait`
+handle. It retains unit/child ownership for Stop even after disconnection; preview
+code has no permission. The UI's bounded serial read never restarts or extends
+execution or authorizes source/filesystem changes. “Connected” does not establish
+renderer health; “ended or disconnected” does not establish an empty cgroup or a
+cause. Native tests independently check journals, monotonic unit age and cgroups.
+A UI Stop acceptance test must observe UI-caused cgroup removal before cleanup;
+an additional direct Stop would mask a failure. See [actual evidence and fault
+controls](security-evidence/2026-11-19-session-status/README.md) and ADR009.
