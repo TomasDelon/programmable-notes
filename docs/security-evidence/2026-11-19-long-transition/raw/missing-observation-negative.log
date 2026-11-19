@@ -1,0 +1,12 @@
+FIXTURE=/tmp/pn-native-Nfl1rN EVIDENCE=/tmp/pn-native-Nfl1rN/evidence
+NATIVE_DIALOG {"pid": 36466, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Nfl1rN/long-paragraph.mdx", "dialogDismissed": true}
+NATIVE_LONG_PARAGRAPH_EVIDENCE /tmp/pn-native-Nfl1rN/evidence/long-paragraph.json
+file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32
+  throw Error(`UI condition failed: ${source}`);
+        ^
+
+Error: UI condition failed: false
+    at waitUi (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32:9)
+    at async file:///opt/pn/acceptance/scripts/native-long-missing-observation.mjs:152:5
+
+Node.js v24.22.1

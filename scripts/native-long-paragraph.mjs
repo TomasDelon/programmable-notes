@@ -20,6 +20,18 @@ import {
   fileIdle,
   pause,
 } from './native-ui-lib.mjs';
+const args = process.argv.slice(2);
+const visualCycles = args.length === 0 ? 1 : Number(args[1]);
+assert.ok(
+  (args.length === 0 ||
+    (args.length === 2 &&
+      args[0] === '--visual-cycles' &&
+      /^[1-9][0-9]*$/.test(args[1]))) &&
+    Number.isSafeInteger(visualCycles) &&
+    visualCycles >= 1 &&
+    visualCycles <= 20,
+  'Expected --visual-cycles with an integer from 1 to 20',
+);
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 assert.ok(process.env.NATIVE_FIXTURE_DIR && process.env.NATIVE_EVIDENCE_DIR);
@@ -37,6 +49,9 @@ await writeFile(path, source, { flag: 'wx', mode: 0o640 });
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const report = {
   observerSha256: digest(await readFile(new URL(import.meta.url))),
+  requestedVisualCycles: visualCycles,
+  completedVisualCycles: 0,
+  phase: 'fixture-created',
   sourceBytes: Buffer.byteLength(source),
   sourceSha256: digest(source),
 };
@@ -111,6 +126,10 @@ async function cleanupOwnedRoot() {
   }
   throw Error('Owned root did not exit');
 }
+async function phase(name) {
+  report.phase = name;
+  await writeFile(output, JSON.stringify(report, null, 2) + '\n');
+}
 let failure;
 try {
   await launch();
@@ -126,7 +145,24 @@ try {
   await button('Open files');
   dialog(pid, 'choose', 'Open documents and modules', path);
   await fileIdle();
-  await button('Visual');
+  for (let index = 0; index < visualCycles; index++) {
+    await phase(`visual-${index + 1}-requested`);
+    await button('Visual');
+    await waitUi(
+      `Array.from(document.querySelectorAll('[aria-label="Markdown editing"] p button')).some(b=>b.textContent===${JSON.stringify(paragraph)})`,
+    );
+    report.completedVisualCycles = index + 1;
+    await phase(`visual-${index + 1}-verified`);
+    if (index + 1 < visualCycles) {
+      await phase(`source-${index + 1}-requested`);
+      await button('Source');
+      await waitUi(
+        `document.querySelector('.source-editor').parentElement.hidden === false`,
+      );
+      await phase(`source-${index + 1}-verified`);
+    }
+  }
+  await phase('inline-input-requested');
   await button(paragraph);
   report.geometry = await script(
     `const done=arguments[arguments.length-1];const e=document.querySelector('textarea[aria-label="Paragraph text"]');done(e?{height:e.getBoundingClientRect().height,viewport:innerHeight,client:e.clientHeight,scroll:e.scrollHeight,rows:e.rows,exact:e.value===arguments[0],focused:e===document.activeElement}:null);`,
@@ -140,6 +176,7 @@ try {
     'Inline input must fit its viewport',
   );
   assert.ok(report.geometry.scroll > report.geometry.client + 1000);
+  await phase('inline-geometry-verified');
   keys(pid, 'ctrl+End');
   await waitUi(`document.querySelector('textarea')?.scrollTop>0`);
   // Real trusted keyboard insertion; do not set textarea.value behind React.
@@ -188,6 +225,7 @@ try {
   );
   await disk(expected);
   report.actualEndTypingSaveUndoRedoReopenExact = true;
+  await phase('disk-history-reopen-verified');
   execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
     timeout: 10000,
   });
@@ -202,6 +240,7 @@ try {
   }
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
   report.actualCleanExit = true;
+  await phase('clean-exit-verified');
 } catch (error) {
   failure = error;
   report.error = String(error);

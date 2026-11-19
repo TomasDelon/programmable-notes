@@ -1,0 +1,44 @@
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { expect, it } from 'vitest';
+
+it('refuses invalid native diagnostic repetition before checking drivers or creating fixtures', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-diagnostic-guard-'));
+  try {
+    for (const args of [
+      ['--visual-cycles', '0'],
+      ['--visual-cycles', '21'],
+      ['--visual-cycles', 'NaN'],
+      ['--visual-cycles'],
+      ['--unknown'],
+    ]) {
+      const result = spawnSync(
+        process.execPath,
+        ['scripts/native-long-paragraph.mjs', ...args],
+        {
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {
+            ...process.env,
+            NATIVE_BINARY: join(directory, 'not-an-application'),
+            NATIVE_DISPOSABLE_PROFILE: '1',
+            NATIVE_FIXTURE_DIR: directory,
+            NATIVE_EVIDENCE_DIR: directory,
+          },
+        },
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        'Expected --visual-cycles with an integer from 1 to 20',
+      );
+      expect(result.stderr).not.toContain('NOT RUN: native');
+      expect(existsSync(join(directory, 'long-paragraph.mdx'))).toBe(false);
+      expect(existsSync(join(directory, 'long-paragraph.json'))).toBe(false);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

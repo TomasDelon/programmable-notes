@@ -66,6 +66,13 @@ renderer SIGSEGV while entering Visual. This remains an unresolved native
 reliability blocker; no parser/security change was guessed from the crashes.
 [Exact failures, diagnostics and package scope](security-evidence/2026-11-19-long-inline/README.md).
 
+A bounded installed-app diagnostic now records requested/completed long-document
+mode transitions before its unchanged editing/disk/history/reopen gates. One
+ordinary and one five-transition current-package run passed; an intentional
+missing-observation control retained failure/phase/count and unchanged original
+bytes after cleanup. These do not explain or fix earlier renderer crashes.
+[Exact scope](security-evidence/2026-11-19-long-transition/README.md).
+
 ## Native session feedback
 
 Compilation feedback is separate from the native wait connection. The editor
@@ -257,8 +264,8 @@ multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
 screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: investigate bounded long-document rendering and preserve current exact
-Source navigation, opaque JSX and pending-input guards.
+Next: preflight browser Open metadata against existing workspace budgets before
+reading a large selection; preserve final asynchronous validation and dirty buffers.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

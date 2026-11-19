@@ -156,3 +156,9 @@ JSX's original source offset. An actual keyboard space, Save, Undo/Redo and exac
 disk comparison verify the caret and unchanged unrelated bytes/mode0640. No
 preview message or document JSX may authorize this action or file operations.
 [Exact production package, results and limits](security-evidence/2026-11-19-opaque-source-navigation/README.md).
+
+The long-paragraph observer also accepts `--visual-cycles 5` (bounded1..20,
+default1) to record repeated exact Visual/Source transitions before the same
+keyboard/disk/history/reopen checks. Requested and verified phases remain distinct;
+its ordinary JSON progress writes are not fsynced crash-durable storage.
+[Actual five-cycle result, refusal control and unresolved crash scope](security-evidence/2026-11-19-long-transition/README.md).

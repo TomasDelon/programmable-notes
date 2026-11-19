@@ -1306,3 +1306,27 @@ large-document reliability in bounded steps. Existing downloadable ZIP remains
 engine34dc906, not this new action. Baseca99097 hosted run44532919827 refused both
 zero-step jobs for billing. Preserve earlier native SIGSEGV/startup/blank/memory
 acceptance failures; no security readiness or complete new pressure-matrix claim.
+
+## 2026-11-19 — bounded native long-document diagnostic
+
+705caee pushed; PR head/draft verified. Hosted run44537378889 refused both zero-step
+jobs with same billing annotation. Native Source navigation/fidelity/recovery/IPC
+results already retained on installed46f65e87….
+
+Ordinary actual long-input acceptance passed currentELF. New bounded
+--visual-cycles1..20 observer recorded5Visual/4Source transitions, then exact
+keyboard/save/Undo/Redo/reopen/mode0640/cleanexit passed. Phase JSON is ordinary
+writeFile, not fsynced crash/power-loss durability. No production/security changes.
+Full check78unit/32Chromium passed; guard RED/GREEN and read-only review clear.
+External second-observation=false control exited1 at original deadline, retained
+completed1/visual2requested/fail, no editing-success flag; independent exact original
+bytes/mode and ownedRootgone verification passed. Actual DOM still had paragraph,
+so this is reporter refusal, not SIGSEGV reproduction. Kernel window no entries;
+old nativecrashes remain unresolved. Evidence2026-11-19-long-transition.
+
+Next: commit/push this diagnostic, update draftPR/check hostedhead. Browser-import
+budget follow-up already has3failing-then-passing focused hook tests: current Open
+reads all files before aggregate32/8MiB rejection. Preflight metadata/currentbudget
+while preserving strictUTF8/BOM/finallatestworkspacechecks. Implement accepted and
+asyncgrowth tests, browser regression, fullcheck/review/evidence, then commit.
+No design replacement, permission expansion, merge/release or readiness claim.

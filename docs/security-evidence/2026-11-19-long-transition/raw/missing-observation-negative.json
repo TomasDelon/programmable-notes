@@ -1,0 +1,20 @@
+{
+  "observerSha256": "706e9dda33bb126f932ccb120de414eba73b9f3809b156ea265d9118818123d5",
+  "requestedVisualCycles": 5,
+  "completedVisualCycles": 1,
+  "phase": "visual-2-requested",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "46f65e87ad853e0147fcbce28037b16a671e4f31d75f123b5a9a49f2e8794846",
+  "pid": 36466,
+  "startTick": "5251850",
+  "error": "Error: UI condition failed: false",
+  "failureUi": {
+    "status": "Source unchanged",
+    "textarea": false,
+    "mode": "Visual",
+    "alerts": [],
+    "paragraphs": 1
+  },
+  "outcome": "fail"
+}
