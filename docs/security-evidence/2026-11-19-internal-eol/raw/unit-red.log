@@ -1,0 +1,133 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/markdownEdits.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/markdownEdits.test.ts (21 tests | 4 failed) 131ms
+   × keeps each internal physical break when a visual word changes: "First line\nSecond line\r\nThird line" 7ms
+   × keeps each internal physical break when a visual word changes: "First line\nSecond line\nThird line" 2ms
+   × preserves unchanged mixed breaks around unambiguous insertions and removals 1ms
+   × rejects ambiguous mixed-break rewrites while keeping source and mappings intact 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > keeps each internal physical break when a visual word changes: "First line\nSecond line\r\nThird line"
+AssertionError: expected '\ufeff# Heading\r\n\r\nEdited line\r\…' to be '\ufeff# Heading\r\n\r\nEdited line\nS…' // Object.is equality
+
+- Expected
++ Received
+
+  ﻿# Heading
+  
+- Edited line
++ Edited line
+  Second line
+  Third line
+
+  <div>Opaque 😀</div>
+
+
+ ❯ tests/unit/markdownEdits.test.ts:241:7
+    239|     expect(
+    240|       patchMarkdown(source, range, canonical.replace('First', 'Edited'…
+    241|     ).toBe(source.replace('First', 'Edited'));
+       |       ^
+    242|     expect(patchMarkdown(source, range, canonical)).toBe(source);
+    243|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > keeps each internal physical break when a visual word changes: "First line\nSecond line\nThird line"
+AssertionError: expected '\ufeff# Heading\r\n\r\nEdited line\r\…' to be '\ufeff# Heading\r\n\r\nEdited line\nS…' // Object.is equality
+
+- Expected
++ Received
+
+  ﻿# Heading
+  
+- Edited line
++ Edited line
+- Second line
++ Second line
+  Third line
+
+  <div>Opaque 😀</div>
+
+
+ ❯ tests/unit/markdownEdits.test.ts:241:7
+    239|     expect(
+    240|       patchMarkdown(source, range, canonical.replace('First', 'Edited'…
+    241|     ).toBe(source.replace('First', 'Edited'));
+       |       ^
+    242|     expect(patchMarkdown(source, range, canonical)).toBe(source);
+    243|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > preserves unchanged mixed breaks around unambiguous insertions and removals
+AssertionError: expected '# Heading\r\n\r\nFirst\r\nInserted li…' to be '# Heading\r\n\r\nFirst\nInserted line…' // Object.is equality
+
+- Expected
++ Received
+
+  # Heading
+  
+- First
++ First
+- Inserted line
++ Inserted line
+  Second line
+  Third line
+
+  <Keep />
+
+
+ ❯ tests/unit/markdownEdits.test.ts:255:5
+    253|   expect(
+    254|     patchMarkdown(source, range, canonical.replace('First', 'First\nIn…
+    255|   ).toBe(source.replace('First', 'First\nInserted'));
+       |     ^
+    256|   expect(
+    257|     patchMarkdown(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > rejects ambiguous mixed-break rewrites while keeping source and mappings intact
+AssertionError: expected 'Different first\r\nDifferent last\n\n…' to be null
+
+- Expected:
+null
+
++ Received:
+"Different first
+Different last
+
+<Keep />
+"
+
+ ❯ tests/unit/markdownEdits.test.ts:277:5
+    275|   expect(
+    276|     patchMarkdown(source, range, 'Different first\nDifferent last'),
+    277|   ).toBeNull();
+       |     ^
+    278|   expect(patchMarkdown(source, range, range.text.replace(/\r\n/g, '\n'…
+    279|     source,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 17 passed (21)
+   Start at  07:05:05
+   Duration  1.47s (environment 61%, import 15%, tests 10%, setup 9%, transform 5%)
+

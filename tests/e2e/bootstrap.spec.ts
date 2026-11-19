@@ -1136,3 +1136,66 @@ test('selected source status stays accurate while sibling edits and save notices
   await expect(page.getByLabel('Workspace status')).toHaveCount(0);
   expect(await closePrevented()).toBe(false);
 });
+
+test('real inline typing preserves mixed internal breaks through exact exports and undo redo', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const source =
+    '\uFEFFimport {useState} from "react"\r\n\r\nexport function Probe(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Mixed counter {n}</button>}\r\n\r\n# Heading\r\n\r\nFirst line 😀\nSecond line café\r\nThird line stays\n\n{/* Opaque comment */}\r\n\r\n<Probe />\r\n';
+  await open(page, source, 'mixed-internal.mdx');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const paragraph = () =>
+    page.getByRole('button', { name: /^(First|Edited) line/ });
+  await paragraph().click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  expect(await field.inputValue()).toBe(
+    'First line 😀\nSecond line café\nThird line stays',
+  );
+  await field.press('Control+Home');
+  for (let i = 0; i < 5; i++) await field.press('Shift+ArrowRight');
+  await page.keyboard.insertText('Edited');
+  await field.press('Enter');
+  const exported = async () => {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  };
+  const expected = source.replace('First', 'Edited');
+  expect(await exported()).toEqual(Buffer.from(expected));
+  await paragraph().click();
+  await field.fill(await field.inputValue());
+  await field.press('Enter');
+  expect(await exported()).toEqual(Buffer.from(expected));
+  // Normalization-only input must not add a phantom undo step.
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(source));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(expected));
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  const counter = page
+    .frameLocator('iframe')
+    .getByRole('button', { name: 'Mixed counter 0', exact: true });
+  await counter.waitFor({ timeout: 20000 });
+  await counter.click();
+  await expect(
+    page
+      .frameLocator('iframe')
+      .getByRole('button', { name: 'Mixed counter 1', exact: true }),
+  ).toBeVisible();
+  const repeated = 'Same\nSame\r\nSame\n\n<div>Opaque</div>\r\n';
+  await open(page, repeated, 'repeated-mixed.mdx');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page.getByRole('button', { name: /^Same Same Same$/ }).click();
+  await field.fill('Same\nSame');
+  await field.press('Enter');
+  await expect(page.getByRole('alert')).toContainText('ambiguous line endings');
+  await expect(field).toHaveValue('Same\nSame');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeDisabled();
+  await field.press('Escape');
+  expect(await exported()).toEqual(Buffer.from(repeated));
+});

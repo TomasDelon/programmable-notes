@@ -1,0 +1,17 @@
+7ef9a9c735e4fdf8717054a50ab552fbe75e912552a14f78ccb68af666689224  /usr/bin/programmable-notes
+NATIVE_DIALOG {"pid": 18116, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-fQSs3m/fidelity-acceptance.mdx"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Actual compiled native preview must run
+    at file:///opt/pn/acceptance/scripts/native-fidelity.mjs:173:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

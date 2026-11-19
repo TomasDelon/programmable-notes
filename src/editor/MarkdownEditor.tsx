@@ -82,7 +82,7 @@ export function MarkdownEditor({
                 setError('');
               } else {
                 setError(
-                  `${label} changed or contains unsupported syntax. Reopen it to retry.`,
+                  `${label} changed, contains unsupported syntax, or has ambiguous line endings. Use Source for this edit.`,
                 );
               }
             }

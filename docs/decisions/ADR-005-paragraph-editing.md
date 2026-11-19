@@ -55,3 +55,16 @@ source. Replace it only in private mapping input with one blank-line UTF-16 unit
 A space would indent first-line imports/JSX and could alter their parse context.
 Private line numbers are unused; parser-owned offsets still address exact original
 bytes. Preserve the original source for compilation, storage, caches and all patches.
+
+## Physical breaks inside multiline text (2026-11-19)
+
+Textarea values normalize CRLF. Patches must not convert all internal newlines
+merely because the document contains CRLF elsewhere. Equal newline counts retain
+the original ending sequence; normalized no-op input returns the original bytes
+and no history transaction. Changed counts preserve raw equal prefix/suffix and
+use an unambiguous local ending, falling back to document style when needed.
+Mixed-ending changed middles and overlapping repeated-text alignments that would
+require choosing between old ending types are refused. This is conservative;
+complex periodic edits may require Source. Revision/range/context checks and
+candidate reparsing still apply. No untrusted message can request this operation.
+[Unit/browser and actual installed red/green evidence](../security-evidence/2026-11-19-internal-eol/README.md).

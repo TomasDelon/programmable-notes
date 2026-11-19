@@ -33,10 +33,11 @@ Patches validate the full captured source revision, parser-owned spans, text and
 block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
 indenting imports/JSX or changing compilation. [Red/green and installed validation](security-evidence/2026-11-19-leading-bom/README.md).
 Untouched spans, BOM, Unicode, markers and whitespace are preserved.
-A newly reproduced gap remains inside a visually edited multiline paragraph with
-mixed LF/CRLF: document-wide normalization can rewrite an existing internal LF.
-No-op/source-mode saves are unaffected. A source-preserving follow-up is next; do
-not infer mixed internal-break fidelity from the existing outside-span tests. CodeMirror provides per-document
+Internal mixed LF/CRLF breaks are now retained for ordinary visual edits and
+normalization-only input adds no undo step. Changed-count edits preserve raw equal
+prefix/suffix; ambiguous mixed middles/repeated-line alignments are refused with
+pending text retained for Source. Some safe periodic edits are conservatively
+unsupported. [Real browser and installed disk red/green](security-evidence/2026-11-19-internal-eol/README.md). CodeMirror provides per-document
 undo/redo and selection histories. Preview messages cannot choose spans, change
 source or authorize saves. One bounded exact-source AST avoids repeated analysis;
 all validators still run. See [ADR-005](decisions/ADR-005-paragraph-editing.md),
@@ -93,7 +94,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 58 unit and 27 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 63 unit and 28 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 36 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
@@ -200,8 +201,8 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: correct selected-document save/dirty notices without changing aggregate
-close protection,
+Next: refresh the review artifact from the fixed committed frontend and diagnose
+remaining native cold-start observations without changing deadlines or isolation;
 retain separate containment and interactive-recovery results, and investigate
 the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source
 compiler navigation passed installed acceptance. Hosted runners need owner billing

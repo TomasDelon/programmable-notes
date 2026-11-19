@@ -709,3 +709,53 @@ Source f61163f and delivery 164cb4e pushed; PR #1 head/draft verified. The curre
 GitHub Blob re-download matched all bytes/SHA and its receipt is retained. PR
 body now links that immutable download, reports 58/27 +36 backend counts and the
 confirmed pending internal mixed-EOL gap. Begin the P2 red tests now.
+
+## 2026-11-19 — mixed internal line-ending fidelity (in progress)
+
+Pushed 37c775c includes exact GitHub demo receipt; PR body/draft verified. New P2
+unit and actual keyboard/export browser tests reproduced global CRLF normalization
+rewriting internal LF. Four new unit cases failed before fix; real browser failed
+exact exported bytes. Implemented bounded physical-break preservation: normalized
+no-op returns original, equal-count edits retain ending sequence, changed-count
+edits retain raw equal prefix/suffix and inherit unambiguous local endings.
+All revision/range/context/size/candidate-parse guards remain.
+
+Initial focused tests and full 62-unit/28-browser check passed. A further repeated
+line case exposed ambiguity in greedy alignment (Same/LF/Same/CRLF/Same deletion or
+insertion). Added failing unit, then conservative overlap-window mixed-ending
+rejection; final focused test running. Read-only review found no unsafe omission;
+some periodic multi-line deletions can be safely but conservatively rejected,
+requiring Source. This is an explicit limit, not permission to guess/source rewrite.
+The failure message directs unsupported/ambiguous changes to Source.
+
+Native fidelity harness now supports --mixed-eol fixture variation without skipping
+its original gates; adds paragraph undo/save/redo exact-byte checks. Old installed
+7ef9a9c7 package reproduction is running first. Next: retain its exact failure,
+build/install final new package after source hashes match, run full native fidelity
+including real Counter, byte saves/recovery/restart/invalid data, rerun full current
+repository checks (now expected 63/28), document precise results and conservative
+limits, commit/push fix, then refresh current browser delivery from committed code.
+Do not call earlier intermediate package/check output the final guard version.
+
+P2 final native results: first old-package attempt failed before service detection
+(no cause established); added failure-only compiler/status/alerts observation,
+without timing/payload/assertion changes. Second old-package attempt actually ran
+React/modes then failed exact disk bytes (LF became CRLF). New source-matched
+package f4921d0b… / ELF 7d315faa… passed complete mixed fidelity, exact paragraph
+save/undo/redo, mode0640, real Counter, dirty-close, actual restart, explicit legacy
+recovery, invalid UTF8 rejection/deletion and unchanged original. Separate IPC
+regression passed. Executed observer hash d4967c80… matches host/guest.
+
+Full 63-unit/28-browser check passed. Added focused real browser refusal/retention/
+Escape test after that run; rerun final full check before source commit. Evidence
+is 2026-11-19-internal-eol. Document conservative Source fallback and retain old
+startup failure; never call it fixed from a successful retry. Then commit/push
+source/test/evidence, refresh/re-download current portable review and update PR.
+
+Final full check after browser refusal/retention assertions passed 63 unit /28
+Chromium. Native IPC on current 7d315faa… passed; source/observer/builder SHA
+parity and fixed actual disk bytes retained. Follow-up wildcard journal query for
+first startup could not add its unit filter (exit1); retained as unavailable, not
+proof of a cause or missing service. Commit source/tests now, refresh review from
+that committed frontend, verify exact extracted mixed-break edits/refusal and
+re-download the pushed blob. Do not silently reuse old archive frontend.

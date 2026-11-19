@@ -157,6 +157,78 @@ function sameContext(a: MarkdownRange, b: MarkdownRange) {
   );
 }
 
+/** Textareas normalize CRLF; that must not rewrite existing source breaks. */
+function preserveTextBreaks(original: string, input: string, fallback: string) {
+  const before = original.replace(/\r\n/g, '\n');
+  const after = input.replace(/\r\n/g, '\n');
+  if (before === after) return original;
+  const endings = original.match(/\r?\n/g) ?? [];
+  if (endings.length === (after.match(/\n/g) ?? []).length) {
+    let index = 0;
+    return after.replace(/\n/g, () => endings[index++]!);
+  }
+
+  // Keep the equal prefix/suffix byte-for-byte, even inside the edited block.
+  let start = 0;
+  while (
+    start < before.length &&
+    start < after.length &&
+    before[start] === after[start]
+  )
+    start++;
+  let beforeEnd = before.length,
+    afterEnd = after.length;
+  while (
+    beforeEnd > start &&
+    afterEnd > start &&
+    before[beforeEnd - 1] === after[afterEnd - 1]
+  ) {
+    beforeEnd--;
+    afterEnd--;
+  }
+  function sourceOffset(offset: number) {
+    let raw = 0;
+    for (let normalized = 0; normalized < offset; normalized++, raw++) {
+      if (original[raw] === '\r' && original[raw + 1] === '\n') raw++;
+    }
+    return raw;
+  }
+  // Repeated lines may permit several insert/delete alignments. A greedy
+  // prefix alone must not decide which of two different old endings survives.
+  let suffix = 0;
+  const shorter = Math.min(before.length, after.length);
+  while (
+    suffix < shorter &&
+    before[before.length - suffix - 1] === after[after.length - suffix - 1]
+  )
+    suffix++;
+  if (start + suffix > shorter) {
+    const earliest = sourceOffset(shorter - suffix);
+    const latest = sourceOffset(
+      start + Math.max(0, before.length - after.length),
+    );
+    if (
+      new Set(original.slice(earliest, latest).match(/\r?\n/g) ?? []).size > 1
+    )
+      return null;
+  }
+  const from = sourceOffset(start),
+    to = sourceOffset(beforeEnd);
+  const changedEndings = original.slice(from, to).match(/\r?\n/g) ?? [];
+  const middle = after.slice(start, afterEnd);
+  // A changed multiline middle with different mixed-break counts has no unique
+  // assignment. Retain input for Source editing instead of normalizing it.
+  if (middle.includes('\n') && new Set(changedEndings).size > 1) return null;
+  const ending =
+    changedEndings[0] ??
+    original.slice(to).match(/\r?\n/)?.[0] ??
+    original.slice(0, from).match(/\r?\n/g)?.at(-1) ??
+    fallback;
+  return (
+    original.slice(0, from) + middle.replace(/\n/g, ending) + original.slice(to)
+  );
+}
+
 export function patchMarkdown(
   source: string,
   range: MarkdownRange,
@@ -174,8 +246,14 @@ export function patchMarkdown(
     return null;
   if (text === range.text) return source;
   if (!plain.test(text) || text.trim() !== text) return null;
-  // New lines inherit this document's line ending; untouched spans remain exact.
-  text = text.replace(/\r?\n/g, source.includes('\r\n') ? '\r\n' : '\n');
+  const preserved = preserveTextBreaks(
+    range.text,
+    text,
+    source.includes('\r\n') ? '\r\n' : '\n',
+  );
+  if (preserved === null) return null;
+  text = preserved;
+  if (text === range.text) return source;
   const next = source.slice(0, range.from) + text + source.slice(range.to);
   return editableMarkdown(next).some(
     (node) =>

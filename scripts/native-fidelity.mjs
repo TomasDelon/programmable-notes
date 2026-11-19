@@ -26,16 +26,28 @@ const draft = join(
 );
 await assert.rejects(lstat(draft), { code: 'ENOENT' });
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
+const mixedEol = process.argv.includes('--mixed-eol');
+const paragraph = mixedEol
+  ? 'A paragraph: 50% + tax.\nRetain physical LF.\r\nRetain physical CRLF.'
+  : 'A paragraph: 50% + tax.';
+const replacement = mixedEol
+  ? 'Updated: 75% + tax.\nRetain physical LF.\nRetain physical CRLF.'
+  : 'Updated: 75% + tax.\nSecond line / retained.';
 const source =
   "﻿---\r\ntitle: Protected 😀 metadata\r\n---\r\n\r\nimport React from 'react'\r\n\r\nexport function Probe() {\r\n  const [n,setN]=React.useState(0)\r\n  return <button onClick={()=>setN(n+1)}>Native probe {n}</button>\r\n}\r\n\r\n<Probe />\r\n\r\n##   Original title  ##\r\n\r\nA paragraph: 50% + tax.\r\n\r\n- First item\r\n- Second item\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* retain comment */}\r\n\r\n```tsx\r\nconst literal = <NeverEvaluate />\r\n```\r\n";
-const saved = source
+const fixture = mixedEol
+  ? source.replace('A paragraph: 50% + tax.', paragraph)
+  : source;
+const saved = fixture
   .replace('Original title', 'Updated title')
   .replace(
-    'A paragraph: 50% + tax.',
-    'Updated: 75% + tax.\r\nSecond line / retained.',
+    paragraph,
+    mixedEol
+      ? paragraph.replace('A paragraph: 50% + tax.', 'Updated: 75% + tax.')
+      : replacement.replace(/\n/g, '\r\n'),
   );
 const unsaved = saved.replace('Second item', 'Recovered item');
-await writeFile(file, source, { flag: 'wx' });
+await writeFile(file, fixture, { flag: 'wx' });
 await chmod(file, 0o640);
 
 async function waitUi(expression) {
@@ -158,6 +170,16 @@ try {
     }
     await pause(100);
   }
+  if (!previewPid) {
+    console.error(
+      'NATIVE_PREVIEW_NOT_STARTED',
+      JSON.stringify(
+        await script(
+          `const done=arguments[arguments.length-1];done({status:document.querySelector('[role="status"]')?.textContent,alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(e=>e.textContent),source:document.querySelector('.cm-content')?.innerText});`,
+        ),
+      ),
+    );
+  }
   assert.ok(previewPid, 'Actual compiled native preview must run');
   execFileSync(
     'python3',
@@ -173,7 +195,7 @@ try {
   await invoke('stop_preview');
   await button('Save source');
   await fileIdle();
-  assert.equal(await readFile(file, 'utf8'), source);
+  assert.equal(await readFile(file, 'utf8'), fixture);
   console.log('NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS');
   await button('Source');
   await waitUi("document.querySelector('.preview-pane').hidden === true");
@@ -193,12 +215,10 @@ try {
   await expectSource('Original title');
   await history(true);
   await expectSource('Updated title');
-  await inline(
-    'A paragraph: 50% + tax.',
-    'Paragraph text',
-    'Updated: 75% + tax.\nSecond line / retained.',
+  await inline(paragraph, 'Paragraph text', replacement);
+  await expectSource(
+    mixedEol ? 'Retain physical CRLF.' : 'Second line / retained.',
   );
-  await expectSource('Second line / retained.');
   await button('Save source');
   await fileIdle();
   assert.equal(await readFile(file, 'utf8'), saved);
@@ -206,6 +226,20 @@ try {
   console.log(
     'NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640',
   );
+  if (mixedEol) {
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(
+      await readFile(file, 'utf8'),
+      fixture.replace('Original title', 'Updated title'),
+    );
+    await history(true);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), saved);
+    console.log('NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS');
+  }
   await inline('Second item', 'List item text', 'Recovered item');
   await waitUi(
     "document.querySelector('.cm-content')?.innerText.includes('Recovered item')",

@@ -83,3 +83,12 @@ saves exact Alpha bytes, checks modes and exits cleanly. Its actual native
 screenshots/results are in [the dated record](security-evidence/2026-11-19-document-status/README.md).
 Delayed save-message races have separate mocked-transport regressions; do not call
 those native security proof.
+
+## Internal mixed physical breaks
+
+Run `NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-fidelity.mjs --mixed-eol`
+with a fresh fixture environment and empty legacy recovery slot. It retains all
+existing fidelity/recovery gates and adds actual disk/history checks for a
+paragraph containing both LF and CRLF. The old installed app reproduced a real
+byte change; the source-matched fixed package passed the complete run.
+[Exact versions, failed startup attempt, disk diff and results](security-evidence/2026-11-19-internal-eol/README.md).

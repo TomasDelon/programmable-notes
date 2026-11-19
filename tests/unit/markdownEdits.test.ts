@@ -223,3 +223,70 @@ it.each([
     ).toBeNull();
   },
 );
+
+it.each([
+  'First line\nSecond line\r\nThird line',
+  'First line\nSecond line\nThird line',
+])(
+  'keeps each internal physical break when a visual word changes: %j',
+  (paragraph) => {
+    const source =
+      '\uFEFF# Heading\r\n\r\n' + paragraph + '\n\n<div>Opaque 😀</div>\r\n';
+    const range = editableMarkdown(source).find((node) =>
+      node.text.startsWith('First line'),
+    )!;
+    const canonical = paragraph.replace(/\r\n/g, '\n');
+    expect(
+      patchMarkdown(source, range, canonical.replace('First', 'Edited')),
+    ).toBe(source.replace('First', 'Edited'));
+    expect(patchMarkdown(source, range, canonical)).toBe(source);
+  },
+);
+
+it('preserves unchanged mixed breaks around unambiguous insertions and removals', () => {
+  const paragraph = 'First line\nSecond line\r\nThird line';
+  const source = '# Heading\r\n\r\n' + paragraph + '\n\n<Keep />\r\n';
+  const range = editableMarkdown(source).find((node) =>
+    node.text.startsWith('First line'),
+  )!;
+  const canonical = paragraph.replace(/\r\n/g, '\n');
+  expect(
+    patchMarkdown(source, range, canonical.replace('First', 'First\nInserted')),
+  ).toBe(source.replace('First', 'First\nInserted'));
+  expect(
+    patchMarkdown(
+      source,
+      range,
+      canonical.replace('Second', 'Second\nInserted'),
+    ),
+  ).toBe(source.replace('Second', 'Second\r\nInserted'));
+  expect(
+    patchMarkdown(
+      source,
+      range,
+      canonical.replace('line\nSecond', 'line Second'),
+    ),
+  ).toBe(source.replace('line\nSecond', 'line Second'));
+});
+
+it('rejects ambiguous mixed-break rewrites while keeping source and mappings intact', () => {
+  const source = 'First line\nSecond line\r\nThird line\n\n<Keep />\r\n';
+  const range = editableMarkdown(source)[0]!;
+  expect(
+    patchMarkdown(source, range, 'Different first\nDifferent last'),
+  ).toBeNull();
+  expect(patchMarkdown(source, range, range.text.replace(/\r\n/g, '\n'))).toBe(
+    source,
+  );
+  expect(
+    patchMarkdown(source, range, range.text.replace('Second', 'Safe second')),
+  ).toBe(source.replace('Second', 'Safe second'));
+});
+
+it('refuses mixed-break deletions and insertions whose repeated text has different valid alignments', () => {
+  const source = 'Same\nSame\r\nSame\n\n<Keep />\r\n';
+  const range = editableMarkdown(source)[0]!;
+  expect(patchMarkdown(source, range, 'Same\nSame')).toBeNull();
+  expect(patchMarkdown(source, range, 'Same\nSame\nSame\nSame')).toBeNull();
+  expect(patchMarkdown(source, range, 'Same\nSame\nSame')).toBe(source);
+});
