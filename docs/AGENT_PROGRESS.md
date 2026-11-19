@@ -1571,3 +1571,55 @@ SIGKILL/restart/explicitunsavedrestore/cancelledandactualSaveAs tocase-preservin
 filename. Productionapp/binaryunchanged. AddrealnegativeCLItests, preserveoldgates,
 runfullcheck andactualordinaryUIDnativeacceptance. ContinueJSC investigationas
 separateunresolvedreleaseblocker; no speculativeproductionengineworkaround.
+
+## 2026-11-19 — uppercase automatic-recovery acceptance running
+
+3a8a036 pushed and draftPR updated. ExactCI44566378334 bothjobs0steps billing;
+no hostedgreen. Newobserver only: strict at-most-one --new-notes/--extension-case
+beforepreflight, preservealloldgates, uppercase file/snapshotmetadata/baseline
+checks, dirtyunsavedrestore, acknowledgedSaveAs exactbytes/modes, ownedRoot
+PID/start/exehash continuity beforeSIGKILL. GuardREDoldexit2→GREEN5diagnostictests;
+livepositiveprereq theninvalidcombinedmode refused1/noPID/noautomaticfixtures.
+Read-onlyreview noCritical/Important; fixtureumaskminorfixedexplicitchmod.
+Finalfullcheck96unit/37matchingChromium passed, no app/nativebuildchange.
+
+ActualordinaryUbuntu run now active: /tmp/pn-uppercase-auto-native.log,
+exec85221. Uses exactinstalledELFff7d4bab…, observerc4895d47…, umask0077,
+NATIVE_CRASH_RESTART=1 --extension-case. Do not claim successful GUI recovery
+beforeexit0/allgates. Evidence2026-11-19-uppercase-auto-recovery retainsnegative
+and fullcheck receipts. First recordPID/start/hash is continuity fromtrusted
+wrapper, not independent hostile-process ownership proof. Previous two native
+primed failures remainfailures; no JIT/resource/security settingchanged.
+
+Next: finishactualrun, independentlycheckoriginal/copy/hash/modes +Rootabsence/
+recoverycleanup; retainrawoutcomes. Formatupdateddocs/checkdiff; commit/push/update
+PR/checkexactCI. Thenverify fresh local clone/npmci/fullcheck with no generated
+runtime/node_modules present initially, without creating a worktree or modifying
+unrelatedrepos. Keep nativeJSC/crash/resource/billing blockers explicit.
+
+## 2026-11-19 — mixed-case automatic recovery verified
+
+Source base: `3a8a036b8e01769e8daa5c6c1fedc60ed3edc48d`. Only the external
+acceptance observer/tests/docs changed. Final full check passed96 unit and37
+matching Chromium tests, formatting, lint, strict types and a fresh production
+build. The ordinary installed ELF remains ff7d4bab…; observer c4895d47… matched
+host, guest and both real Root launch records.
+
+The ordinary Ubuntu/WebKitGTK run exited0 with umask0077 and --extension-case.
+Two picker-authorized mixed-case file buffers retained independent bounded
+snapshot histories and exact baselines/content. Root43681 was identity-checked
+before actual SIGKILL; Root43817 discovered recovery after restart. Explicit
+restoration remained unsaved/unbound, Save As cancellation retained the original,
+and acknowledged Save As created exact automatic-restored.MdX with mode0600.
+The original stayed exact with mode0640. All owned versions were deleted and the
+second Root exited. Independent post-run checks compare literal expected bytes,
+permissions, both Root absences and the recovery collection. Evidence:
+2026-11-19-uppercase-auto-recovery. Review reported no Critical/Important issue;
+its umask fixture concern was corrected before the successful run.
+
+Next executable action: finish docs formatting, commit/push this verified observer
+milestone and update draftPR/CI status. Then use a new local clone (not a worktree)
+to verify npm ci and the full check without existing node_modules, dist or runtime.
+Retain exact commit/tool versions and generation/clean-status receipts. No new
+application package is needed for this observer-only milestone. Earlier primed
+renderer failures and resource5/1 remain unresolved, as does hosted billing.

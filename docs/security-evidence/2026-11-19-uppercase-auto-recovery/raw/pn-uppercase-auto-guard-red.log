@@ -1,0 +1,33 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-diagnostic.test.ts (5 tests | 1 failed) 2208ms
+   × refuses ambiguous or misspelled automatic-recovery modes before prerequisites and fixture creation 153ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-diagnostic.test.ts > refuses ambiguous or misspelled automatic-recovery modes before prerequisites and fixture creation
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ tests/unit/native-diagnostic.test.ts:143:29
+    141|       );
+    142|       expect(result.error).toBeUndefined();
+    143|       expect(result.status).toBe(1);
+       |                             ^
+    144|       expect(result.stderr).toContain('Expected at most one of --new-n…
+    145|       expect(result.stderr).not.toContain('NOT RUN: native');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  16:29:07
+   Duration  3.44s (tests 67%, environment 27%, setup 4%, transform 1%)
+

@@ -198,3 +198,25 @@ retain their existing lowercase names; this flag does not claim native multi-fil
 TSX import or versioned uppercase-record GUI coverage. Rust tests separately
 exercise distinct `Note.MdX`/`Note.mdx` paths and mixed-case snapshot metadata;
 Chromium exercises exact `Widget.TSX` imports and wrong-case import refusal.
+
+## Mixed-case versioned automatic recovery
+
+Run the existing automatic-recovery observer with `--extension-case` in a fresh
+fixture and empty recovery collection. `NATIVE_CRASH_RESTART=1` intentionally
+SIGKILLs its identity-checked owned Root after snapshots are verified, then starts
+a new application process and requires explicit unsaved restoration, cancelled
+Save As and exact saving to `automatic-restored.MdX`. The original
+`automatic-original.MdX` must retain its bytes/mode0640; the new copy is mode0600.
+Running the observer shell with `umask 0077` additionally checks that the synthetic
+original's explicit chmod establishes its intended permission fixture.
+
+```sh
+pn_env=$(NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native-test-setup.mjs)
+. "$pn_env"
+NATIVE_DISPOSABLE_PROFILE=1 NATIVE_CRASH_RESTART=1 node scripts/native-auto-recovery.mjs --extension-case
+```
+
+Use either `--extension-case`, `--new-notes` or no mode. Unknown, duplicate and
+combined modes fail before driver/fixture access so an intended uppercase run
+cannot silently exercise untitled notes. This observer change does not alter the
+production binary or resolve the recorded primed renderer crashes.

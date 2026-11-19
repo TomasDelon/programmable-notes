@@ -171,7 +171,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 94 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 96 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
 | Native document backend            | 39 ordinary Rust tests passed; four infrastructure-only cases are excluded from that count. Earlier 15 snapshot tests were repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                  |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
@@ -314,9 +314,14 @@ candidate; pure default-JSC calls did not reproduce it. No exclusive cause or
 identity with the earlier SIGSEGV is established.
 
 Independent IPC passed on this exact ELF; the complete malicious-pressure
-matrix was not repeated. Next: exercise uppercase-named versioned automatic
-recovery and explicit Save As across a real process restart, while preserving
-these native renderer failures for bounded investigation. The portable review is remote-verified
+matrix was not repeated. The same production ELF now also passed automatic versioned recovery for
+mixed-case names across actual SIGKILL/restart: independent histories/retention,
+exact metadata baselines and bytes, explicit unsaved restoration, cancelled Save As
+and acknowledged exact saving to a new `.MdX` copy with mode0600. The original
+retained mode0640 and its exact source. [Executed scope and strict option controls](security-evidence/2026-11-19-uppercase-auto-recovery/README.md).
+Next: verify the committed implementation from a fresh clone with a new npm
+installation and no preexisting generated runtime. Preserve these native renderer
+failures for bounded investigation. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner

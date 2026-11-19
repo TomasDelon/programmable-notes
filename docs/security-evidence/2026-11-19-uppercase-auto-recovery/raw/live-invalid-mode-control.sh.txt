@@ -1,0 +1,19 @@
+set -e
+cd /opt/pn/acceptance
+pn_env=$(NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native-test-setup.mjs)
+. "$pn_env"
+node --input-type=module - <<'JS'
+import {preflight} from './scripts/native-webdriver-lib.mjs';
+await preflight();
+console.log('LIVE_NATIVE_AUTO_PREREQUISITES_CONFIRMED');
+JS
+set +e
+NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-auto-recovery.mjs --new-notes --extension-case > "$NATIVE_EVIDENCE_DIR/invalid-modes.log" 2>&1
+pn_status=$?
+set -e
+test "$pn_status" -eq 1
+test ! -e "$NATIVE_PID_FILE"
+test ! -e "$NATIVE_FIXTURE_DIR/automatic-original.mdx"
+test ! -e "$NATIVE_FIXTURE_DIR/automatic-original.MdX"
+cat "$NATIVE_EVIDENCE_DIR/invalid-modes.log"
+printf 'LIVE_NATIVE_AUTO_INVALID_MODES_REFUSED exit=%s no-launcher-pid no-automatic-fixture\n' "$pn_status"

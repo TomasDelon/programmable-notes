@@ -114,3 +114,80 @@ it('accepts the full supported fidelity flag set before reporting missing native
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+it('refuses ambiguous or misspelled automatic-recovery modes before prerequisites and fixture creation', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-auto-flags-'));
+  try {
+    for (const args of [
+      ['--new-note'],
+      ['--extension-cas'],
+      ['--new-notes', '--extension-case'],
+      ['--extension-case', '--extension-case'],
+      ['unexpected-positional'],
+    ]) {
+      const result = spawnSync(
+        process.execPath,
+        ['scripts/native-auto-recovery.mjs', ...args],
+        {
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {
+            ...process.env,
+            NATIVE_BINARY: join(directory, 'not-an-application'),
+            NATIVE_DISPOSABLE_PROFILE: '1',
+            NATIVE_FIXTURE_DIR: directory,
+          },
+        },
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        'Expected at most one of --new-notes or --extension-case',
+      );
+      expect(result.stderr).not.toContain('NOT RUN: native');
+      for (const name of [
+        'automatic-original.mdx',
+        'automatic-original.MdX',
+        'editor.pid',
+      ])
+        expect(existsSync(join(directory, name))).toBe(false);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('accepts ordinary, unbound and uppercase automatic-recovery modes before missing-prerequisite reporting', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-auto-valid-'));
+  try {
+    for (const args of [[], ['--new-notes'], ['--extension-case']]) {
+      const result = spawnSync(
+        process.execPath,
+        ['scripts/native-auto-recovery.mjs', ...args],
+        {
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {
+            ...process.env,
+            NATIVE_BINARY: join(directory, 'not-an-application'),
+            NATIVE_DISPOSABLE_PROFILE: '1',
+            NATIVE_FIXTURE_DIR: directory,
+          },
+        },
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain(
+        'NOT RUN: native WebKitGTK prerequisites',
+      );
+      for (const name of [
+        'automatic-original.mdx',
+        'automatic-original.MdX',
+        'editor.pid',
+      ])
+        expect(existsSync(join(directory, name))).toBe(false);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

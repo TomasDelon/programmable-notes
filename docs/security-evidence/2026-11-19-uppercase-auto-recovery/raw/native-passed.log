@@ -1,0 +1,14 @@
+ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf  /usr/bin/programmable-notes
+c4895d47eb862e35289bb35d8b55ec95b2c83a6224f21de11a9e32217da93267  scripts/native-auto-recovery.mjs
+NATIVE_AUTOMATIC_IDENTITY {"pid":43681,"startTick":"6215436","executableSha256":"ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf","observerSha256":"c4895d47eb862e35289bb35d8b55ec95b2c83a6224f21de11a9e32217da93267","mode":"extension-case"}
+NATIVE_DIALOG {"pid": 43681, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-V3LkZR/automatic-original.MdX", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 43681, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-V3LkZR/automatic-original.MdX", "dialogDismissed": true}
+NATIVE_AUTOMATIC_MULTI_BUFFER_INDEPENDENT_RETENTION_AND_UNCHANGED_ORIGINAL_PASS
+NATIVE_ACTUAL_ROOT_SIGKILL 43681
+NATIVE_AUTOMATIC_IDENTITY {"pid":43817,"startTick":"6221667","executableSha256":"ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf","observerSha256":"c4895d47eb862e35289bb35d8b55ec95b2c83a6224f21de11a9e32217da93267","mode":"extension-case"}
+NATIVE_AUTOMATIC_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 43817, "title": "Save source as", "action": "cancel", "argument": "", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 43817, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-V3LkZR/automatic-restored.MdX", "dialogDismissed": true}
+NATIVE_AUTOMATIC_RESTORED_PATHS_AND_PERMISSIONS {"originalName":"automatic-original.MdX","copyName":"automatic-restored.MdX","originalSha256":"760766e1c3d21d5f56905e90418ff34efaa3138859fb9b8f9844eac488238b02","restoredSha256":"f64e95e5c3f36ce1f837224864b2c4f89ef55828e554ff1ad447060546b6a151","originalMode":"0640","restoredMode":"0600","firstDocumentId":"ebe5efdde8421a17d4dfde2824dcc154","secondDocumentId":"d1a4a4aa6b5291884e5a97f30d93c79c","firstSnapshotName":"automatic-original.MdX","latestSnapshotName":"automatic-original.MdX","baseline":"760766e1c3d21d5f56905e90418ff34efaa3138859fb9b8f9844eac488238b02"}
+NATIVE_AUTOMATIC_RESTORE_UNSAVED_CANCEL_AND_EXPLICIT_EXACT_SAVE_PASS
+NATIVE_AUTOMATIC_OWNED_VERSIONS_REMOVED_AND_CLEAN_EXIT_PASS
