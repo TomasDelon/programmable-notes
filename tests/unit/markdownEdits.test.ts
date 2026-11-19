@@ -166,3 +166,60 @@ it('keeps repeated mapping results independent across revisions and malformed do
     source.replace('Original body.', 'Safe again.'),
   );
 });
+
+it.each([
+  {
+    kind: 'paragraph',
+    source: '\uFEFFFirst paragraph.\r\n\r\n<Keep />\r\n',
+    texts: ['First paragraph.'],
+    patched: '\uFEFFUpdated text\r\n\r\n<Keep />\r\n',
+  },
+  {
+    kind: 'ATX heading',
+    source: '\uFEFF##   Heading  ##\r\n\r\n<Keep />\r\n',
+    texts: ['Heading'],
+    patched: '\uFEFF##   Updated text  ##\r\n\r\n<Keep />\r\n',
+  },
+  {
+    kind: 'Setext heading',
+    source: '\uFEFFTitle\r\n=====  \r\n\r\n<Keep />\r\n',
+    texts: ['Title'],
+    patched: '\uFEFFUpdated text\r\n=====  \r\n\r\n<Keep />\r\n',
+  },
+  {
+    kind: 'list',
+    source: '\uFEFF3.   One\r\n4. Two\r\n\r\n<Outer><Nested /></Outer>\r\n',
+    texts: ['One', 'Two'],
+    patched:
+      '\uFEFF3.   Updated text\r\n4. Two\r\n\r\n<Outer><Nested /></Outer>\r\n',
+  },
+  {
+    kind: 'import first',
+    source:
+      '\uFEFFimport React from "react"\r\n\r\nLiteral paragraph.\r\n\r\n{/* Preserve comment */}\r\n\r\n<React.Fragment><span>Opaque</span></React.Fragment>\r\n',
+    texts: ['Literal paragraph.'],
+    patched:
+      '\uFEFFimport React from "react"\r\n\r\nUpdated text\r\n\r\n{/* Preserve comment */}\r\n\r\n<React.Fragment><span>Opaque</span></React.Fragment>\r\n',
+  },
+  {
+    kind: 'JSX first',
+    source: '\uFEFF<Outer><Nested /></Outer>\n\nLiteral paragraph.\n',
+    texts: ['Literal paragraph.'],
+    patched: '\uFEFF<Outer><Nested /></Outer>\n\nUpdated text\n',
+  },
+])(
+  'maps leading-BOM $kind using original offsets without changing opaque source',
+  ({ source, texts, patched }) => {
+    const ranges = editableMarkdown(source);
+    expect(ranges.map((r) => r.text)).toEqual(texts);
+    expect(markdownBlocks(source)[0]?.from).toBe(1);
+    expect(patchMarkdown(source, ranges[0]!, 'Updated text')).toBe(patched);
+    expect(
+      patchMarkdown(
+        source,
+        { ...ranges[0]!, from: ranges[0]!.from - 1 },
+        'Bad offset',
+      ),
+    ).toBeNull();
+  },
+);

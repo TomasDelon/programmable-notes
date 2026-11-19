@@ -56,8 +56,13 @@ function parsedSource(source: string) {
   if (parsed?.source === source) return parsed;
   const end = metadataEnd(source);
   // Preserve UTF-16 offsets and line endings. No author bytes are rewritten.
-  const masked =
-    source.slice(0, end).replace(/[^\r\n]/g, ' ') + source.slice(end);
+  const masked = (
+    source.slice(0, end).replace(/[^\r\n]/g, ' ') + source.slice(end)
+  )
+    // The MDX parser strips an initial BOM and otherwise shifts every offset.
+    // A private blank line keeps its one UTF-16 unit without indenting imports
+    // or JSX. Only offsets are consumed; original source bytes stay untouched.
+    .replace(/^\uFEFF/, '\n');
   const tree = processor.parse(masked);
   parsed = { source, end, tree };
   return parsed;

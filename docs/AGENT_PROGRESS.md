@@ -422,3 +422,26 @@ actual private-network/cgroup policy, Stop, Counter 2 and parent DOM/storage plu
 HTTP/file denial. This is not a complete fresh stress-matrix pass. Raw successful
 checks and native screenshots are retained. Commit/push the guard now, then fix
 the separate leading-BOM mapping offset with red/green exact-source fixtures.
+
+## 2026-11-19 — leading-BOM mapping
+
+The pending-input guard is committed/pushed as 5578131; draft PR #1 was updated.
+Six red fixtures proved ordinary BOM documents lost all safe visual spans because
+the parser strips the first character. Private parser input now uses one blank
+line in place of that unit, keeping exact offsets without indenting imports or
+JSX. Source/cache/compiler inputs remain original; stale/shifted spans still fail.
+Read-only review found no important issue. Full check passed 56 unit / 25 Chromium;
+actual Counter interaction, exact BOM/CRLF saving, Undo/Redo/reopen passed.
+
+The optimized installed package passed --leading-bom pending/close/Cancel,
+Escape/Enter, exact source/mode 0640, Undo/Redo/reopen and clean exit. Final builder
+source hash matched; an initial pre-format copy was resynchronized/rebuilt before
+installation. Exact hashes/raw logs: 2026-11-19-leading-bom. Hosted run 44458530794
+for 5578131 still has zero steps and actual account-billing annotations.
+
+Next: commit/push this source-correctness fix, update draft PR, then add trusted
+editor Ctrl/Cmd+S and native Shift+Save As shortcuts. Use actual key events, refuse
+synthetic/untrusted, composing or repeated events, retain pending/busy guards, and
+never relay preview keyboard messages into privileged actions. Validate exact
+browser download and real native keyboard save/cancel/Save As. Then refresh the
+current portable review ZIP/screenshots/video and verify its GitHub re-download.

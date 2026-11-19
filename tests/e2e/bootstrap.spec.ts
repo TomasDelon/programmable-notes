@@ -907,3 +907,57 @@ test('unapplied visual text blocks document replacement and stays protected unti
   await page.getByRole('button', { name: 'Save source', exact: true }).click();
   expect(readFileSync((await (await stale).path())!, 'utf8')).toBe('<Broken');
 });
+
+test('leading BOM keeps original MDX mappings, opaque React imports and exact save history', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF' +
+    fixture('counter.mdx').replace(/\n/g, '\r\n') +
+    '\r\n{/* Preserve BOM and JSX 😀 */}\r\n';
+  await open(page, original, 'bom-first.mdx');
+  const frame = page.frameLocator('iframe');
+  await frame.getByRole('button', { name: 'Count: 0', exact: true }).click();
+  await expect(
+    frame.getByRole('button', { name: 'Count: 1', exact: true }),
+  ).toBeVisible();
+  async function exported() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  }
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('button', {
+      name: 'This paragraph should render as Markdown.',
+      exact: true,
+    })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Updated paragraph — 😀.');
+  await field.press('Enter');
+  const updated = original.replace(
+    'This paragraph should render as Markdown.',
+    'Updated paragraph — 😀.',
+  );
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  const saved = await exported();
+  expect(saved).toEqual(Buffer.from(updated));
+  await open(page, saved.toString('utf8'), 'reopened-bom.mdx');
+  await expect(
+    page.getByRole('button', { name: 'Updated paragraph — 😀.', exact: true }),
+  ).toBeVisible();
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await frame.getByRole('button', { name: 'Count: 0', exact: true }).click();
+  await expect(
+    frame.getByRole('button', { name: 'Count: 1', exact: true }),
+  ).toBeVisible();
+});

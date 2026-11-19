@@ -30,7 +30,9 @@ Shift+Enter inserts a soft break and Escape cancels. Arbitrary JSX, imports,
 comments, fences, formatted/nested Markdown and mapping-style metadata stay opaque.
 
 Patches validate the full captured source revision, parser-owned spans, text and
-block context, then reparse the candidate. Unchanged source bytes, BOM, CRLF,
+block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
+indenting imports/JSX or changing compilation. [Red/green and installed validation](security-evidence/2026-11-19-leading-bom/README.md).
+Unchanged source bytes, BOM, CRLF,
 Unicode, markers and whitespace are preserved. CodeMirror provides per-document
 undo/redo and selection histories. Preview messages cannot choose spans, change
 source or authorize saves. One bounded exact-source AST avoids repeated analysis;
@@ -75,7 +77,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 50 unit and 24 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 56 unit and 25 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |

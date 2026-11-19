@@ -47,3 +47,11 @@ previous revision's mappings. No stale-source, context or candidate check is
 skipped, and no untrusted preview input is accepted. The cache has no history and
 holds at most one source/AST. Initial parsing remains synchronous; timing evidence
 is descriptive, not a portable performance guarantee.
+
+## Leading BOM offsets
+
+The MDX parser strips an initial BOM, shifting positions relative to the original
+source. Replace it only in private mapping input with one blank-line UTF-16 unit.
+A space would indent first-line imports/JSX and could alter their parse context.
+Private line numbers are unused; parser-owned offsets still address exact original
+bytes. Preserve the original source for compilation, storage, caches and all patches.

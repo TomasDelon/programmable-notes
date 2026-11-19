@@ -26,8 +26,9 @@ assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 assert.ok(process.env.NATIVE_FIXTURE_DIR);
 assert.ok(process.env.NATIVE_EVIDENCE_DIR);
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'pending-inline.mdx');
-const original =
-  '\uFEFF---\r\ntitle: Native pending input\r\n---\r\n\r\nOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX 😀</div>\r\n';
+const original = process.argv.includes('--leading-bom')
+  ? '\uFEFFOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX 😀</div>\r\n'
+  : '\uFEFF---\r\ntitle: Native pending input\r\n---\r\n\r\nOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX 😀</div>\r\n';
 const replacement = 'Applied native paragraph.';
 await writeFile(file, original, { flag: 'wx', mode: 0o640 });
 async function screenshot(name) {
