@@ -24,11 +24,18 @@ import {
 const args = process.argv.slice(2);
 assert.ok(
   args.length <= 1 &&
-    args.every((arg) => ['--new-notes', '--extension-case'].includes(arg)),
-  'Expected at most one of --new-notes or --extension-case',
+    args.every((arg) =>
+      ['--new-notes', '--extension-case', '--renderer-restart'].includes(arg),
+    ),
+  'Expected at most one of --new-notes or --extension-case or --renderer-restart',
 );
 const newNotes = args.includes('--new-notes');
-const extensionCase = args.includes('--extension-case');
+const rendererRestart = args.includes('--renderer-restart');
+const extensionCase = args.includes('--extension-case') || rendererRestart;
+assert.ok(
+  !rendererRestart || process.env.NATIVE_CRASH_RESTART !== '1',
+  'Do not combine renderer restart with NATIVE_CRASH_RESTART',
+);
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 assert.ok(process.env.NATIVE_FIXTURE_DIR);
@@ -132,11 +139,13 @@ async function start() {
       observerSha256: createHash('sha256')
         .update(await readFile(new URL(import.meta.url)))
         .digest('hex'),
-      mode: extensionCase
-        ? 'extension-case'
-        : newNotes
-          ? 'new-notes'
-          : 'ordinary',
+      mode: rendererRestart
+        ? 'renderer-restart'
+        : extensionCase
+          ? 'extension-case'
+          : newNotes
+            ? 'new-notes'
+            : 'ordinary',
     }),
   );
   await wait("Boolean(document.querySelector('.cm-content'))");
@@ -161,6 +170,61 @@ async function open(pid) {
   );
 }
 async function exit(pid, dirty) {
+  if (rendererRestart && dirty) {
+    assert.ok(process.env.NATIVE_EVIDENCE_DIR);
+    // Emulate the dead frontend's busy hint; no Rust file operation is in flight.
+    assert.equal(
+      (await invoke('set_documents_dirty', { dirty: true, busy: true })).ok,
+      true,
+    );
+    await writeFile(
+      join(process.env.NATIVE_EVIDENCE_DIR, 'kill-editor-renderer.json'),
+      JSON.stringify(identities.get(pid)),
+      { flag: 'wx' },
+    );
+    let receipt;
+    for (let attempt = 0; attempt < 300; attempt++) {
+      try {
+        receipt = JSON.parse(
+          await readFile(
+            join(
+              process.env.NATIVE_EVIDENCE_DIR,
+              'editor-renderer-killed.json',
+            ),
+            'utf8',
+          ),
+        );
+        break;
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        await pause(100);
+      }
+    }
+    assert.ok(receipt, 'External owned-renderer termination receipt required');
+    assert.equal(receipt.root.pid, pid);
+    assert.equal(receipt.root.startTick, identities.get(pid).startTick);
+    assert.equal(
+      receipt.root.executableSha256,
+      identities.get(pid).executableSha256,
+    );
+    assert.equal(
+      receipt.renderer.exe,
+      '/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess',
+    );
+    assert.ok(
+      Number.isInteger(receipt.renderer.pid) && receipt.renderer.pid > 1,
+    );
+    assert.match(receipt.renderer.executableSha256, /^[a-f0-9]{64}$/);
+    assert.equal(receipt.signal, 'SIGKILL');
+    assert.equal(receipt.renderer.uid, process.getuid());
+    assert.equal(receipt.rootSurvived, true);
+    dialog(pid, 'button', 'Editor stopped', 'Keep window open');
+    assert.doesNotThrow(() => process.kill(pid, 0));
+    console.log(
+      'NATIVE_EDITOR_RENDERER_KEEP_OPEN_AND_STALE_BUSY_RECOVERY',
+      JSON.stringify(receipt),
+    );
+  }
   const crash = dirty && process.env.NATIVE_CRASH_RESTART === '1';
   if (crash) {
     assert.deepEqual(

@@ -171,7 +171,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 96 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 98 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
 | Native document backend            | 39 ordinary Rust tests passed; four infrastructure-only cases are excluded from that count. Earlier 15 snapshot tests were repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                  |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
@@ -209,6 +209,25 @@ Stop cleanup finished at 51.29 seconds, before earliest expiry; registered-comma
 recovery, DOM/storage, HTTP/file and Counter regressions passed. This is defense
 in depth, not a demonstrated iframe escape or a new full resource-matrix pass.
 [Exact hashes, failed probes and reproduction](security-evidence/2026-11-19-native-downloads/README.md).
+
+## Native editor termination feedback
+
+Actual Linux editor-renderer death now produces a native recovery notice with
+warned Quit / Keep actions. Only the trusted editor installs this callback;
+preview capabilities and lifecycle remain unchanged. Renderer loss invalidates
+stale frontend busy hints while actual Rust operations and dirty confirmation
+remain. The notice uses the same native dialog guard as file pickers, waits for
+them to finish and holds the guard through dismissal. No automatic reload,
+restoration or document write is added.
+
+The old blank/stale-close failure and an intermediate concurrent-modal bug were
+reproduced with real owned-renderer kills. On the new optimized installed ELF
+837d2ab9…, native Quit, crash during an open picker, Keep/dirty-close cancellation,
+actual restart, explicit version restoration and exact separate Save As passed.
+Independent IPC, filesystem hashes/modes and cleanup passed. Full packaged editing/fidelity acceptance with all seven flags also passed; this
+is not an underlying engine-crash fix. Exact scope is recorded in the [dated evidence](security-evidence/2026-11-19-native-editor-failure/README.md), with an actual GTK screenshot.
+[ADR011](decisions/ADR-011-native-editor-termination.md) explains the boundary.
+This is recovery feedback, not a JSC fix or a live-hang watchdog.
 
 ## Security boundary and release blockers
 
@@ -325,8 +344,11 @@ ordinary document Rust tests and7 policy tests in new targets. The frontend
 bundle matches the production builder exactly and tracked state remained clean.
 Wry verification passed with its explicit pinned offline archive after a DNS
 failure; no online verification pass is claimed. [Clean-checkout evidence](security-evidence/2026-11-19-clean-recovery-checkout/README.md).
-Next: retain these native renderer failures for a bounded external-debugger
-investigation on the unchanged binary. The portable review is remote-verified
+The namespace-correct debugger diagnostic did not reproduce the older failure;
+its instrumented pass is not a crash fix. Native termination feedback and actual
+restart recovery now passed on ELF837d2ab9… with the full fidelity suite.
+Next: validate preview-renderer loss separately from a live native connection,
+while retaining the unresolved engine/resource failures. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner

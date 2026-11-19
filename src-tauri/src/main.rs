@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod documents;
 mod downloads;
+#[cfg(target_os = "linux")]
+mod renderer_failure;
 use documents::{
     close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
     save_document, save_document_as, set_documents_dirty,
@@ -162,7 +164,11 @@ fn main() {
                 // The value is serialized data; it is never evaluated as document JavaScript in this shell.
                 builder=builder.initialization_script(format!("addEventListener('DOMContentLoaded',()=>{{document.querySelector('iframe').srcdoc={value};}},{{once:true}});"));
             }
-            builder.build()?;
+            let _window = builder.build()?;
+            #[cfg(target_os = "linux")]
+            if !child {
+                renderer_failure::install(&_window)?;
+            }
             Ok(())
         })
         .build(context).expect("Failed to start native runtime");

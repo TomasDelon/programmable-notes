@@ -1,0 +1,71 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-diagnostic.test.ts (6 tests | 2 failed) 3015ms
+   × accepts ordinary, unbound and uppercase automatic-recovery modes before missing-prerequisite reporting 539ms
+   × refuses combined renderer and whole-process crash mechanisms before prerequisites 220ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-diagnostic.test.ts > accepts ordinary, unbound and uppercase automatic-recovery modes before missing-prerequisite reporting
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/unit/native-diagnostic.test.ts:179:29
+    177|       );
+    178|       expect(result.error).toBeUndefined();
+    179|       expect(result.status).toBe(2);
+       |                             ^
+    180|       expect(result.stderr).toContain(
+    181|         'NOT RUN: native WebKitGTK prerequisites',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/native-diagnostic.test.ts > refuses combined renderer and whole-process crash mechanisms before prerequisites
+AssertionError: expected 'node:internal/modules/run_main:107\n …' to contain 'Do not combine renderer restart with …'
+
+- Expected
++ Received
+
+- Do not combine renderer restart with NATIVE_CRASH_RESTART
++ node:internal/modules/run_main:107
++     triggerUncaughtException(
++     ^
++
++ AssertionError [ERR_ASSERTION]: Expected at most one of --new-notes or --extension-case
++     at file:///workspace/programmable-notes/scripts/native-auto-recovery.mjs:25:8
++     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
++     at async node:internal/modules/esm/loader:647:26
++     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
++   generatedMessage: false,
++   code: 'ERR_ASSERTION',
++   actual: false,
++   expected: true,
++   operator: '==',
++   diff: 'simple'
++ }
++
++ Node.js v24.22.1
++
+
+ ❯ tests/unit/native-diagnostic.test.ts:204:27
+    202|     expect(result.error).toBeUndefined();
+    203|     expect(result.status).toBe(1);
+    204|     expect(result.stderr).toContain('Do not combine renderer restart w…
+       |                           ^
+    205|     expect(result.stderr).not.toContain('NOT RUN: native');
+    206|     expect(existsSync(join(directory, 'automatic-original.MdX'))).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  18:19:15
+   Duration  4.24s (tests 74%, environment 21%, setup 3%, transform 1%)
+

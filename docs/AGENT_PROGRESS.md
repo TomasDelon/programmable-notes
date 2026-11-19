@@ -1680,3 +1680,110 @@ without automatic reload/restoration or document writes. First reproduce missing
 feedback against old ELF with a real owned-renderer kill. Keep preview failures
 separate; no new child capability or document-controlled authorization. Validate
 new package, recovery and IPC before pushing implementation.
+
+## 2026-11-19 — native editor failure handling, verification pending
+
+Pushed baseline:0fedae6. Uncommitted native feature now connects GTK termination
+only for !child, with warned native Quit/Keep guidance and no new IPC/capability.
+The old installed ELFff7d4bab… probe positively exercised native dialogs, killed
+owned renderer45071, then failed at missing Editor stopped notice; Root45039
+survived and stale client_busy prevented normal close. Owned cleanup is logged.
+
+Root-private renderer_stopped invalidates frontend busy hints, while actual Rust
+operations and dirty confirmation remain. Already-pinned GTK2.0.2 dependency moved
+from dev to ordinary Linux target dependency; lock graph/caps/Wry remain intact.
+Rust App tests2 passed, including real Operation guard lifecycle with healthy
+busy, native operation surviving renderer loss, late busy hint and dirty retention.
+
+Review's Important modal gap was reproduced on intermediate ELF6e26da64…:
+actual crash while picker open showed both picker and failure notice. Initial
+BadWindow/undefined-helper attempts were diagnostic errors, not semantic proof;
+corrected/linted permanent native-renderer-failure.mjs reproduced the actual
+concurrent-modal assertion. Final renderer_failure now waits for the existing
+Documents::Dialog guard in one background task, checks window existence, displays
+on main thread and retains the guard through dismissal. New production package
+built in /accept-build; not installed/accepted yet. Underlying JSC bug is not fixed.
+
+NativeAuto --renderer-restart extends mixed-case committed-snapshot/restart gates:
+external verified renderer kill, native Keep, ordinary dirty Close Cancel/OK,
+recovery discovery, explicit unsaved restore and exact Save As. Strict arg and
+mechanism conflict tests RED→GREEN; receipt checks Root hash and renderer metadata.
+External administrator kill helper: /tmp/pn-editor-renderer-kill.py. Permanent
+Root probe has default/--picker modes and GTK screenshot (Pillow absent). Latest
+helper copied to guest scripts, but perform checks before GUI execution.
+
+Environment/tool service resumed at18:45UTC. Files/Docker VM survived; old exec
+session IDs were lost. /tmp/pn-editor-failure-fullcheck.log eventually reports
+98unit/37browser passes, but the old exit receipt is unavailable and screenshot
+helper changed afterward: rerun final fullcheck. Cargo package log:
+/tmp/pn-editor-failure-final-native-build.log. Current installed package remains
+intermediate6e26da64 until final artifact install; do not conflate its results.
+
+Next exact action: run final npmcheck, inspect/install final .deb, obtain exactELF
+hash. Execute default+picker native probes with fresh fixtures and paired owned-
+renderer kill actor; then --renderer-restart automatic recovery and independent
+IPC on that exactELF. Keep live GUI tests serial/no host test load. Capture actual
+PNG and independent original/copy/modes/Root/recovery checks. Finish read-only
+re-review, ADR/status/evidence/format, commit/push/update draftPR. All old primed
+JSC/SIGSEGV/startup/resource/billing limits remain. Never publish/merge/mark ready.
+
+## 2026-11-19 — native notice package acceptance checkpoint
+
+Base0fedae6; implementation not committed yet. Final Node check exited0 with98
+unit/37 matching Chromium, format/lint/types/fresh build. Current Rust App tests2
+passed. Final optimized Debian7ad9debe… (6,835,996 bytes), installedELF837d2ab9…;
+152 shipping inputs match builder. No security-test API/JIT/cap/limit changes.
+
+Actual default probe Root46249 and picker probe Root46459 exited0. Owned renderer
+kills produced the native notice; healthy busy-close positives passed. Picker
+remained alone after the trusted native crash signal; only after explicit Cancel
+did the queued notice appear, then Quit exited. Actual GTK screenshot retained.
+Renderer-restart recovery Root46705→46863 passed independent snapshot retention,
+Keep, native dirty Close Cancel/OK, actual restart/discovery/unsaved restore,
+cancelled/exact Save As and original0640/new0600. Independent literal bytes/hash/
+mode/Root-absence/recovery-empty verification passed. New exact-binary IPC suite
+exited0 including real Counter2 and all native/CSP/policy denials.
+
+Current final full fidelity process is still running: /tmp/pn-editor-final-fidelity.log,
+exec12354, Root47277, fixture/tmp/pn-native-Fnt70E. All seven flags requested.
+It has passed real counter, previous heading-Undo point, modes, quotes, repeated
+files and dense fallback. Do not claim whole-command pass until completed.
+Underlying JSC/SIGSEGV/startup/OOM and hosted billing limits remain unchanged.
+
+Next: finish that command and independent final file/identity checks; retain raw
+results, finalize ADR011/status/evidence/format. Re-review reported no Important/
+Critical after serialized-dialog fix; final minor receipt validation applied.
+Commit/push verified feature, update draftPR/current exactCI. Keep no merge/release/
+readiness change. Then choose a bounded preview-renderer-health or core document
+reliability task; do not add speculative architecture or engine workarounds.
+
+## 2026-11-19 — native editor failure feature verified
+
+Source base0fedae6; feature ready to commit. Production Debian7ad9debe… /
+ELF837d2ab9… passed inspection/install and152-input source parity. Full check98
+unit/37 matching Chromium and application Rust2 passed. Root-only native GTK
+termination handling now gives warned Quit/Keep guidance, invalidates stale
+frontend hints while retaining actual operations/dirty protection, and serializes
+the notice through the existing dialog guard. No child capability/JIT/limit change.
+
+Actual default and picker probes passed on this ELF, with native positive controls
+and verified owned-renderer kills. Automatic recovery --renderer-restart passed
+committed independent histories, native Keep/Close Cancel+OK, actual restart,
+explicit unsaved restoration, cancelled/exact Save As, original640/copy600 and
+cleanup. Independent IPC passed. Final ordinary full fidelity also exited0 with
+all seven flags, all source/disk/history/modes/React/restart/legacy-invalid gates.
+Independent post-check verifies four fixture hashes/modes and Roots47277/47882
+gone. The two old ff7 primed failures remain failures and no JSC fix is claimed.
+
+Evidence2026-11-19-native-editor-failure includes actual GTK PNG, original missing-
+notice RED, intermediate concurrent-modal RED, observation/compile errors, final
+logs and exact identities. Review: no Critical/Important after fix; receipt minor
+was strengthened. Latest known hosted0fedae run44584710973 bothjobs0steps billing.
+
+Next exact action: finish docs formatting/diff review, commit/push this verified
+feature and update draftPR/exactCI. Then independently test unprivileged preview
+WebProcess death: a live native connection is not renderer health. Use owned
+identities and preserve Root responsiveness, Stop/cgroup/rebuild and no-editor-
+notice guarantees. Only implement a lifecycle correction after a real failing
+baseline; never add author privileges or relax resource/expiry checks. Keep
+JSC/startup/blank/OOM/distribution and physical hardware scopes explicit.

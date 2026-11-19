@@ -1,0 +1,15 @@
+NATIVE_AUTOMATIC_IDENTITY {"pid":46705,"startTick":"7091294","executableSha256":"837d2ab94a1b4e0004538da710bc2d7e9c32d203f106e93bce08032e8900865a","observerSha256":"5ca487ecebe8c96b6cf814d02aa3a51b60904fa93cf9014e344a1716a1537b7f","mode":"renderer-restart"}
+NATIVE_DIALOG {"pid": 46705, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-pF20bq/automatic-original.MdX", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 46705, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-pF20bq/automatic-original.MdX", "dialogDismissed": true}
+NATIVE_AUTOMATIC_MULTI_BUFFER_INDEPENDENT_RETENTION_AND_UNCHANGED_ORIGINAL_PASS
+NATIVE_DIALOG {"pid": 46705, "title": "Editor stopped", "action": "button", "argument": "Keep window open", "dialogDismissed": true}
+NATIVE_EDITOR_RENDERER_KEEP_OPEN_AND_STALE_BUSY_RECOVERY {"root":{"pid":46705,"startTick":"7091294","parent":625,"exe":"/usr/bin/programmable-notes","uid":1000,"namespacePids":[46705],"tracer":0,"executableSha256":"837d2ab94a1b4e0004538da710bc2d7e9c32d203f106e93bce08032e8900865a"},"renderer":{"pid":46736,"startTick":"7091522","parent":46735,"exe":"/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess","uid":1000,"namespacePids":[46736,2],"tracer":0,"executableSha256":"792ac17c51235fdce369903e9ee1198ac3d467094f25ec1778ce731aea4e1838"},"signal":"SIGKILL","rootSurvived":true}
+NATIVE_DIALOG {"pid": 46705, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 46705, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_AUTOMATIC_IDENTITY {"pid":46863,"startTick":"7098164","executableSha256":"837d2ab94a1b4e0004538da710bc2d7e9c32d203f106e93bce08032e8900865a","observerSha256":"5ca487ecebe8c96b6cf814d02aa3a51b60904fa93cf9014e344a1716a1537b7f","mode":"renderer-restart"}
+NATIVE_AUTOMATIC_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 46863, "title": "Save source as", "action": "cancel", "argument": "", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 46863, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-pF20bq/automatic-restored.MdX", "dialogDismissed": true}
+NATIVE_AUTOMATIC_RESTORED_PATHS_AND_PERMISSIONS {"originalName":"automatic-original.MdX","copyName":"automatic-restored.MdX","originalSha256":"760766e1c3d21d5f56905e90418ff34efaa3138859fb9b8f9844eac488238b02","restoredSha256":"f64e95e5c3f36ce1f837224864b2c4f89ef55828e554ff1ad447060546b6a151","originalMode":"0640","restoredMode":"0600","firstDocumentId":"3dd72c858da41a097ab47896a5b583bf","secondDocumentId":"e7e8f663170a0c378e08bc4cfe9643ab","firstSnapshotName":"automatic-original.MdX","latestSnapshotName":"automatic-original.MdX","baseline":"760766e1c3d21d5f56905e90418ff34efaa3138859fb9b8f9844eac488238b02"}
+NATIVE_AUTOMATIC_RESTORE_UNSAVED_CANCEL_AND_EXPLICIT_EXACT_SAVE_PASS
+NATIVE_AUTOMATIC_OWNED_VERSIONS_REMOVED_AND_CLEAN_EXIT_PASS

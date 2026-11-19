@@ -220,3 +220,43 @@ Use either `--extension-case`, `--new-notes` or no mode. Unknown, duplicate and
 combined modes fail before driver/fixture access so an intended uppercase run
 cannot silently exercise untitled notes. This observer change does not alter the
 production binary or resolve the recorded primed renderer crashes.
+
+## Native editor renderer failure
+
+The Linux editor now reports actual WebKit renderer termination through a native
+notice. Quit editor is an explicit warned force-quit; Keep window open retains
+the normal native operation/dirty-close protection. Completed drafts remain
+available for explicit restoration after reopening. The engine crash itself is
+not fixed by this notice. A live hung renderer does not emit this termination
+signal, and preview failure is a separate lifecycle.
+
+The production regression probe requires the existing ordinary X11/WebDriver
+session plus an administrator in the disposable VM to terminate only the verified
+owned renderer. Copy the retained `owned-renderer-kill.py.txt` from the dated
+native-editor-failure evidence to a temporary `.py` file. It currently targets
+the documented Ubuntu user `ubuntu`/UID1000, checks the expected installed ELF
+hash and exact Root/descendant identities, and writes a receipt as that user.
+Never use personal documents or a nondisposable profile.
+
+Create/source a fresh fixture in the ordinary user terminal. In a second VM
+administrator terminal run the helper with that exact fixture directory and the
+reviewed installed binary hash. Do not source a user-writable shell file as root:
+
+```sh
+sudo python3 /tmp/owned-renderer-kill.py /tmp/pn-native-REPLACE EXPECTED_ELF_SHA256
+```
+
+Then in the ordinary terminal run one case per fresh fixture:
+
+```sh
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:renderer:test
+# Or: crash with a real picker open; no overlapping error modal is allowed.
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:renderer:test -- --picker
+# Or: committed mixed-case snapshots, renderer loss, Keep/dirty-close and restart.
+NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-auto-recovery.mjs --renderer-restart
+```
+
+The last mode is mutually exclusive with other modes and `NATIVE_CRASH_RESTART=1`;
+it must not silently substitute a whole-process kill. GTK screenshot capture uses
+the existing GI/Gdk X11 stack. Native code/renderer ownership, explicit operations,
+actual package hashes and failed attempts are retained in the dated evidence.

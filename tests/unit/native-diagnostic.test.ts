@@ -160,7 +160,12 @@ it('refuses ambiguous or misspelled automatic-recovery modes before prerequisite
 it('accepts ordinary, unbound and uppercase automatic-recovery modes before missing-prerequisite reporting', () => {
   const directory = mkdtempSync(join(tmpdir(), 'pn-auto-valid-'));
   try {
-    for (const args of [[], ['--new-notes'], ['--extension-case']]) {
+    for (const args of [
+      [],
+      ['--new-notes'],
+      ['--extension-case'],
+      ['--renderer-restart'],
+    ]) {
       const result = spawnSync(
         process.execPath,
         ['scripts/native-auto-recovery.mjs', ...args],
@@ -186,6 +191,62 @@ it('accepts ordinary, unbound and uppercase automatic-recovery modes before miss
         'editor.pid',
       ])
         expect(existsSync(join(directory, name))).toBe(false);
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('refuses combined renderer and whole-process crash mechanisms before prerequisites', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-renderer-mechanism-'));
+  try {
+    const result = spawnSync(
+      process.execPath,
+      ['scripts/native-auto-recovery.mjs', '--renderer-restart'],
+      {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          NATIVE_BINARY: join(directory, 'missing'),
+          NATIVE_FIXTURE_DIR: directory,
+          NATIVE_CRASH_RESTART: '1',
+        },
+      },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'Do not combine renderer restart with NATIVE_CRASH_RESTART',
+    );
+    expect(result.stderr).not.toContain('NOT RUN: native');
+    expect(existsSync(join(directory, 'automatic-original.MdX'))).toBe(false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('rejects unsupported renderer-failure probe options before native prerequisites', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'pn-editor-probe-mode-'));
+  try {
+    for (const args of [['--unknown'], ['--picker', '--picker']]) {
+      const result = spawnSync(
+        process.execPath,
+        ['scripts/native-renderer-failure.mjs', ...args],
+        {
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {
+            ...process.env,
+            NATIVE_BINARY: join(directory, 'missing'),
+            NATIVE_FIXTURE_DIR: directory,
+          },
+        },
+      );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('Expected no options or --picker');
+      expect(result.stderr).not.toContain('NOT RUN: native');
     }
   } finally {
     rmSync(directory, { recursive: true, force: true });

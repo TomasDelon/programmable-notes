@@ -1,0 +1,9 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  18:20:18
+   Duration  4.51s (tests 77%, environment 19%, setup 2%, transform 1%)
+

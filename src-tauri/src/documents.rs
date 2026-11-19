@@ -13,8 +13,21 @@ pub struct Documents {
     store: Mutex<Store>,
     pub dirty: AtomicBool,
     pub client_busy: AtomicBool,
+    renderer_stopped: AtomicBool,
     pub operations: AtomicUsize,
     dialog: AtomicBool,
+}
+impl Documents {
+    fn close_must_wait(&self) -> bool {
+        self.operations.load(Ordering::SeqCst) > 0
+            || (self.client_busy.load(Ordering::SeqCst)
+                && !self.renderer_stopped.load(Ordering::SeqCst))
+    }
+    #[cfg(target_os = "linux")]
+    fn renderer_stopped(&self) {
+        self.renderer_stopped.store(true, Ordering::SeqCst);
+        self.client_busy.store(false, Ordering::SeqCst);
+    }
 }
 struct Operation(Arc<Documents>);
 impl Operation {
@@ -28,9 +41,9 @@ impl Drop for Operation {
         self.0.operations.fetch_sub(1, Ordering::SeqCst);
     }
 }
-struct Dialog(Arc<Documents>);
+pub(crate) struct Dialog(Arc<Documents>);
 impl Dialog {
-    fn acquire(docs: &Arc<Documents>) -> Result<Self, String> {
+    pub(crate) fn acquire(docs: &Arc<Documents>) -> Result<Self, String> {
         if docs.dialog.swap(true, Ordering::SeqCst) {
             return Err("A native dialog is already open".into());
         }
@@ -231,6 +244,15 @@ pub fn set_documents_dirty(
     docs.client_busy.store(busy, Ordering::SeqCst);
     Ok(())
 }
+/// Frontend work cannot continue after its renderer has terminated. Rust-side
+/// operation counts and the last dirty-source state remain authoritative.
+#[cfg(target_os = "linux")]
+pub(crate) fn editor_renderer_stopped(app: &AppHandle) {
+    if let Some(docs) = app.try_state::<Arc<Documents>>() {
+        docs.renderer_stopped();
+    }
+}
+
 pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
     if window.label() != "editor" {
         return;
@@ -242,7 +264,7 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
         return;
     };
     let docs = state.inner().clone();
-    if docs.operations.load(Ordering::SeqCst) > 0 || docs.client_busy.load(Ordering::SeqCst) {
+    if docs.close_must_wait() {
         api.prevent_close();
         let Ok(dialog) = Dialog::acquire(&docs) else {
             return;
@@ -328,4 +350,35 @@ pub async fn recovery_draft(
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::*;
+    #[test]
+    fn renderer_failure_invalidates_only_frontend_hints_not_native_operations_or_dirty_state() {
+        let docs = Arc::new(Documents::default());
+        docs.dirty.store(true, Ordering::SeqCst);
+        docs.client_busy.store(true, Ordering::SeqCst);
+        assert!(
+            docs.close_must_wait(),
+            "Healthy frontend work must protect closing"
+        );
+        let operation = Operation::new(docs.clone());
+        docs.renderer_stopped();
+        docs.client_busy.store(true, Ordering::SeqCst); // A queued stale IPC hint.
+        assert!(
+            docs.close_must_wait(),
+            "A live Rust operation still protects closing"
+        );
+        drop(operation);
+        assert!(
+            !docs.close_must_wait(),
+            "A dead frontend cannot finish its stale work"
+        );
+        assert!(
+            docs.dirty.load(Ordering::SeqCst),
+            "Dirty confirmation remains required"
+        );
+    }
 }

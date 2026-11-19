@@ -1,0 +1,23 @@
+NATIVE_FIDELITY_IDENTITY {"pid":47277,"executableSha256":"837d2ab94a1b4e0004538da710bc2d7e9c32d203f106e93bce08032e8900865a","observerSha256":"7faebddcc934769fc46fb9d8ac9188e199f958f9607ba08643fbf695f32c5184","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 47277, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Fnt70E/first/repeat.mdx", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 47277, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Fnt70E/second/repeat.mdx", "dialogDismissed": true}
+NATIVE_SAME_NAME_DISTINCT_CHOICES_INDEPENDENT_DIRTY_KEYS_BYTES_HISTORY_SAVE_REOPEN_PASS
+NATIVE_DIALOG {"pid": 47277, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Fnt70E/dense-visual.mdx", "dialogDismissed": true}
+NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS
+NATIVE_DIALOG {"pid": 47277, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Fnt70E/fidelity-acceptance.MdX", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS
+NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS
+NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640
+NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS
+NATIVE_OPAQUE_SOURCE_JUMP_PENDING_GUARD_EXACT_CARET_BYTES_UNDO_REDO_PASS
+NATIVE_DIALOG {"pid": 47277, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 47277, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS
+NATIVE_FIDELITY_IDENTITY {"pid":47882,"executableSha256":"837d2ab94a1b4e0004538da710bc2d7e9c32d203f106e93bce08032e8900865a","observerSha256":"7faebddcc934769fc46fb9d8ac9188e199f958f9607ba08643fbf695f32c5184","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 47882, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-Fnt70E/fidelity-acceptance.MdX", "dialogDismissed": true}
+NATIVE_EXPLICIT_RECOVERY_PASS original unchanged
+NATIVE_DIALOG {"pid": 47882, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 47882, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS

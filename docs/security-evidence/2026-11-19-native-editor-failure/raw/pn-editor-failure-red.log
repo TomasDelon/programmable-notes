@@ -1,0 +1,50 @@
+EDITOR_FAILURE_PROBE_IDENTITY {"pid":45039,"startTick":"6795870","executableSha256":"ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf"}
+NATIVE_DIALOG {"pid": 45039, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG_POSITIVE_CONTROL_PASS
+EDITOR_RENDERER_KILL_RECEIPT {"root":{"pid":45039,"startTick":"6795870","parent":625,"exe":"/usr/bin/programmable-notes","uid":1000,"namespacePids":[45039],"tracer":0},"renderer":{"pid":45071,"startTick":"6796108","parent":45070,"exe":"/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess","uid":1000,"namespacePids":[45071,2],"tracer":0},"signal":"SIGKILL","rootSurvived":true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 107, in <module>
+    assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'
+           ^^^^^^^^^^^^^^^
+AssertionError: Native dialog not visible for PID 45039: Editor stopped
+NATIVE_DIALOG {"pid": 45039, "title": "File operation in progress", "action": "button", "argument": "OK", "dialogDismissed": true}
+STALE_CLIENT_BUSY_BLOCKS_NORMAL_CLOSE_CONFIRMED
+OWNED_PROBE_ROOT_CLEANUP {"pid":45039,"startTick":"6795870","executableSha256":"ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf"}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-dialog.py 45039 button Editor stopped Quit editor
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 107, in <module>
+    assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'
+           ^^^^^^^^^^^^^^^
+AssertionError: Native dialog not visible for PID 45039: Editor stopped
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at dialog (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:35:18)
+    at file:///opt/pn/acceptance/scripts/native-editor-failure-probe.mjs:21:6 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 107, in <module>\n' +
+      "    assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'\n" +
+      '           ^^^^^^^^^^^^^^^\n' +
+      'AssertionError: Native dialog not visible for PID 45039: Editor stopped\n'
+  ],
+  pid: 45118,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 107, in <module>\n' +
+    "    assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'\n" +
+    '           ^^^^^^^^^^^^^^^\n' +
+    'AssertionError: Native dialog not visible for PID 45039: Editor stopped\n'
+}
+
+Node.js v24.22.1
