@@ -445,3 +445,25 @@ synthetic/untrusted, composing or repeated events, retain pending/busy guards, a
 never relay preview keyboard messages into privileged actions. Validate exact
 browser download and real native keyboard save/cancel/Save As. Then refresh the
 current portable review ZIP/screenshots/video and verify its GitHub re-download.
+
+## 2026-11-19 — trusted keyboard saving
+
+Leading-BOM correction is committed/pushed as 181d2d4 and draft PR updated. A
+browser real-key test first failed because Ctrl+S did not export source. The host
+editor now delegates trusted Ctrl/Meta+S (Shift Save As) to existing guarded Save.
+Synthetic/repeated/composing/Alt input cannot trigger it; no preview key relay or
+new permission exists. Focused and full checks passed 56 unit / 26 Chromium,
+including exact bytes, synthetic rejection, held repeat, pending input, and delayed
+real File read with source typed meanwhile preserved across document switching.
+
+The new optimized installed package passed real Ctrl+S, pending/dirty-close Cancel,
+BOM/CRLF/JSX bytes, mode 0640, Undo/Redo/reopen, actual Ctrl+Shift+S cancellation
+and explicit separate exact Save As without changing the original, then clean
+exit. Evidence/hashes: 2026-11-19-keyboard-save. Read-only review found no important
+issue. No fresh security stress-matrix or native IME/Cmd-hardware pass is claimed.
+
+Next: commit/push shortcuts, update draft PR, then refresh the portable demo from
+this frontend, assert protected inline input and keyboard export in the recording,
+run manifest/negative/clean-extracted checks, commit the requested review artifact
+and verify actual GitHub re-download. Keep hosted billing and native blank-startup
+limits explicit; continue safe core reliability after the delivery checkpoint.

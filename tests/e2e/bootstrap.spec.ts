@@ -961,3 +961,110 @@ test('leading BOM keeps original MDX mappings, opaque React imports and exact sa
     frame.getByRole('button', { name: 'Count: 1', exact: true }),
   ).toBeVisible();
 });
+
+test('trusted save keys export exact source while synthetic, repeated and unapplied edits cannot save', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF# Keyboard source\r\n\r\nA paragraph.\r\n\r\n<div>Opaque JSX</div>\r\n';
+  await open(page, original, 'keyboard.mdx');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+End');
+  await page.keyboard.insertText('Unsaved tail.');
+  const expected = Buffer.from(original + 'Unsaved tail.');
+  let downloads = 0;
+  page.on('download', () => downloads++);
+  const first = page.waitForEvent('download', { timeout: 5000 });
+  await source.press('Control+s');
+  expect(readFileSync((await (await first).path())!)).toEqual(expected);
+  const dispatched = await page.evaluate(() =>
+    document.querySelector('main')!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 's',
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
+  expect(dispatched).toBe(false);
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  expect(downloads).toBe(1);
+  const repeat = page.waitForEvent('download', { timeout: 5000 });
+  await page.keyboard.down('Control');
+  await page.keyboard.down('s');
+  await page.keyboard.down('s');
+  await page.keyboard.up('s');
+  await page.keyboard.up('Control');
+  expect(readFileSync((await (await repeat).path())!)).toEqual(expected);
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  expect(downloads).toBe(2);
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page.getByRole('button', { name: 'A paragraph.', exact: true }).click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Unapplied value must not be saved.');
+  await field.press('Control+s');
+  await expect(field).toHaveValue('Unapplied value must not be saved.');
+  await expect(page.getByLabel('Document status')).toContainText(
+    'Unapplied visual edit',
+  );
+  expect(downloads).toBe(2);
+  await field.press('Escape');
+  const final = page.waitForEvent('download', { timeout: 5000 });
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  expect(readFileSync((await (await final).path())!)).toEqual(expected);
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const priorKey = await page.getByLabel('Source file').inputValue();
+  const release = await page.evaluateHandle(() => {
+    const original = File.prototype.arrayBuffer;
+    let finish: (() => void) | undefined;
+    File.prototype.arrayBuffer = function () {
+      return new Promise((resolve) => {
+        finish = () => {
+          void original.call(this).then(resolve);
+        };
+      });
+    };
+    return () => {
+      File.prototype.arrayBuffer = original;
+      finish?.();
+    };
+  });
+  await open(page, '# Incoming\n\nA separate note.\n', 'incoming.mdx');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeDisabled();
+  await source.press('Control+End');
+  await page.keyboard.insertText('During read.');
+  await source.press('Control+s');
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      ),
+  );
+  expect(downloads).toBe(3);
+  await release.evaluate((finish) => finish());
+  await release.dispose();
+  await expect(page.getByLabel('Source file')).toHaveValue(/incoming\.mdx$/);
+  await page.getByLabel('Source file').selectOption(priorKey);
+  const late = page.waitForEvent('download', { timeout: 5000 });
+  await source.press('Control+s');
+  expect(readFileSync((await (await late).path())!)).toEqual(
+    Buffer.from(original + 'Unsaved tail.During read.'),
+  );
+});

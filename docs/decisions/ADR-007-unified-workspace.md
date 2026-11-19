@@ -51,3 +51,11 @@ from an invalid/stale patch. Unapplied input remains memory-only; the user sees
 that applying it is necessary before saving/recovery. This bounded guard avoids
 implicitly applying unsafe Markdown or inventing a second persisted source.
 No untrusted preview message can set draft state, apply patches or authorize files.
+
+## Save shortcuts
+
+Handle Ctrl/Meta+S only on the trusted editor surface, delegating to the same Save
+flow as the toolbar. Shift requests Save As. Require an actual trusted keyboard
+event and retain pending/busy guards; ignore held repeats, composing and Alt input.
+Do not translate preview keyboard messages into editor/file operations. Browser
+exports and native picker/grant-backed writes keep their existing authorization.

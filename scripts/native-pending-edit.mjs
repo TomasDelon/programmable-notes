@@ -30,6 +30,7 @@ const original = process.argv.includes('--leading-bom')
   ? '\uFEFFOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX 😀</div>\r\n'
   : '\uFEFF---\r\ntitle: Native pending input\r\n---\r\n\r\nOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX 😀</div>\r\n';
 const replacement = 'Applied native paragraph.';
+const shortcuts = process.argv.includes('--shortcuts');
 await writeFile(file, original, { flag: 'wx', mode: 0o640 });
 async function screenshot(name) {
   await mkdir(process.env.NATIVE_EVIDENCE_DIR, { recursive: true });
@@ -98,6 +99,12 @@ try {
   await button('Visual');
   await button('Original paragraph.');
   await input('Unapplied native text.');
+  if (shortcuts) {
+    await keys(pid, 'ctrl+s');
+    await waitUi(
+      "document.querySelector('textarea')?.value==='Unapplied native text.'",
+    );
+  }
   await waitUi(
     "document.querySelector('[aria-label=\"Document status\"]')?.textContent==='Unapplied visual edit'",
   );
@@ -133,7 +140,12 @@ try {
     `Array.from(document.querySelectorAll('button')).some(b=>b.textContent===${JSON.stringify(replacement)})`,
   );
   const saved = original.replace('Original paragraph.', replacement);
-  await button('Save source');
+  if (shortcuts) {
+    await keys(pid, 'ctrl+s');
+    await waitUi(
+      "document.querySelector('[aria-label=\"Document status\"]')?.textContent==='Saved.'",
+    );
+  } else await button('Save source');
   await fileIdle();
   await disk(saved);
   await button('Undo');
@@ -155,6 +167,25 @@ try {
   console.log(
     'NATIVE_PENDING_ESCAPE_APPLY_EXACT_BOM_CRLF_SAVE_UNDO_REDO_REOPEN_0640_PASS',
   );
+  if (shortcuts) {
+    const copy = join(process.env.NATIVE_FIXTURE_DIR, 'keyboard-save-as.mdx');
+    await button('Source');
+    await script(
+      'const done=arguments[arguments.length-1];document.querySelector(".cm-content").focus();done(true);',
+    );
+    await keys(pid, 'ctrl+shift+s');
+    dialog(pid, 'cancel', 'Save source as');
+    await fileIdle();
+    await disk(saved);
+    await keys(pid, 'ctrl+shift+s');
+    dialog(pid, 'choose', 'Save source as', copy);
+    await fileIdle();
+    await disk(saved);
+    assert.equal(await readFile(copy, 'utf8'), saved);
+    console.log(
+      'NATIVE_TRUSTED_CTRL_SAVE_PENDING_GUARD_AND_SHIFT_SAVE_AS_CANCEL_EXACT_COPY_PASS',
+    );
+  }
   closeWindow(pid);
   for (let i = 0; i < 100; i++) {
     try {

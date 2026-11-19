@@ -1,0 +1,38 @@
+[WebServer] (node:261983) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:262006) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/bootstrap.spec.ts:965:1 › trusted save keys export exact source while synthetic, repeated and unapplied edits cannot save (6.2s)
+
+
+  1) [chromium] › tests/e2e/bootstrap.spec.ts:965:1 › trusted save keys export exact source while synthetic, repeated and unapplied edits cannot save 
+
+    TimeoutError: page.waitForEvent: Timeout 5000ms exceeded while waiting for event "download"
+    =========================== logs ===========================
+    waiting for event "download"
+    ============================================================
+
+      972 |   const expected=Buffer.from(original+'Unsaved tail.');
+      973 |   let downloads=0;page.on('download',()=>downloads++);
+    > 974 |   const first=page.waitForEvent('download',{timeout:5000});
+          |                    ^
+      975 |   await source.press('Control+s');
+      976 |   expect(readFileSync((await (await first).path())!)).toEqual(expected);
+      977 |   const dispatched=await page.evaluate(()=>document.querySelector('main')!.dispatchEvent(new KeyboardEvent('keydown',{key:'s',ctrlKey:true,bubbles:true,cancelable:true})));
+        at /workspace/programmable-notes/tests/e2e/bootstrap.spec.ts:974:20
+
+    Error Context: test-results/bootstrap-trusted-save-key-c3e93-unapplied-edits-cannot-save-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bootstrap-trusted-save-key-c3e93-unapplied-edits-cannot-save-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bootstrap-trusted-save-key-c3e93-unapplied-edits-cannot-save-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/bootstrap.spec.ts:965:1 › trusted save keys export exact source while synthetic, repeated and unapplied edits cannot save 

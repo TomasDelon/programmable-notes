@@ -196,6 +196,22 @@ export function App() {
         const target = event.target as HTMLElement;
         if (
           (event.ctrlKey || event.metaKey) &&
+          !event.altKey &&
+          event.key.toLowerCase() === 's'
+        ) {
+          event.preventDefault();
+          if (
+            !event.nativeEvent.isTrusted ||
+            event.nativeEvent.isComposing ||
+            event.repeat ||
+            documentActionsBlocked
+          )
+            return;
+          void documents.save(event.shiftKey);
+          return;
+        }
+        if (
+          (event.ctrlKey || event.metaKey) &&
           event.key.toLowerCase() === 'z' &&
           !target.closest('input,textarea,[contenteditable="true"]')
         ) {
@@ -260,6 +276,8 @@ export function App() {
         )}
         <button
           disabled={documentActionsBlocked}
+          aria-keyshortcuts="Control+s Meta+s"
+          title="Save source (Ctrl/Cmd+S)"
           onClick={() => void documents.save()}
         >
           Save source
@@ -268,6 +286,8 @@ export function App() {
           <>
             <button
               disabled={documentActionsBlocked}
+              aria-keyshortcuts="Control+Shift+s Meta+Shift+s"
+              title="Save As (Ctrl/Cmd+Shift+S)"
               onClick={() => void documents.save(true)}
             >
               Save As
