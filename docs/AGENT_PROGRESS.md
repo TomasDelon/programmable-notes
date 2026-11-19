@@ -1654,3 +1654,29 @@ external debugger on the unchanged production binary; retain diagnostic scope,
 owned PID/start/executable checks and every failure. Do not ship speculative JIT
 or policy changes. Keep ordinary source/persistence functionality progressing
 independently when native engine/hardware infrastructure blocks an investigation.
+
+## 2026-11-19 — bounded namespace-correct debugger diagnostic
+
+Base510e37f, unchanged ELFff7d4bab…. Temporary full-fidelity variant25d6cab4…
+adds only a readiness barrier after the actual counter/Stop and before mainVisual.
+The administrator verified Root44116 start/hash/UID and exactly one descendant
+renderer44147. GDB44463 entered the renderer's PID namespace with its own private
+mount/proc view; assertions checked identical PID namespace, different debugger
+mount and unchanged application mount. No app/JIT/policy/deadline changes.
+
+The instrumented observer exited0 through every requested gate and real restart.
+The previous heading-Undo failure did not reproduce. GDB recorded normal-shutdown
+SIGTERM then exited-9, with no fatal backtrace. Namespace teardown is a plausible
+cause of its kill, not independently established. Controller exit0 is orchestration
+completion, not a fatal-capture pass or ordinary acceptance. Raw sources/logs and
+independent final fixture/hash/mode/identity/recovery cleanup checks are preserved
+under2026-11-19-gutter-debugger. Original two full primed failures remain failures.
+
+Next: commit/push these diagnostic docs and update draftPR/CI. Then address a
+concrete consequence of actual native renderer death: the Root survives with a
+blank editing window, and stale client_busy can prevent normal close. Add a native
+trusted-editor termination notification with an explicit warned Quit action,
+without automatic reload/restoration or document writes. First reproduce missing
+feedback against old ELF with a real owned-renderer kill. Keep preview failures
+separate; no new child capability or document-controlled authorization. Validate
+new package, recovery and IPC before pushing implementation.
