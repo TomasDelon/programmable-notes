@@ -2,6 +2,11 @@
 
 This procedure is required before treating native preview as safe for hostile documents. No step may be replaced by Chromium, a missing JavaScript global, configuration inspection, or a passing mock test.
 
+Current package-specific results and unresolved gates are linked from
+[implementation status](IMPLEMENTATION_STATUS.md). The [latest complete matrix](security-evidence/2026-11-19-current-stress/README.md)
+contains four passes and a failed memory/OOM acceptance gate; earlier successes
+do not certify later binaries.
+
 ## Milestone 3 production configuration
 
 The historical debug/test-feature procedure below remains useful, but does not establish production package behavior. New production work, actual results and limitations are recorded in the [2026-11-18 evidence](security-evidence/2026-11-18/README.md). Read [ADR-004](decisions/ADR-004-linux-persistence-and-production.md) for the authorized file store, actual namespace enforcement, WebKit process sandbox and residual native risks.
@@ -15,7 +20,7 @@ NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native-test-set
 npm run native:test > production-ipc.log 2>&1
 npm run native:persistence:test > production-persistence.log 2>&1
 node scripts/native-lifecycle.mjs > production-lifecycle.log 2>&1
-npm run native:stress:test > production-stress.log 2>&1
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test > production-stress.log 2>&1
 npm run native:editor:test > production-editor-cpu.log 2>&1
 npm run native:editor:test -- --pressure > production-editor-heap.log 2>&1
 ```
@@ -80,12 +85,12 @@ The native suite has now run in a real Ubuntu 24.04 VM created inside this cloud
 Additional native tests:
 
 ```sh
-npm run native:stress:test
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test
 npm run native:editor:test
 npm run native:editor:test -- --pressure
 ```
 
-The stress suite executes real compiled React/MDX in the production supervised child. It controls the child externally through Linux AT-SPI, matching its native PID; the child has no WebDriver automation and no testing IPC capability. Cases cover CPU throttling/Stop, the exact immediate-allocation fixture below, natural expiry, editor SIGKILL, window close and interactive recovery. Each case reports independently and any failure makes the command fail. Run one case with `npm run native:stress:test -- --case=memory` (also `cpu-stop`, `expiry`, `editor-crash`, `window-close`). OOM and expiry require the actual systemd journal cause. A disappearing renderer alone never counts as either.
+The stress suite executes real compiled React/MDX in the production supervised child. It controls the child externally through Linux AT-SPI, matching its native PID; the child has no WebDriver automation and no testing IPC capability. Cases cover CPU throttling/Stop, the exact immediate-allocation fixture below, natural expiry, editor SIGKILL, window close and interactive recovery. Each case reports independently and any failure makes the command fail. Run one case with `NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test -- --case=memory` (also `cpu-stop`, `expiry`, `editor-crash`, `window-close`). OOM and expiry require the actual systemd journal cause. A disappearing renderer alone never counts as either.
 
 The current editor suite launches the full installed application using the fixture environment above, observes the browser-WASM compiler, opens a real file through the native picker, tests actual CodeMirror input and exact native disk saves under CPU or confirmed growing-heap pressure, and rebuilds additional unsaved source. The immediate-allocation OOM fixture is unchanged and remains separate. Earlier Save Blob captures are historical evidence only; the current test does not substitute a Blob for an actual write. Set `NATIVE_EVIDENCE_DIR` to retain native screenshots and cgroup samples; stdout/stderr must also be retained.
 
@@ -183,7 +188,7 @@ npm run native:test > native-ipc.log 2>&1
 npm run native:persistence:test > native-persistence.log 2>&1
 npm run native:lifecycle:test > native-lifecycle.log 2>&1
 node scripts/native-environment.mjs > native-environment.log 2>&1
-npm run native:stress:test > native-stress.log 2>&1
+NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test > native-stress.log 2>&1
 npm run native:editor:test > native-editor.log 2>&1
 npm run native:editor:test -- --pressure > native-editor-pressure.log 2>&1
 npm run native:resource:test > native-resource.log 2>&1
@@ -216,3 +221,17 @@ The helper writes a sentinel only after it has received nonempty stdin. Also run
 The outer Codex workspace still has no user manager, delegated cgroups, GTK or display. Rootless Docker provides package installation but its cgroup driver is none, so it cannot validate containment directly. A full Ubuntu guest with its own kernel, systemd, cgroup v2 controllers, user bus and Xvfb supplied the missing boundary. KVM is not exposed by the outer host; the guest ran with QEMU TCG. No host cgroup was mounted writable and no security assertion was skipped for that infrastructure.
 
 See [the dated validation record](security-evidence/2026-11-17/README.md) for precise passes, failures and outstanding gates. CI compile results remain separate from runtime evidence. Native filesystem save, non-Linux supervisors, broad compromised-native-code containment and production packaging are not established by these tests. Visual editing remains deferred.
+
+## Failure evidence and startup diagnosis
+
+The stress runner requires NATIVE_DISPOSABLE_PROFILE=1. Each returned unit is
+registered before policy/readiness checks, and a whole-case failure stays attached
+to every corresponding unit. Keep its report and stderr on failure; a completed
+termination sub-observation is not a whole-case pass. Raw generated evidence is
+marked separately from the visible summaries for review.
+
+For a separate static/no-JavaScript versus real Counter startup comparison using
+the same production limits, run `NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-startup.mjs`
+with a fresh fixture env. It records accessibility timing, CPU/memory/process
+samples and verified before-expiry cleanup. It does not replace any stress gate
+or prove pixel visibility. [Executed startup comparison](security-evidence/2026-11-19-startup-probe/README.md).

@@ -138,12 +138,14 @@ or power-loss evidence. [Executed scope](security-evidence/2026-11-19-sync-error
 Snapshot capacity exhaustion requires explicit cleanup. These constrain durability
 claims, not permission to continue editor-side source-preserving work.
 
-Current-package revalidation retained a repeated blank/startup failure after
-editor crash on QEMU TCG/Xvfb. CPU/Stop, memory/OOM, expiry and window-close have
-individual executed successes; the whole fresh matrix is not passing. A procfs
-ESRCH observer race was corrected without inferring empty groups. Strict Stop/close
-checks now exclude natural-expiry attribution; both passed. Native IPC/HTTP/file
-denial also passed. See [exact results and failures](security-evidence/2026-11-19-resource-repeat/README.md).
+The latest complete packaged matrix passed CPU/Stop, expiry, editor SIGKILL/recovery
+and window-close. **Memory acceptance failed:** the immediate-allocation fixture
+expired at 60 seconds before the required OOM cause, with a sampled 515,461,120-byte
+peak. The full command exited 1; it is not relabeled a pass. Both focused and full
+current editor-crash cases recovered Counter 0 → 1 → 2, but prior intermittent
+blank failures remain unexplained. Reporter fixes retain failed targets and
+per-case outcomes; deliberate observer/unsafe-profile negatives passed. [Exact
+current results and binary hashes](security-evidence/2026-11-19-current-stress/README.md).
 
 A separate current-binary startup diagnostic measured a JavaScript-free static
 button at 40.54 s and real React Counter at 43.88 s under identical production

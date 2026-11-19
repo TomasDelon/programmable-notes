@@ -14,10 +14,12 @@ import {
 } from './native-webdriver-lib.mjs';
 import { button, waitUi } from './native-ui-lib.mjs';
 await preflight();
+assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const output = process.env.NATIVE_EVIDENCE_DIR || 'test-results/native';
 await mkdir(output, { recursive: true });
 const reports = [];
+let currentCase;
 const cpuSource = `import {useState} from 'react'
 
 export function Attack() { const [armed,setArmed]=useState(false); return <button onClick={()=>{setArmed(true); setTimeout(()=>{while(true){}},3000)}}>{armed?'CPU loop armed':'Arm CPU loop'}</button> }
@@ -97,31 +99,42 @@ async function start(code) {
   assert.equal(reply.ok, true, JSON.stringify(reply));
   const unit = reply.value;
   assert.match(unit, /^programmable-notes-preview-\d+-\d+\.service$/);
+  const target = {
+    case: currentCase,
+    fixture:
+      code === counter
+        ? 'counter'
+        : code === cpu
+          ? 'cpu-loop'
+          : code === memory
+            ? 'memory'
+            : 'unknown',
+    unit,
+    requestedAt,
+    requestedMonotonic,
+    samples: [],
+  };
+  // Retain targets before readiness; a failed UI lookup must not erase the
+  // current unit from the forensic report.
+  reports.push(target);
   const group = systemctl('show', '--property=ControlGroup', '--value', unit);
   assert.ok(group.startsWith('/user.slice/'));
-  const root = `/sys/fs/cgroup${group}`;
-  const pid = Number(systemctl('show', '--property=MainPID', '--value', unit));
-  assert.ok(pid > 0);
-  const first = await sample(root);
+  target.root = `/sys/fs/cgroup${group}`;
+  target.pid = Number(systemctl('show', '--property=MainPID', '--value', unit));
+  assert.ok(target.pid > 0);
+  const first = await sample(target.root);
+  target.samples.push(first);
   assert.equal(first['memory.max'], '536870912');
   assert.equal(first['memory.swap.max'], '0');
   assert.equal(first['pids.max'], '128');
   assert.equal(first['cpu.max'], '25000 100000');
-  const target = {
-    unit,
-    root,
-    pid,
-    requestedAt,
-    requestedMonotonic,
-    started: Date.now(),
-    samples: [first],
-  };
+  target.started = Date.now();
   await sandbox(target);
   console.log(
     'PREVIEW_START_TIMING',
     JSON.stringify({
       unit,
-      pid,
+      pid: target.pid,
       invokeMs: target.started - requestedAt,
       sandboxObservedMs: Date.now() - requestedAt,
     }),
@@ -179,7 +192,7 @@ async function stopped(target, seconds = 75) {
           if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
         }
       }
-      reports.push({ ...target, ended: Date.now(), noLiveDescendants: true });
+      Object.assign(target, { ended: Date.now(), noLiveDescendants: true });
       return;
     }
     await pause(100);
@@ -277,11 +290,19 @@ assert.ok(!requested || cases.includes(requested), 'Unknown --case');
 const failures = [];
 async function runCase(name, task) {
   if (requested && requested !== name) return;
+  currentCase = name;
   try {
     await task();
+    for (const target of reports.filter((target) => target.case === name))
+      target.caseOutcome = 'passed';
     console.log('CASE_PASS', name);
   } catch (error) {
     failures.push(name);
+    for (const target of reports.filter((target) => target.case === name)) {
+      target.caseOutcome = 'failed';
+      target.caseFailure = String(error);
+      if (!target.ended) target.failure = String(error);
+    }
     console.error('CASE_FAIL', name, error);
     try {
       await invoke('stop_preview');

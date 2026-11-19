@@ -529,3 +529,38 @@ or declare a new full matrix pass. Continue safe editor reliability afterward.
 Final diagnostic repository checks passed 56 unit / 26 Chromium; executed observer
 hash still matches its retained report after formatting. Commit/push this milestone
 now, then preserve active stress targets and run the single editor-crash case.
+
+## 2026-11-19 — complete current native matrix and forensic retention
+
+Startup diagnostic/evidence is committed/pushed as 2c7a2e5. PR description was
+rewritten around final implemented behavior and scoped evidence; it stays draft.
+The stress runner now registers targets before policy/readiness and retains case
+outcomes/failures; no acceptance predicate, payload or resource limit changed.
+Disposable-profile guard and documented commands prevent accidental personal use.
+Only generated raw evidence is marked generated; summaries/source stay visible.
+Read-only review found no important issue.
+
+Actual current keyboard-save binary: focused editor-crash passed, then the full
+matrix passed CPU/Stop, expiry, editor-crash/recovery and window-close. Memory
+FAILED because runtime expiry happened before the required OOM journal cause;
+peak sampled 515,461,120 bytes, journal 491.5 MiB. The whole command exited 1.
+No weaker substitute was accepted. Raw all-case data and both focused/full crash
+successes are preserved in 2026-11-19-current-stress; old blank failures are not
+claimed fixed. Current core resource assertions include before-earliest-expiry
+Stop/close and known-process identity removal.
+
+Two negatives passed: unsafe profile flag rejected before launcher PID creation;
+missing external AT-SPI helper retained its failed active unit and did not invent
+cleanup success. An external verifier checked actual cleanup; CPU attack was not
+armed in that harness negative. Local full check passed 56 unit / 26 Chromium.
+
+Next: finish final formatting/lint after evidence additions, commit/push this
+reviewable tooling/results milestone and update draft PR's latest matrix status.
+Then address a source-backed native defense gap: Wry defaults downloads allowed
+(and can choose a filesystem destination without a save prompt), while the child
+has no explicit on_download denial. This is NOT yet a demonstrated MDX sandbox
+bypass. Review found a minimal child-only on_download false hook. First build an
+actual probe with a trusted-editor positive control, distinguish ordinary
+supervised MDX from automation-attached outer-shell tests, and retain red/green
+proof before hardening. Do not enable automation on production supervised children,
+grant preview file APIs, or weaken CSP/navigation/resource checks.

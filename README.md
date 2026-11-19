@@ -8,6 +8,14 @@ Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile 
 
 [Download the current browser review demo, screenshots and walkthrough](docs/demo/README.md).
 
+New note creates an independent empty buffer. Focus the editor workspace and use
+Ctrl/Cmd+S to save; Shift requests native Save As. Enter applies a visual text edit
+and Escape cancels it. Modified inline text stays protected against closing or
+switching documents, but remains memory-only until applied. Native automatic
+versioned recovery stores applied source separately from originals. Current
+package-specific successes and failed acceptance gates are recorded in the
+[implementation status](docs/IMPLEMENTATION_STATUS.md).
+
 ## Principles
 
 - Direct MDX, JSX/TSX, and React authoring is the foundation.
