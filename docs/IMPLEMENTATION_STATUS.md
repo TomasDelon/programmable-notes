@@ -246,9 +246,14 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: refresh the downloadable browser review for multiline quoted text and the
-current verified engine. Continue core source navigation/usability with parser-owned
-spans and full revision checks. Investigate native blank/startup, renderer SIGSEGV
-and the failed memory-pressure matrix without changing deadlines or isolation.
-Hosted runners still need owner billing action; physical GPU/Wayland compatibility
-can proceed independently. No production security readiness is claimed.
+The current [downloadable review](demo/README.md) binds engine34dc906 and includes
+multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
+screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
+checks are independent of native acceptance.
+
+Next: add revision-checked navigation from opaque visual source blocks to their
+exact Source location, without reverse editing JSX or discarding pending text.
+Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
+matrix without changing deadlines or isolation. Hosted runners still need owner
+billing action; physical GPU/Wayland compatibility can proceed independently.
+No production security readiness is claimed.

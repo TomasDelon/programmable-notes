@@ -42,10 +42,11 @@ with tempfile.TemporaryDirectory(prefix='review-positive-', dir='.cache') as tem
         assert current['capture'] == manifest['capture']
         assert current['sha256'] == manifest['sha256']
 
-cases = ['capture-change', 'asset-change', 'asset-missing', 'asset-extra',
+cases = ['capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
          'backslash-path', 'windows-dot-space-path', 'symlink', 'failed-capture']
 reasons = {
     'capture-change': 'Capture checksum mismatch',
+    'capture-script-change': 'Capture script changed since recording',
     'asset-change': 'Build files changed since verified capture',
     'asset-missing': 'Build files changed since verified capture',
     'asset-extra': 'Build files changed since verified capture',
@@ -68,6 +69,8 @@ for case in cases:
         if case == 'capture-change':
             with (capture / 'lesson.mdx').open('ab') as file:
                 file.write(b'\nchanged')
+        elif case == 'capture-script-change':
+            receipt['captureScriptSha256'] = '0' * 64
         elif case == 'asset-change':
             with next((build / 'assets').glob('*.js')).open('ab') as file:
                 file.write(b'\n/* changed without changing index.html */')
@@ -95,7 +98,7 @@ for case in cases:
         ], capture_output=True, text=True)
         assert result.returncode != 0 and not output.exists() and reasons[case] in result.stderr, (case, result.stdout, result.stderr)
         print(f'REVIEW_ARTIFACT_REJECTED {case}')
-print('REVIEW_ARTIFACT_INTEGRITY_PASS manifest_crc_and_8_negative_cases')
+print(f'REVIEW_ARTIFACT_INTEGRITY_PASS manifest_crc_and_{len(cases)}_negative_cases')
 if args.browser:
     with tempfile.TemporaryDirectory(prefix='review-browser-clean-', dir='.cache') as temporary:
         root = Path(temporary).resolve()

@@ -1246,3 +1246,25 @@ Next commit/push this bounded feature, update draft PR/check exact CI head, then
 refresh recorded browser demonstration/download (source commit must be the newly
 pushed feature). Current review ZIP still binds f503644. Keep source fidelity,
 opaque JSX and unprivileged preview; old SIGSEGV/startup/memory blockers remain.
+
+## 2026-11-19 — current multiline review delivery verified
+
+Engine34dc906 is pushed; PR#1 remains draft. New actual recording/extracted build
+checks passed all old cases plus multiline quote edit/Undo/Redo/exact export and
+unsafe line-count retention. Full matching-browser check75unit/31browser passed;
+recording-only pacing then passed format/lint, capture and complete artifact checks.
+Producer formatting drift was correctly refused; re-recorded output and a ninth
+checksum-drift negative now preserve that guard.150 tracked shipping/config/vendor/
+lock/default-fixture files and build metadata match the native builder exactly.
+
+Final archive 8,540,754bytes /36entries, SHA256
+ccc780298173df68c25612d56989f0560889c1f0ee58e8dc1bd6c0995cd3febb. Actual extracted local HTML media playback passed:
+21.32s,1440×1000,decoded frames,all18images,no error. Old6.44s receipt
+is labelled prepace; producer-preformat receipts are separate historical controls.
+Native scope remains package287692f1… / ELFfd151c78…; no new native claim from demo.
+
+Next commit/push delivery, then download remote Git blob and compare every byte;
+record receipt/update draft PR. Current source34dc906 hosted CIrun44527525920 again
+refused both zero-step jobs for billing. Then begin bounded opaque-block Source
+navigation using existing revealSource snapshot/offset guards. No JSX reverse
+editing, privilege expansion, merge, public release or production-readiness claim.

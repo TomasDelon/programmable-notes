@@ -47,6 +47,7 @@ entries = {'walkthrough/capture.json': receipt_bytes}
 allowed = {'01-preview.png', '02-inline-edit.png', '03-updated.png', '04-new-note.png',
            '05-dirty-sibling.png', '06-long-input.png', 'long-note.mdx',
            '07-quote.png', 'quoted-note.mdx',
+           '08-multiline-quote.png', '09-unsafe-quote.png', 'multiline-quoted-note.mdx',
            'walkthrough.webm', 'walkthrough.html', 'lesson.mdx', 'new-note.mdx'}
 for device in ('desktop', 'tablet', 'mobile'):
     allowed.add(f'before/{device}.png')

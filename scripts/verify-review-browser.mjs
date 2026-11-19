@@ -210,8 +210,48 @@ try {
       quoteSource.replace('Quoted café 😀.', 'Changed quote: café 😀.'),
     ),
   );
+  const multiline =
+    '\uFEFF# Multiline quote\r\n\r\n  >  First café 😀.\r\n >\tSecond line.\n> Third line.\r\n\r\n<div>Opaque JSX</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'multiline.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(multiline),
+  });
+  const quoteButton = page
+    .getByRole('region', { name: 'Markdown editing' })
+    .locator('blockquote button');
+  await quoteButton.click();
+  assert.equal(
+    await field.inputValue(),
+    'First café 😀.\nSecond line.\nThird line.',
+  );
+  await field.fill('First café 😀.\nChanged continuation.\nThird line.');
+  await field.press('Enter');
+  const multilineDownload = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await multilineDownload).path()),
+    Buffer.from(multiline.replace('Second line.', 'Changed continuation.')),
+  );
+  await quoteButton.click();
+  await field.fill('One\nTwo');
+  await field.press('Enter');
+  await page
+    .getByRole('region', { name: 'Markdown editing' })
+    .getByRole('alert')
+    .waitFor();
+  assert.equal(await field.inputValue(), 'One\nTwo');
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .isEnabled(),
+    false,
+  );
+  await field.press('Escape');
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_and_literal_quote',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_literal_and_multiline_quotes',
   );
 } finally {
   await browser.close();

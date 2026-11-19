@@ -46,6 +46,9 @@ try {
     viewport: { width: 1440, height: 1000 },
     recordVideo: { dir: output, size: { width: 1440, height: 1000 } },
   });
+  // Recording pacing only; all readiness/correctness assertions remain explicit.
+  const pauseForReview = (milliseconds = 900) =>
+    page.waitForTimeout(milliseconds);
   const source = await readFile(
     'docs/handoff/samples/fixtures/counter.mdx',
     'utf8',
@@ -82,6 +85,7 @@ try {
     path: join(output, '01-preview.png'),
     fullPage: true,
   });
+  await pauseForReview();
   await paragraph.click();
   const inline = panel.getByRole('textbox', { name: 'Paragraph text' });
   const replacement = 'Edited directly in the rendered note.';
@@ -97,6 +101,7 @@ try {
     path: join(output, '02-inline-edit.png'),
     fullPage: true,
   });
+  await pauseForReview();
   await inline.press('Enter');
   await page.getByRole('button', { name: 'Split', exact: true }).click();
   await page
@@ -108,6 +113,7 @@ try {
     path: join(output, '03-updated.png'),
     fullPage: true,
   });
+  await pauseForReview();
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source' }).click();
   const download = await pending;
@@ -135,6 +141,7 @@ try {
         path: join(output, `${device}-${mode.toLowerCase()}.png`),
         fullPage: true,
       });
+      await pauseForReview(650);
     }
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -151,6 +158,7 @@ try {
     path: join(output, '04-new-note.png'),
     fullPage: true,
   });
+  await pauseForReview();
   const newKey = await page.getByLabel('Source file').inputValue();
   await page.getByLabel('Source file').selectOption(lessonKey);
   assert.equal(
@@ -165,6 +173,7 @@ try {
     path: join(output, '05-dirty-sibling.png'),
     fullPage: true,
   });
+  await pauseForReview();
   await page.getByLabel('Source file').selectOption(newKey);
   assert.equal(
     await page.getByLabel('Document status').textContent(),
@@ -214,6 +223,7 @@ try {
     path: join(output, '06-long-input.png'),
     fullPage: true,
   });
+  await pauseForReview();
   await longInput.press('Enter');
   const longDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source', exact: true }).click();
@@ -238,6 +248,7 @@ try {
     'Edited quote: café 😀 + £50.',
   );
   await page.screenshot({ path: join(output, '07-quote.png'), fullPage: true });
+  await pauseForReview();
   const quoteDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save source', exact: true }).click();
   await (await quoteDownload).saveAs(join(output, 'quoted-note.mdx'));
@@ -245,13 +256,73 @@ try {
     await readFile(join(output, 'quoted-note.mdx'), 'utf8'),
     quoteSource.replace('Quoted café 😀.', 'Edited quote: café 😀 + £50.'),
   );
+  const multilineSource =
+    '\uFEFF# Multiline quote\r\n\r\n  >  First café 😀.\r\n >\tSecond line.\n> Third line.\r\n\r\n<div><span>Opaque JSX</span></div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'multiline-quoted-note.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(multilineSource),
+  });
+  const multilineButton = panel.locator('blockquote button');
+  await multilineButton.click();
+  const multilineInput = panel.getByRole('textbox', { name: 'Paragraph text' });
+  assert.equal(
+    await multilineInput.inputValue(),
+    'First café 😀.\nSecond line.\nThird line.',
+  );
+  await multilineInput.fill('First café 😀.\nChanged: £50 + tax.\nThird line.');
+  await multilineInput.press('Enter');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  assert.equal(
+    await multilineButton.textContent(),
+    'First café 😀.\r\nSecond line.\nThird line.',
+  );
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await page.screenshot({
+    path: join(output, '08-multiline-quote.png'),
+    fullPage: true,
+  });
+  await pauseForReview(1200);
+  const multilineDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  await (
+    await multilineDownload
+  ).saveAs(join(output, 'multiline-quoted-note.mdx'));
+  const multilineSaved = multilineSource.replace(
+    'Second line.',
+    'Changed: £50 + tax.',
+  );
+  assert.equal(
+    await readFile(join(output, 'multiline-quoted-note.mdx'), 'utf8'),
+    multilineSaved,
+  );
+  await multilineButton.click();
+  await multilineInput.fill('First\nSecond\nThird\nExtra');
+  await multilineInput.press('Enter');
+  await panel.getByRole('alert').waitFor();
+  assert.equal(
+    await multilineInput.inputValue(),
+    'First\nSecond\nThird\nExtra',
+  );
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .isEnabled(),
+    false,
+  );
+  await page.screenshot({
+    path: join(output, '09-unsafe-quote.png'),
+    fullPage: true,
+  });
+  await pauseForReview(1200);
+  await multilineInput.press('Escape');
   const video = page.video();
   await page.close();
   await video.saveAs(join(output, 'walkthrough.webm'));
   await video.delete();
   await writeFile(
     join(output, 'walkthrough.html'),
-    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson. It then edits the end of a thousand-line paragraph in a bounded scrollable input and saves exact source. Finally it edits a literal blockquote while preserving its marker, indentation, Unicode and line endings.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a> · <a href="long-note.mdx" download>long paragraph</a> · <a href="quoted-note.mdx" download>edited quote</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure><figure><figcaption>Full long-paragraph input with internal scrolling</figcaption><img alt="Thousand-line paragraph edited at its end without an oversized input" src="06-long-input.png"></figure><figure><figcaption>Literal quote edited without rewriting its marker</figcaption><img alt="Direct quote editing preserves surrounding opaque JSX" src="07-quote.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
+    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson. It then edits the end of a thousand-line paragraph in a bounded scrollable input and saves exact source. It edits a literal blockquote, then a multiline quoted paragraph with Undo/Redo while preserving every prefix and mixed physical line ending. A rejected line-count change retains pending text and blocks Save until cancelled.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a> · <a href="long-note.mdx" download>long paragraph</a> · <a href="quoted-note.mdx" download>edited quote</a> · <a href="multiline-quoted-note.mdx" download>multiline quote</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure><figure><figcaption>Full long-paragraph input with internal scrolling</figcaption><img alt="Thousand-line paragraph edited at its end without an oversized input" src="06-long-input.png"></figure><figure><figcaption>Literal quote edited without rewriting its marker</figcaption><img alt="Direct quote editing preserves surrounding opaque JSX" src="07-quote.png"></figure><figure><figcaption>Multiline quote keeps every marker and physical ending</figcaption><img alt="Three-line quoted text edited without changing its prefixes" src="08-multiline-quote.png"></figure><figure><figcaption>Unsupported structure stays pending</figcaption><img alt="A changed quote line count is refused and Save stays blocked" src="09-unsafe-quote.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
   );
 } finally {
   await browser.close();
@@ -279,12 +350,15 @@ const names = [
   '05-dirty-sibling.png',
   '06-long-input.png',
   '07-quote.png',
+  '08-multiline-quote.png',
+  '09-unsafe-quote.png',
   'walkthrough.webm',
   'walkthrough.html',
   'lesson.mdx',
   'new-note.mdx',
   'long-note.mdx',
   'quoted-note.mdx',
+  'multiline-quoted-note.mdx',
   ...['desktop', 'tablet', 'mobile'].flatMap((device) => [
     `before/${device}.png`,
     ...['source', 'split', 'visual'].map((mode) => `${device}-${mode}.png`),
