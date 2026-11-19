@@ -111,6 +111,21 @@ changing source/entry. Real browser and installed separate-directory file edits,
 independent exact saves/history/reopen plus the full native recovery/IPC suites
 passed. [90 unit /35 browser checks and exact package scope](security-evidence/2026-11-19-safe-source-selection/README.md).
 
+## Original-document Save interruption
+
+A production-library integration test now kills an owned native writer after
+actual temporary write, file fsync, atomic publication and parent-directory
+fsync. Ordinary Ubuntu UID1000 execution passed all four stages with exact
+old/new BOM/Unicode/mixed-ending bytes, mode0640, untouched sibling, fresh Store
+reopen and subsequent explicit Save. Writer identity/syscall/descriptor/name
+receipts and the initial rename-observer failure are retained. A pre-publication
+crash can leave an orphan temporary; the application neither promotes nor
+arbitrarily scavenges it. This is process interruption, not power loss or a new
+packaged-GUI restart test. CI adds a mandatory timeout and explicit stage checks;
+hosted billing remains blocked.114unit/37browser and ordinary Rust39document/
+7policy passed; the new ignored integration case was manually executed separately.
+[Exact results and limits](security-evidence/2026-11-19-document-save-crashes/README.md).
+
 ## Browser import budgets
 
 Browser Open preflights the existing workspace and selection metadata before

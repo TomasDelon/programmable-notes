@@ -285,3 +285,32 @@ than counting lifetime expiry as crash propagation. Retain the report, helper
 receipt, unit journals and cleanup checks. Repeat native IPC and unchanged strict
 CPU/OOM/expiry regressions after changing this lifecycle; renderer disappearance
 or exit1 is not OOM proof. See ADR012 for the authority boundary.
+
+## Actual original-document Save interruption
+
+The standalone ordinary-user gate exercises the same production Store library
+without adding application failpoints or native permissions. Use disposable
+Linux x86_64 with own-child ptrace permitted and synthetic temporary files only:
+
+```sh
+cargo build --manifest-path native-documents/Cargo.toml --locked --example document-save-crash-writer
+PN_SAVE_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/document-save-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_crash -- --ignored --exact actual_save_crashes_preserve_complete_document_and_permissions --nocapture
+```
+
+The outer timeout is mandatory because final OS child reaping can block. Missing
+ptrace is explicitly NOT RUN and cannot satisfy acceptance. Require all four
+REAL_DOCUMENT_SAVE_CRASH_PASS stage lines and a successful command. The writer
+accepts only an owned private synthetic directory under the configured temporary
+directory. The parent checks writer PID/start/executable/hash, successful syscall
+exits, actual source/destination directory descriptors and publication names.
+On this glibc, renameat2(flags0) becomes renameat; both atomic operations are
+recognized with the same exact fixture checks.
+
+The gate SIGKILLs only its own traced writer after temporary write, file fsync,
+publication and directory fsync. It requires complete old/new BOM/Unicode/mixed
+ending bytes, mode0640, unchanged sibling and fresh Store reopen/subsequent Save.
+An early write interruption need not complete write_all. Pre-publication crashes
+can leave an orphan temporary in the chosen directory; it is never promoted or
+arbitrarily removed by the application. Synthetic fixture cleanup is test-owned.
+This is library process-interruption evidence, not packaged-GUI restart or
+power-loss evidence. [Exact executed results and failed observer assumption](security-evidence/2026-11-19-document-save-crashes/README.md).

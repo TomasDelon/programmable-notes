@@ -90,6 +90,14 @@ jobs:
           cargo build --manifest-path native-documents/Cargo.toml --locked --example recovery-crash-writer
           PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact process_crashes_preserve_durable_recovery_at_each_publication_stage --nocapture | tee /tmp/recovery-crash.log
           grep -F 'REAL_PROCESS_CRASH_PASS stage=durable' /tmp/recovery-crash.log
+      - name: Verify original document Save across real writer crashes
+        shell: bash
+        run: |
+          cargo build --manifest-path native-documents/Cargo.toml --locked --example document-save-crash-writer
+          PN_SAVE_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/document-save-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_crash -- --ignored --exact actual_save_crashes_preserve_complete_document_and_permissions --nocapture | tee /tmp/document-save-crash.log
+          for stage in write synced published durable; do
+            grep -F "REAL_DOCUMENT_SAVE_CRASH_PASS stage=$stage " /tmp/document-save-crash.log
+          done
       - name: Verify recovery sync error reporting (external syscall injection)
         shell: bash
         run: |

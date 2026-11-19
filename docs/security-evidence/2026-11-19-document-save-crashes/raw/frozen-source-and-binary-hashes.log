@@ -1,0 +1,4 @@
+35a5a5277a56c53aae8e5fa92e76b5bb9c095809e3b983d40371cb5bffb90ee3  .cache/document-save-crash-test
+45a07e9813684ab420c6567838f0c501b7a88fe685ca5ebec7817c4851acbdb3  .cache/document-save-crash-writer
+c8b3471fd9697f59f8f663e6c2d41a8034c3042784c5ccfe64873022a3974ff4  native-documents/tests/save_crash.rs
+2fff1c3b4015328853a3ca9b44cd4d398c66841ed611f27a15f99e1dc7523648  native-documents/examples/document-save-crash-writer.rs

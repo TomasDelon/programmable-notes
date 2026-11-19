@@ -2025,3 +2025,60 @@ Noexamplewriterimplementedyet; nextP0stepwriteexternalrestrictedmain-thread
 writerfromplan, compile/runrealSIGKILL4stageswithmandatoryoutertimeout, preserve
 allreceipts/compile+artifactsetupfailures, runremainingtestsandCIprocedure. Keep
 P0sourceOUT ofobservercommit. No merge/release/readiness/securitycertification.
+
+## 2026-11-19 — original Save crash gate verified; final checks pending
+
+Observercommit2e0a9b5625b0ec64f45b078a51ecebffe3c3a7d3 pushed, PRheadverified/drafttrue,
+bodyupdated6/6scopeandretained4/2failures. ExactCI44607665007 bothjobs0steps with
+billing/spending-limitannotation; noexecutedCIorownerbillingchange.
+
+P0originalSaveexternalwriter+ignoredtestimplemented (noStore/productchange).
+ActualmissingwriterRED101first. EarlybinarycopyassumedCargo/depslayout, failed
+setupandexit127NOTRUN; correctedstructuredartifactmetadata. Firstrunpassedwrite/
+fsyncthenmissedpubsyscall. Actualunchangedpredicate diagnosticprovedrenameat264,
+notrenameat2. Observernowvalidatesbothatomicforms,bothFDs,exacttemp32hex/newname,
+flags, priorpublicationfordirsync. Ownchildmemoryreadsbounded. Noassertion skip.
+
+Finalsourceafterreviewtimingcorrection passedactualordinaryUbuntuUID1000 test:
+/tmp/pn-document-save-frozen-native.log/.exit0,1integrationtest4SIGKILLstages17.01s,
+writers53401–53404. Exactold/newBOM/UnicodeMixedEOL224067B,mode640,siblingbytes,
+freshStoreopenandsubsequentexplicitSavepassed. Prepuborphans1/published0recorded,
+neverautopromoted/removedbyapp. Source/binaryhashesinnew evidencefolder
+2026-11-19-document-save-crashes. Testbinary35a5a527…,writer45a07e98….
+Invalidrootactualwriterrefusal101expected; independentallwriterPIDs/ownedfixture
+folders/invalidrootpathabsent. NopowerlossornewpackagedGUIrestartclaim.
+
+CIstepaddedexplicitBash/mandatorytimeout90s/pipelinefailure+all4stagegrepchecks.
+Linuxprocedure/documentedABI/prerequisitesandorphanlimits. Read-onlyreviewno
+Critical/Important;lateStopminorresolvedandfrozenrealtestrerunpassed. Next:
+finaldocsformat+frozenfullNodecheck,ordinarycachedRust39doc/7policy(format+compile
+newignoredtest), retainlogs, README/statusfinalupdate/review/commit/push/draftPR/
+exactCI. P0filesuntrackeduntilcoherentverifiedcommit. Currentallothersecurity/
+JSC/startup/distribution/hardware/billinglimitationsremain. Thenhighestvalue
+nextdata-integritygate:originalSavefsync-errororrealENOSPC handling; inspecttests
+beforechoosing. No merge/release/readiness/securitycertification.
+
+## 2026-11-19 — original Save interruption ready to commit
+
+Base2e0a9b5, finalfrozenP0source/bin hashesretained. RealordinaryUID1000 guest
+integration1test4SIGKILLstages passed17.01s/exit0 afterminorlate-waitcorrection.
+BothFDs+source/destnames identifyactualglibcrenameat264atomicpublication. Every
+stage exactold/new224067Bsource/640/sibling/freshStore+subsequentSavepassed.
+Prepuborphans1/postpub0explicitlimit; noappscavenging/promoting, no powerlossclaim.
+Ownwriters53401–53404/fixturesallgone. InvalidRootrefusal101expected.
+
+FinalNodeexec88869 exited0:114unit/37Chromium+format/lint/types/freshbuild.
+FinalcachedordinaryRustexec18273 exited0:39doc/7policy,5infraonlyignored;
+newSaveCrashintegrationexecutedseparately; other4notrerunorclaimed. Finalreview
+noCritical/Important; Timingminorcorrectedthenrealtestrerun. Evidencefolder
+2026-11-19-document-save-crashes retainsrealRED/failingrenameassumption/diagnostic/
+frozenpass/checks/hashes/cleanup. Finaldocsnowupdatedandneedformatcheckbefore
+commit. CIstepBash90stimeout+fourpasslinechecks, nohostedexecutionclaim.
+
+Nextimmediate:format/diff/finalevidencereview,commit/pushP0files+CI/docs/evidence,
+update draftPRhead/exactCI. Latestbase2eCI44607665007 jobs0stepsbillingconfirmed.
+Thenexecute2026-11-19-original-save-sync-errors.md: publicSavefile-fsyncErrvs
+postpubdirsyncdurable=false underexternalEIOinjection, NOTrealstoragefailure.
+Firstfailingtest thenminimalwriterreportmode, no productchangeunlessprovenbug.
+AfterwardinspectrealENOSPCcoverage. KeepallnativeJSC/startup/instantPIDoldfailure/
+distribution/hardware/billinglimits. No merge/release/readiness/securityclaim.
