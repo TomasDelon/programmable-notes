@@ -28,3 +28,7 @@ CPU/memory budget, cold offline/PWA support or production security readiness cla
 Hosted runner startup remains blocked by account billing; this source attachment
 keeps the demo reviewable without relying on a new Actions artifact. See the
 linked instructions for local loopback serving without Node/npm.
+
+Actual pushed GitHub source Blob re-download also matched all 6,626,776 bytes
+and SHA-256 above (delivery commit 164cb4e, blob
+d62f26ba00abe09e8952a91e89939829c256c7e1). Receipt is retained in raw.

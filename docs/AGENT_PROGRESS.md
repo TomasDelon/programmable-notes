@@ -704,3 +704,8 @@ and CRLF rewrites an unchanged internal LF to CRLF. No-op/source-mode saves are
 unaffected. Reproduction is retained with delivery evidence; source-fidelity claims
 are narrowed until the follow-up fix. Commit/push delivery, verify remote bytes,
 then start failing unit/browser tests before changing patchMarkdown.
+
+Source f61163f and delivery 164cb4e pushed; PR #1 head/draft verified. The current
+GitHub Blob re-download matched all bytes/SHA and its receipt is retained. PR
+body now links that immutable download, reports 58/27 +36 backend counts and the
+confirmed pending internal mixed-EOL gap. Begin the P2 red tests now.
