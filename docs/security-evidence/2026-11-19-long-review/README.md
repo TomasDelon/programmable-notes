@@ -23,5 +23,6 @@ input and verifies exact exported MDX. No mockup or native acceptance claim.
 See [download/run instructions](../../demo/README.md). Hosted artifact jobs
 remain refused before execution by account billing, so this Git-tracked ZIP is
 the PR-accessible review attachment. No public site, release or readiness change.
-Remote byte-for-byte retrieval must be verified after push; until then the prior
-dated Git download receipt applies only to its previous artifact.
+Remote Git blob `a0265cf34da1434c81e6370b494e97da75eef629` was downloaded
+after push and matched every byte and SHA256. Immutable delivery commit is
+`01afe73254f6c8f01b14fe2f12cc46b504852f6e`; the receipt is retained in raw evidence.
