@@ -1435,3 +1435,28 @@ portable reviewZIP for latesttrustedSourcejump/densefallback. Existingdownload
 servedbuildhash, actualvideo/media/extractedapp/exactexports and remoteGitblob
 bytecomparison. Preservefailednativepagegate/RootSIGSEGV/startup/blankhistory and
 accountbillingblocker. No publicrelease/merge/readiness change.
+
+## 2026-11-19 — current browser review verified before delivery
+
+Engine54c41a7 is pushed and PRdraft verified; latest hosted44547920235 again failed
+before steps (check exact annotation after delivery). Production app unchanged.
+Capture/packager/extracted browser checker now include trusted opaque Sourcefocus/
+unchanged export and100KBdense read-only/exact export, retaining all older cases.
+Read-only review caught hidden-details count before capture; expand beforecount.
+DOMcallback lint and second-pass formatting fixed without disabling rules. Focus
+uses explicit retrying wait. Exactcaret remains full e2e scope, not new verifier.
+
+Full88unit/34systemChromium check passed; capture/extracted checks used pinned159.
+Strict manifest/CRC+9malformed controls passed; actual extracted local HTML played
+27.64s1440x1000/decodedframes/noerror/all20embeddedimages. Archive40entries,23PNG,
+7actualMDXexports (navigation copy intentionally unchanged),10,984,209bytes, SHA256
+0d802c849718fa6ab5e36c3a1e8af69ffe42ab0d58743e54061bc8404e1cea26. Evidence directory
+2026-11-19-engine54-review; earlier current-review trackedreceipt restored exactly
+and kept historical. Old generated .cache capture preserved separately.
+
+Next: commit/push delivery, remoteGitBlobdownload→actualbytecomparison→receipt/
+immutable README URL; update draftPR/check exactCI. Then investigate duplicate
+visible Sourcefile labels across separate openedgroups (current options strip
+opened-N prefix / native binding name). Preserve source/grants/history; no design
+replacement. Latest native full6case remains5pass/1pageOOMfailure; oldJSC/startup
+issues/billing remain, no release/readiness or native claim from browser media.

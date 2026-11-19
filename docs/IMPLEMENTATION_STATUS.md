@@ -281,14 +281,14 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-The current [downloadable review](demo/README.md) binds engine34dc906 and includes
-multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
-screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
+The current [downloadable review](demo/README.md) binds engine 54c41a7 and includes
+Source navigation, dense read-only fallback, multiline quote edits, exact exports,
+structural refusal, desktop/tablet/mobile screenshots and a paced 27.64-second walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: refresh the portable browser review for current Source navigation and dense
-read-only fallback, with real capture/extracted-build verification and immutable
-GitHub receipt. A cancellable visual-analysis worker remains a future stronger bound.
+Next: verify the pushed portable review byte-for-byte and pin its immutable
+GitHub receipt, then investigate ambiguous labels when separate sources share
+a filename. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

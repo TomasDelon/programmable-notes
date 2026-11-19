@@ -1,0 +1,25 @@
+
+> programmable-notes@0.0.0 check
+> npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:e2e
+
+
+> programmable-notes@0.0.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> programmable-notes@0.0.0 lint
+> eslint . --max-warnings 0
+
+
+/workspace/programmable-notes/scripts/demo-editor.mjs
+  328:32  error  'document' is not defined  no-undef
+  356:5   error  'document' is not defined  no-undef
+
+/workspace/programmable-notes/scripts/verify-review-browser.mjs
+  263:32  error  'document' is not defined  no-undef
+  285:5   error  'document' is not defined  no-undef
+
+✖ 4 problems (4 errors, 0 warnings)
+

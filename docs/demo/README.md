@@ -1,73 +1,68 @@
 # Downloadable editor review
 
-[Download the working review ZIP](https://github.com/TomasDelon/programmable-notes/blob/247ee9a1de67c027a032ee1ba162fd03714611ba/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
-(8,540,754 bytes).
+[Download the current browser review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
+(10,984,209 bytes).
 
-This dated ZIP is the requested PR-accessible review attachment while hosted
-Actions refuses jobs because of account billing. It contains a complete browser
-build, a recorded walkthrough, before/after screenshots at desktop/tablet/mobile
-sizes and all five actual saved MDX files. The source application is from `34dc906`;
-these delivery-tool changes do not change its frontend. The PR remains draft.
+The application source is `54c41a7`; these delivery-tool changes do not change
+its frontend. The ZIP contains a complete browser build, a 27.64-second
+1440 × 1000 walkthrough, 23 PNG files (20 shown in the walkthrough), desktop/tablet/
+mobile before/after modes and seven actual MDX exports. The navigation export
+intentionally preserves the already-edited quote document unchanged. PR #1 stays
+draft; this is a review attachment, not a public release.
 
-Extract into a new directory. Open `walkthrough/walkthrough.html` for the video
-and screenshots. To use the editor, open a terminal in `browser-build` and run:
+Extract into a new directory. Open `walkthrough/walkthrough.html` for video and
+screenshots. To use the working editor, run in `browser-build`:
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Open <http://127.0.0.1:8000> in Chromium. Node/npm is unnecessary for this packaged
-browser build. Browser Save exports an MDX download. Focus Source, Visual or the toolbar and
-use Ctrl/Cmd+S. In Visual mode, Enter applies and Escape cancels; apply pending
-text before saving. Unapplied text is memory-only until applied. Native file permissions,
-WebKitGTK, recovery and cgroups have separate Linux acceptance procedures.
-Browser CPU/memory quotas and production security readiness are not claimed.
+Open <http://127.0.0.1:8000> in Chromium; Node/npm is unnecessary. Source authoring,
+interactive isolated React, trusted visual Markdown edits, per-document history,
+exact source exports and browser drafts are working. Enter applies visual text;
+Escape cancels; Ctrl/Cmd+S exports from the trusted workspace. Unapplied text is
+memory-only until applied. Source changes restart React; mode changes preserve it.
 
-SHA-256: `ccc780298173df68c25612d56989f0560889c1f0ee58e8dc1bd6c0995cd3febb`
+The recording also demonstrates exact multiline quote prefixes/endings, refused
+structural edits with pending input retained, **Show in Source** for opaque JSX,
+and a conservative dense-document read-only fallback without changing source.
+The fallback is not a universal parser deadline. JSX stays opaque in the trusted
+editing surface; arbitrary React reverse editing is unsupported.
 
-The clean extracted package passed real React interaction, a new focused note,
-exact keyboard-exported bytes, protected unapplied text, BOM/CRLF/opaque JSX
-preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, offline recompilation after initial loading, and end typing in a bounded thousand-line input with exact export, literal quote edits retaining indentation, markers, Unicode and CRLF, plus explicit multiline quotes with mixed endings and unsafe line-count retention. Final repository checks passed
-75 unit and 31 Chromium tests. The packager verified a complete asset/capture hash
-manifest and CRC; nine negative fixtures rejected changed/missing/extra assets,
-changed captures, unsafe paths, symlinks and failed recordings. The ZIP contains
-its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-multiline-review/README.md).
+SHA256: `0d802c849718fa6ab5e36c3a1e8af69ffe42ab0d58743e54061bc8404e1cea26`.
 
-![Current Split workspace](desktop.png)
+Actual clean-extracted browser checks passed the earlier editing/React/offline/
+pending/history/source-fidelity cases plus Source focus/unchanged export and dense
+readonly/exact export. Exact caret insertion remains covered by the repository's
+end-to-end tests. Local-file playback decoded frames without error; all 20 embedded
+images loaded. Full repository check passed 88 unit and 34 Chromium tests. Manifest/CRC
+and nine malformed-artifact rejection controls passed. [Raw evidence and scope](../security-evidence/2026-11-19-engine54-review/README.md).
 
-![Protected unapplied visual text](pending-edit.png)
+![Split workspace](desktop.png)
 
-![New note in Source mode](new-note.png)
+![Trusted navigation from opaque JSX into Source](source-navigation.png)
 
-![Clean selected lesson with an unsaved other source](dirty-sibling.png)
+![Dense source stays read only with explicit Source fallback](dense-fallback.png)
 
-![Long paragraph edited at its end](long-input.png)
-
-![Literal quote edited in place](quote.png)
-
-![Multiline quoted text preserves every prefix and ending](multiline-quote.png)
-
-![Unsupported quote structure remains pending with Save blocked](unsafe-quote.png)
+![Multiline quote preserves its markers and endings](multiline-quote.png)
 
 ![Mobile Visual mode](mobile.png)
 
-Regenerate from the repository with a fresh production build, serve it on loopback
-port 4188, then run `node scripts/demo-editor.mjs`,
-`python3 scripts/package-review-demo.py`, and
-`python3 scripts/verify-review-demo.py --browser`. In Codex Cloud set
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` and
-`PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright`. `DEMO_URL` can select
-another available loopback port. CI runs these checks and uploads the unpacked
-package as `playable-editor-demo` when runners become available.
+Native filesystem permissions, WebKitGTK, recovery and cgroups have separate
+Linux acceptance procedures. No native installer is included. Browser CPU/memory
+quotas and production security readiness are not claimed. The latest native
+six-case command has five passes and one failed additional OOM gate; native
+renderer/startup issues remain. [Current native evidence](../security-evidence/2026-11-19-memory-pages/README.md).
 
-Mixed internal LF/CRLF word edits now preserve bytes. Ambiguous changes to the
-number of mixed breaks are conservatively refused, retaining entered text; use
-Source for those structures. Exact outside spans and undo history remain intact.
+Regenerate with a fresh production build on loopback port 4188, then
+`node scripts/demo-editor.mjs`, `python3 scripts/package-review-demo.py` and
+`python3 scripts/verify-review-demo.py --browser`. `DEMO_URL` selects another
+loopback port. CI uploads the unpacked `playable-editor-demo` when account billing
+allows runners to start. In Codex Cloud, system Chromium is selected with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`; matching downloaded
+Playwright uses `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` with the
+executable override unset.
 
-Explicit multiline quoted paragraphs may change text while retaining line count.
-Every continuation marker and physical ending remains exact; use Source to change
-structure. Native session feedback and Stop retry are implemented in the source
-engine, but this browser attachment does not exercise native functionality.
-
-The exact remote Git blob was downloaded and matched every byte; its immutable
-link above is pinned to the verified delivery commit. [Download receipt](../security-evidence/2026-11-19-multiline-review/raw/remote-download.json).
+[Previous immutable engine 34dc906 review](https://github.com/TomasDelon/programmable-notes/blob/247ee9a1de67c027a032ee1ba162fd03714611ba/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
+and its [remote receipt](../security-evidence/2026-11-19-multiline-review/raw/remote-download.json)
+remain historical. The current delivery gets its own immutable download receipt.

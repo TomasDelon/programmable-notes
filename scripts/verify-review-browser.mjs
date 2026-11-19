@@ -250,8 +250,60 @@ try {
     false,
   );
   await field.press('Escape');
+  const opaqueBlock = page
+    .getByRole('region', { name: 'Markdown editing' })
+    .locator('details.opaque-block')
+    .filter({ hasText: 'Opaque JSX' });
+  await opaqueBlock.locator('summary').click();
+  await opaqueBlock.getByRole('button', { name: 'Show in Source' }).click();
+  const sourceEditor = page.getByRole('textbox', { name: 'MDX source' });
+  await sourceEditor.waitFor();
+  await page.waitForFunction(
+    (element) => element === element.ownerDocument.activeElement,
+    await sourceEditor.elementHandle(),
+    { timeout: 5000 },
+  );
+  const navigationDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  assert.deepEqual(
+    await readFile(await (await navigationDownload).path()),
+    Buffer.from(multiline.replace('Second line.', 'Changed continuation.')),
+  );
+  const denseSource =
+    '\uFEFF# Dense exact source\r\n\r\n' +
+    '['.repeat(50_000) +
+    'x' +
+    ']'.repeat(50_000) +
+    '\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'dense.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(denseSource),
+  });
+  await page
+    .getByLabel('Source file')
+    .locator('option:checked')
+    .filter({ hasText: 'dense.mdx' })
+    .waitFor({ state: 'attached' });
+  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const densePanel = page.getByRole('region', { name: 'Markdown editing' });
+  await densePanel
+    .getByRole('note')
+    .filter({ hasText: 'too complex for visual editing' })
+    .waitFor();
+  assert.equal(await densePanel.locator('details.opaque-block').count(), 1);
+  assert.equal(await densePanel.locator('pre').textContent(), denseSource);
+  await densePanel.locator('details.opaque-block summary').click();
+  assert.equal(await densePanel.getByRole('button').count(), 1);
+  const denseDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  assert.deepEqual(
+    await readFile(await (await denseDownload).path()),
+    Buffer.from(denseSource),
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_literal_and_multiline_quotes',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_literal_and_multiline_quotes_opaque_source_navigation_dense_readonly_exact_exports',
   );
 } finally {
   await browser.close();

@@ -48,6 +48,8 @@ allowed = {'01-preview.png', '02-inline-edit.png', '03-updated.png', '04-new-not
            '05-dirty-sibling.png', '06-long-input.png', 'long-note.mdx',
            '07-quote.png', 'quoted-note.mdx',
            '08-multiline-quote.png', '09-unsafe-quote.png', 'multiline-quoted-note.mdx',
+           '10-source-navigation.png', '11-dense-fallback.png',
+           'source-navigation.mdx', 'dense-visual.mdx',
            'walkthrough.webm', 'walkthrough.html', 'lesson.mdx', 'new-note.mdx'}
 for device in ('desktop', 'tablet', 'mobile'):
     allowed.add(f'before/{device}.png')
