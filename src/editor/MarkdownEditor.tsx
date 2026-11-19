@@ -162,6 +162,12 @@ export function MarkdownEditor({
                   </List>
                 );
               }
+              if (range.quoteFrom !== undefined)
+                return (
+                  <blockquote key={range.quoteFrom}>
+                    <p>{editableText(range)}</p>
+                  </blockquote>
+                );
               const Block = range.headingDepth
                 ? (`h${range.headingDepth}` as const)
                 : 'p';

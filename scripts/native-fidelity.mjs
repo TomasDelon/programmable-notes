@@ -1,6 +1,7 @@
 /** Actual installed Linux editor. Run only in a disposable desktop profile. */
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { execFileSync, spawn } from 'node:child_process';
 import { readFile, writeFile, lstat, chmod, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -27,6 +28,10 @@ const draft = join(
 await assert.rejects(lstat(draft), { code: 'ENOENT' });
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
 const mixedEol = process.argv.includes('--mixed-eol');
+const quotes = process.argv.includes('--quotes');
+const quoteBefore = 'Quoted café 😀.';
+const quoteAfter = 'Changed quote: £50 + tax.';
+const unsafeQuote = 'Unsafe\nLazy continuation.';
 const paragraph = mixedEol
   ? 'A paragraph: 50% + tax.\nRetain physical LF.\r\nRetain physical CRLF.'
   : 'A paragraph: 50% + tax.';
@@ -35,17 +40,24 @@ const replacement = mixedEol
   : 'Updated: 75% + tax.\nSecond line / retained.';
 const source =
   "﻿---\r\ntitle: Protected 😀 metadata\r\n---\r\n\r\nimport React from 'react'\r\n\r\nexport function Probe() {\r\n  const [n,setN]=React.useState(0)\r\n  return <button onClick={()=>setN(n+1)}>Native probe {n}</button>\r\n}\r\n\r\n<Probe />\r\n\r\n##   Original title  ##\r\n\r\nA paragraph: 50% + tax.\r\n\r\n- First item\r\n- Second item\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* retain comment */}\r\n\r\n```tsx\r\nconst literal = <NeverEvaluate />\r\n```\r\n";
-const fixture = mixedEol
+const paragraphFixture = mixedEol
   ? source.replace('A paragraph: 50% + tax.', paragraph)
   : source;
-const saved = fixture
+const fixture = quotes
+  ? paragraphFixture +
+    '\r\n  >\t' +
+    quoteBefore +
+    '\r\n\r\n> *Opaque formatting.*\r\n\r\n> <span>Opaque quote JSX</span>\r\n'
+  : paragraphFixture;
+const beforeParagraph = fixture
   .replace('Original title', 'Updated title')
-  .replace(
-    paragraph,
-    mixedEol
-      ? paragraph.replace('A paragraph: 50% + tax.', 'Updated: 75% + tax.')
-      : replacement.replace(/\n/g, '\r\n'),
-  );
+  .replace(quoteBefore, quotes ? quoteAfter : quoteBefore);
+const saved = beforeParagraph.replace(
+  paragraph,
+  mixedEol
+    ? paragraph.replace('A paragraph: 50% + tax.', 'Updated: 75% + tax.')
+    : replacement.replace(/\n/g, '\r\n'),
+);
 const unsaved = saved.replace('Second item', 'Recovered item');
 await writeFile(file, fixture, { flag: 'wx' });
 await chmod(file, 0o640);
@@ -64,6 +76,22 @@ async function waitUi(expression) {
 }
 async function start() {
   await launch();
+  const pid = await rootPid();
+  console.log(
+    'NATIVE_FIDELITY_IDENTITY',
+    JSON.stringify({
+      pid,
+      executableSha256: createHash('sha256')
+        .update(await readFile(`/proc/${pid}/exe`))
+        .digest('hex'),
+      observerSha256: createHash('sha256')
+        .update(await readFile(new URL(import.meta.url)))
+        .digest('hex'),
+      jitEnvironment: (await readFile(`/proc/${pid}/environ`, 'utf8'))
+        .split('\0')
+        .filter((value) => /^(?:JSC_useJIT|JSC_useDFGJIT)=/.test(value)),
+    }),
+  );
   await waitUi("Boolean(document.querySelector('.cm-content'))");
   await button('Stop preview');
   const automatic = await script(
@@ -81,7 +109,7 @@ async function open() {
     "document.querySelector('select')?.value.endsWith('fidelity-acceptance.mdx')",
   );
 }
-async function inline(before, label, after) {
+async function inline(before, label, after, applied = true) {
   await button(before);
   const element = await wd(`/session/${session}/element`, {
     using: 'css selector',
@@ -89,12 +117,66 @@ async function inline(before, label, after) {
   });
   const id = element['element-6066-11e4-a52e-4f735466cecf'];
   await wd(`/session/${session}/element/${id}/clear`, {});
+  await wd(`/session/${session}/element/${id}/click`, {});
   const lines = after.split('\n');
   for (let i = 0; i < lines.length; i++) {
     if (i) await pressKey('shift+Return');
-    await wd(`/session/${session}/element/${id}/value`, { text: lines[i] });
+    await pasteText(lines[i], lines.slice(0, i + 1).join('\n'));
   }
+  const actual = await script(
+    `arguments[arguments.length-1](document.querySelector('textarea').value);`,
+  );
+  assert.equal(
+    actual,
+    after,
+    'Native keyboard input must match the intended text before applying',
+  );
   await pressKey('Return');
+  if (applied) {
+    await waitUi("!document.querySelector('textarea')");
+    const rendered = await script(
+      `arguments[arguments.length-1](Array.from(document.querySelectorAll('[aria-label="Markdown editing"] button.rendered-text')).map(b=>b.textContent));`,
+    );
+    assert.ok(
+      rendered.some((text) => text.replace(/\r\n/g, '\n') === after),
+      'Applied native text must render exactly',
+    );
+  }
+}
+async function pasteText(text, expected) {
+  // WebKitWebDriver send-keys and X11 key synthesis omit astral characters on
+  // this stack. Real OS clipboard paste exercises normal trusted input instead.
+  const owner = spawn('python3', ['scripts/native-clipboard-owner.py'], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  let timer;
+  const ready = new Promise((resolve, reject) => {
+    timer = setTimeout(
+      () => reject(Error('Synthetic clipboard owner did not start')),
+      5000,
+    );
+    owner.once('error', reject);
+    owner.once('exit', () =>
+      reject(Error('Synthetic clipboard owner exited before ready')),
+    );
+    owner.stdout.once('data', (value) =>
+      String(value).includes('OWNED_CLIPBOARD_READY')
+        ? resolve()
+        : reject(Error('Unexpected clipboard owner response')),
+    );
+  });
+  owner.stdin.end(text);
+  try {
+    await ready;
+    clearTimeout(timer);
+    await pressKey('ctrl+v');
+    await waitUi(
+      `document.querySelector('textarea')?.value===${JSON.stringify(expected)}`,
+    );
+  } finally {
+    clearTimeout(timer);
+    owner.kill();
+  }
 }
 async function pressKey(key) {
   const pid = await rootPid();
@@ -215,6 +297,59 @@ try {
   await expectSource('Original title');
   await history(true);
   await expectSource('Updated title');
+  if (quotes) {
+    await waitUi(
+      `document.querySelectorAll('[aria-label="Markdown editing"] blockquote button').length===1`,
+    );
+    // Normalization/no-op must add no history transaction.
+    await inline(quoteBefore, 'Paragraph text', quoteBefore);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(
+      await readFile(file, 'utf8'),
+      fixture.replace('Original title', 'Updated title'),
+    );
+    await history();
+    await expectSource('Original title');
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), fixture);
+    await history(true);
+    await expectSource('Updated title');
+    await button('Save source');
+    await fileIdle();
+    assert.equal(
+      await readFile(file, 'utf8'),
+      fixture.replace('Original title', 'Updated title'),
+    );
+    await inline(quoteBefore, 'Paragraph text', unsafeQuote, false);
+    await waitUi(
+      `document.querySelector('textarea')?.value===${JSON.stringify(unsafeQuote)} && document.querySelector('[aria-label="Markdown editing"] [role="alert"]')?.textContent.includes('Use Source')`,
+    );
+    await waitUi(
+      `Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source').disabled`,
+    );
+    await pressKey('Escape');
+    await expectSource(quoteBefore);
+    await inline(quoteBefore, 'Paragraph text', quoteAfter);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(
+      await readFile(file, 'utf8'),
+      fixture.replace('Original title', 'Updated title'),
+    );
+    await history(true);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    console.log(
+      'NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS',
+    );
+  }
   await inline(paragraph, 'Paragraph text', replacement);
   await expectSource(
     mixedEol ? 'Retain physical CRLF.' : 'Second line / retained.',
@@ -230,10 +365,7 @@ try {
     await history();
     await button('Save source');
     await fileIdle();
-    assert.equal(
-      await readFile(file, 'utf8'),
-      fixture.replace('Original title', 'Updated title'),
-    );
+    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
     await history(true);
     await button('Save source');
     await fileIdle();
@@ -284,6 +416,21 @@ try {
   await assert.rejects(lstat(draft), { code: 'ENOENT' });
   await shutdown(second, true);
   console.log('NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS');
+} catch (error) {
+  try {
+    console.error(
+      'NATIVE_FIDELITY_FAILURE_UI',
+      await script(
+        `const done=arguments[arguments.length-1];done({selected:document.querySelector('select')?.value,status:document.querySelector('[aria-label="Document status"]')?.textContent,alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(e=>e.textContent)});`,
+      ),
+    );
+  } catch (diagnosticError) {
+    console.error(
+      'NATIVE_FIDELITY_DIAGNOSTIC_UNAVAILABLE',
+      String(diagnosticError),
+    );
+  }
+  throw error;
 } finally {
   await close().catch(() => {});
 }

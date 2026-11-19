@@ -290,3 +290,64 @@ it('refuses mixed-break deletions and insertions whose repeated text has differe
   expect(patchMarkdown(source, range, 'Same\nSame\nSame\nSame')).toBeNull();
   expect(patchMarkdown(source, range, 'Same\nSame\nSame')).toBe(source);
 });
+
+it('patches only literal single-line blockquote text while preserving markers and surrounding MDX', () => {
+  for (const marker of ['> ', '  >  ', '>\t', '>']) {
+    const source =
+      '\uFEFFimport React from "react"\r\n\r\n' +
+      marker +
+      'Quoted café 😀.\r\n\r\n{/* keep exact */}\r\n\r\n<div><em>Opaque</em></div>\r\n';
+    const ranges = editableMarkdown(source);
+    expect(ranges).toHaveLength(1);
+    const range = ranges[0]!;
+    expect(range.text).toBe('Quoted café 😀.');
+    expect(range.from).toBe(source.indexOf('Quoted'));
+    expect(patchMarkdown(source, range, range.text)).toBe(source);
+    expect(patchMarkdown(source, range, 'Changed: £50 + tax.')).toBe(
+      source.replace('Quoted café 😀.', 'Changed: £50 + tax.'),
+    );
+    expect(
+      patchMarkdown(
+        source,
+        { ...range, quoteFrom: undefined },
+        'Forged context',
+      ),
+    ).toBeNull();
+    expect(
+      patchMarkdown(source.replace('Quoted', 'Altered'), range, 'Stale'),
+    ).toBeNull();
+    for (const unsafe of [
+      '# Heading',
+      '- List',
+      '> Nested',
+      '<Widget />',
+      '{run()}',
+      '*Formatting*',
+      'First\nLazy continuation',
+      'First\n> Explicit continuation',
+    ]) {
+      expect(patchMarkdown(source, range, unsafe)).toBeNull();
+    }
+  }
+});
+
+it('keeps nested, formatted, multiline and JSX blockquotes opaque', () => {
+  for (const quote of [
+    '> First.\n> Second.',
+    '> First.\nLazy continuation.',
+    '> First\n>\n> Second',
+    '> > Nested',
+    '> # Heading',
+    '> - List',
+    '> *Formatted*',
+    '> <Widget />',
+    '> {run()}',
+    '> Escaped \\*text\\*',
+    '> &#65; literal',
+  ]) {
+    const source = quote + '\n\nSeparate paragraph.\n';
+    expect(editableMarkdown(source).map((range) => range.text)).toEqual([
+      'Separate paragraph.',
+    ]);
+  }
+});

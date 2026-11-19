@@ -1,0 +1,6 @@
+NATIVE_DIALOG_REGRESSION_REPORT {"scope": "real GTK dialog with delayed validation; no application API or disk write", "driverSha256": "e31a4e3beb6a5f7f9e2f2d679c6ea4ebe7cad007e0fd5e8b03db54e3af1534cc", "prematureSuccess": true, "driverExit": 0, "stdout": "{\"pid\": 23514, \"title\": \"Delayed synthetic Open\", \"action\": \"choose\", \"argument\": \"/tmp/pn-dialog-regression-_mcvn0pw/source.mdx\"}\n", "stderr": ""}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog-regression.py", line 89, in <module>
+    assert not report['prematureSuccess'], 'Driver reported success before chooser accepted'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Driver reported success before chooser accepted

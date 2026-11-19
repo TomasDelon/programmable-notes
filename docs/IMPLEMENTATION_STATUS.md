@@ -25,9 +25,12 @@ until applied; automatic recovery continues storing actual document source.
 [Browser/native red-green evidence](security-evidence/2026-11-19-pending-inline/README.md).
 Changing modes preserves React state. Changing executable source restarts the
 isolated runtime. Literal paragraphs with punctuation/soft line breaks, ATX and
-Setext headings, and simple list items support in-place editing. Enter applies,
+Setext headings, simple list items and literal single-line blockquotes support in-place editing. Enter applies,
 Shift+Enter inserts a soft break and Escape cancels. Arbitrary JSX, imports,
-comments, fences, formatted/nested Markdown and mapping-style metadata stay opaque.
+comments, fences, formatted/nested Markdown and mapping-style metadata stay opaque. Quote markers,
+indentation and terminators remain outside patches; nested/lazy/multiline/JSX
+quotes stay in Source. [Browser/installed quote, disk/history/restart and driver
+red-green evidence](security-evidence/2026-11-19-literal-quotes/README.md).
 
 Patches validate the full captured source revision, parser-owned spans, text and
 block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
@@ -208,7 +211,8 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: finish delivery of the bounded-input review and diagnose
+Next: refresh review delivery for literal quotes and investigate native session-end
+feedback; diagnose
 remaining native cold-start observations without changing deadlines or isolation;
 retain separate containment and interactive-recovery results, and investigate
 the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source

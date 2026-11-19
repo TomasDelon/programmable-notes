@@ -5,6 +5,7 @@ export interface MarkdownRange {
   to: number;
   text: string;
   headingDepth?: 1 | 2 | 3 | 4 | 5 | 6;
+  quoteFrom?: number;
   list?: { from: number; ordered: boolean; start: number };
 }
 
@@ -74,6 +75,32 @@ export function editableMarkdown(source: string): MarkdownRange[] {
     const { tree, end } = parsedSource(source);
     return tree.children.flatMap((root): MarkdownRange[] => {
       if ((root.position?.start.offset ?? -1) < end) return [];
+      if (root.type === 'blockquote') {
+        const paragraph = root.children[0];
+        if (root.children.length !== 1 || paragraph?.type !== 'paragraph')
+          return [];
+        const child = paragraph.children[0];
+        if (paragraph.children.length !== 1 || child?.type !== 'text')
+          return [];
+        const quoteFrom = root.position?.start.offset;
+        const from = child.position?.start.offset;
+        const to = child.position?.end.offset;
+        if (
+          quoteFrom === undefined ||
+          from === undefined ||
+          to === undefined ||
+          paragraph.position?.start.offset !== from ||
+          paragraph.position?.end.offset !== to ||
+          root.position?.end.offset !== to ||
+          !/^>[ \t]*$/.test(source.slice(quoteFrom, from))
+        )
+          return [];
+        const text = source.slice(from, to);
+        // Continuation prefixes and lazy lines require a different mapping contract.
+        if (/[\r\n]/.test(text) || text !== child.value || !plain.test(text))
+          return [];
+        return [{ from, to, text, quoteFrom }];
+      }
       if (root.type === 'list') {
         const from = root.position?.start.offset;
         if (from === undefined || root.spread) return [];
@@ -151,6 +178,7 @@ export function editableMarkdown(source: string): MarkdownRange[] {
 function sameContext(a: MarkdownRange, b: MarkdownRange) {
   return (
     a.headingDepth === b.headingDepth &&
+    a.quoteFrom === b.quoteFrom &&
     a.list?.from === b.list?.from &&
     a.list?.ordered === b.list?.ordered &&
     a.list?.start === b.list?.start

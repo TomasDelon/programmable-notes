@@ -103,3 +103,16 @@ reopening and clean exit. Failures record diagnostics and clean up only the
 captured owned root process. Native renderer crashes remain unresolved;
 [all observations and exact package hashes](security-evidence/2026-11-19-long-inline/README.md)
 distinguish those from passing browser behavior.
+
+## Literal quotes and native input fidelity
+
+Run `NATIVE_DISPOSABLE_PROFILE=1 python3 scripts/native-dialog-regression.py` in
+the authenticated disposable desktop to verify that refused Open actions cannot
+be reported as success. Then use a fresh fixture env for
+`NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-fidelity.mjs --mixed-eol --quotes`.
+It retains the full existing runtime/fidelity/recovery suite and adds literal
+quote no-op/full-source history and unsafe-input retention. The helper uses real
+OS Unicode clipboard paste with exact input checks; WebKitWebDriver and X11 key
+synthesis omitted astral characters in retained probes. No direct DOM value
+setter substitutes for native editing, and no IME certification is implied.
+[Failures, controls, exact package and results](security-evidence/2026-11-19-literal-quotes/README.md).

@@ -1,0 +1,95 @@
+/tmp/pn-native-bXTnMC
+NATIVE_FIDELITY_IDENTITY {"pid":24495,"executableSha256":"4a14f61b695f8fd502844c7792a232e5d8440373b3cd0559ea3613bb933d8824","observerSha256":"fda3ef672ee44062c4c9110d7842d2dc3ff7c23330efe9a30c789702d3875b04","jitEnvironment":[]}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 116, in <module>
+    while window() is not None and time.monotonic() < deadline:
+          ^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 19, in window
+    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command
+    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Open\\ documents\\ and\\ modules$']' returned non-zero exit status 1.
+NATIVE_FIDELITY_FAILURE_UI {
+  status: 'Source unchanged',
+  selected: 'opened-1/fidelity-acceptance.mdx',
+  alerts: []
+}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-dialog.py 24495 choose Open documents and modules /tmp/pn-native-bXTnMC/fidelity-acceptance.mdx
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 116, in <module>
+    while window() is not None and time.monotonic() < deadline:
+          ^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 19, in window
+    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command
+    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Open\\ documents\\ and\\ modules$']' returned non-zero exit status 1.
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at dialog (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:35:18)
+    at open (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:106:3)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:175:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 116, in <module>\n' +
+      '    while window() is not None and time.monotonic() < deadline:\n' +
+      '          ^^^^^^^^\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 19, in window\n' +
+      "    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()\n" +
+      '          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command\n' +
+      "    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()\n" +
+      '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output\n' +
+      '    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n' +
+      '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/usr/lib/python3.12/subprocess.py", line 571, in run\n' +
+      '    raise CalledProcessError(retcode, process.args,\n' +
+      "subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Open\\\\ documents\\\\ and\\\\ modules$']' returned non-zero exit status 1.\n"
+  ],
+  pid: 24563,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 116, in <module>\n' +
+    '    while window() is not None and time.monotonic() < deadline:\n' +
+    '          ^^^^^^^^\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 19, in window\n' +
+    "    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()\n" +
+    '          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command\n' +
+    "    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()\n" +
+    '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output\n' +
+    '    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n' +
+    '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/usr/lib/python3.12/subprocess.py", line 571, in run\n' +
+    '    raise CalledProcessError(retcode, process.args,\n' +
+    "subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Open\\\\ documents\\\\ and\\\\ modules$']' returned non-zero exit status 1.\n"
+}
+
+Node.js v24.22.1

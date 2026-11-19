@@ -1,0 +1,35 @@
+{
+  "scope": "actual existing chooser driver instrumentation only",
+  "path": "/tmp/pn-native-TNYBOJ/dialog-control.mdx",
+  "pid": 25026,
+  "firstAction": "{\"pid\": 25026, \"title\": \"Open documents and modules\", \"action\": \"choose\", \"argument\": \"/tmp/pn-native-TNYBOJ/dialog-control.mdx\", \"dialogDismissed\": true}\n",
+  "immediateUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "laterUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "loadedAfterActions": true,
+  "initialValue": "Quoted café 😀.",
+  "afterClear": "",
+  "afterRetype": "Quoted café .",
+  "retypeExact": false,
+  "codePoints": [
+    81,
+    117,
+    111,
+    116,
+    101,
+    100,
+    32,
+    99,
+    97,
+    102,
+    233,
+    32,
+    46
+  ],
+  "outcome": "observed"
+}

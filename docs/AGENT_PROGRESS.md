@@ -904,3 +904,104 @@ and equals local bytes/SHA08b7f34d… . Current immutable browser review source
 isd919978, delivery01afe73. PR remains draft. No MiniBrowser or application
 processes remained after owned diagnostics expired. Next: receipt commit/PRbody
 update, then test-first single-line quote support under existing source contracts.
+
+## 2026-11-19 — literal single-line quote editing in progress
+
+On pushed c090a29. Added failing unit expectation (zero old mappings) before the
+parser change. Capture quoteFrom root context, exact literal child spans, single
+marker and single-line text; preserve indentation/marker/terminator. Nested,
+formatted, lazy/multiline, JSX and entity/escape quotes stay opaque. Browser test
+first failed on missing semantic blockquote, then passed actual editing, no-op,
+Escape, exact BOM/CRLF/JSX exports, history, reopen, retained unsafe multiline
+input and React interaction. All 65 unit tests passed. Native-fidelity --quotes
+adds quote gates without skipping the mixed-EOL/React/save/history/close/restart/
+recovery base; source-matched optimized package is building now. No security,
+IPC or native backend change. Review pending. Next: install, run full native
+--mixed-eol --quotes and independent IPC, retain failures and exact binary hashes,
+full check, document/commit/push; unresolved long-document renderer fault remains.
+
+Quote package e7456301… / ELF4a14f61b… built/inspected/installed. Full repository
+65unit/30Chromium passed. FIRST native --quotes --mixed-eol attempt failed BEFORE
+quote/preview checks at native Open/fileIdle, operation remained busy. Failure
+and exact observer retained. No passing native quote acceptance claimed.
+
+Review found no important quote/context/fidelity issues. Current investigation is
+the external chooser driver: it ignores a failed Open click and reports success
+without confirming dialog dismissal. Instrumented actual app chooser reported
+clickTrue/windowStillVisibleTrue but loaded the requested file immediately; this
+successful control does not establish the earlier stall's cause. A real GTK
+negative fixture is being constructed to hold validation after Enter. Initial
+fixture gate started too early and passed old driver; retain as ineffective
+control rather than call it red. Updated fixture observes entry activation and
+holds Open disabled until release. Do not change driver before genuine red proof;
+then verify native acceptance and preserve all original gates/security policy.
+
+Chooser regression is now real red/green: initial two GtkFileChooser fixtures
+passed old driver (ineffective controls). A simpler real GTK dialog explicitly
+held Open validation after entry activation; old driver exited0/reported success
+before acceptance, failing the oracle. Fixed driver waits for a visible, enabled,
+sensitive button and then for dismissal, never automatically confirms overwrite
+or retries an acknowledged click. Ambiguous dialogs/X-server errors fail; only
+no-match/BadWindow disappearance is ordinary. Final GTK regression passed actual
+acceptance, unchanged bytes/mode0640, empty stderr; driver4b9297c0… . No app/native
+permission change. Earlier original fileIdle stall cause remains unproven.
+
+Native fidelity now logs actual root executable and observer hashes, filtered
+JIT flags and failure-only UI diagnostics. Fresh strict native --mixed-eol
+--quotes run started on the same installed4a14f61b… package. Do not claim a pass
+until all React/fidelity/history/close/restart/recovery gates finish. Then separate
+native IPC regression and final fullcheck/commit/push. No routine approval needed.
+
+Strict native run still failed before file load: actual chooser did not dismiss
+within30s, selected source stayed note.mdx. Default JIT flags[] and actual4a14f61b
+binary recorded; no source save occurred. This is not quote/runtime acceptance.
+Added input barriers in driver: wait for the modal's focused editable location
+entry after Ctrl+L and exact full path echo before Return, then same30s deadline
+and acknowledged dismissal. Final delayed-validator GTK regression passes with
+empty stderr, driver eb12915a… . These checks strengthen selection, not weaken it.
+An actual instrumented successful chooser read exact focused path before Return;
+it does not prove the failed chooser's root cause. New full native quote/mixed run
+started with the echo-verified driver. Preserve earlier failures regardless of
+outcome. Native renderer SIGSEGV and memory/expiry gate remain unresolved.
+
+Native full run reached actual React/counter, unchanged exact save and modes,
+then failed the new quote no-op/history oracle. Actual input probe explains it:
+WebDriver /value retypes 'Quoted café 😀.' as 'Quoted café .' (astral emoji
+omitted); clear/retype was a real source change, so Undo correctly reverted that
+before the title edit. Independent reviewer agrees no production history bug is
+established. Even settled X11 key synthesis omitted the astral character; an
+immediate partial-text snapshot alone was not classified as a typing failure.
+All actual values/codepoints are retained. Do not relax expected source bytes or
+skip the gate. Probe actual OS Unicode clipboard paste next; require exact input,
+textarea dismissal/rendered text and original full-source/history before calling
+native no-op acceptance a pass. Product IME/hardware behavior remains unverified.
+
+Actual OS clipboard paste preserved the entire Unicode text, including emoji,
+without DOM value setters. Native helper now pastes through a bounded synthetic
+GTK clipboard owner, asserts intended textarea bytes before Enter and exact
+rendered text/dismissal after valid apply. Shift+Enter still supplies actual soft
+breaks. No-op gate also saves/compares full source before Undo and after Undo/Redo.
+No security/byte/history criterion was relaxed to accommodate automation.
+
+Full installed --mixed-eol --quotes now PASSED: Counter, unchanged BOM/CRLF save,
+modes, literal quote exact disk/no-op/history/unsafe retention, paragraph mixed
+break history, mode0640, list edit, dirty-close Cancel/OK, actual application
+restart, explicit unsaved legacy recovery, invalid UTF8 rejection/deletion and
+unchanged original. Root JIT flags[]; actual ELF4a14f61b… / observer4c6a02ab…
+recorded for both processes. Host/builder and host/guest observer hashes match.
+Final GTK delayed-validator regression and independent IPC suite now running.
+Next: write exact dated scope/failures, final fullcheck65/30, commit/push draft PR,
+then refresh review delivery and inspect next independently justified core task.
+
+Final quote milestone: independent native IPC/security and final repository
+65unit/30Chromium checks PASS. Native delayed-validator oracle also passed with
+empty stderr. Scope/failures/exact package and observer hashes are retained under
+2026-11-19-literal-quotes. Commit/push quote feature plus honest native input
+drivers now; keep draft PR and current artifact source scope explicit.
+
+Next measured reliability investigation: native preview currently shows a static
+60-second expiry note, but NativePreview has no authoritative end/disconnection
+feedback after successful start. Inspect actual expiry UI and supervisor handle
+lifecycle before choosing a minimal change. Do not infer stopped enforcement from
+a frontend timer, drop a retained unit handle, restart automatically, or relax
+limits. App already prunes closed-document histories; do NOT duplicate that work.

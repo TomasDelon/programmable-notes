@@ -1,0 +1,20 @@
+/tmp/pn-native-x9TZbx
+NATIVE_FIDELITY_IDENTITY {"pid":24697,"executableSha256":"4a14f61b695f8fd502844c7792a232e5d8440373b3cd0559ea3613bb933d8824","observerSha256":"fda3ef672ee44062c4c9110d7842d2dc3ff7c23330efe9a30c789702d3875b04","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 24697, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-x9TZbx/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_FIDELITY_FAILURE_UI {
+  status: 'Unsaved changes',
+  selected: 'opened-1/fidelity-acceptance.mdx',
+  alerts: []
+}
+file:///opt/pn/acceptance/scripts/native-fidelity.mjs:75
+  throw Error(`UI check did not pass: ${expression}`);
+        ^
+
+Error: UI check did not pass: Boolean(document.querySelector('.cm-content')?.innerText.includes("Original title")) === true
+    at waitUi (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:75:9)
+    at async expectSource (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:143:3)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:253:5
+
+Node.js v24.22.1

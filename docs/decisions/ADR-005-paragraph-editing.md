@@ -68,3 +68,20 @@ require choosing between old ending types are refused. This is conservative;
 complex periodic edits may require Source. Revision/range/context checks and
 candidate reparsing still apply. No untrusted message can request this operation.
 [Unit/browser and actual installed red/green evidence](../security-evidence/2026-11-19-internal-eol/README.md).
+
+## Literal single-line blockquotes (2026-11-19)
+
+A root blockquote is editable only when it contains exactly one paragraph with
+one literal text node. Require exact original text/value offsets, the root and
+paragraph to end at that text, and a single `>` marker followed only by optional
+spaces/tabs. The patch excludes the marker, indentation and terminator. Capture
+the quote root offset as context and require it on candidate reparse. Render a
+semantic blockquote in the trusted editing surface; it never executes the quote.
+
+Multiline/lazy continuations, nested quotes, headings/lists inside quotes,
+formatting, escapes/entities and JSX remain Source-only. Supporting those by
+stripping/regenerating continuation markers would risk source fidelity; this
+bounded extension does not attempt it. Unsafe changes retain pending text and
+block saving until apply/cancel, using the existing contract. Source revision,
+opaque React boundaries, exact byte/history guarantees and filesystem authority
+are unchanged. This advances standard Markdown coverage without custom syntax.

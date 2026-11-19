@@ -1247,3 +1247,68 @@ test('long visual paragraphs keep a bounded scrollable input and exact source hi
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
   expect(await exported()).toEqual(Buffer.from(expected));
 });
+
+test('literal quote editing preserves original markers, opaque MDX and undo through exact reopen', async ({
+  page,
+}) => {
+  const source =
+    '\uFEFFimport React from "react"\r\n\r\nexport function Counter() { const [n,setN]=React.useState(0); return <button onClick={()=>setN(n+1)}>Quote count {n}</button> }\r\n\r\n<Counter />\r\n\r\n  >\tQuoted café 😀.\r\n\r\n> *Formatted stays opaque.*\r\n\r\n> <span>JSX quote opaque</span>\r\n\r\n{/* Keep comment exactly. */}\r\n\r\n<div><em>Nested opaque JSX.</em></div>\r\n';
+  await page.goto('/');
+  await open(page, source, 'quoted.mdx');
+  const frame = page.frameLocator('iframe');
+  await frame
+    .getByRole('button', { name: 'Quote count 0', exact: true })
+    .click();
+  await expect(
+    frame.getByRole('button', { name: 'Quote count 1', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  const quote = panel.locator('blockquote button');
+  await expect(quote).toHaveText('Quoted café 😀.');
+  const exported = async () => {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  };
+  await quote.click();
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Discarded pending quote.');
+  await field.press('Escape');
+  expect(await exported()).toEqual(Buffer.from(source));
+  await quote.click();
+  await field.press('Enter');
+  expect(await exported()).toEqual(Buffer.from(source));
+  await quote.click();
+  await field.fill('Changed: £50 + tax.');
+  await field.press('Enter');
+  const expected = source.replace('Quoted café 😀.', 'Changed: £50 + tax.');
+  expect(await exported()).toEqual(Buffer.from(expected));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(source));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  const saved = await exported();
+  expect(saved).toEqual(Buffer.from(expected));
+  await open(page, saved.toString('utf8'), 'reopened-quote.mdx');
+  await expect(quote).toHaveText('Changed: £50 + tax.');
+  await expect(panel.locator('blockquote')).toHaveCount(1);
+  await quote.click();
+  await field.fill('Unsafe\nLazy continuation.');
+  await field.press('Enter');
+  await expect(page.getByRole('alert')).toContainText('Use Source');
+  await expect(field).toHaveValue('Unsafe\nLazy continuation.');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeDisabled();
+  await field.press('Escape');
+  expect(await exported()).toEqual(saved);
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await frame
+    .getByRole('button', { name: 'Quote count 0', exact: true })
+    .click();
+  await expect(
+    frame.getByRole('button', { name: 'Quote count 1', exact: true }),
+  ).toBeVisible();
+});
