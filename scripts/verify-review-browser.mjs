@@ -67,9 +67,20 @@ try {
     mimeType: 'text/plain',
     buffer: Buffer.from(bom),
   });
-  await page
-    .getByRole('button', { name: 'Kept paragraph.', exact: true })
-    .click();
+  const paragraph = page.getByRole('button', {
+    name: 'Kept paragraph.',
+    exact: true,
+  });
+  await paragraph.waitFor();
+  assert.equal(
+    await page.getByLabel('Document status').textContent(),
+    'Source unchanged',
+  );
+  assert.equal(
+    await page.getByLabel('Workspace status').textContent(),
+    '1 other source has unsaved changes.',
+  );
+  await paragraph.click();
   await field.fill('Edited portable paragraph.');
   await field.press('Enter');
   const saved = page.waitForEvent('download');
@@ -80,8 +91,16 @@ try {
     await readFile(await (await saved).path()),
     Buffer.from(bom.replace('Kept paragraph.', 'Edited portable paragraph.')),
   );
+  assert.equal(
+    await page.getByLabel('Document status').textContent(),
+    'Source download requested.',
+  );
+  assert.equal(
+    await page.getByLabel('Workspace status').textContent(),
+    '1 other source has unsaved changes.',
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_and_dirty_sibling',
   );
 } finally {
   await browser.close();

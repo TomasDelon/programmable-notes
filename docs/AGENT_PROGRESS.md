@@ -673,3 +673,34 @@ Evidence is 2026-11-19-document-status. Commit source/tests/evidence now, leavin
 demo-tool changes for the following validated delivery commit. Then capture the
 committed frontend, package/verify the fresh portable ZIP and push both coherent
 commits; do not leave the prior archive described as the current frontend.
+
+## 2026-11-19 — current source-status browser review delivery
+
+Source/status tests/native evidence committed locally as f61163f. Fresh recording
+and extracted-browser validation passed against that committed frontend. Capture
+now also demonstrates clean selected lesson versus an unsaved sibling; exact
+new/lesson exports and all desktop/tablet/mobile modes remain. Updated packaging
+allowlist includes only that additional captured screenshot. Eight deliberate
+negative cases still rejected invalid artifacts; CRC/full asset/capture hashes and
+current recorder SHA verified. Archive source manifest points to f61163f.
+
+Current ZIP: 6,626,776 bytes / 29 entries / SHA-256
+82446e3f0cdf9fe0c6ae89a4dbeb2dd723dbae2d21c080985f6311fbe3c2d64d.
+No installer/public site/release. Delivery evidence is 2026-11-19-status-review.
+Next: finish repository checks, commit delivery tools/archive/screenshots, push
+both coherent commits and update draft PR's immutable download + 58/27 counts.
+Re-download the pushed Git blob and retain an exact-hash receipt.
+
+Next independent P2 investigation: inline textareas normalize physical CRLF to LF.
+patchMarkdown currently uses document-wide CRLF normalization for replacement text;
+reproduce whether changing one word in a mixed-EOL multiline paragraph rewrites
+other physical breaks inside that span. If confirmed, preserve unchanged internal
+spans and reject ambiguous transformations without weakening mapping/context checks.
+Do not claim this suspected source-fidelity issue fixed before red/green proof.
+
+Final delivery check passed 58 unit / 27 Chromium. Read-only source probe now
+CONFIRMS the next P2 bug: changing First→Edited in a paragraph containing both LF
+and CRLF rewrites an unchanged internal LF to CRLF. No-op/source-mode saves are
+unaffected. Reproduction is retained with delivery evidence; source-fidelity claims
+are narrowed until the follow-up fix. Commit/push delivery, verify remote bytes,
+then start failing unit/browser tests before changing patchMarkdown.

@@ -32,8 +32,11 @@ comments, fences, formatted/nested Markdown and mapping-style metadata stay opaq
 Patches validate the full captured source revision, parser-owned spans, text and
 block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
 indenting imports/JSX or changing compilation. [Red/green and installed validation](security-evidence/2026-11-19-leading-bom/README.md).
-Unchanged source bytes, BOM, CRLF,
-Unicode, markers and whitespace are preserved. CodeMirror provides per-document
+Untouched spans, BOM, Unicode, markers and whitespace are preserved.
+A newly reproduced gap remains inside a visually edited multiline paragraph with
+mixed LF/CRLF: document-wide normalization can rewrite an existing internal LF.
+No-op/source-mode saves are unaffected. A source-preserving follow-up is next; do
+not infer mixed internal-break fidelity from the existing outside-span tests. CodeMirror provides per-document
 undo/redo and selection histories. Preview messages cannot choose spans, change
 source or authorize saves. One bounded exact-source AST avoids repeated analysis;
 all validators still run. See [ADR-005](decisions/ADR-005-paragraph-editing.md),

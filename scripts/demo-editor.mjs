@@ -151,6 +151,25 @@ try {
     path: join(output, '04-new-note.png'),
     fullPage: true,
   });
+  const newKey = await page.getByLabel('Source file').inputValue();
+  await page.getByLabel('Source file').selectOption(lessonKey);
+  assert.equal(
+    await page.getByLabel('Document status').textContent(),
+    'Source unchanged',
+  );
+  assert.equal(
+    await page.getByLabel('Workspace status').textContent(),
+    '1 other source has unsaved changes.',
+  );
+  await page.screenshot({
+    path: join(output, '05-dirty-sibling.png'),
+    fullPage: true,
+  });
+  await page.getByLabel('Source file').selectOption(newKey);
+  assert.equal(
+    await page.getByLabel('Document status').textContent(),
+    'Unsaved changes',
+  );
   const newDownload = page.waitForEvent('download');
   await editor.press('Control+s');
   await (await newDownload).saveAs(join(output, 'new-note.mdx'));
@@ -169,7 +188,7 @@ try {
   await video.delete();
   await writeFile(
     join(output, 'walkthrough.html'),
-    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
+    `<!doctype html><meta charset="utf-8"><title>Programmable Notes walkthrough</title><style>body{font:16px system-ui;max-width:72rem;margin:2rem auto;padding:1rem}video,img{max-width:100%}figure{margin:1rem 0}</style><h1>Unified document workspace</h1><p>Source edits exact MDX, Split runs isolated React, Visual edits supported Markdown. The recording exercises the counter, changes a paragraph, saves exact MDX, protects unapplied text, switches modes at three sizes and creates an independent new note saved with Ctrl+S, and distinguishes its unsaved text from the clean lesson.</p><video src="walkthrough.webm" controls aria-label="Editor interaction walkthrough"></video><p>Actual saved source: <a href="lesson.mdx" download>edited lesson</a> · <a href="new-note.mdx" download>new note</a>.</p><figure><figcaption>New unsaved note</figcaption><img alt="A separately created note in Source mode" src="04-new-note.png"></figure><figure><figcaption>Clean selected source with a dirty sibling</figcaption><img alt="A clean lesson remains distinct from an unsaved other source" src="05-dirty-sibling.png"></figure>${['desktop', 'tablet', 'mobile'].map((device) => `<h2>${device}</h2><figure><figcaption>Before</figcaption><img alt="Previous three-surface ${device} layout" src="before/${device}.png"></figure>${['source', 'split', 'visual'].map((mode) => `<figure><figcaption>${mode}</figcaption><img alt="${device} ${mode} mode" src="${device}-${mode}.png"></figure>`).join('')}`).join('')}`,
   );
 } finally {
   await browser.close();
@@ -194,6 +213,7 @@ const names = [
   '02-inline-edit.png',
   '03-updated.png',
   '04-new-note.png',
+  '05-dirty-sibling.png',
   'walkthrough.webm',
   'walkthrough.html',
   'lesson.mdx',
