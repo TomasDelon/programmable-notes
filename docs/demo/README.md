@@ -1,12 +1,12 @@
 # Downloadable editor review
 
 [Download the working review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
-(6,626,776 bytes).
+(6,350,148 bytes).
 
 This dated ZIP is the requested PR-accessible review attachment while hosted
 Actions refuses jobs because of account billing. It contains a complete browser
 build, a recorded walkthrough, before/after screenshots at desktop/tablet/mobile
-sizes and both actual saved MDX files. The source application is from `f61163f`;
+sizes and both actual saved MDX files. The source application is from `6f7d4c6`;
 these delivery-tool changes do not change its frontend. The PR remains draft.
 
 Extract into a new directory. Open `walkthrough/walkthrough.html` for the video
@@ -23,15 +23,15 @@ text before saving. Unapplied text is memory-only until applied. Native file per
 WebKitGTK, recovery and cgroups have separate Linux acceptance procedures.
 Browser CPU/memory quotas and production security readiness are not claimed.
 
-SHA-256: `82446e3f0cdf9fe0c6ae89a4dbeb2dd723dbae2d21c080985f6311fbe3c2d64d`
+SHA-256: `c175fbe7c7cc250347512e90de668b9aa7b84392d7b60c8454c1c3a24f4d6dee`
 
 The clean extracted package passed real React interaction, a new focused note,
 exact keyboard-exported bytes, protected unapplied text, BOM/CRLF/opaque JSX
-preservation, accurate selected status with a dirty sibling, and offline recompilation after initial loading. Final repository checks passed
-58 unit and 27 Chromium tests. The packager verified a complete asset/capture hash
+preservation, exact mixed internal breaks, ambiguous-edit refusal, accurate selected status with a dirty sibling, and offline recompilation after initial loading. Final repository checks passed
+63 unit and 28 Chromium tests. The packager verified a complete asset/capture hash
 manifest and CRC; eight negative fixtures rejected changed/missing/extra assets,
 changed captures, unsafe paths, symlinks and failed recordings. The ZIP contains
-its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-status-review/README.md).
+its manifest and capture receipt. [Raw checks and scope](../security-evidence/2026-11-19-eol-review/README.md).
 
 ![Current Split workspace](desktop.png)
 
@@ -52,6 +52,6 @@ port 4188, then run `node scripts/demo-editor.mjs`,
 another available loopback port. CI runs these checks and uploads the unpacked
 package as `playable-editor-demo` when runners become available.
 
-Known current edge case: visual word edits inside a multiline paragraph containing
-both LF and CRLF can normalize an internal break. Use Source for that structure
-until the documented follow-up fix; unchanged source-mode saves preserve bytes.
+Mixed internal LF/CRLF word edits now preserve bytes. Ambiguous changes to the
+number of mixed breaks are conservatively refused, retaining entered text; use
+Source for those structures. Exact outside spans and undo history remain intact.

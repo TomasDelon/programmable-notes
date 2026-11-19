@@ -759,3 +759,46 @@ first startup could not add its unit filter (exit1); retained as unavailable, no
 proof of a cause or missing service. Commit source/tests now, refresh review from
 that committed frontend, verify exact extracted mixed-break edits/refusal and
 re-download the pushed blob. Do not silently reuse old archive frontend.
+
+## 2026-11-19 — mixed-break fixed browser delivery
+
+Source fix committed locally as 6f7d4c6. Fresh review now binds that exact committed
+frontend; extracted static build passed real mixed internal-break editing plus
+ambiguous repeated-line refusal, input retention/Save block/Escape exact restore,
+as well as prior React/new-note/keyboard/pending/BOM/offline/status cases. All eight
+packaging negatives, CRC and complete asset/capture hashes passed. First capture
+failed on connection refused after environment restart stopped the owned server;
+no artifact was assembled from that failed capture. Restarted server4189, verified
+actual current index, recaptured successfully; failure log retained.
+
+Current ZIP: 6,350,148 bytes /29 entries / SHA-256
+c175fbe7c7cc250347512e90de668b9aa7b84392d7b60c8454c1c3a24f4d6dee.
+Delivery evidence is 2026-11-19-eol-review. Next: finish required repository check,
+commit/push source+delivery, verify remote blob, update draft PR to fixed source
+and fresh immutable ZIP/counts63/28. Then investigate native cold-start failure
+with bounded actual observations; preserve the15-second compiler and60-second
+service deadlines. Independently measure long-paragraph editor usability before
+choosing another implementation; avoid speculative refactoring or aesthetic work.
+
+Delivery verification caught a one-off390px counter first-click failure (Count0
+after click). No app source/test behavior changed to bypass it. Failed log, input
+timeline and screenshot retained; fulltrace cached /tmp/eol-delivery-mobile-failure-trace.zip.
+Ten serial +ten parallel targeted repeats passed, but cause is NOT resolved. Full
+check rerunning alone now; preserve failure even if it passes. One probe formatter
+second pass was needed before checks; no acceptance predicate changed.
+
+Independent read-only real Chromium geometry measurement found a concrete next
+usability issue: a legal31,927-byte/1000-line paragraph opens a27,189.5px textarea
+in an800px viewport, though all input remains exact. After this checkpoint, bound
+its editing viewport/retain internal scrolling, full text, focus/keyboard and
+exact source/history; this is functional control sizing, not an aesthetic redesign.
+Native cold-start and unexplained mobile click still need observations; no claimed
+fix from successful repeats. Source/evidence P2 remains verified separately.
+
+Final isolated full check passed63 unit/28 Chromium. Fresh extracted archive
+validation rerun after probe formatting also passed all mixed/refusal/old behavior
+and8negative controls. Mobile counter first-click cause remainsunresolved despite
+20targeted passes; failure andlatestpass bothretained. Commit/push source6f7d4c6
+anddeliverynow, re-download exact remoteGitblob, update draftPR fixedEOL/current
+63/28counts plus remaining startup/memory/mobilelimits. Then bounded long-field
+viewport improvement, proven by realinput geometry, keeping data/scroll/history.

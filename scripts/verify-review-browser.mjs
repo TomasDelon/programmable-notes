@@ -99,8 +99,57 @@ try {
     await page.getByLabel('Workspace status').textContent(),
     '1 other source has unsaved changes.',
   );
+  const mixed =
+    '\uFEFF# Mixed\r\n\r\nFirst line\nSecond line\r\nThird line\n\n<div>Opaque</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'mixed.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(mixed),
+  });
+  await page
+    .getByRole('button', { name: /^First line Second line Third line$/ })
+    .click();
+  await field.fill('Edited line\nSecond line\nThird line');
+  await field.press('Enter');
+  const mixedDownload = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await mixedDownload).path()),
+    Buffer.from(mixed.replace('First', 'Edited')),
+  );
+  const repeated = 'Same\nSame\r\nSame\n\n<div>Opaque</div>\r\n';
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'repeated.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(repeated),
+  });
+  await page.getByRole('button', { name: /^Same Same Same$/ }).click();
+  await field.fill('Same\nSame');
+  await field.press('Enter');
+  await page
+    .getByRole('alert')
+    .filter({ hasText: 'ambiguous line endings' })
+    .waitFor();
+  assert.equal(await field.inputValue(), 'Same\nSame');
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .isEnabled(),
+    false,
+  );
+  await field.press('Escape');
+  const unchanged = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Visual', exact: true })
+    .press('Control+s');
+  assert.deepEqual(
+    await readFile(await (await unchanged).path()),
+    Buffer.from(repeated),
+  );
   console.log(
-    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_and_dirty_sibling',
+    'REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_and_ambiguous_refusal',
   );
 } finally {
   await browser.close();
