@@ -497,3 +497,35 @@ and child test processes from prior functional cases exited; retain the disposab
 VM only while needed for this next experiment. Keep failure evidence and exact
 binary hashes. The Linux init script is already TopFrame; do not change it based
 on the disproven reinjection hypothesis.
+
+## 2026-11-19 — current native startup diagnosis
+
+Current review delivery and actual GitHub receipt are pushed as 405ebc4/431296b;
+PR #1 remains draft and links the immutable current download. A new diagnostic
+compares static/no-JS content against real MDX/React using the same unchanged
+production Supervisor, with process/CPU/memory/journal observations and strict
+before-expiry cleanup. Read-only safety review found no important issue.
+
+First observer attempt: static ready 43.41 s, then Counter UI was NOT RUN because
+Node rejects fractional execFile timeouts. The harness now floors the remaining
+budget (no limit increase). Complete corrected pair passed: static ready 40.54 s,
+Counter 43.88 s, real Count 1, Stop cleanup 41.59 / 48.51 s. Raw CPU samples show
+400/400 and 424/428 throttled periods near readiness; the no-JS fixture is also
+slow. Common emulated startup is implicated, not a proven cause/fix of old blanks.
+Exact observer/binary hashes and both attempts: 2026-11-19-startup-probe.
+
+Sources already enforce TopFrame Linux initialization; no speculative fix made.
+No KVM or cloud-compute tool/AWS CLI/profile is available here; no physical CPU/GPU
+comparison was run. Native security/resource policy and app code are unchanged.
+
+Next: finish full repository checks, commit/push diagnostic and evidence, update
+the draft PR with final behavior and scoped validation (avoid stale chronological
+check-count lists). Then fix the concrete stress-report gap: it only records targets
+when stopped(), losing failed readiness targets. Register a target immediately and
+mark completion in place, preserving all assertions. Repeat only editor-crash on
+the current package, retain failures/cgroup/journal data, and do not weaken limits
+or declare a new full matrix pass. Continue safe editor reliability afterward.
+
+Final diagnostic repository checks passed 56 unit / 26 Chromium; executed observer
+hash still matches its retained report after formatting. Commit/push this milestone
+now, then preserve active stress targets and run the single editor-crash case.

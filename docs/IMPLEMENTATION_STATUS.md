@@ -145,6 +145,12 @@ ESRCH observer race was corrected without inferring empty groups. Strict Stop/cl
 checks now exclude natural-expiry attribution; both passed. Native IPC/HTTP/file
 denial also passed. See [exact results and failures](security-evidence/2026-11-19-resource-repeat/README.md).
 
+A separate current-binary startup diagnostic measured a JavaScript-free static
+button at 40.54 s and real React Counter at 43.88 s under identical production
+limits. Both were heavily CPU-throttled; actual interaction and Stop before expiry
+passed. This narrows common emulated startup cost but does not resolve the earlier
+editor-crash blank case. [Raw comparison and failed harness attempt](security-evidence/2026-11-19-startup-probe/README.md).
+
 Software rendering passed normal and stricter AppArmor desktop tests. Default
 llvmpipe failed on QEMU/Xvfb; physical GPU, Wayland, IME and other distributions
 remain untested compatibility targets. They do not block independent editor work.

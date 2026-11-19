@@ -1,0 +1,3 @@
+NATIVE_STARTUP_EVIDENCE /tmp/pn-native-XC4qnE/evidence/startup.json
+NATIVE_STARTUP_OBSERVATION {"kind":"static","invokeMs":1680.6013299999995,"sandboxObservedMs":15094.490329999999,"accessibleReadyMs":43411.593799999995,"cleanupMs":44831.134809999996,"errors":[]}
+NATIVE_STARTUP_OBSERVATION {"kind":"counter","invokeMs":2752.1187199999986,"cleanupMs":4057.2367099999974,"errors":["RangeError [ERR_OUT_OF_RANGE]: The value of \"timeout\" is out of range. It must be an unsigned integer. Received 54862.05575"]}

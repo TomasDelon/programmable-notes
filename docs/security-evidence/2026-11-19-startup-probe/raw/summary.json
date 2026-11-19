@@ -1,0 +1,34 @@
+{
+  "executableSha256": "886285a41426b8d1d66a3c432139e057f7bf6a31cc823fd5831a30112cfccb5e",
+  "observerSha256": "03093d7514c21be43189d629932f765cf234ae33c9688a013b74beb9b247a96e",
+  "observations": [
+    {
+      "kind": "static",
+      "htmlBytes": 153,
+      "invokeMs": 1583.3944599999995,
+      "sandboxObservedMs": 14439.79073,
+      "accessibleReadyMs": 40540.80533,
+      "cleanupMs": 41592.85227,
+      "cpuSampleElapsedMs": 40356.13093,
+      "cpuUsageUsec": 10018401,
+      "throttledPeriods": 400,
+      "periods": 400,
+      "sampledMemoryPeakBytes": 63033344,
+      "sampledTaskPeak": 47
+    },
+    {
+      "kind": "counter",
+      "htmlBytes": 224305,
+      "invokeMs": 3295.2015600000013,
+      "sandboxObservedMs": 15330.421420000006,
+      "accessibleReadyMs": 43881.370189999994,
+      "cleanupMs": 48509.96,
+      "cpuSampleElapsedMs": 43699.89234,
+      "cpuUsageUsec": 10628206,
+      "throttledPeriods": 424,
+      "periods": 428,
+      "sampledMemoryPeakBytes": 68550656,
+      "sampledTaskPeak": 51
+    }
+  ]
+}
