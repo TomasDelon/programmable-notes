@@ -823,3 +823,87 @@ test('new notes preserve siblings and independent history through save and reope
   });
   expect((await exported(reopened)).bytes).toEqual(saved.bytes);
 });
+
+test('unapplied visual text blocks document replacement and stays protected until apply or cancel', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF---\r\ntitle: Pending edits\r\n---\r\n\r\nOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX</div>\r\n';
+  await open(page, original, 'pending.mdx');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Original paragraph.', exact: true })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Unapplied 😀 paragraph.');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Close source', exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'New note', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByLabel('Open files')).toBeDisabled();
+  await expect(page.getByLabel('Source file')).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Second paragraph.', exact: true }),
+  ).toBeDisabled();
+  await expect(page.getByLabel('Document status')).toContainText(
+    'Unapplied visual edit',
+  );
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await expect(page.getByRole('note')).toContainText('Enter to apply');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await expect(field).toHaveValue('Unapplied 😀 paragraph.');
+  await field.press('Enter');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(
+      original.replace('Original paragraph.', 'Unapplied 😀 paragraph.'),
+    ),
+  );
+  await page
+    .getByRole('button', { name: 'Unapplied 😀 paragraph.', exact: true })
+    .click();
+  await field.fill('Discard this pending value.');
+  await field.press('Escape');
+  await expect(page.getByLabel('Source file')).toBeEnabled();
+  const selected = await page.getByLabel('Source file').inputValue();
+  await page.getByLabel('Source file').selectOption('note.mdx');
+  await page.getByLabel('Source file').selectOption(selected);
+  await expect(
+    page.getByRole('button', { name: 'Unapplied 😀 paragraph.', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  const undo = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await undo).path())!)).toEqual(
+    Buffer.from(original),
+  );
+  await page
+    .getByRole('button', { name: 'Original paragraph.', exact: true })
+    .click();
+  await field.fill('Keep this value after a source error.');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  await page.getByRole('textbox', { name: 'MDX source' }).fill('<Broken');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await expect(field).toHaveValue('Keep this value after a source error.');
+  await field.press('Enter');
+  await expect(
+    page.getByRole('region', { name: 'Markdown editing' }).getByRole('alert'),
+  ).toContainText('Paragraph changed');
+  await field.press('Escape');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeEnabled();
+  const stale = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await stale).path())!, 'utf8')).toBe('<Broken');
+});

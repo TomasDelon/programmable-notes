@@ -22,6 +22,7 @@ export function RecoveryHistory({
   restore,
   candidates = noCandidates,
   onHealth,
+  unappliedEdit = false,
 }: {
   candidates?: RecoveryCandidate[];
   onHealth?: (health: { message: string; error: boolean }) => void;
@@ -31,6 +32,7 @@ export function RecoveryHistory({
   baseline?: string;
   displayPath?: string;
   busy: boolean;
+  unappliedEdit?: boolean;
   restore: (file: string) => Promise<void>;
 }) {
   const [automatic, setAutomatic] = useState(true);
@@ -216,7 +218,7 @@ export function RecoveryHistory({
         storage is bounded.
       </p>
       <button
-        disabled={busy || working}
+        disabled={busy || working || unappliedEdit}
         onClick={() =>
           void perform(() =>
             keepCandidate({ documentKey, name, source, baseline, displayPath }),
@@ -262,7 +264,7 @@ export function RecoveryHistory({
             </select>
           </label>
           <button
-            disabled={busy || working || !chosen}
+            disabled={busy || working || unappliedEdit || !chosen}
             onClick={() =>
               void perform(async () => {
                 if (chosen) await restore(chosen.file);

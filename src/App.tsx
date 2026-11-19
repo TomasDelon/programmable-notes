@@ -28,11 +28,14 @@ function compilerModule() {
 }
 
 export function App() {
+  const [pendingVisual, setPendingVisual] = useState(false);
   const documents = useDocuments(
     { 'note.mdx': counter, 'widgets/ImportedCounter.tsx': imported },
     'note.mdx',
+    pendingVisual,
   );
   const { files, entry, selected, groups } = documents.workspace;
+  const documentActionsBlocked = documents.busy || pendingVisual;
   const [mode, setMode] = useState<'source' | 'split' | 'visual'>('split');
   const workspaceMode =
     mode === 'visual' && !/\.mdx?$/.test(selected) ? 'source' : mode;
@@ -214,7 +217,9 @@ export function App() {
       )}
       <nav aria-label="Document actions">
         <button
-          disabled={documents.busy || Object.keys(files).length >= MAX_FILES}
+          disabled={
+            documentActionsBlocked || Object.keys(files).length >= MAX_FILES
+          }
           title={
             Object.keys(files).length >= MAX_FILES
               ? 'Close a source before creating another note (32-file limit).'
@@ -233,7 +238,7 @@ export function App() {
         </button>
         {documents.native ? (
           <button
-            disabled={documents.busy}
+            disabled={documentActionsBlocked}
             onClick={() => void documents.openNative()}
           >
             Open files
@@ -246,27 +251,31 @@ export function App() {
               type="file"
               multiple
               accept=".md,.mdx,.tsx,.ts,.jsx,.js"
-              disabled={documents.busy}
+              disabled={documentActionsBlocked}
               onChange={(event) =>
                 void documents.openBrowser(event.target.files)
               }
             />
           </label>
         )}
-        <button disabled={documents.busy} onClick={() => void documents.save()}>
+        <button
+          disabled={documentActionsBlocked}
+          onClick={() => void documents.save()}
+        >
           Save source
         </button>
         {documents.native && (
           <>
             <button
-              disabled={documents.busy}
+              disabled={documentActionsBlocked}
               onClick={() => void documents.save(true)}
             >
               Save As
             </button>
             <button
               disabled={
-                documents.busy || !documents.workspace.bindings[selected]
+                documentActionsBlocked ||
+                !documents.workspace.bindings[selected]
               }
               onClick={() => void documents.reopen()}
             >
@@ -275,7 +284,7 @@ export function App() {
           </>
         )}
         <button
-          disabled={documents.busy}
+          disabled={documentActionsBlocked}
           onClick={() => void documents.close()}
         >
           Close source
@@ -304,6 +313,7 @@ export function App() {
           <select
             aria-label="Source file"
             value={selected}
+            disabled={pendingVisual}
             onChange={(e) => documents.select(e.target.value)}
           >
             {Object.keys(files).map((path) => (
@@ -343,10 +353,19 @@ export function App() {
       <p aria-label="Document status" aria-live="polite">
         {documents.busy
           ? 'File operation in progress'
-          : documents.dirty
-            ? 'Unsaved changes'
-            : documents.fileNotice || 'Source unchanged'}
+          : pendingVisual
+            ? 'Unapplied visual edit'
+            : documents.dirty
+              ? 'Unsaved changes'
+              : documents.fileNotice || 'Source unchanged'}
       </p>
+      {pendingVisual && (
+        <p role="note">
+          Visual text has not been applied. In Visual mode, press Enter to apply
+          or Escape to cancel before saving or changing documents. Apply it to
+          include it in saved source and recovery.
+        </p>
+      )}
       {documents.fileError && (
         <pre role="alert" data-file-error>
           {documents.fileError}
@@ -356,7 +375,9 @@ export function App() {
       {locations.map((location, index) => (
         <button
           key={`${location.file}:${location.line}:${index}`}
-          disabled={documents.busy || files[location.file] !== location.source}
+          disabled={
+            documentActionsBlocked || files[location.file] !== location.source
+          }
           onClick={() => {
             if (files[location.file] !== location.source) return;
             pendingLocation.current = location;
@@ -381,6 +402,7 @@ export function App() {
         <details>
           <summary>Recovery draft</summary>
           <RecoveryHistory
+            unappliedEdit={pendingVisual}
             candidates={recoveryCandidates}
             onHealth={setRecoveryHealth}
             documentKey={selected}
@@ -396,19 +418,19 @@ export function App() {
           />
           <p>Legacy single-copy controls (kept for migration):</p>
           <button
-            disabled={documents.busy || !/\.mdx?$/.test(selected)}
+            disabled={documentActionsBlocked || !/\.mdx?$/.test(selected)}
             onClick={() => void documents.nativeDraft('keep')}
           >
             Keep recovery draft
           </button>
           <button
-            disabled={documents.busy}
+            disabled={documentActionsBlocked}
             onClick={() => void documents.nativeDraft('restore')}
           >
             Restore as unsaved document
           </button>
           <button
-            disabled={documents.busy}
+            disabled={documentActionsBlocked}
             onClick={() => void documents.nativeDraft('delete')}
           >
             Delete recovery draft
@@ -420,12 +442,14 @@ export function App() {
           documentKey={selected}
           name={selected.split('/').pop()!}
           source={files[selected]!}
-          busy={documents.busy}
+          busy={documentActionsBlocked}
           restore={documents.restoreBrowserDraft}
         />
       )}
       <div className={`workspace mode-${workspaceMode}`}>
         <SourceEditor
+          busy={documents.busy}
+          onPendingChange={setPendingVisual}
           visual={workspaceMode === 'visual'}
           commandsRef={editorCommands}
           key={selected}

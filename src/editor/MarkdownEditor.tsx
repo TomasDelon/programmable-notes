@@ -9,9 +9,13 @@ export function MarkdownEditor({
   source,
   active,
   apply,
+  busy = false,
+  onPendingChange,
 }: {
   source: string;
   active: boolean;
+  busy?: boolean;
+  onPendingChange?: (pending: boolean) => void;
   apply: (
     snapshot: string,
     range: MarkdownRange,
@@ -25,6 +29,7 @@ export function MarkdownEditor({
   }>();
   const focusTarget = useRef<number | undefined>(undefined);
   const [error, setError] = useState('');
+  const pending = edit !== undefined && edit.value !== edit.range.text;
   const blocks = useMemo(() => {
     if (!active) return [];
     const ranges = editableMarkdown(source);
@@ -55,19 +60,25 @@ export function MarkdownEditor({
           rows={Math.max(1, edit.value.split('\n').length)}
           aria-label={`${label} text`}
           value={edit.value}
+          disabled={busy}
           ref={focusInput}
-          onChange={(event) => setEdit({ ...edit, value: event.target.value })}
+          onChange={(event) => {
+            setEdit({ ...edit, value: event.target.value });
+            onPendingChange?.(event.target.value !== edit.range.text);
+          }}
           onKeyDown={(event) => {
             if (event.nativeEvent.isComposing) return;
             if (event.key === 'Escape') {
               focusTarget.current = range.from;
               setEdit(undefined);
+              onPendingChange?.(false);
               setError('');
             } else if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault();
               if (apply(edit.source, edit.range, edit.value)) {
                 focusTarget.current = range.from;
                 setEdit(undefined);
+                onPendingChange?.(false);
                 setError('');
               } else {
                 setError(
@@ -82,6 +93,7 @@ export function MarkdownEditor({
     return (
       <button
         className="rendered-text"
+        disabled={busy || pending}
         ref={(button) => {
           if (button && focusTarget.current === range.from) {
             button.focus();
@@ -109,6 +121,18 @@ export function MarkdownEditor({
           No safe visual mapping is available. Use Source to edit this document.
         </p>
       )}
+      {edit &&
+        !blocks.some((block) =>
+          block.items.some((range) => range.from === edit.range.from),
+        ) && (
+          <div>
+            <p role="note">
+              Source changed while this text was being edited. Your pending text
+              is kept below. Copy it or press Escape to cancel.
+            </p>
+            {editableText(edit.range)}
+          </div>
+        )}
       {blocks.map((block) => {
         const { items } = block;
         if (!items.length)

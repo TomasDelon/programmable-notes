@@ -1,0 +1,89 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/editor.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/editor.test.tsx (2 tests | 1 failed) 169ms
+   × retains unapplied text when its original mapping disappears and allows explicit cancellation 95ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/editor.test.tsx > retains unapplied text when its original mapping disappears and allows explicit cancellation
+TestingLibraryElementError: Unable to find an accessible element with the role "textbox" and name "Paragraph text"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Markdown editing":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Markdown editing"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"edit-hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  note:
+
+  Name "":
+  [36m<p[39m
+    [33mrole[39m=[32m"note"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Markdown editing"[39m
+    [36m>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"edit-hint"[39m
+      [36m>[39m
+        [0mClick text to edit. Enter applies, Shift+Enter adds a line, Escape cancels. React and formatted blocks stay opaque; use Source to edit them.[0m
+      [36m</p>[39m
+      [36m<p[39m
+        [33mrole[39m=[32m"note"[39m
+      [36m>[39m
+        [0mNo safe visual mapping is available. Use Source to edit this document.[0m
+      [36m</p>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/editor.test.tsx:20:24
+     18|   expect(pending).toHaveBeenLastCalledWith(true);
+     19|   view.rerender(<MarkdownEditor source="<Broken" active apply={apply} …
+     20|   const field = screen.getByRole('textbox', {name:'Paragraph text'});
+       |                        ^
+     21|   expect(field).toHaveValue('Keep this pending value.');
+     22|   expect(apply).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  04:21:05
+   Duration  1.64s (environment 66%, import 13%, tests 11%, setup 6%, transform 3%)
+

@@ -16,6 +16,13 @@ untrusted execution, not a Markdown sanitizer.
 
 Source mode shows CodeMirror; Split shows source and interactive React output;
 Visual shows the editor-owned Markdown surface and collapsed opaque blocks.
+Changing modes preserves React state. Modified inline text is guarded until
+Enter applies or Escape cancels: document switching/replacement and saving cannot
+discard it or claim it was saved. It participates in native/browser dirty-close
+protection. If source editing invalidates its mapping, the pending value remains
+accessible for copying/cancellation and stale patches still fail. It is memory-only
+until applied; automatic recovery continues storing actual document source.
+[Browser/native red-green evidence](security-evidence/2026-11-19-pending-inline/README.md).
 Changing modes preserves React state. Changing executable source restarts the
 isolated runtime. Literal paragraphs with punctuation/soft line breaks, ATX and
 Setext headings, and simple list items support in-place editing. Enter applies,
@@ -68,7 +75,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 48 unit and 23 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 50 unit and 24 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |

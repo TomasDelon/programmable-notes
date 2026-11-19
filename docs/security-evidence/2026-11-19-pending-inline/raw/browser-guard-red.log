@@ -1,0 +1,47 @@
+[WebServer] (node:251990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:252013) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/bootstrap.spec.ts:827:1 › unapplied visual text blocks document replacement and stays protected until apply or cancel (6.3s)
+
+
+  1) [chromium] › tests/e2e/bootstrap.spec.ts:827:1 › unapplied visual text blocks document replacement and stays protected until apply or cancel 
+
+    Error: expect(locator).toBeDisabled() failed
+
+    Locator:  getByRole('button', { name: 'Save source', exact: true })
+    Expected: disabled
+    Received: enabled
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toBeDisabled" getByRole('button', { name: 'Save source', exact: true }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Save source', exact: true })
+        13 × locator resolved to <button>Save source</button>
+           - unexpected value "enabled"
+
+
+      833 |   const field=page.getByRole('textbox',{name:'Paragraph text'});
+      834 |   await field.fill('Unapplied 😀 paragraph.');
+    > 835 |   await expect(page.getByRole('button',{name:'Save source',exact:true})).toBeDisabled();
+          |                                                                          ^
+      836 |   await expect(page.getByRole('button',{name:'Close source',exact:true})).toBeDisabled();
+      837 |   await expect(page.getByRole('button',{name:'New note',exact:true})).toBeDisabled();
+      838 |   await expect(page.getByLabel('Open files')).toBeDisabled();
+        at /workspace/programmable-notes/tests/e2e/bootstrap.spec.ts:835:74
+
+    Error Context: test-results/bootstrap-unapplied-visual-5a8d5-ected-until-apply-or-cancel-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/bootstrap-unapplied-visual-5a8d5-ected-until-apply-or-cancel-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/bootstrap-unapplied-visual-5a8d5-ected-until-apply-or-cancel-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/bootstrap.spec.ts:827:1 › unapplied visual text blocks document replacement and stays protected until apply or cancel 

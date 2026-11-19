@@ -33,3 +33,21 @@ changes is a safe incremental improvement, verified by a counter interaction.
 Keeping arbitrary state across changed code would require an explicit runtime
 refresh protocol, boundary rules and separate security review. We do not copy
 state from untrusted frames or keep obsolete code running after a source edit.
+
+## Unapplied inline text and document lifetime
+
+Inline input is a trusted-editor draft until Enter validates/applies a patch.
+It must not be silently discarded by opening, selecting, closing or replacing a
+document, or misrepresented as saved. Modified inline text blocks those actions
+and manual Save/recovery restore until explicit apply/cancel. Native window close
+and browser unload treat it as dirty. File operations disable inline input;
+source typing keeps its existing asynchronous preservation behavior.
+
+Mode changes retain inline drafts. A source change can invalidate their mapping:
+keep the exact input accessible even if its block disappears, and reject Enter
+unless the original full revision still matches. Escape explicitly cancels.
+Automatic snapshots still store actual document source, never speculative text
+from an invalid/stale patch. Unapplied input remains memory-only; the user sees
+that applying it is necessary before saving/recovery. This bounded guard avoids
+implicitly applying unsafe Markdown or inventing a second persisted source.
+No untrusted preview message can set draft state, apply patches or authorize files.

@@ -388,3 +388,37 @@ potential loss of uncommitted inline text on document switching/close/save. Keep
 source patches explicit, and never let preview messages authorize edits. If the
 loss is reproducible, add the smallest trusted-editor guard and dirty-close
 protection, preserving mode switching and current source/recovery semantics.
+
+## 2026-11-19 — guard unapplied visual input
+
+Error-path tests are committed/pushed as 3db7805 and PR #1 stays draft. A real
+browser reproduction then showed unapplied inline typing silently disappeared
+on document switch, while status stayed Source unchanged and Save exported older
+source. A browser guard assertion and dirty-state unit test failed before fixes.
+Trusted pending state now blocks document replacement/save/selection, participates
+in browser/native dirty-close, and cannot be supplied by preview messages. Mode
+and source editing remain available; a disappearing mapping keeps exact pending
+text accessible and still rejects stale Enter. Its unit test failed before the
+fallback. Busy file operations lock inline input, without pausing committed-source
+recovery for unrelated buffers. Pending text remains memory-only until applied.
+
+The optimized installed package passed real native close/Cancel with unchanged
+pending value and original, Escape, Enter, exact BOM/CRLF/Unicode/JSX Save,
+Undo/Redo, Reopen, mode 0640 and clean exit. Package/ELF hashes and raw evidence:
+2026-11-19-pending-inline. Initial red browser fixtures exposed a separate ordinary
+BOM parser-offset mapping gap; proper guard fixture uses existing supported BOM
+metadata and retains full byte checks. Read-only review found no important issue.
+
+Next: complete full checks/current-package IPC regression, retain results, commit/
+push guard and update draft PR. Then fix ordinary leading-BOM visual mapping using
+private parser input that preserves UTF-16 offsets and never modifies source;
+write red fixtures first. Refresh the portable review download once these editor
+correctness changes are validated. Native blank-startup remains unresolved and
+hosted CI still cannot start because of account billing.
+
+Final guard checks passed formatting/lint/types, 50 unit and 24 Chromium tests.
+The new optimized installed package also passed native IPC/recovery-action denial,
+actual private-network/cgroup policy, Stop, Counter 2 and parent DOM/storage plus
+HTTP/file denial. This is not a complete fresh stress-matrix pass. Raw successful
+checks and native screenshots are retained. Commit/push the guard now, then fix
+the separate leading-BOM mapping offset with red/green exact-source fixtures.

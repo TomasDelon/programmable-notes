@@ -20,20 +20,23 @@ import {
 export function useDocuments(
   initialFiles: Record<string, string>,
   initialEntry: string,
+  unappliedVisualEdit = false,
 ) {
   const [workspace, setWorkspace] = useState(() =>
     initialWorkspace(initialFiles, initialEntry),
   );
   const running = useRef(false);
   const current = useRef(workspace);
+  const pendingVisual = useRef(unappliedVisualEdit);
   useLayoutEffect(() => {
     current.current = workspace;
-  }, [workspace]);
+    pendingVisual.current = unappliedVisualEdit;
+  }, [workspace, unappliedVisualEdit]);
   const [busy, setBusy] = useState(false),
     [fileError, setFileError] = useState(''),
     [fileNotice, setFileNotice] = useState('');
   const native = isTauri(),
-    dirty = isDirty(workspace);
+    dirty = isDirty(workspace) || unappliedVisualEdit;
   // Native close protection covers all buffers, including edits during an async save.
   useEffect(() => {
     if (native)
@@ -45,7 +48,7 @@ export function useDocuments(
   }, [native, dirty, busy]);
   useEffect(() => {
     const handler = (event: BeforeUnloadEvent) => {
-      if (isDirty(current.current)) {
+      if (isDirty(current.current) || pendingVisual.current) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -53,21 +56,31 @@ export function useDocuments(
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
-  const operation = useCallback(async (task: () => Promise<void>) => {
-    if (running.current) return;
-    running.current = true;
-    setBusy(true);
-    setFileError('');
-    setFileNotice('');
-    try {
-      await task();
-    } catch (error) {
-      setFileError(`${String(error)} Source retained.`);
-    } finally {
-      running.current = false;
-      setBusy(false);
-    }
+  const allowDocumentOperation = useCallback(() => {
+    if (!pendingVisual.current) return true;
+    setFileError(
+      'Apply or cancel the visual edit before changing documents or saving.',
+    );
+    return false;
   }, []);
+  const operation = useCallback(
+    async (task: () => Promise<void>) => {
+      if (running.current || !allowDocumentOperation()) return;
+      running.current = true;
+      setBusy(true);
+      setFileError('');
+      setFileNotice('');
+      try {
+        await task();
+      } catch (error) {
+        setFileError(`${String(error)} Source retained.`);
+      } finally {
+        running.current = false;
+        setBusy(false);
+      }
+    },
+    [allowDocumentOperation],
+  );
   async function openNative() {
     await operation(async () => {
       const docs = await nativeDocuments.open();
@@ -92,7 +105,7 @@ export function useDocuments(
     });
   }
   function newNote() {
-    if (running.current) return;
+    if (running.current || !allowDocumentOperation()) return;
     setFileError('');
     setFileNotice('New unsaved note.');
     setWorkspace(createNote);
@@ -301,6 +314,7 @@ export function useDocuments(
     });
   }
   function select(key: string) {
+    if (!allowDocumentOperation()) return;
     setWorkspace((next) => ({
       ...next,
       selected: key,

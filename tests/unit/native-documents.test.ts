@@ -252,3 +252,43 @@ it('new notes retain queued source input and start without filesystem authorizat
   expect(api.saveAs).not.toHaveBeenCalled();
   expect(h.result.current.dirty).toBe(true);
 });
+
+it('protects unapplied trusted visual text without authorizing saves or replacing documents', async () => {
+  const h = renderHook(
+    ({ pending }) =>
+      useDocuments({ 'note.mdx': 'saved example' }, 'note.mdx', pending),
+    { initialProps: { pending: false } },
+  );
+  await act(async () => h.result.current.openNative());
+  const before = h.result.current.workspace;
+  h.rerender({ pending: true });
+  expect(h.result.current.dirty).toBe(true);
+  expect(api.dirty).toHaveBeenLastCalledWith(true, false);
+  const closing = new Event('beforeunload', { cancelable: true });
+  window.dispatchEvent(closing);
+  expect(closing.defaultPrevented).toBe(true);
+  await act(async () => {
+    await h.result.current.save();
+    await h.result.current.reopen();
+    await h.result.current.openNative();
+    await h.result.current.close();
+    h.result.current.newNote();
+    h.result.current.select('note.mdx');
+  });
+  expect(h.result.current.workspace).toBe(before);
+  expect(h.result.current.fileError).toMatch(/Apply or cancel/);
+  expect(api.open).toHaveBeenCalledTimes(1);
+  expect(api.save).not.toHaveBeenCalled();
+  expect(api.reopen).not.toHaveBeenCalled();
+  expect(api.close).not.toHaveBeenCalled();
+  expect(api.confirmDiscard).not.toHaveBeenCalled();
+  h.rerender({ pending: false });
+  expect(h.result.current.dirty).toBe(false);
+  expect(api.dirty).toHaveBeenLastCalledWith(false, false);
+  const clean = new Event('beforeunload', { cancelable: true });
+  window.dispatchEvent(clean);
+  expect(clean.defaultPrevented).toBe(false);
+  api.save.mockResolvedValue({ revision: '2', durable: true });
+  await act(async () => h.result.current.save());
+  expect(api.save).toHaveBeenCalledWith('grant', '1', 'disk original');
+});
