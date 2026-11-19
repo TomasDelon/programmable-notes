@@ -486,3 +486,14 @@ initialization_script is already TopFrame on Linux; per-frame reinjection is rul
 out, not a fix. Next useful experiment compares static-button and Counter srcdoc
 under identical unchanged production limits, retaining failures and startup timing.
 Do not retry until green or infer cleanup from a timer/empty accessibility tree.
+
+Current delivery is committed/pushed as 405ebc4. The actual GitHub Blob response
+was decoded and matched the 6,461,629-byte archive and SHA-256 f92c9930…cebe93e.
+Receipt retained; no base64/credential committed. Full check passed 56 unit / 26
+Chromium and the current extracted app passed all extended delivery checks after
+the final build. Update PR to its immutable 405ebc4 download link, then execute the
+static-versus-Counter startup diagnostic under unchanged production limits. Root
+and child test processes from prior functional cases exited; retain the disposable
+VM only while needed for this next experiment. Keep failure evidence and exact
+binary hashes. The Linux init script is already TopFrame; do not change it based
+on the disproven reinjection hypothesis.

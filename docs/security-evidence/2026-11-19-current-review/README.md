@@ -36,3 +36,11 @@ A new hosted upload or green job is not claimed. Current package-specific native
 keyboard, pending-input and source-preservation evidence stays separate. Earlier
 native blank-preview recovery, physical GPU/Wayland and distribution-security
 review remain outside this browser artifact's claims.
+
+The pushed archive at 405ebc4 was actually re-downloaded through GitHub's source
+Blob API. Decoded bytes matched the local archive exactly, including its
+6,461,629-byte size and SHA-256
+`f92c9930bcb91156a0dc6a510b3c96ab46affac3aa116d8b1c3a07d22cebe93e`.
+The small response receipt is retained in `raw/github-download.json`; no encoded
+binary response or credential is committed. Hosted artifact execution remains a
+separate billing-blocked operation.
