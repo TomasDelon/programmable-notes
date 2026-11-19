@@ -331,10 +331,12 @@ it('patches only literal single-line blockquote text while preserving markers an
   }
 });
 
-it('keeps nested, formatted, multiline and JSX blockquotes opaque', () => {
+it('keeps lazy, separated, nested, formatted and JSX blockquotes opaque', () => {
   for (const quote of [
-    '> First.\n> Second.',
+    '> First.\n> Second.\nLazy continuation.',
     '> First.\nLazy continuation.',
+    '> First.\rLazy continuation.',
+    '> First.\r> Second.',
     '> First\n>\n> Second',
     '> > Nested',
     '> # Heading',
@@ -349,5 +351,62 @@ it('keeps nested, formatted, multiline and JSX blockquotes opaque', () => {
     expect(editableMarkdown(source).map((range) => range.text)).toEqual([
       'Separate paragraph.',
     ]);
+  }
+});
+
+it('edits explicit multiline quotes without changing prefixes, mixed endings or surrounding MDX', () => {
+  for (const endings of [
+    ['\n', '\n'],
+    ['\r\n', '\r\n'],
+    ['\r\n', '\n'],
+  ]) {
+    const logical = `First café 😀.${endings[0]}Second line.${endings[1]}Third line.`;
+    const source =
+      '\uFEFFimport React from "react"\r\n\r\n  >  First café 😀.' +
+      endings[0] +
+      ' >\tSecond line.' +
+      endings[1] +
+      '> Third line.\r\n\r\n{/* keep exact */}\r\n\r\n<div><span>Opaque JSX</span></div>\r\n';
+    const ranges = editableMarkdown(source);
+    expect(ranges).toHaveLength(1);
+    const range = ranges[0]!;
+    expect(range.text).toBe(logical);
+    expect(range).toHaveProperty('quotePrefixes', [' >\t', '> ']);
+    expect(patchMarkdown(source, range, logical.replace(/\r\n/g, '\n'))).toBe(
+      source,
+    );
+    expect(
+      patchMarkdown(
+        source,
+        range,
+        logical
+          .replace(/\r\n/g, '\n')
+          .replace('Second line.', 'Changed: £50 + tax.'),
+      ),
+    ).toBe(source.replace('Second line.', 'Changed: £50 + tax.'));
+    const forged = { ...range, quotePrefixes: ['> ', '> '] };
+    expect(
+      patchMarkdown(source, forged, logical.replace('Second', 'Changed')),
+    ).toBeNull();
+    expect(
+      patchMarkdown(
+        source.replace('Second', 'Stale'),
+        range,
+        logical.replace('Second', 'Changed'),
+      ),
+    ).toBeNull();
+    for (const unsafe of [
+      'One line.',
+      'One\nTwo',
+      'One\nTwo\nThree\nFour',
+      'First\n<Widget />\nThird',
+      'First\n{run()}\nThird',
+      'First\n*Formatting*\nThird',
+      '# Heading\nSecond\nThird',
+      'First\n> Nested\nThird',
+      'First\n\nThird',
+    ]) {
+      expect(patchMarkdown(source, range, unsafe)).toBeNull();
+    }
   }
 });

@@ -1,0 +1,18 @@
+/tmp/pn-native-jYqEnv
+NATIVE_FIDELITY_IDENTITY {"pid":34120,"executableSha256":"fd151c78178f79eef7de8cebffa5beca7f419365fab8519ad7a2c0a76781a516","observerSha256":"a3f431cff2a82bad7aeccd83345e20cbc34781155ff9d3535095ca11706183f9","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 34120, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-jYqEnv/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS
+NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS
+NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640
+NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS
+NATIVE_DIALOG {"pid": 34120, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 34120, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS
+NATIVE_FIDELITY_IDENTITY {"pid":34548,"executableSha256":"fd151c78178f79eef7de8cebffa5beca7f419365fab8519ad7a2c0a76781a516","observerSha256":"a3f431cff2a82bad7aeccd83345e20cbc34781155ff9d3535095ca11706183f9","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 34548, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-jYqEnv/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_EXPLICIT_RECOVERY_PASS original unchanged
+NATIVE_DIALOG {"pid": 34548, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 34548, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS

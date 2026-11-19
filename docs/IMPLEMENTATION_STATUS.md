@@ -23,14 +23,21 @@ protection. If source editing invalidates its mapping, the pending value remains
 accessible for copying/cancellation and stale patches still fail. It is memory-only
 until applied; automatic recovery continues storing actual document source.
 [Browser/native red-green evidence](security-evidence/2026-11-19-pending-inline/README.md).
-Changing modes preserves React state. Changing executable source restarts the
+Changing modes preserves React state. Applying source changes rebuilds the artifact and restarts the
 isolated runtime. Literal paragraphs with punctuation/soft line breaks, ATX and
-Setext headings, simple list items and literal single-line blockquotes support in-place editing. Enter applies,
+Setext headings, simple list items and literal quoted paragraphs support in-place editing. Enter applies,
 Shift+Enter inserts a soft break and Escape cancels. Arbitrary JSX, imports,
 comments, fences, formatted/nested Markdown and mapping-style metadata stay opaque. Quote markers,
-indentation and terminators remain outside patches; nested/lazy/multiline/JSX
-quotes stay in Source. [Browser/installed quote, disk/history/restart and driver
+indentation and endings are preserved byte-for-byte. Explicit multiline quoted
+paragraphs keep their line count; lazy/nested/formatted/JSX quotes and structural
+changes stay in Source. [Browser/installed quote, disk/history/restart and driver
 red-green evidence](security-evidence/2026-11-19-literal-quotes/README.md).
+
+Explicit multiline quote logical text excludes continuation markup while its raw
+patch span retains every prefix. Exact context/candidate checks and no-op/history
+preservation passed actual browser export/reopen and installed native disk/restart/
+recovery acceptance. [ADR010](decisions/ADR-010-multiline-quote-editing.md) and
+[exact scope, initial failure and driver regression controls](security-evidence/2026-11-19-multiline-quotes/README.md).
 
 Patches validate the full captured source revision, parser-owned spans, text and
 block context, then reparse the candidate. Ordinary leading-BOM documents now map at their original offsets without
@@ -239,12 +246,9 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: expand conservative source-preserving editing to explicit multiline quoted
-paragraphs with unchanged line count, keeping every continuation marker/ending and
-all unrelated MDX bytes. Single-line-to-multiline, lazy, formatted, nested and JSX
-quotes remain outside that proposed contract until independently validated. Keep
-investigating native blank/startup, renderer SIGSEGV and the failed memory-pressure
-matrix without changing deadlines or isolation. Quote review delivery, native
-session-end feedback and explicit Stop recovery are implemented and verified in
-the dated evidence. Hosted runners still need owner billing action; physical
-GPU/Wayland compatibility can proceed independently.
+Next: refresh the downloadable browser review for multiline quoted text and the
+current verified engine. Continue core source navigation/usability with parser-owned
+spans and full revision checks. Investigate native blank/startup, renderer SIGSEGV
+and the failed memory-pressure matrix without changing deadlines or isolation.
+Hosted runners still need owner billing action; physical GPU/Wayland compatibility
+can proceed independently. No production security readiness is claimed.

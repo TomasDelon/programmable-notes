@@ -24,7 +24,9 @@ def window():
                 return None  # xdotool's documented no-match result.
             # Window enumeration itself races GTK destruction. Retry only this
             # read, within the same deadline; never turn a failed query into absence.
-            if 'BadWindow' in error.stderr and time.monotonic() < deadline:
+            transient = ('BadWindow' in error.stderr or
+                         ('BadDrawable' in error.stderr and 'X_GetGeometry' in error.stderr))
+            if transient and time.monotonic() < deadline:
                 time.sleep(0.05)
                 continue
             raise RuntimeError(f'Native window query failed: {error.output!r} {error.stderr!r}') from error

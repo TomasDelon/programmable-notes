@@ -6,6 +6,8 @@ export interface MarkdownRange {
   text: string;
   headingDepth?: 1 | 2 | 3 | 4 | 5 | 6;
   quoteFrom?: number;
+  /** Exact continuation markers, excluded from the editable logical text. */
+  quotePrefixes?: string[];
   list?: { from: number; ordered: boolean; start: number };
 }
 
@@ -95,11 +97,33 @@ export function editableMarkdown(source: string): MarkdownRange[] {
           !/^>[ \t]*$/.test(source.slice(quoteFrom, from))
         )
           return [];
-        const text = source.slice(from, to);
-        // Continuation prefixes and lazy lines require a different mapping contract.
-        if (/[\r\n]/.test(text) || text !== child.value || !plain.test(text))
+        const raw = source.slice(from, to);
+        if (/\r(?!\n)/.test(raw)) return [];
+        const pieces = raw.split(/(\r?\n)/);
+        const quotePrefixes: string[] = [];
+        let text = pieces[0]!;
+        for (let index = 1; index < pieces.length; index += 2) {
+          const line = pieces[index + 1]!;
+          const prefix = /^ {0,3}>[ \t]*/.exec(line)?.[0];
+          // Every physical continuation must be explicit; never infer lazy markup.
+          if (!prefix) return [];
+          quotePrefixes.push(prefix);
+          text += pieces[index]! + line.slice(prefix.length);
+        }
+        if (
+          text.replace(/\r\n/g, '\n') !== child.value.replace(/\r\n/g, '\n') ||
+          !plain.test(text)
+        )
           return [];
-        return [{ from, to, text, quoteFrom }];
+        return [
+          {
+            from,
+            to,
+            text,
+            quoteFrom,
+            ...(quotePrefixes.length ? { quotePrefixes } : {}),
+          },
+        ];
       }
       if (root.type === 'list') {
         const from = root.position?.start.offset;
@@ -179,6 +203,11 @@ function sameContext(a: MarkdownRange, b: MarkdownRange) {
   return (
     a.headingDepth === b.headingDepth &&
     a.quoteFrom === b.quoteFrom &&
+    a.quotePrefixes?.length === b.quotePrefixes?.length &&
+    (a.quotePrefixes?.every(
+      (prefix, index) => prefix === b.quotePrefixes?.[index],
+    ) ??
+      true) &&
     a.list?.from === b.list?.from &&
     a.list?.ordered === b.list?.ordered &&
     a.list?.start === b.list?.start
@@ -274,6 +303,11 @@ export function patchMarkdown(
     return null;
   if (text === range.text) return source;
   if (!plain.test(text) || text.trim() !== text) return null;
+  if (
+    range.quotePrefixes &&
+    (text.match(/\r?\n/g)?.length ?? 0) !== range.quotePrefixes.length
+  )
+    return null;
   const preserved = preserveTextBreaks(
     range.text,
     text,
@@ -282,11 +316,19 @@ export function patchMarkdown(
   if (preserved === null) return null;
   text = preserved;
   if (text === range.text) return source;
-  const next = source.slice(0, range.from) + text + source.slice(range.to);
+  let index = 0;
+  const replacement = range.quotePrefixes
+    ? text.replace(
+        /\r?\n/g,
+        (ending) => ending + range.quotePrefixes![index++]!,
+      )
+    : text;
+  const next =
+    source.slice(0, range.from) + replacement + source.slice(range.to);
   return editableMarkdown(next).some(
     (node) =>
       node.from === range.from &&
-      node.to === range.from + text.length &&
+      node.to === range.from + replacement.length &&
       node.text === text &&
       sameContext(node, range),
   )

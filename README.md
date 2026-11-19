@@ -4,7 +4,23 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 
 ## Status
 
-Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. The Linux desktop build adds native picker-authorized opening, atomic saving and reopening. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: the prior Linux native isolation/resource tests passed, and Milestone 3 production validation has its own [evidence record](docs/security-evidence/2026-11-18/README.md). Source, Split and Visual modes now separate source authoring, live React execution and safe in-place Markdown edits. Plain paragraphs, headings and simple lists support checked, undoable text patches; React and formatted blocks remain opaque in Visual mode. See the [workspace decision](docs/decisions/ADR-007-unified-workspace.md) and [downloadable demo instructions](docs/ux-evidence/README.md).
+Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile
+in a browser worker, use JSX/imports/hooks/events in an isolated preview and
+save exact source. Linux adds picker-authorized opening, atomic saving/reopening
+and bounded versioned recovery with explicit unsaved restoration.
+
+Source, Split and Visual modes separate source authoring, React execution and
+trusted in-place Markdown editing. Literal paragraphs, headings, simple lists
+and quoted paragraphs support checked, undoable text patches. Explicit multiline
+quotes keep their line count, every marker and each original LF/CRLF ending;
+use Source to change structure. React, formatted and ambiguous blocks remain
+opaque. See the [workspace decision](docs/decisions/ADR-007-unified-workspace.md)
+and [quote contract](docs/decisions/ADR-010-multiline-quote-editing.md).
+
+This remains experimental and is not approved for hostile documents or production
+security readiness. [Implementation status](docs/IMPLEMENTATION_STATUS.md) links
+exact successful checks, failed acceptance gates and unresolved native risks;
+compilation, browser tests and packaged runtime evidence have distinct scopes.
 
 [Download the current browser review demo, screenshots and walkthrough](docs/demo/README.md).
 
@@ -55,9 +71,9 @@ CI uses Playwright's matching downloaded browser; cloud validation uses the syst
 | `npm run lint`         | ESLint with zero warnings allowed                                          |
 | `npm run format`       | Apply Prettier formatting                                                  |
 | `npm run format:check` | Verify formatting without changing files                                   |
-| `npm test`             | Run Vitest smoke tests once                                                |
+| `npm test`             | Run Vitest unit and regression tests                                       |
 | `npm run test:watch`   | Run Vitest interactively                                                   |
-| `npm run test:e2e`     | Build, start a production preview, and run Chromium smoke tests            |
+| `npm run test:e2e`     | Build, start a production preview, and run Chromium integration tests      |
 | `npm run check`        | Run formatting, lint, typecheck, unit tests, and production browser checks |
 
 `test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. Browser integration tests exercise actual compilation, React hooks, error recovery, source fidelity, offline rebuilds and negative security probes. Intentional sandbox violations and runtime-error fixtures produce expected console errors. Chromium is the baseline browser; Firefox and WebKit coverage are deferred.
@@ -103,4 +119,4 @@ Codex Cloud installation and restart instructions are saved in the environment c
 
 `npm run native:package` builds an optimized Debian package without test features. Follow [installation and desktop checks](docs/LINUX_DESKTOP_TESTING.md). Native source files are authorized through OS pickers; document code receives no filesystem capability. Conflicts, read-only errors and cancelled dialogs preserve the editor buffer. Automatic private versioned recovery snapshots are implemented, with explicit unsaved restoration and no automatic writes to original files; see [ADR-008](docs/decisions/ADR-008-versioned-recovery.md). The native preview requires actual network namespaces and delegated cgroup controllers and fails closed when unavailable.
 
-CI builds and inspects the package and uploads a temporary testing artifact. It does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.
+CI is configured to build and inspect the package and upload a temporary testing artifact. Latest hosted runs are blocked before runner startup by account billing; local results are recorded separately. It does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.

@@ -1312,3 +1312,75 @@ test('literal quote editing preserves original markers, opaque MDX and undo thro
     frame.getByRole('button', { name: 'Quote count 1', exact: true }),
   ).toBeVisible();
 });
+
+test('multiline quote text keeps every prefix and physical ending through no-op, undo, exact save and reopen', async ({
+  page,
+}) => {
+  const original =
+    '\uFEFFimport React from "react"\r\n\r\nexport function QuoteCounter(){const[n,setN]=React.useState(0);return <button onClick={()=>setN(n+1)}>Quote counter {n}</button>}\r\n\r\n<QuoteCounter />\r\n\r\n## Original heading\r\n\r\n  >  First café 😀.\r\n >\tSecond line.\n> Third line.\r\n\r\n{/* keep comment */}\r\n\r\n<div><span>Opaque JSX</span></div>\r\n\r\n> *Opaque formatting.*\r\n';
+  const logical = 'First café 😀.\nSecond line.\nThird line.';
+  await page.goto('/');
+  await open(page, original, 'multiline-quote.mdx');
+  const counter = page
+    .frameLocator('iframe')
+    .getByRole('button', { name: /Quote counter/ });
+  await expect(counter).toHaveText('Quote counter 0');
+  await counter.click();
+  await expect(counter).toHaveText('Quote counter 1');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await panel
+    .getByRole('button', { name: 'Original heading', exact: true })
+    .click();
+  await panel
+    .getByRole('textbox', { name: 'Heading text' })
+    .fill('Updated heading');
+  await panel.getByRole('textbox', { name: 'Heading text' }).press('Enter');
+  const quote = panel
+    .locator('blockquote')
+    .getByRole('button', { name: /First café/ });
+  await quote.click({ timeout: 5000 });
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await expect(field).toHaveValue(logical);
+  await field.fill(logical);
+  await field.press('Enter');
+  async function savedBytes() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!, 'utf8');
+  }
+  const headingOnly = original.replace('Original heading', 'Updated heading');
+  expect(await savedBytes()).toBe(headingOnly);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await savedBytes()).toBe(original);
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await quote.click();
+  await field.fill(logical.replace('Second line.', 'Changed: £50 + tax.'));
+  await field.press('Enter');
+  const changed = headingOnly.replace('Second line.', 'Changed: £50 + tax.');
+  expect(await savedBytes()).toBe(changed);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await savedBytes()).toBe(headingOnly);
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await savedBytes()).toBe(changed);
+  await quote.click();
+  await field.fill('First\nSecond\nThird\nExtra');
+  await field.press('Enter');
+  await expect(panel.getByRole('alert')).toBeVisible();
+  await expect(field).toHaveValue('First\nSecond\nThird\nExtra');
+  await expect(
+    page.getByRole('button', { name: 'Save source', exact: true }),
+  ).toBeDisabled();
+  await field.press('Escape');
+  expect(await savedBytes()).toBe(changed);
+  await open(page, changed, 'multiline-quote.mdx');
+  await expect(
+    panel.locator('blockquote').getByRole('button', { name: /Changed: £50/ }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Split', exact: true }).click();
+  await expect(counter).toHaveText('Quote counter 0');
+  await counter.click();
+  await expect(counter).toHaveText('Quote counter 1');
+});

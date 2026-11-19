@@ -85,3 +85,9 @@ bounded extension does not attempt it. Unsafe changes retain pending text and
 block saving until apply/cancel, using the existing contract. Source revision,
 opaque React boundaries, exact byte/history guarantees and filesystem authority
 are unchanged. This advances standard Markdown coverage without custom syntax.
+
+ADR010 now extends the strict explicit-continuation case with unchanged line count
+and exact prefix/ending preservation. Lazy/nested/formatted/JSX and structural
+quote changes described above remain Source-only. The initial single-line evidence
+is historical; current behavior and verification are linked from implementation
+status and ADR010.

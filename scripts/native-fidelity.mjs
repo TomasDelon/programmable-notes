@@ -29,6 +29,15 @@ await assert.rejects(lstat(draft), { code: 'ENOENT' });
 const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
 const mixedEol = process.argv.includes('--mixed-eol');
 const quotes = process.argv.includes('--quotes');
+const multilineQuotes = process.argv.includes('--multiline-quotes');
+assert.ok(!multilineQuotes || quotes, '--multiline-quotes requires --quotes');
+const multilineBefore =
+  'Multi quote café 😀.\r\nContinuation line.\nFinal line.';
+const multilineAfter = multilineBefore
+  .replace(/\r\n/g, '\n')
+  .replace('Continuation line.', 'Changed continuation: £50 + tax.');
+const multilineRaw =
+  '  > Multi quote café 😀.\r\n >\tContinuation line.\n> Final line.\r\n';
 const quoteBefore = 'Quoted café 😀.';
 const quoteAfter = 'Changed quote: £50 + tax.';
 const unsafeQuote = 'Unsafe\nLazy continuation.';
@@ -43,15 +52,24 @@ const source =
 const paragraphFixture = mixedEol
   ? source.replace('A paragraph: 50% + tax.', paragraph)
   : source;
-const fixture = quotes
+const quoteFixture = quotes
   ? paragraphFixture +
     '\r\n  >\t' +
     quoteBefore +
     '\r\n\r\n> *Opaque formatting.*\r\n\r\n> <span>Opaque quote JSX</span>\r\n'
   : paragraphFixture;
-const beforeParagraph = fixture
+const fixture = multilineQuotes
+  ? quoteFixture + '\r\n' + multilineRaw
+  : quoteFixture;
+const beforeMultiline = fixture
   .replace('Original title', 'Updated title')
   .replace(quoteBefore, quotes ? quoteAfter : quoteBefore);
+const beforeParagraph = multilineQuotes
+  ? beforeMultiline.replace(
+      'Continuation line.',
+      'Changed continuation: £50 + tax.',
+    )
+  : beforeMultiline;
 const saved = beforeParagraph.replace(
   paragraph,
   mixedEol
@@ -299,7 +317,7 @@ try {
   await expectSource('Updated title');
   if (quotes) {
     await waitUi(
-      `document.querySelectorAll('[aria-label="Markdown editing"] blockquote button').length===1`,
+      `document.querySelectorAll('[aria-label="Markdown editing"] blockquote button').length===${multilineQuotes ? 2 : 1}`,
     );
     // Normalization/no-op must add no history transaction.
     await inline(quoteBefore, 'Paragraph text', quoteBefore);
@@ -334,7 +352,7 @@ try {
     await inline(quoteBefore, 'Paragraph text', quoteAfter);
     await button('Save source');
     await fileIdle();
-    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    assert.equal(await readFile(file, 'utf8'), beforeMultiline);
     await history();
     await button('Save source');
     await fileIdle();
@@ -345,9 +363,56 @@ try {
     await history(true);
     await button('Save source');
     await fileIdle();
-    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    assert.equal(await readFile(file, 'utf8'), beforeMultiline);
     console.log(
       'NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS',
+    );
+  }
+  if (multilineQuotes) {
+    // Re-pasting textarea-normalized text must not add an undo step.
+    await inline(
+      multilineBefore,
+      'Paragraph text',
+      multilineBefore.replace(/\r\n/g, '\n'),
+    );
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeMultiline);
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(
+      await readFile(file, 'utf8'),
+      fixture.replace('Original title', 'Updated title'),
+    );
+    await history(true);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeMultiline);
+    const unsafe = 'One line.\nTwo lines.';
+    await inline(multilineBefore, 'Paragraph text', unsafe, false);
+    await waitUi(
+      `document.querySelector('textarea')?.value===${JSON.stringify(unsafe)} && document.querySelector('[aria-label="Markdown editing"] [role="alert"]')?.textContent.includes('Use Source')`,
+    );
+    await waitUi(
+      `Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source').disabled`,
+    );
+    await pressKey('Escape');
+    await inline(multilineBefore, 'Paragraph text', multilineAfter);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    await history();
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeMultiline);
+    await history(true);
+    await button('Save source');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), beforeParagraph);
+    assert.equal((await stat(file)).mode & 0o777, 0o640);
+    console.log(
+      'NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS',
     );
   }
   await inline(paragraph, 'Paragraph text', replacement);

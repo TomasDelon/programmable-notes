@@ -1,0 +1,134 @@
+/tmp/pn-native-RL6kRj
+NATIVE_FIDELITY_IDENTITY {"pid":33267,"executableSha256":"fd151c78178f79eef7de8cebffa5beca7f419365fab8519ad7a2c0a76781a516","observerSha256":"a3f431cff2a82bad7aeccd83345e20cbc34781155ff9d3535095ca11706183f9","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 33267, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-RL6kRj/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS
+NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS
+NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640
+NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS
+NATIVE_DIALOG {"pid": 33267, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 33267, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS
+NATIVE_FIDELITY_IDENTITY {"pid":33689,"executableSha256":"fd151c78178f79eef7de8cebffa5beca7f419365fab8519ad7a2c0a76781a516","observerSha256":"a3f431cff2a82bad7aeccd83345e20cbc34781155ff9d3535095ca11706183f9","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 33689, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-RL6kRj/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_EXPLICIT_RECOVERY_PASS original unchanged
+NATIVE_DIALOG {"pid": 33689, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 20, in window
+    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command
+    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Unsaved\\ source$']' returned non-zero exit status 1.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 135, in <module>
+    while window() is not None and time.monotonic() < deadline:
+          ^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 30, in window
+    raise RuntimeError(f'Native window query failed: {error.output!r} {error.stderr!r}') from error
+RuntimeError: Native window query failed: '' 'X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)\n  Major opcode of failed request:  14 (X_GetGeometry)\n  Resource id in failed request:  0x20c0b6\n  Serial number of failed request:  198\n  Current serial number in output stream:  198\n'
+NATIVE_FIDELITY_DIAGNOSTIC_UNAVAILABLE Error: {"value":{"error":"invalid session id","message":"session deleted because of page crash or hang.","stacktrace":""}}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-dialog.py 33689 button Unsaved source OK
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 20, in window
+    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command
+    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Unsaved\\ source$']' returned non-zero exit status 1.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 135, in <module>
+    while window() is not None and time.monotonic() < deadline:
+          ^^^^^^^^
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 30, in window
+    raise RuntimeError(f'Native window query failed: {error.output!r} {error.stderr!r}') from error
+RuntimeError: Native window query failed: '' 'X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)\n  Major opcode of failed request:  14 (X_GetGeometry)\n  Resource id in failed request:  0x20c0b6\n  Serial number of failed request:  198\n  Current serial number in output stream:  198\n'
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at dialog (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:35:18)
+    at shutdown (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:232:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:482:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 20, in window\n' +
+      "    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()\n" +
+      '          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command\n' +
+      "    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()\n" +
+      '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output\n' +
+      '    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n' +
+      '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+      '  File "/usr/lib/python3.12/subprocess.py", line 571, in run\n' +
+      '    raise CalledProcessError(retcode, process.args,\n' +
+      "subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Unsaved\\\\ source$']' returned non-zero exit status 1.\n" +
+      '\n' +
+      'The above exception was the direct cause of the following exception:\n' +
+      '\n' +
+      'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 135, in <module>\n' +
+      '    while window() is not None and time.monotonic() < deadline:\n' +
+      '          ^^^^^^^^\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 30, in window\n' +
+      "    raise RuntimeError(f'Native window query failed: {error.output!r} {error.stderr!r}') from error\n" +
+      "RuntimeError: Native window query failed: '' 'X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)\\n  Major opcode of failed request:  14 (X_GetGeometry)\\n  Resource id in failed request:  0x20c0b6\\n  Serial number of failed request:  198\\n  Current serial number in output stream:  198\\n'\n"
+  ],
+  pid: 33791,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 20, in window\n' +
+    "    ids = command('search', '--onlyvisible', '--name', '^' + re.escape(title) + '$').split()\n" +
+    '          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 15, in command\n' +
+    "    return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()\n" +
+    '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output\n' +
+    '    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,\n' +
+    '           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n' +
+    '  File "/usr/lib/python3.12/subprocess.py", line 571, in run\n' +
+    '    raise CalledProcessError(retcode, process.args,\n' +
+    "subprocess.CalledProcessError: Command '['xdotool', 'search', '--onlyvisible', '--name', '^Unsaved\\\\ source$']' returned non-zero exit status 1.\n" +
+    '\n' +
+    'The above exception was the direct cause of the following exception:\n' +
+    '\n' +
+    'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 135, in <module>\n' +
+    '    while window() is not None and time.monotonic() < deadline:\n' +
+    '          ^^^^^^^^\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 30, in window\n' +
+    "    raise RuntimeError(f'Native window query failed: {error.output!r} {error.stderr!r}') from error\n" +
+    "RuntimeError: Native window query failed: '' 'X Error of failed request:  BadDrawable (invalid Pixmap or Window parameter)\\n  Major opcode of failed request:  14 (X_GetGeometry)\\n  Resource id in failed request:  0x20c0b6\\n  Serial number of failed request:  198\\n  Current serial number in output stream:  198\\n'\n"
+}
+
+Node.js v24.22.1

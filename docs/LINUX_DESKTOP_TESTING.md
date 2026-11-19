@@ -134,3 +134,14 @@ external EIO mode requires a second administrator terminal in a disposable VM;
 [exact instructions and evidence](security-evidence/2026-11-19-stop-retry/README.md)
 record the first failed Stop, live group, detachment and second UI click. Never
 substitute a direct cleanup RPC for successful UI Stop.
+
+## Explicit multiline quoted paragraphs
+
+Run `NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-fidelity.mjs --mixed-eol --quotes --multiline-quotes`
+with a fresh fixture. It retains all older gates and adds marker-free logical input,
+no-op/history, rejected line-count changes, Unicode clipboard/Shift+Enter, exact
+prefix/mixed-ending disk bytes and Undo/Redo. Source remains required for structure.
+The external GTK driver now re-queries a transient X_GetGeometry BadDrawable race
+within its original deadline. Test `native-dialog-regression.py --query-fault-once`
+and `--query-fault-persistent`: one recovers; persistent query errors must still
+refuse dismissal. [Actual native results and failed first final-close observation](security-evidence/2026-11-19-multiline-quotes/README.md).

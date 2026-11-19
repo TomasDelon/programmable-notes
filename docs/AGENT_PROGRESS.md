@@ -1196,3 +1196,53 @@ IMPLEMENTATION_STATUS. Keep snapshots, JSX opacity, source revision and native
 limits unchanged. Do not rerun random clicks indefinitely or infer a fix from
 absence of reproduction. Browser demo remains the exact remotely verified f503644
 review ZIP; no native-only update is silently attributed to that older artifact.
+
+## 2026-11-19 — multiline quote implementation checkpoint
+
+Diagnostic milestone10cb2f3 pushed; PR#1 remains draft and includes its bounded
+120-click investigation. Current uncommitted ADR010/plan extends explicit literal
+multiline quote editing only with unchanged physical line count. Unit RED at absent
+range and actual browser RED at absent editable blockquote, then25 focused unit
+and actual full browser interaction GREEN. Full check75unit/31Chromium passed,
+including prior single-quote multiline-input rejection and all sandbox cases.
+Fresh read-only review found no Important/Critical issue; raw span integration in
+SourceEditor is unchanged. No native authority or JSX editing contract added.
+
+Optimized Debian287692f1… / installedELF fd151c78… built/inspected/installed. The
+native-fidelity observer now has --multiline-quotes (requires --quotes) and retains
+all old gates: new logical/raw quote fixture, exact no-op/history, rejected line
+count with pending input, real Unicode clipboard edit, raw prefix/mixed-ending
+save/undo/redo/mode0640, then old paragraph/list/close/restart/recovery checks.
+Observer a3f431cf…; fixture /tmp/pn-native-RL6kRj; actual native run is in progress
+at /tmp/pn-multiquote-native.log. Do not claim native support until the complete
+result. Source/builder and observer parity/evidence still need recording.
+
+Next: inspect native result, preserve any startup/render failure; run independent
+IPC regression on exact installed binary. Update ADR010/README/status/Linux testing,
+retain TDD/full/native logs and hashes, commit/push/update draft PR. Then refresh
+the downloadable review demonstration to include this current editing feature;
+the existing verified ZIP still binds f503644 and must not be relabelled as new.
+No pressure/hardware/security-readiness claim; prior SIGSEGV/blank/memory failures
+remain. Do not change fixed native limits or parser fallback to force acceptance.
+
+## 2026-11-19 — multiline quoted editing verified
+
+Full75unit/31Chromium check passed. Installed fd151c78… full expanded fidelity
+passed with --mixed-eol --quotes --multiline-quotes, including both quotes, exact
+mixed-ending disk/history, source mode0640, dirty-close cancellation, real restart,
+explicit unsaved recovery, invalid UTF8/delete and final shutdown. Independent
+native IPC passed on the same ELF. Host/builder seven files and host/guest three
+observers match; actual saved MDX host/guest SHA agrees.
+
+First full run failed only at final close query BadDrawable/X_GetGeometry, retained
+as a failed command. Actual GTK delayed-acceptance + recorded transport error made
+old driver RED after real acceptance; fixed once-only query retry GREEN. Persistent
+query error still refused at original deadline (innerdriver exit1; runner verified
+that refusal). No query error is absence, no acknowledged action is repeated and
+no app/security limit changed. External driver9fb7305b…; fidelity observera3f431cf….
+All failures/receipts and exact package287692f1… / ELFfd151c78… retained.
+
+Next commit/push this bounded feature, update draft PR/check exact CI head, then
+refresh recorded browser demonstration/download (source commit must be the newly
+pushed feature). Current review ZIP still binds f503644. Keep source fidelity,
+opaque JSX and unprivileged preview; old SIGSEGV/startup/memory blockers remain.
