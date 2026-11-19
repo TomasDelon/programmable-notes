@@ -1,0 +1,35 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-cleanup.test.ts (12 tests | 1 failed) 13ms
+   × confirms the group again when it repopulates during historical PID reads 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-cleanup.test.ts > confirms the group again when it repopulates during historical PID reads
+AssertionError: promise resolved "undefined" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+undefined
+
+ ❯ tests/unit/native-cleanup.test.ts:171:42
+    169|   f.options.identity = async () => { repopulated = true; return undefi…
+    170|   f.options.sample = async () => ({ members: {}, 'cgroup.procs': repop…
+    171|   await expect(waitForCleanup(f.options)).rejects.toThrow('Cleanup dea…
+       |                                          ^
+    172| });
+    173|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  19:59:14
+   Duration  1.02s (environment 84%, setup 9%, transform 4%, tests 1%)
+

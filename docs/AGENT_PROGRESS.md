@@ -1917,3 +1917,111 @@ anypossiblemigrationfinding. Deterministicnegativecontrolsfirst, thenactualnativ
 matrix. Afterwardindependentoriginal-SaveprocesscrashP0plan isprepared. Keepall
 JSC/startup/distribution/physicalhardware/billinglimitations. No merge/release/
 readyforrevieworproductionsecurityclaim.
+
+## 2026-11-19 — bounded cleanup observer implementation checkpoint
+
+Committed/pushed9dffcd08a9555906b216f53fff88e30c5d67abf8, PRheadverified/drafttrue,
+bodyRESTupdated. Exacthostedrun44603154321 bothjobs0steps:billing/spending-limit
+annotation confirmed, notexecutedCI. ProductnativeELFa6d00cbb unchanged.
+
+Newuncommittedscripts/native-cleanup.ts andnative-stressstoppedadapter require
+BOTH empty/removedgroup andseeded+subsequentPID/startidentitiesgone/reused/Z
+within one original5s/75sabsoluteMONOTONICdeadline. Finiteboundedoptions, lateIO
+checks; noPF_EXITINGshortcut/ignoredunexpectederrors/timeoutgrowth. Rawprocparser
+failsclosedonmalformedidentity. Nativepolicies/strictOOMoracle unchanged.
+
+InitialhelperimportRED; basiccontrolsGREEN. Reviewfoundstaleemptyconfirmation
+hole; actualempty→repopulatecontrolREDthenfixedwithconfirmation/newIDmerge/
+deadlinecheck.15newunitcontrols/typecheck/lintpassed. Liveadapterretainsfirst+
+latestperidentity andlogs state/cgroup/errorlocationchanges on everymatchinglive
+observation. Read-onlyre-review noCritical/Important. Original4/2matrix+warning
+remain; eventualcleanupdoesnotproveabsenceoftemporaryescape.
+
+Currentexec91711 /tmp/pn-cleanup-frozen-check.log is the finalfullNodecheck after
+sourcefreeze; don'tclaimpassuntilreceipt. Earlierexec40056/fullcheck passedon
+intermediatehelper, notfinalsource. Next: copyfinal scripts/native-cleanup.ts +
+native-stress.mjs toUbuntuacceptance, freshfixture, serialactualsixcasematrix
+onunchangedinstalledELFa6d00cbb. NoheavyhostcheckswhileGUItest. Retain sourcehashes,
+rawJSON/stdout andalllive/migrationobservations, actualOOM/CPU/expiry/Stop/recovery.
+Do notinferoriginalfailurefixed/allgreen. Evidence2026-11-19-bounded-cleanup isnew
+andhasRED/hostedbaseannotations. Then docs/securitycontractprocedure/read-only
+review/format/commit/push/update draftPR. Original-SaveSIGKILLP0plan follows.
+
+## 2026-11-19 — revised observer native matrix running
+
+Base9dffcd0 pushed/draftPRverified; latestCI44603154321 jobs0stepsbillingconfirmed.
+Finalhelper+adapter15controls pass; fullfrozenNodecheckexec91711 exited0:
+114unit/37Chromium, format/lint/types/freshbuild. Sourcefreezehash helper47b2f0a6…,
+stressbc735431…, strictOOMoracleunchanged637db391…. Host+guestverifiedsame;
+installednativeELFunchangeda6d00cbb…. No application/Rust/policychanges.
+
+Now actualfullsixcasematrixexec32953 running serial inVM:
+/tmp/pn-cleanup-native-matrix.log, exitreceiptoncompletion
+/tmp/pn-cleanup-native-matrix.exit, freshfixture/tmp/pn-native-DKukPE.
+NodecommandordinaryUID1000, samefixedlimits/JIT/defaultproductionautomationoff.
+Do notclaimresultuntilfinished. NoheavyhostcheckswhileliveGUI. Retainliveidentity
+first/latest/changedlocation evidence, structuredJSON/fullstdout/actualOOMjournal
+andfinalindependentRoot/unit/processcleanup. Alloriginal4/2failuresstillretained.
+
+Docssecuritycontractexplainschangedinstantaneous→boundedsemantics, confirmation,
+original5s/75sdeadlines andnoPFshortcut/ignorederrors. Evidencefolder
+2026-11-19-bounded-cleanup READMEpendingactualrun. CurrentdocsneedfinalPrettier
+beforecommit (post-testonlydocsupdated). Nextfinishactualmatrix/investigateany
+live/outsidegroupobservations; reviewresults/format/diff/commit/push/update draftPR.
+Then original-Saveprocess-crashP0plan2026-11-19-original-save-crash-validation.md.
+No merge/publicrelease/readiness/securitycertification. Neverrelabeloldfailures.
+
+## 2026-11-19 — independent next P0 test drafted while GUI remains serial
+
+Currentobservermatrixexec32953 /tmp/pn-cleanup-native-matrix.log ongoing:
+CPU-stop+freshCounter2 passed. Do notrunheavyhost/buildcheckswhileGUIlive.
+Independenttest-onlysource native-documents/tests/save_crash.rs drafted from
+publicStore/realown-childptracepattern:SIGKILLafterwrite/fsync/rename/dirsync,
+exactBOM+Unicode+mixedendingold/newbytes, mode640, untouchedsibling, freshStore
+openandsubsequentSave, orphan-temporarylimitationexplicit. Noexamplewriter yet:
+TDDnextstepistheactualignoredREDwithmissingwriter in cachedbuilder AFTERcurrent
+nativeGUImatrixfinishes, beforeimplementingwriter. No passing/crashclaimyet.
+KeepP0testseparatefromobservercommit; no productioncode/permissionchange.
+
+## 2026-11-19 — observer matrix five cases passed, final case running
+
+Exec32953 /tmp/pn-cleanup-native-matrix.log onunchangedELFa6d00cbb:
+CPU-stop, memoryfill(strictOOM), resident-pages(strictOOM), expiry andactual
+editorSIGKILL/independentexpiry/newRootCounter2 allpassed. Root51824 deliberately
+killed; newRoot52713 currentlyowns finalwindowclosecase. NoCLEANUP_MATCHING_LIVE
+observationseen sofar; donotclaimoriginalinstantassertcauseexplained. Lastcase
+stillrunning; requireexitreceipt/fullJSON/independentcleanupbeforereportingwhole
+matrix. Preservefirst4/2matrixandallwarningsunchanged. Sourcehelper47b2…/driverbc735…
+remainfrozen. CurrentfullNode114/37previouslypassed. NoheavyhostcheckswhileGUI.
+
+NextP0draftsave_crash.rs nowincludesactualPID/startTick/exepath+SHA256, syscall
+return+matchedFD, explicitx86entryconvention, ptraceprereqNOTRUNhandling andstrong
+exactbyte/mode/sibling/freshStoreassertions. Read-onlyreviewnoCritical/Important;
+stillNOTcompiledorrun; noexamplewriterexistsyet. Mandatoryoutertimeoutbecause
+OwnedChild.waitcleanupcanblock. NextTDDREDmissingwriter onlyAFTERGUIends, then
+writehelper. KeepdraftP0fileOUT ofobservercommit. Noappcode/permissionchange.
+
+## 2026-11-19 — observer matrix verified, ready to commit separately
+
+Actualserialfullmatrixexec32953 completedexit0 (receiptretained):6casespassed,
+12targets, stricttrustedOOMforbothmemoryfill/pages,536870912peak0swap, CPU774393us/
+3046ms/31throttled/Root529ms, Stop/expiry/editorSIGKILL/windowclose+Counter2recovery.
+NoMatchingLiveobservationemitted: donotclaimoriginalPID50295causeexplained.
+Independent96historicalidentitiesalloriginalsgone/reused/Z, Roots51824/52713gone,
+noownedunits/recovery.lockonly/installedELFa6d00cbbunchanged. RawJSON/stdout/exit/
+independentreceiptsin2026-11-19-bounded-cleanup. Alloriginal4/2failuresretained.
+
+Nextimmediate: docsfinalformat/diff/read-onlyevidencereview,stageONLYobserver
+files/docs/evidence (exclude untrackednative-documents/tests/save_crash.rs),
+commit/push/draftPRupdate/exactCI. Node114/37frozenpass source47b2…/bc735…already
+verified; noproductRustchange. Neverclaimhostedgreenwhilebilling0steps.
+
+IndependentP0save_crash.rs compiledsuccessfullyin cachedUbuntu. Initialartifact
+lookupassumedoldCargo/depslayout andfailed; subsequentattemptcouldnotfindtest
+binary(exit127), NOTatestreproduction. CorrectstructuredCargoartifactpathunder
+build/.../outthenused. Actualordinaryguestmissing-writerREDexecutedexit101,
+/tmp/pn-document-save-crash-missing-writer-red.log/.exit. Testfixturecleaned.
+Noexamplewriterimplementedyet; nextP0stepwriteexternalrestrictedmain-thread
+writerfromplan, compile/runrealSIGKILL4stageswithmandatoryoutertimeout, preserve
+allreceipts/compile+artifactsetupfailures, runremainingtestsandCIprocedure. Keep
+P0sourceOUT ofobservercommit. No merge/release/readiness/securitycertification.

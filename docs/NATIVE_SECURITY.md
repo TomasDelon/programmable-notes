@@ -100,6 +100,24 @@ The current editor suite launches the full installed application using the fixtu
 
 `npm run native:resource:test` compiles a trusted Rust helper (no GTK needed) and exercises the real Linux service/cgroup supervisor: a CPU loop, memory pressure, whole-group Stop, expiry, and restart after collected units. The helper receives only fixed test modes over stdin after limit verification. Missing/rejected backend exits 2, not PASS. It can take over a minute. It does not exercise WebKit or author JavaScript, and memory-pressure termination still requires journal evidence before labelling it an OOM enforcement pass. It passed in the delegated Ubuntu VM, with separate kernel/journal evidence for the helper OOM. Keep these helper results distinct from the actual WebKit JavaScript tests.
 
+### Bounded cleanup observation
+
+The current stress observer requires both an empty/removed cgroup and every
+historical PID/start identity absent, replaced or zombie before one absolute
+monotonic deadline: the existing5s Stop/close or75s lifetime-observation bound.
+It confirms cgroup emptiness again after asynchronous identity reads and tracks
+newly discovered identities. Malformed identities and unexpected errors fail;
+ENODEV is indeterminate, never proof of emptiness. Late evidence cannot pass.
+
+A matching live identity remains a blocker, including PF_EXITING. First/latest
+raw identity observations and state/cgroup/error-location changes are retained.
+This deliberately replaces the earlier immediate assertion at the first empty
+cgroup read with eventual proof within the same bound. The original failed
+matrix stays failed. Eventual cleanup does not independently establish that no
+temporary migration occurred: investigate any clear out-of-group identity even
+if it disappears later. Fixed runtime/resource policies and the trusted OOM
+oracle are unchanged. [Observer regression evidence](security-evidence/2026-11-19-bounded-cleanup/README.md).
+
 ## Resource and termination acceptance
 
 Build a normal embedded app without security-test, open it from a graphical user session, and close other app instances so unit observations are unambiguous. Watch generated units with:

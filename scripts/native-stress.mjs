@@ -15,6 +15,7 @@ import {
 } from './native-webdriver-lib.mjs';
 import { button, waitUi, rootPid } from './native-ui-lib.mjs';
 import { oomKillRecord } from './native-journal.ts';
+import { parseProcessIdentity, waitForCleanup } from './native-cleanup.ts';
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -184,40 +185,76 @@ function ui(target, name, action = 'click') {
   }
 }
 async function stopped(target, seconds = 75) {
-  const deadline = Date.now() + seconds * 1000;
-  while (Date.now() < deadline) {
-    const row = await sample(target.root);
-    target.samples.push(row);
-    if (row.observerTransient) {
-      await pause(100);
-      continue;
-    }
-    if (!row['cgroup.procs']) {
-      const known = Object.assign(
-        {},
-        ...target.samples.map((sample) => sample.members),
-      );
-      for (const [pid, info] of Object.entries(known)) {
-        try {
-          const stat = (await readFile(`/proc/${pid}/stat`, 'utf8'))
-            .split(') ')
-            .at(-1)
-            .split(' ');
-          assert.ok(
-            stat[19] !== info.start || stat[0] === 'Z',
-            `Live preview descendant survived: ${pid}`,
-          );
-        } catch (error) {
-          if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
-        }
+  await waitForCleanup({
+    milliseconds: seconds * 1000,
+    initial: Object.assign({}, ...target.samples.map((row) => row.members)),
+    now: () => performance.now(),
+    pause: () => pause(100),
+    sample: async () => {
+      const row = await sample(target.root);
+      target.samples.push(row);
+      return row;
+    },
+    identity: async (pid) => {
+      try {
+        const rawStat = await readFile(`/proc/${pid}/stat`, 'utf8');
+        return parseProcessIdentity(rawStat);
+      } catch (error) {
+        if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
+        return undefined;
       }
-      Object.assign(target, { ended: Date.now(), noLiveDescendants: true });
-      return;
-    }
-    await pause(100);
-  }
-  throw Error(`Service still populated after deadline: ${target.unit}`);
+    },
+    observeLive: async (pid, identity) => {
+      const observation = {
+        pid,
+        ...identity,
+        monotonicNs: process.hrtime.bigint().toString(),
+        sinceRequestMs: performance.now() - target.requestedMonotonic,
+        expectedCgroup: target.root.slice('/sys/fs/cgroup'.length),
+      };
+      let readFailure;
+      try {
+        observation.cgroup = await readFile(`/proc/${pid}/cgroup`, 'utf8');
+      } catch (error) {
+        observation.cgroupError = String(error);
+        if (error.code !== 'ENOENT' && error.code !== 'ESRCH')
+          readFailure = error;
+      }
+      const retained = (target.cleanupLiveObservations ??= []);
+      const previous = retained.find(
+        (entry) => entry.pid === pid && entry.start === identity.start,
+      );
+      // Bound retained snapshots per observed identity, but log every state or
+      // cgroup-location change. Later disappearance cannot erase migration evidence.
+      if (previous) {
+        const changed =
+          previous.latest.state !== observation.state ||
+          previous.latest.cgroup !== observation.cgroup ||
+          previous.latest.cgroupError !== observation.cgroupError;
+        previous.latest = observation;
+        if (changed)
+          console.log(
+            'CLEANUP_LIVE_IDENTITY_CHANGED',
+            JSON.stringify(observation),
+          );
+      } else {
+        retained.push({
+          pid,
+          start: identity.start,
+          first: observation,
+          latest: observation,
+        });
+        console.log(
+          'CLEANUP_MATCHING_LIVE_IDENTITY',
+          JSON.stringify(observation),
+        );
+      }
+      if (readFailure) throw readFailure;
+    },
+  });
+  Object.assign(target, { ended: Date.now(), noLiveDescendants: true });
 }
+
 function requireCause(target, pattern) {
   const journal = execFileSync(
     'journalctl',

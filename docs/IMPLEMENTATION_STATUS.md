@@ -361,7 +361,18 @@ not a whole-case pass; its precise process teardown remains under investigation.
 The original full-matrix result remains four passed/two failed. Separate fresh
 targeted runs then passed resident-page strictOOM/recovery (the live-PID failure
 was not reproduced) and actual editor-SIGKILL/independent expiry/new editor/Counter2.
-These do not relabel the original failures or establish repeatability. Healthy connection
+These do not relabel the original failures or establish repeatability.
+The external cleanup observer now requires both group emptiness and historical
+identity termination within one original absolute monotonic deadline, with final
+confirmation and retained live-location observations.15 controlled regressions
+and114unit/37browser checks passed. A fresh current-ELF six-case native run then
+passed all cases, including both strictOOM workloads, actual editorSIGKILL,
+expiry/Stop/windowclose and real Counter2 recovery. Independent96-identity/Root/
+unit cleanup passed. This changes the original instantaneous observer semantics;
+no policy or application authority changed, and the earlier failed results stay
+failed. No matching-live observation recurred in this run, so no original kernel
+teardown cause or absence of temporary escape is inferred.
+[Bounded observer evidence](security-evidence/2026-11-19-bounded-cleanup/README.md). Healthy connection
 still does not prove arbitrary React responsiveness. [ADR012](decisions/ADR-012-preview-renderer-termination.md)
 and [exact observations](security-evidence/2026-11-19-preview-renderer-loss/README.md).
 Keep the unresolved engine/resource failures explicit. The portable review is remote-verified

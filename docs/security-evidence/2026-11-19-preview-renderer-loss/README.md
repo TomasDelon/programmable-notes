@@ -96,8 +96,8 @@ first RED for the missing probe, then GREEN.
 
 The native callback improves failure propagation only. Exit1 or renderer loss
 never proves OOM; keep the trusted systemd `UNIT_RESULT=oom-kill` oracle unchanged.
-Full security/resource results and repeat outcome will be recorded after actual
-execution. Existing JSC/blank/startup failures, incomplete resident-page pressure
+Full resource results and targeted follow-ups below retain their exact executed
+scope and failures. Existing JSC/blank/startup failures, incomplete resident-page pressure
 acceptance, distribution/Wry maintenance risks and hosted-runner billing blocker
 remain. This record does not certify production security readiness.
 
