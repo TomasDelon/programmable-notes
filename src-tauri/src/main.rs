@@ -130,6 +130,9 @@ fn main() {
             let mut builder=WebviewWindowBuilder::new(app,label,url)
                 .title(if child {"Unprivileged document preview"} else {"Programmable Notes"})
                 .disable_drag_drop_handler()
+                // Rebuilding untrusted output must not take source typing focus.
+                // The user can still explicitly activate and interact with it.
+                .focused(!child)
                 .incognito(child)
                 .on_navigation(allowed_navigation);
             if let Some(html)=html.as_ref() {

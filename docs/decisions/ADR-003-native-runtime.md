@@ -39,3 +39,11 @@ Wry 0.57.2 discarded explicit automation when creating an incognito context. A d
 Tauri normalizes the editor entry URL to `tauri://localhost`, whose custom-scheme path is empty. The original navigation callback rejected it while accepting `/index.html`, leaving a blank normal editor even though the static probe worked. The corrected allowlist accepts the empty root path for the already pinned app origin, with a red/green native regression covering the root and denied external/unlisted destinations. No external route, permission, CSP or resource limit was broadened.
 
 The full-system VM was necessary because the outer rootless container has no delegated cgroup backend. QEMU TCG lacks KVM acceleration here. Supported software-rendering options avoided llvmpipe crashes; sandbox-disable variables were not used. Slow WebKit startup required a longer external AT-SPI readiness wait, not a longer service lifetime. The initial armed memory fixture expired before OOM; the contract’s immediate-allocation fixture subsequently produced actual cgroup OOM. Failed attempts are preserved alongside passes.
+
+## Initial window focus
+
+New preview windows start unfocused so a background/live rebuild cannot take
+source typing focus merely by creating a window. The editor still starts focused.
+Normal user selection and preview keyboard interaction remain supported; actual
+packaged red/green tests verify active PIDs, source input and a Space-key React
+update. This changes window behavior only, not preview capabilities or limits.

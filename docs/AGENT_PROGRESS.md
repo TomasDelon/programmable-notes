@@ -295,3 +295,21 @@ Tao's focused(false) restores accept-focus after drawing, so it may prevent only
 initial focus theft without disabling later user interaction; verify real red/green
 focus and keyboard tests before changing production behavior. Do not relax any
 resource, namespace, CSP or IPC check.
+
+New note is committed/pushed as 8e7a6f7; PR remains draft and description updated.
+Native focus probe then reproduced automatic source-focus theft on that package.
+A three-line builder change initializes only child windows unfocused. The rebuilt
+production package passed retained source keyboard input, explicit preview focus
+and Space-key React state update, then source textbox Undo. Full check passed
+45 unit / 23 Chromium, Rust app test passed, and native IPC/policy regression
+passed again. Evidence: 2026-11-19-native-focus. Initial focus is fixed; slow/blank
+startup and editor-crash recovery remain separate unresolved failures.
+
+The refreshed browser demonstration now also creates/saves a new note and verifies
+the prior lesson remains exact. Local recording succeeded after selecting the
+already installed Playwright encoder cache (the first default-cache attempt failed).
+Port 4188 was occupied, so this task owns a preview on 4189 (exec session 99540).
+Next: commit focus correction, package a current PR-accessible review demo because
+hosted Actions cannot start due account billing, then test automatic restart
+recovery for entirely unbound new notes. Do not include stale cache files or claim
+a new hosted artifact exists. Keep the PR draft and all isolation unchanged.

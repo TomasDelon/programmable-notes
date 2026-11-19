@@ -1,0 +1,8 @@
+NATIVE_FOCUS_UI {"pid": 9790, "button": "Count: 0", "action": "find", "passed": true}
+NATIVE_FOCUS_OBSERVATION {"root":9716,"child":9790,"active":9716,"unit":"programmable-notes-preview-9716-1795056234471381900.service"}
+XGetWindowProperty[_NET_ACTIVE_WINDOW] failed (code=1)
+NATIVE_FOCUS_UI {"pid": 9790, "button": "Count: 0", "action": "focus", "passed": true}
+NATIVE_FOCUS_UI {"pid": 9790, "button": "Count: 1", "action": "find", "passed": true}
+NATIVE_EXPLICIT_PREVIEW_KEYBOARD_INTERACTION_PASS
+XGetWindowProperty[_NET_ACTIVE_WINDOW] failed (code=1)
+NATIVE_EDITOR_FOCUS_PRESERVATION_AND_EXACT_UNDO_PASS

@@ -7,6 +7,7 @@ import pyatspi
 pid = int(sys.argv[1])
 name = sys.argv[2]
 action = sys.argv[3] if len(sys.argv) > 3 else 'click'
+assert action in ('click', 'find', 'focus'), 'Unsupported native action'
 limit = time.monotonic() + 55
 
 def find(node, depth=0):
@@ -32,6 +33,8 @@ while time.monotonic() < limit:
             if button is not None:
                 if action == 'click':
                     assert button.queryAction().doAction(0), 'Native action was rejected'
+                elif action == 'focus':
+                    assert button.queryComponent().grabFocus(), 'Native focus was rejected'
                 print(json.dumps({'pid': pid, 'button': name, 'action': action, 'passed': True}))
                 sys.exit(0)
         except Exception:

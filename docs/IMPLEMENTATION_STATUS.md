@@ -79,6 +79,11 @@ full-system desktop matrix. Each dated record retains exact package/source hashe
 failed attempts and limitations; earlier results do not certify later binaries.
 The cloud's artifact re-download is blocked by HTTP 403, even for verified uploads.
 
+New native preview windows now start unfocused. Actual packaged testing proved
+continued source keyboard input and normal explicit preview keyboard interaction,
+with native IPC/policy denials repeated. [Red/green evidence](security-evidence/2026-11-19-native-focus/README.md).
+This is an input-focus fix, not a claim that startup reliability is resolved.
+
 ## Security boundary and release blockers
 
 The browser preview uses an opaque origin, sandbox and hash CSP. Linux uses a
