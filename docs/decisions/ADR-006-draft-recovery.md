@@ -1,6 +1,6 @@
 # ADR-006 — Separate recovery drafts from source saves
 
-Status: browser drafts and explicit Linux versioned recovery implemented; see ADR-008 for immutable records, limits and failure behavior. Native automatic recovery is the next milestone.
+Status: browser drafts and explicit Linux versioned recovery implemented; see ADR-008 for immutable records, limits and failure behavior. Native automatic recovery now uses the same bounded version store; explicit source saves remain separate.
 
 Crash recovery should snapshot dirty buffers into an editor-owned store separate from the original files. A snapshot should carry its source bytes, document name, saved baseline identity, schema version and timestamp. Native snapshots belong in the application's private data directory and should be written atomically with a bounded size and retention policy. They must not contain reusable native file grants. Browser persistence needs a separate opt-in because it leaves note text in browser storage.
 

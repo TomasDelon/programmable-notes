@@ -53,6 +53,10 @@ async function start() {
   await launch();
   await waitUi("Boolean(document.querySelector('.cm-content'))");
   await button('Stop preview');
+  const automatic = await script(
+    `const done=arguments[arguments.length-1];done(Array.from(document.querySelectorAll('button')).some(b=>b.textContent==='Pause automatic recovery'));`,
+  );
+  if (automatic) await button('Pause automatic recovery');
   assert.equal((await invoke('stop_preview')).ok, true);
   return rootPid();
 }

@@ -39,3 +39,11 @@ export async function recoveryDigest(text: string) {
     b.toString(16).padStart(2, '0'),
   ).join('');
 }
+
+export interface RecoveryCandidate {
+  documentKey: string;
+  name: string;
+  source: string;
+  baseline?: string;
+  displayPath?: string;
+}

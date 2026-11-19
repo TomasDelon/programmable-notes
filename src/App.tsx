@@ -47,6 +47,24 @@ export function App() {
     () => compilerFiles({ files, entry, groups }),
     [files, entry, groups],
   );
+  const recoveryCandidates = useMemo(
+    () =>
+      Object.keys(files)
+        .filter((key) => files[key] !== documents.workspace.saved[key])
+        .map((key) => ({
+          documentKey: key,
+          name:
+            documents.workspace.bindings[key]?.name || key.split('/').pop()!,
+          source: files[key]!,
+          baseline: documents.workspace.saved[key],
+          displayPath: documents.workspace.bindings[key]?.displayPath,
+        })),
+    [files, documents.workspace.saved, documents.workspace.bindings],
+  );
+  const [recoveryHealth, setRecoveryHealth] = useState({
+    message: '',
+    error: false,
+  });
   const [html, setHtml] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('Waiting');
@@ -289,12 +307,25 @@ export function App() {
         </pre>
       )}
       {error && <pre role="alert">{error}</pre>}
+      {documents.native && recoveryHealth.message && (
+        <p
+          aria-label="Recovery status"
+          role={recoveryHealth.error ? 'alert' : undefined}
+        >
+          {recoveryHealth.message}
+        </p>
+      )}
       {documents.native && (
         <details>
           <summary>Recovery draft</summary>
           <RecoveryHistory
+            candidates={recoveryCandidates}
+            onHealth={setRecoveryHealth}
             documentKey={selected}
-            name={selected.split('/').pop()!}
+            name={
+              documents.workspace.bindings[selected]?.name ||
+              selected.split('/').pop()!
+            }
             source={files[selected]!}
             baseline={documents.workspace.saved[selected]}
             displayPath={documents.workspace.bindings[selected]?.displayPath}

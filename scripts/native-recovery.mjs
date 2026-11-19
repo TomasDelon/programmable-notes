@@ -57,6 +57,10 @@ async function start() {
   await launch();
   await wait("Boolean(document.querySelector('.cm-content'))");
   await button('Stop preview');
+  const automatic = await script(
+    `const done=arguments[arguments.length-1];done(Array.from(document.querySelectorAll('button')).some(b=>b.textContent==='Pause automatic recovery'));`,
+  );
+  if (automatic) await button('Pause automatic recovery');
   await invoke('stop_preview');
   await recoveryIdle();
   return rootPid();

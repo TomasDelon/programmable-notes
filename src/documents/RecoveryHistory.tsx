@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { nativeDocuments } from './native';
-import { recoveryDigest, type RecoveryInventory } from './recovery';
+import {
+  recoveryDigest,
+  type RecoveryCandidate,
+  type RecoveryInventory,
+} from './recovery';
 
+const noCandidates: RecoveryCandidate[] = [];
 const empty: RecoveryInventory = {
   snapshots: [],
   errors: [],
@@ -15,7 +20,11 @@ export function RecoveryHistory({
   displayPath,
   busy,
   restore,
+  candidates = noCandidates,
+  onHealth,
 }: {
+  candidates?: RecoveryCandidate[];
+  onHealth?: (health: { message: string; error: boolean }) => void;
   documentKey: string;
   name: string;
   source: string;
@@ -24,6 +33,10 @@ export function RecoveryHistory({
   busy: boolean;
   restore: (file: string) => Promise<void>;
 }) {
+  const [automatic, setAutomatic] = useState(true);
+  const [ready, setReady] = useState(false);
+  const lastWritten = useRef(new Map<string, RecoveryCandidate>());
+  const latestCandidates = useRef(candidates);
   const [inventory, setInventory] = useState(empty);
   const [selected, setSelected] = useState('');
   const [working, setWorking] = useState(false);
@@ -32,10 +45,11 @@ export function RecoveryHistory({
   const [session] = useState(() => crypto.randomUUID());
   const running = useRef(false);
   const alive = useRef(false);
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setInventory(await nativeDocuments.snapshots());
-  }
-  async function perform(action: () => Promise<void>) {
+    setReady(true);
+  }, []);
+  const perform = useCallback(async (action: () => Promise<void>) => {
     if (running.current) return;
     running.current = true;
     setWorking(true);
@@ -43,12 +57,15 @@ export function RecoveryHistory({
     try {
       await action();
     } catch (error) {
-      if (alive.current) setError(String(error));
+      if (alive.current) {
+        setError(String(error));
+        setAutomatic(false);
+      }
     } finally {
       running.current = false;
       if (alive.current) setWorking(false);
     }
-  }
+  }, []);
   useEffect(() => {
     alive.current = true;
     void perform(refresh);
@@ -56,48 +73,156 @@ export function RecoveryHistory({
       alive.current = false;
     };
     // Discovery is independent of the selected source. StrictMode reuses the in-flight request.
-  }, []);
+  }, [perform, refresh]);
+  useEffect(() => {
+    const problem =
+      error ||
+      inventory.errors[0]?.message ||
+      (inventory.capacityExceeded ? 'Recovery storage exceeds its limit.' : '');
+    onHealth?.({
+      message: problem
+        ? `Automatic recovery needs attention: ${problem}`
+        : automatic
+          ? 'Automatic recovery enabled for modified buffers.'
+          : 'Automatic recovery paused.',
+      error: Boolean(problem),
+    });
+  }, [automatic, error, inventory, onHealth]);
   const chosen =
     inventory.snapshots.find((s) => s.file === selected) ||
     inventory.snapshots[0];
-  async function keep() {
-    const documentId = (
-      await recoveryDigest(
-        displayPath
-          ? `native-path:${displayPath}`
-          : `session:${session}:${documentKey}`,
-      )
-    ).slice(0, 32);
-    const head = inventory.snapshots.find(
-      (s) => s.metadata.documentId === documentId,
-    );
-    const written = await nativeDocuments.snapshot({
-      documentId,
-      name,
-      source,
-      baseline: baseline === undefined ? null : await recoveryDigest(baseline),
-      parent: head?.id || null,
-    });
-    await refresh();
-    if (!written.durable)
-      throw Error(
-        written.warning ||
-          'Snapshot publication could not be confirmed durable; previous versions retained.',
+  const identity = useCallback(
+    async (candidate: RecoveryCandidate) => {
+      return (
+        await recoveryDigest(`buffer:${session}:${candidate.documentKey}`)
+      ).slice(0, 32);
+    },
+    [session],
+  );
+  const keepCandidate = useCallback(
+    async (candidate: RecoveryCandidate) => {
+      const documentId = await identity(candidate);
+      const head = inventory.snapshots.find(
+        (s) => s.metadata.documentId === documentId,
       );
-    setSelected(written.snapshot.file);
-    setNotice(
-      written.warning ||
-        'Recovery version stored separately from the original file.',
+      const written = await nativeDocuments.snapshot({
+        documentId,
+        name: candidate.name,
+        source: candidate.source,
+        baseline:
+          candidate.baseline === undefined
+            ? null
+            : await recoveryDigest(candidate.baseline),
+        parent: head?.id || null,
+      });
+      await refresh();
+      if (!written.durable)
+        throw Error(
+          written.warning ||
+            'Snapshot publication could not be confirmed durable; previous versions retained.',
+        );
+      if (written.warning) throw Error(written.warning);
+      lastWritten.current.set(candidate.documentKey, candidate);
+      setSelected(written.snapshot.file);
+      setNotice(
+        written.warning ||
+          'Recovery version stored separately from the original file.',
+      );
+    },
+    [identity, inventory, refresh],
+  );
+  useEffect(() => {
+    latestCandidates.current = candidates;
+    const keys = new Set(candidates.map((c) => c.documentKey));
+    for (const key of lastWritten.current.keys())
+      if (!keys.has(key)) lastWritten.current.delete(key);
+  }, [candidates]);
+  useEffect(() => {
+    if (
+      !automatic ||
+      !ready ||
+      busy ||
+      working ||
+      inventory.errors.length ||
+      inventory.capacityExceeded
+    )
+      return;
+    const changed = candidates.filter((candidate) => {
+      const previous = lastWritten.current.get(candidate.documentKey);
+      return (
+        candidate.source !== candidate.baseline &&
+        (!previous ||
+          previous.source !== candidate.source ||
+          previous.baseline !== candidate.baseline ||
+          previous.displayPath !== candidate.displayPath ||
+          previous.name !== candidate.name)
+      );
+    });
+    if (!changed.length) return;
+    const timer = setTimeout(
+      () =>
+        void perform(async () => {
+          for (const candidate of changed) {
+            const latest = latestCandidates.current.find(
+              (c) => c.documentKey === candidate.documentKey,
+            );
+            if (
+              latest?.source !== candidate.source ||
+              latest.baseline !== candidate.baseline ||
+              latest.displayPath !== candidate.displayPath
+            )
+              continue;
+            await keepCandidate(candidate);
+          }
+        }),
+      2000,
     );
-  }
+    return () => clearTimeout(timer);
+  }, [
+    automatic,
+    ready,
+    busy,
+    working,
+    candidates,
+    inventory,
+    perform,
+    identity,
+    keepCandidate,
+  ]);
   return (
     <section aria-label="Versioned recovery">
       <p>
+        Automatic recovery{' '}
+        {automatic ? 'is enabled after two seconds of inactivity' : 'is paused'}
+        . It writes only recovery records; original files require Save or Save
+        As.
+      </p>
+      <button
+        disabled={busy || working}
+        onClick={() => {
+          if (automatic) setAutomatic(false);
+          else
+            void perform(async () => {
+              await refresh();
+              setAutomatic(true);
+            });
+        }}
+      >
+        {automatic ? 'Pause automatic recovery' : 'Resume automatic recovery'}
+      </button>
+      <p>
         Recovery versions never save the original file. Restoring creates a
-        separate unsaved source. Keep up to five versions per document; total
+        separate unsaved source. Keep up to five versions per buffer; total
         storage is bounded.
       </p>
-      <button disabled={busy || working} onClick={() => void perform(keep)}>
+      <button
+        disabled={busy || working}
+        onClick={() =>
+          void perform(() =>
+            keepCandidate({ documentKey, name, source, baseline, displayPath }),
+          )
+        }
+      >
         Keep versioned snapshot
       </button>
       <button disabled={busy || working} onClick={() => void perform(refresh)}>
@@ -107,9 +232,13 @@ export function RecoveryHistory({
         disabled={busy || working}
         onClick={() =>
           void perform(async () => {
-            await nativeDocuments.migrateRecovery();
+            const imported = await nativeDocuments.migrateRecovery();
             await refresh();
-            setNotice('Legacy copy imported without deleting it.');
+            setNotice(
+              imported
+                ? 'Legacy copy imported without deleting it.'
+                : 'No legacy recovery copy was found.',
+            );
           })
         }
       >

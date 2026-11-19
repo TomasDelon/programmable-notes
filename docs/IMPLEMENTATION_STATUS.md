@@ -150,3 +150,16 @@ record/byte limits; failed writes never delete an earlier version to free space.
 See ADR-008 and the 2026-11-19 recovery-store/recovery-ui evidence for real ENOSPC,
 crash-state regression fixtures, installed-package restart and IPC-denial results.
 Automatic background snapshots remain the next implementation slice.
+
+### Automatic native recovery (P1)
+
+All modified native buffers receive debounced snapshots into the private version
+store. One batch is in flight, queued changes are coalesced and storage/revision
+failures pause recovery visibly. Separate per-buffer/session histories prevent a
+second buffer of the same file from pruning the first buffer's unsaved content.
+Original Save/Save As authorization and dirty flags are unchanged. The installed
+package passed actual automatic capture, six-version bounded retention, process
+restart/discovery, explicit restore/save and real filesystem ENOSPC pause/resume.
+See `docs/security-evidence/2026-11-19-automatic-recovery` for exact inputs, hashes,
+failed driver attempts, commands and limitations. Local checks passed 34 unit and
+18 Chromium tests; GitHub CI must be read separately for each pushed revision.

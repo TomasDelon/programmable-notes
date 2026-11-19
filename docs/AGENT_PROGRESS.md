@@ -92,3 +92,20 @@ and the complete repository check pass (34 unit, 18 Chromium). The optimized
 P1 package is installed; actual automatic snapshot/restart/retention testing is
 running. Next action: inspect that log, run native disk-full pause/resume, then
 commit P1 with evidence and update draft PR #1.
+
+## P1 ready for checkpoint
+
+CI correction `b7f29e0` passed both jobs in run `44424517094`, including real
+ENOSPC. P1 installed automatic recovery passed: two same-file dirty buffers,
+independent histories/five-version retention, unchanged original, actual restart,
+explicit unsaved restore and exact Save As. GUI ENOSPC passed visible failure,
+auto pause, previous-version preservation, explicit Save while full, and explicit
+Resume after space was freed. Manual and native IPC regressions passed again.
+All executed observations and failed harness attempts are in
+`docs/security-evidence/2026-11-19-automatic-recovery`. No sandbox was relaxed.
+
+Next executable action: commit/push P1 and update draft PR #1, then start P2
+source-fidelity regressions for front matter, fences, Unicode and unchanged
+save/reopen. In particular, verify that YAML-style front matter is kept opaque
+rather than offered as editable Setext headings. Keep generated artifacts and
+synthetic recovery records out of Git; only evidence/logs and source belong here.

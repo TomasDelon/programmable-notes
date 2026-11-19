@@ -1,0 +1,13 @@
+NATIVE_DIALOG {"pid": 2229, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-j3zDv6/automatic-original.mdx"}
+NATIVE_AUTO_ENOSPC_PAUSE_VISIBLE_ERROR_PRIOR_VERSION_AND_EXPLICIT_SAVE_PASS
+file:///opt/pn/acceptance/scripts/native-webdriver-lib.mjs:36
+  if (!response.ok) throw Error(JSON.stringify(json));
+                          ^
+
+Error: {"value":{"error":"unknown error","message":"","stacktrace":""}}
+    at wd (file:///opt/pn/acceptance/scripts/native-webdriver-lib.mjs:36:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async appendSource (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:75:3)
+    at async file:///opt/pn/acceptance/scripts/native-auto-enospc.mjs:174:3
+
+Node.js v24.22.1

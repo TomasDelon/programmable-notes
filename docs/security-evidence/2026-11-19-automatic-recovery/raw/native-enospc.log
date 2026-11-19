@@ -1,0 +1,5 @@
+NATIVE_DIALOG {"pid": 2451, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-JuterA/automatic-original.mdx"}
+NATIVE_AUTO_ENOSPC_PAUSE_VISIBLE_ERROR_PRIOR_VERSION_AND_EXPLICIT_SAVE_PASS
+NATIVE_AUTO_RECOVERY_EXPLICIT_RESUME_AFTER_REAL_ENOSPC_PASS
+NATIVE_DIALOG {"pid": 2451, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 2451, "title": "Unsaved source", "action": "button", "argument": "OK"}
