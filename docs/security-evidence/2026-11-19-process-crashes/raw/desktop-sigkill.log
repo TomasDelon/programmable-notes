@@ -1,0 +1,13 @@
+NATIVE_DIALOG {"pid": 4113, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-bbw6bv/automatic-original.mdx"}
+NATIVE_DIALOG {"pid": 4113, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-bbw6bv/automatic-original.mdx"}
+NATIVE_AUTOMATIC_MULTI_BUFFER_INDEPENDENT_RETENTION_AND_UNCHANGED_ORIGINAL_PASS
+NATIVE_ACTUAL_ROOT_SIGKILL 4113
+NATIVE_AUTOMATIC_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 4238, "title": "Save source as", "action": "cancel", "argument": ""}
+X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  15 (X_QueryTree)
+  Resource id in failed request:  0x2020ad
+  Serial number of failed request:  336
+  Current serial number in output stream:  336
+NATIVE_DIALOG {"pid": 4238, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-bbw6bv/automatic-restored.mdx"}
+NATIVE_AUTOMATIC_RESTORE_UNSAVED_CANCEL_AND_EXPLICIT_EXACT_SAVE_PASS

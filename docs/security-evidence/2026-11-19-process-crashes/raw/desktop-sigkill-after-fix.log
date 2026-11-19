@@ -1,0 +1,8 @@
+NATIVE_DIALOG {"pid": 4542, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-bJPWWV/automatic-original.mdx"}
+NATIVE_DIALOG {"pid": 4542, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-bJPWWV/automatic-original.mdx"}
+NATIVE_AUTOMATIC_MULTI_BUFFER_INDEPENDENT_RETENTION_AND_UNCHANGED_ORIGINAL_PASS
+NATIVE_ACTUAL_ROOT_SIGKILL 4542
+NATIVE_AUTOMATIC_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 4673, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 4673, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-bJPWWV/automatic-restored.mdx"}
+NATIVE_AUTOMATIC_RESTORE_UNSAVED_CANCEL_AND_EXPLICIT_EXACT_SAVE_PASS

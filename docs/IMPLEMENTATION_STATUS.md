@@ -173,3 +173,21 @@ metadata/runtime grammar feature was introduced. New exact-byte browser and
 installed WebKitGTK acceptance covers metadata, imports, JSX, fences, real React
 interaction, visual patches, undo/redo, no-op save and reopening. Local checks
 passed 39 unit and 19 Chromium tests. See the dated source-fidelity evidence.
+
+### Real process-crash boundaries
+
+An external validation writer now proves recovery after SIGKILL at pending write,
+file fsync, atomic rename and directory fsync boundaries. It uses actual syscalls
+and no production failpoints. A separate installed-desktop SIGKILL/restart test
+also passed discovery and exact recovery without rewriting the original. The
+ordinary suite marks the tracing test environment-dependent; CI executes a named
+Linux x86_64 gate with a hard timeout and fail-closed output handling. See the
+2026-11-19 process-crash evidence. These observations do not prove power-loss
+behavior of disks, firmware or other filesystems.
+
+Parallel validation also exposed and reproduced a fork-inherited recovery lock
+outliving its guard. Explicit guard-drop unlock fixes the false busy error without
+weakening mutual exclusion. The regression, ten parallel-suite repetitions, real
+ENOSPC and all four real writer-kill stages passed; exact raw evidence is retained
+in the same dated directory. The fixed optimized package was rebuilt for restart
+acceptance. P2 commit `438f4b4` passed both GitHub CI jobs (run `44430453610`).

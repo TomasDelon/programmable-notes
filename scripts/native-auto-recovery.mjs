@@ -80,16 +80,22 @@ async function open(pid) {
   );
 }
 async function exit(pid, dirty) {
-  const request = () =>
-    execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
-      timeout: 10000,
-    });
-  request();
-  if (dirty) {
-    dialog(pid, 'button', 'Unsaved source', 'Cancel');
-    assert.doesNotThrow(() => process.kill(pid, 0));
+  const crash = dirty && process.env.NATIVE_CRASH_RESTART === '1';
+  if (crash) {
+    process.kill(pid, 'SIGKILL');
+    console.log('NATIVE_ACTUAL_ROOT_SIGKILL', pid);
+  } else {
+    const request = () =>
+      execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
+        timeout: 10000,
+      });
     request();
-    dialog(pid, 'button', 'Unsaved source', 'OK');
+    if (dirty) {
+      dialog(pid, 'button', 'Unsaved source', 'Cancel');
+      assert.doesNotThrow(() => process.kill(pid, 0));
+      request();
+      dialog(pid, 'button', 'Unsaved source', 'OK');
+    }
   }
   for (let i = 0; i < 200; i++) {
     try {

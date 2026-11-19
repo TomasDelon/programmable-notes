@@ -76,6 +76,15 @@ pub struct Recovery {
     _lock: Option<File>,
     maintenance_warning: Option<String>,
 }
+impl Drop for Recovery {
+    fn drop(&mut self) {
+        if let Some(lock) = &self._lock {
+            // A forked child can retain this open file description until exec.
+            // Release at the guard boundary rather than its last descriptor close.
+            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_UN) };
+        }
+    }
+}
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }

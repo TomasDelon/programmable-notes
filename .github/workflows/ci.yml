@@ -76,12 +76,19 @@ jobs:
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
       - run: cargo test --manifest-path native-documents/Cargo.toml --locked
       - name: Verify recovery under real ENOSPC on a disposable tmpfs
+        shell: bash
         run: |
           pn_recovery_fs=$(mktemp -d)
           sudo mount -t tmpfs -o "size=2M,uid=$(id -u),gid=$(id -g),mode=0700" tmpfs "$pn_recovery_fs"
           trap 'sudo umount "$pn_recovery_fs"; rmdir "$pn_recovery_fs"' EXIT
           PN_RECOVERY_SMALL_FS="$pn_recovery_fs" cargo test --manifest-path native-documents/Cargo.toml --locked --test snapshots -- --ignored --exact real_enospc_preserves_previous_snapshot --nocapture | tee /tmp/recovery-enospc.log
           grep -F 'test real_enospc_preserves_previous_snapshot ... ok' /tmp/recovery-enospc.log
+      - name: Verify recovery after real writer process crashes
+        shell: bash
+        run: |
+          cargo build --manifest-path native-documents/Cargo.toml --locked --example recovery-crash-writer
+          PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact process_crashes_preserve_durable_recovery_at_each_publication_stage --nocapture | tee /tmp/recovery-crash.log
+          grep -F 'REAL_PROCESS_CRASH_PASS stage=durable' /tmp/recovery-crash.log
       - run: cargo test --manifest-path src-tauri/Cargo.toml --features custom-protocol,security-test --locked
       - run: npm run native:wry:verify
       - run: npm run native:package

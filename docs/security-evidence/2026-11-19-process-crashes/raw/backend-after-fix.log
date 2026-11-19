@@ -1,0 +1,75 @@
+   Compiling native-documents v0.1.0 (/workspace/programmable-notes/native-documents)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.99s
+     Running unittests src/lib.rs (native-documents/target/debug/build/native-documents/bfff297c7d598912/out/native_documents-bfff297c7d598912)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/draft.rs (native-documents/target/debug/build/native-documents/bd6a407a75bf10cd/out/draft-bd6a407a75bf10cd)
+
+running 2 tests
+test concurrent_snapshots_never_replace_the_winner ... ok
+test recovery_uses_one_private_copy_and_never_replaces_an_existing_draft ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/process_crash.rs (native-documents/target/debug/build/native-documents/42f43e91df075d61/out/process_crash-42f43e91df075d61)
+
+running 1 test
+test process_crashes_preserve_durable_recovery_at_each_publication_stage ... ignored, requires a disposable Linux x86_64 environment permitting own-child ptrace
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.35s
+
+     Running tests/store.rs (native-documents/target/debug/build/native-documents/7f180d80475ded9c/out/store-7f180d80475ded9c)
+
+running 18 tests
+test confirmed_save_as_conflicts_if_target_changes_while_dialog_is_open ... ok
+test disk_replacement_symlink_cannot_redirect_a_save ... ok
+test atomic_save_preserves_extended_attributes ... ok
+test explicit_reopen_refreshes_conflicted_source_and_revision ... ok
+test explicit_selected_module_paths_share_a_logical_root_without_loading_neighbors ... ok
+test forged_tokens_stale_revisions_and_external_changes_do_not_overwrite ... ok
+test invalid_logical_name_does_not_leak_partial_batch_grants ... ok
+test opened_document_saves_atomically_and_reopens_exact_utf8_crlf ... ok
+test parent_rename_keeps_saves_in_the_authorized_directory ... ok
+test read_only_failure_retains_original_and_does_not_leave_temp_files ... ok
+test refuses_symlinks_fifo_invalid_utf8_oversize_and_unlisted_extensions ... ok
+test save_as_new_file_grants_only_its_selected_target ... ok
+test save_as_rejects_non_utf8_filename_before_any_commit ... ok
+test save_as_selection_does_not_clobber_a_later_created_file ... ok
+test saving_selected_hardlink_does_not_modify_an_unselected_alias ... ok
+test open_batch_is_transactional_and_limits_grants ... ok
+test concurrent_readers_observe_only_complete_old_or_new_source ... ok
+test aggregate_source_bytes_and_multibyte_save_size_are_bounded ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+   Doc-tests native_documents
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

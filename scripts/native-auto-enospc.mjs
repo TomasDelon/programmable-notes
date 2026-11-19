@@ -110,6 +110,7 @@ async function open(pid) {
     "Boolean(document.querySelector('.cm-content')) && document.querySelector('select[aria-label=\"Source file\"]').value.endsWith('automatic-original.mdx')",
   );
 }
+let applicationClosed = false;
 async function exit(pid, dirty) {
   const request = () =>
     execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
@@ -131,6 +132,7 @@ async function exit(pid, dirty) {
     await pause(100);
   }
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
+  applicationClosed = true;
   await close().catch(() => {});
 }
 const fillerPath = process.env.PN_RECOVERY_FILLER;
@@ -225,7 +227,7 @@ try {
   // A failed WebDriver attempt must not leave automatic writes running after
   // the caller unmounts this disposable recovery filesystem.
   try {
-    process.kill(await rootPid(), 'SIGTERM');
+    if (!applicationClosed) process.kill(await rootPid(), 'SIGTERM');
   } catch {
     /* Already exited. */
   }

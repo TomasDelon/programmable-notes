@@ -410,3 +410,56 @@ fn inventory_uses_real_file_lengths_for_one_record_crash_headroom() {
         500_000
     );
 }
+
+#[test]
+fn finished_writer_unlocks_even_while_a_forked_child_retains_descriptors() {
+    let f = Fixture::new("inherited-lock");
+    let mut store = f.store();
+    let prior = store.append(input("durable before fork", None)).unwrap();
+    let mut pipe = [0; 2];
+    assert_eq!(
+        unsafe { libc::pipe2(pipe.as_mut_ptr(), libc::O_CLOEXEC) },
+        0
+    );
+    let pid = unsafe { libc::fork() };
+    assert!(pid >= 0);
+    if pid == 0 {
+        // Only async-signal-safe calls are permitted after fork in this
+        // multithreaded test process. No Rust allocation or destructor runs.
+        unsafe {
+            libc::close(pipe[1]);
+            let mut byte = 0u8;
+            libc::read(pipe[0], (&mut byte as *mut u8).cast(), 1);
+            libc::_exit(0);
+        }
+    }
+    unsafe {
+        libc::close(pipe[0]);
+    }
+    drop(store);
+    let reopened = Recovery::open(&f.0.join("recovery"));
+    unsafe {
+        let byte = 1u8;
+        libc::write(pipe[1], (&byte as *const u8).cast(), 1);
+        libc::close(pipe[1]);
+    }
+    let mut status = 0;
+    loop {
+        let result = unsafe { libc::waitpid(pid, &mut status, 0) };
+        if result == pid {
+            break;
+        }
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::EINTR)
+        );
+    }
+    assert!(libc::WIFEXITED(status));
+    assert_eq!(libc::WEXITSTATUS(status), 0);
+    let reopened = reopened
+        .expect("A finished writer must release its lock before an inherited descriptor closes");
+    assert_eq!(
+        reopened.restore(&prior.snapshot.file).unwrap(),
+        "durable before fork"
+    );
+}

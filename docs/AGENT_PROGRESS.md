@@ -128,3 +128,45 @@ libtest worker is not a main-process syscall trace. Do not claim that test passe
 Move the traced writer to a separate main-thread validation executable, retain
 an external timeout/owned-child cleanup, and run only in the disposable VM before
 enabling a CI gate. No production recovery code needs modification yet.
+
+## Actual crash checkpoint
+
+P2 is committed/pushed as `438f4b4`. New external writer tests passed actual
+SIGKILL at write, file-fsync, publication and directory-fsync syscall boundaries
+in the ordinary-user VM. The prior durable version survived all four cases;
+new readers removed incomplete temporaries and repaired retention safely.
+The installed P2 desktop also passed actual main-process SIGKILL, restart,
+discovery, explicit unsaved restore, cancellation and exact separate saving.
+Evidence: `docs/security-evidence/2026-11-19-process-crashes`.
+
+The timed-out libtest-worker prototype was replaced by a separate main-thread
+writer. Review caught/fixed stale Child reaping and missing explicit pipefail in
+CI. The negative CI-shell probe now fails with status 7 even after printing the
+success marker. The ENOSPC gate is also explicitly Bash. No production recovery
+or isolation code changed. Next action: commit this validation milestone, verify
+its CI, then measure repeated large-document AST parsing before optimizing it.
+Keep draft PR #1 unchanged in readiness and preserve every source validator.
+
+## Fork-inherited lock correction
+
+The full parallel backend run caught an intermittent busy error, reproduced by a
+deterministic fork retaining the lock descriptor. The red regression is retained.
+Recovery now explicitly unlocks at guard drop, including while a forked child is
+alive; failed acquisitions cannot unlock another owner. Read-only review found no
+remaining important issue. Full backend tests passed (35), ten snapshot-suite
+repetitions passed, actual writer SIGKILL at all four boundaries and real ENOSPC
+passed again. Full npm check passed 39 unit / 19 Chromium tests. The optimized
+package was rebuilt and installed; its SIGKILL/restart suite is in progress.
+P2 CI run 44430453610 passed both jobs. No sandbox restriction changed.
+
+Next action: finish installed restart validation, retain exact evidence, commit
+and push this crash/locking milestone; then measure repeated large-document AST
+parsing and choose a small bounded optimization only if the measurement warrants
+it. PR #1 stays draft. Do not claim fresh CPU/OOM/expiry stress or power-loss tests.
+
+Installed lock-fix package acceptance completed successfully: actual root SIGKILL,
+fresh-process discovery, explicit restore, cancelled Save As, exact separate save,
+unchanged original and final clean exit. All evidence is retained. A first timing
+probe of 5,000 CRLF paragraphs (193,888 UTF-16 units) measured 735–1,610 ms for
+mapping/no-op/patch/remapping. Next: a bounded exact-source AST reuse optimization
+with all validation preserved, then full regressions and a reproducible benchmark.
