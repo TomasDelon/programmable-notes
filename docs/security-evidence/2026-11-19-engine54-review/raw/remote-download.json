@@ -1,0 +1,10 @@
+{
+  "scope": "actual GitHub GitBlob download; every byte compared with delivered archive",
+  "deliveryCommit": "16e8a3a09d33e05b57dbe1992eb25dc1c3c8ee84",
+  "applicationSource": "54c41a75d2bef22b76b55d64cecc9f8e8731d629",
+  "gitBlob": "34ce65cfbbf7316a02d67d04e6dc7e551a8afb96",
+  "bytes": 10984209,
+  "sha256": "0d802c849718fa6ab5e36c3a1e8af69ffe42ab0d58743e54061bc8404e1cea26",
+  "byteForByteEqual": true,
+  "url": "https://github.com/TomasDelon/programmable-notes/blob/16e8a3a09d33e05b57dbe1992eb25dc1c3c8ee84/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true"
+}

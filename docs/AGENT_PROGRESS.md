@@ -1460,3 +1460,19 @@ visible Sourcefile labels across separate openedgroups (current options strip
 opened-N prefix / native binding name). Preserve source/grants/history; no design
 replacement. Latest native full6case remains5pass/1pageOOMfailure; oldJSC/startup
 issues/billing remain, no release/readiness or native claim from browser media.
+
+## 2026-11-19 — current review remote receipt
+
+Delivery16e8a3a pushed, PRhead/draft verified. Actual remote GitBlob34ce65cf…
+matched10,984,209bytes/SHA2560d802c84…/objectSHA; immutable URL and receipt now
+pin source54c41a7,27.64s video/23PNGs/20displayedimages/7actualexports. Native
+5pass/1pageOOMfailure scope unchanged. Hosted16e8 run44550796321 failed; fetch
+exactannotations, then updatePR/currenthead. No publicrelease/readiness change.
+
+Next boundedcoretask: Source dropdown currently has identical visible names for
+separateopenedgroups withsamefilename; use presentation ordinals while preserving
+actual source keys/grants. Also useDocuments.select currently accepts closed/
+unknown/prototype keys, violating selected/entry membership if a stale event is
+delivered. Reproduce with unit/browser tests before fixing; reject unknownkeys in
+functional latest-workspace updater, preserve per-doc bytes/history, validate
+actualnative pair selection/saves. No aesthetic redesign or new permissions.

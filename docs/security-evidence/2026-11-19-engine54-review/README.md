@@ -44,3 +44,8 @@ blank failures remain. No fresh native test, public release or security readines
 is inferred from browser media. Hosted CI remains separately blocked before steps
 by account billing. PR #1 remains draft. See docs/demo/README.md for the current
 portable download, local serving instructions and historical immutable link.
+
+Delivery16e8a3a is pushed. Actual remote Git blob34ce65cf… matched every one of
+the10,984,209 bytes and SHA2560d802c84…; its Git blob object hash also matched.
+The README download is now pinned to that immutable delivery. Raw base64 response
+remains ignored locally; only the concise verification receipt is versioned.

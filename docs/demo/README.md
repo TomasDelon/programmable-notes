@@ -1,6 +1,6 @@
 # Downloadable editor review
 
-[Download the current browser review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
+[Download the current browser review ZIP](https://github.com/TomasDelon/programmable-notes/blob/16e8a3a09d33e05b57dbe1992eb25dc1c3c8ee84/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
 (10,984,209 bytes).
 
 The application source is `54c41a7`; these delivery-tool changes do not change
@@ -65,4 +65,4 @@ executable override unset.
 
 [Previous immutable engine 34dc906 review](https://github.com/TomasDelon/programmable-notes/blob/247ee9a1de67c027a032ee1ba162fd03714611ba/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
 and its [remote receipt](../security-evidence/2026-11-19-multiline-review/raw/remote-download.json)
-remain historical. The current delivery gets its own immutable download receipt.
+remain historical. The current remote Git blob was downloaded and matched every byte. [Current download receipt](../security-evidence/2026-11-19-engine54-review/raw/remote-download.json).
