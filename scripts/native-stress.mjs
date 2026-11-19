@@ -1,5 +1,6 @@
 /** Actual hostile JavaScript in WebKit, with the production supervisor unchanged. */
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
@@ -12,7 +13,8 @@ import {
   systemctl,
   artifact,
 } from './native-webdriver-lib.mjs';
-import { button, waitUi } from './native-ui-lib.mjs';
+import { button, waitUi, rootPid } from './native-ui-lib.mjs';
+import { oomKillRecord } from './native-journal.ts';
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,13 +38,27 @@ const memorySource = `export function Pressure() {
 }
 
 <Pressure />`;
+// Distinct from full-fill pressure: dirty every resident page, retain all blocks.
+// No policy/deadline change; the original full-fill fixture remains mandatory.
+const memoryPagesSource = `export function PagePressure() {
+  const retained = globalThis.__pnPagePressure = [];
+  while (true) {
+    const block = new Uint8Array(128 * 1024 * 1024);
+    retained.push(block);
+    for (let offset = 0; offset < block.length; offset += 4096) block[offset] = 1;
+  }
+  return null;
+}
+
+<PagePressure />`;
 const counterSource = await readFile(
   'docs/handoff/samples/fixtures/counter.mdx',
   'utf8',
 );
 const counter = await artifact(counterSource),
   cpu = await artifact(cpuSource),
-  memory = await artifact(memorySource);
+  memory = await artifact(memorySource),
+  memoryPages = await artifact(memoryPagesSource);
 function fieldStats(value) {
   return Object.fromEntries(
     value.split('\n').map((line) => {
@@ -108,7 +124,10 @@ async function start(code) {
           ? 'cpu-loop'
           : code === memory
             ? 'memory'
-            : 'unknown',
+            : code === memoryPages
+              ? 'memory-pages'
+              : 'unknown',
+    artifactSha256: createHash('sha256').update(code).digest('hex'),
     unit,
     requestedAt,
     requestedMonotonic,
@@ -215,6 +234,27 @@ function requireCause(target, pattern) {
   report.journal = journal;
   return journal;
 }
+function requireOomKill(target) {
+  const journal = execFileSync(
+    'journalctl',
+    ['--user', '--no-pager', '-u', target.unit, '-o', 'json'],
+    { encoding: 'utf8', timeout: 10000 },
+  );
+  target.journalJson = journal;
+  target.journalRecords = journal
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  target.oomKillRecord = oomKillRecord(
+    target.journalRecords,
+    target.unit,
+    process.getuid(),
+  );
+  assert.ok(
+    target.oomKillRecord,
+    `Missing trusted systemd OOM-kill result for ${target.unit}`,
+  );
+}
 function requireExpiry(target) {
   const elapsed = Date.now() - target.started;
   assert.ok(
@@ -245,6 +285,29 @@ async function recover(label) {
 }
 async function launchEditor() {
   await launch(process.env.NATIVE_PREVIEW_WRAPPER ? [] : ['--security-editor']);
+  if (process.env.NATIVE_PID_FILE) {
+    const pid = await rootPid();
+    console.log(
+      'NATIVE_STRESS_IDENTITY',
+      JSON.stringify({
+        pid,
+        executableSha256: createHash('sha256')
+          .update(await readFile(`/proc/${pid}/exe`))
+          .digest('hex'),
+        observerSha256: createHash('sha256')
+          .update(await readFile(new URL(import.meta.url)))
+          .digest('hex'),
+        journalOracleSha256: createHash('sha256')
+          .update(
+            await readFile(new URL('./native-journal.ts', import.meta.url)),
+          )
+          .digest('hex'),
+        jitEnvironment: (await readFile(`/proc/${pid}/environ`, 'utf8'))
+          .split('\0')
+          .filter((value) => /^(?:JSC_useJIT|JSC_useDFGJIT)=/.test(value)),
+      }),
+    );
+  }
   if (process.env.NATIVE_PREVIEW_WRAPPER) {
     await waitUi(`Boolean(document.querySelector('.cm-content'))`);
     await button('Stop preview');
@@ -285,7 +348,14 @@ async function sandbox(target) {
 const requested = process.argv
   .find((arg) => arg.startsWith('--case='))
   ?.slice(7);
-const cases = ['cpu-stop', 'memory', 'expiry', 'editor-crash', 'window-close'];
+const cases = [
+  'cpu-stop',
+  'memory',
+  'memory-pages',
+  'expiry',
+  'editor-crash',
+  'window-close',
+];
 assert.ok(!requested || cases.includes(requested), 'Unknown --case');
 const failures = [];
 async function runCase(name, task) {
@@ -358,7 +428,16 @@ try {
     await stopped(pressure);
     await responsive();
     await recover('Memory-pressure termination');
-    requireCause(pressure, /[Oo][Oo][Mm]|oom-kill/);
+    requireOomKill(pressure);
+  });
+  await runCase('memory-pages', async () => {
+    const pressure = await start(memoryPages);
+    console.log('PAGE_PRESSURE_UNIT', pressure.unit);
+    await stopped(pressure);
+    // Preserve an actual OOM cause even when later recovery fails.
+    requireOomKill(pressure);
+    await responsive();
+    await recover('Resident-page memory-pressure termination');
   });
   await runCase('expiry', async () => {
     const expiry = await start(cpu);

@@ -1,0 +1,67 @@
+{
+  "scope": "full command exit1:5passed,1failed; not a complete pass",
+  "units": 11,
+  "cases": [
+    {
+      "case": "cpu-stop",
+      "outcome": "passed",
+      "fixture": "cpu-loop",
+      "unit": "programmable-notes-preview-38461-1795098617544351550.service",
+      "result": null,
+      "noLiveDescendants": true,
+      "sampledPeak": 68186112,
+      "managerFailedAfterStartedMs": null
+    },
+    {
+      "case": "memory",
+      "outcome": "passed",
+      "fixture": "memory",
+      "unit": "programmable-notes-preview-38461-1795098729009164750.service",
+      "result": "oom-kill",
+      "noLiveDescendants": true,
+      "sampledPeak": 536870912,
+      "managerFailedAfterStartedMs": 60603.015,
+      "firstOomNotificationAfterStartedMs": 59339.265
+    },
+    {
+      "case": "memory-pages",
+      "outcome": "failed",
+      "fixture": "memory-pages",
+      "unit": "programmable-notes-preview-38461-1795098846146288030.service",
+      "result": "timeout",
+      "noLiveDescendants": true,
+      "sampledPeak": 528297984,
+      "managerFailedAfterStartedMs": 61284.756
+    },
+    {
+      "case": "expiry",
+      "outcome": "passed",
+      "fixture": "cpu-loop",
+      "unit": "programmable-notes-preview-38461-1795098909458151940.service",
+      "result": null,
+      "noLiveDescendants": true,
+      "sampledPeak": 68431872,
+      "managerFailedAfterStartedMs": null
+    },
+    {
+      "case": "editor-crash",
+      "outcome": "passed",
+      "fixture": "cpu-loop",
+      "unit": "programmable-notes-preview-38461-1795099022612330320.service",
+      "result": null,
+      "noLiveDescendants": true,
+      "sampledPeak": 67141632,
+      "managerFailedAfterStartedMs": null
+    },
+    {
+      "case": "window-close",
+      "outcome": "passed",
+      "fixture": "counter",
+      "unit": "programmable-notes-preview-39308-1795099145326160870.service",
+      "result": null,
+      "noLiveDescendants": true,
+      "sampledPeak": 68317184,
+      "managerFailedAfterStartedMs": null
+    }
+  ]
+}

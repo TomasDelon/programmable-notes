@@ -1,0 +1,17 @@
+FIXTURE=/tmp/pn-native-Jqdhra
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Unknown --case
+    at file:///opt/pn/acceptance/scripts/native-stress.mjs:289:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

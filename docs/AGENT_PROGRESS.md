@@ -1380,3 +1380,58 @@ and itsfailedOOM-before-expiry record. Enforced512MiB/0swap/25%CPU/60s, required
 actualOOMcause/cleanup/recovery must remain. Run in same disposableVM, no sandbox
 or productionlimit changes. OriginalrendererSIGSEGV/startup/blank failures remain;
 no nativecrash/all-parserDoS/security-readiness claim. ReviewZIP still34dc906.
+
+## 2026-11-19 — resident-page pressure / strict OOM oracle in progress
+
+368dd95 pushed; PRdraft/head verified. Hosted44542637950 refused zero-step jobs
+forbilling. Added distinct memory-pages workload (retained128MiBblocks, dirtyeach
+4096Bpage), original16MiBfullfill retained. Unknowncasefirstrefusedbeforelaunch.
+First selectedrun(a830aca… observer) exited0, actualkernel/systemdOOM512MiB/0swap
+thenCounter0→1→2/cleanup; labelledpre-strict. Independent structuredposthoccheck
+confirmed actualsystemdEXE/UID1000/unitresultoom-kill/536870912peak/0swappeak.
+
+ReviewcaughtbroadOOMregexcouldacceptallocationdiagnostic. Bothmemorycases now
+require trustedstructuredjournal metadata via scripts/native-journal.ts; reject
+wrongauthor/sender/unit/UID/result/transport/messageid, malformedrecords and
+RangeError/OOMtext. Broadpredicateadaptersemanticallyfailed2tests, strictpassed.
+Retainrawjournalbeforeparse; helper/observer/HTMLSHAidentitiesrecorded. Fullcheck
+88unit/34Chromiumpassed, laterrawretentionlinepassedtargetedlint.
+
+ACTIVE full6case actualproductionmatrix: guestfixture /tmp/pn-native-X7wiYM,
+loghost /tmp/pn-memory-pages-full-native.log, guestoutput
+/tmp/pn-native-X7wiYM/evidence/webkit-stress.json (writtenoncompletion).
+Execsession71200; guestRoot38461. InstalledELF6e301bce… unchangedfrom368dd95;
+observere7013cc2… / oracle637db391…. No concurrentGUI/heavyhostchecks. CPUquota
+observed775854us/3041ms,31throttledperiods,395mseditorresponse; recoverypending
+atlastsample. Letall6casesfinish; preservefailures, don'tclaimwholepassyet.
+
+Next: inspectfinalcommandexit/percaseJSON/journals, retainfullraw and exact
+helperparity; verifyemptyownedgroups. UpdateNATIVE_SECURITY/status/evidence/
+progress/PR withactualoutcomes, runfinalformat/lint asneeded, commit/push.
+Originalmemoryfailure/rendererSIGSEGV/startup/blankrecordsstillstand; selected
+newworkloadsuccessisnotcomplete6casepass. No productionpermissions changed.
+
+## 2026-11-19 — strict OOM oracle / complete native repeat recorded
+
+Full6case actualproductionmatrix finished exit1:5passed, memory-pagesfailed.
+CPUStop775854us/3041ms/31throttles/395msRootresponse +Counter recovery; original
+16MiBfullfill now actualtrustedOOM536870912peak/0swap+Counter; expiry/editorSIGKILL/
+windowclose+recoverypassed. Additionalpages timedout528297984peak/0swap; itsimmediate
+Countergate notexecuted aftermissingcause. All11unitgroups/knownidentities and
+Root38461/39308 termination independentlyverified. OriginalOOM notification59.339s
+afterStarted, finalfailurecleanup60.603s; no runtime-expirymessage for thatunit.
+Samepageartifactf397704e…/ELF6e301bce… had precedingselectedOOM+Counterpass, finalfull
+timeout; actualdifference retained, no exclusiveTCG/timingfixclaim.
+
+Structuredoracle637db391…/observere7013cc2… fixesreviewImportantbroadtextfalsepositive.
+88unit/34Chromium fullcheckpassed; rawretentionline subsequentlint/nativeexecuted.
+Evidence2026-11-19-memory-pages has2.2MBfullJSON,percase,journals,semanticRED/GREEN,
+prestrictscope/independentposthocproof, cleanupreceipt, CIbillingannotation.
+Nativepackage remains6878294f…/ELF6e301bce…; no productioncode/limit changes.
+
+Next: finalformat/diffcheck, commit/push/update draftPR/checkCI. Thenrefresh
+portable reviewZIP for latesttrustedSourcejump/densefallback. Existingdownload
+247ee9a stillengine34dc906; don'trelabel. Formatproducerbeforecapture, require
+servedbuildhash, actualvideo/media/extractedapp/exactexports and remoteGitblob
+bytecomparison. Preservefailednativepagegate/RootSIGSEGV/startup/blankhistory and
+accountbillingblocker. No publicrelease/merge/readiness change.

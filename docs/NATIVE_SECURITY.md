@@ -3,9 +3,11 @@
 This procedure is required before treating native preview as safe for hostile documents. No step may be replaced by Chromium, a missing JavaScript global, configuration inspection, or a passing mock test.
 
 Current package-specific results and unresolved gates are linked from
-[implementation status](IMPLEMENTATION_STATUS.md). The [latest complete matrix](security-evidence/2026-11-19-current-stress/README.md)
-contains four passes and a failed memory/OOM acceptance gate; earlier successes
-do not certify later binaries.
+[implementation status](IMPLEMENTATION_STATUS.md). The [latest complete six-case run](security-evidence/2026-11-19-memory-pages/README.md)
+contains five passes and a failed additional resident-page OOM gate. The unchanged
+original allocation case passed with trusted structured OOM evidence; the new
+page workload expired instead. The complete command failed. Earlier results
+retain their own binary scope and do not certify later binaries.
 
 ## Milestone 3 production configuration
 
@@ -90,7 +92,7 @@ npm run native:editor:test
 npm run native:editor:test -- --pressure
 ```
 
-The stress suite executes real compiled React/MDX in the production supervised child. It controls the child externally through Linux AT-SPI, matching its native PID; the child has no WebDriver automation and no testing IPC capability. Cases cover CPU throttling/Stop, the exact immediate-allocation fixture below, natural expiry, editor SIGKILL, window close and interactive recovery. Each case reports independently and any failure makes the command fail. Run one case with `NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test -- --case=memory` (also `cpu-stop`, `expiry`, `editor-crash`, `window-close`). OOM and expiry require the actual systemd journal cause. A disappearing renderer alone never counts as either.
+The stress suite executes real compiled React/MDX in the production supervised child. It controls the child externally through Linux AT-SPI, matching its native PID; the child has no WebDriver automation and no testing IPC capability. Cases cover CPU throttling/Stop, the unchanged exact immediate-allocation fixture below, a separate resident-page memory workload, natural expiry, editor SIGKILL, window close and interactive recovery. Each case reports independently and any failure makes the command fail. Run one case with `NATIVE_DISPOSABLE_PROFILE=1 npm run native:stress:test -- --case=memory` (also `cpu-stop`, `memory-pages`, `expiry`, `editor-crash`, `window-close`). OOM and expiry require the actual systemd journal cause. Both memory cases require structured journal records from the matching systemd user manager: trusted sender executable/UID/transport, unit-failure message ID, exact unit and `UNIT_RESULT=oom-kill`. Authored console text, engine allocation errors, wrong units and timeout results cannot satisfy this oracle. A disappearing renderer alone never counts as either.
 
 The current editor suite launches the full installed application using the fixture environment above, observes the browser-WASM compiler, opens a real file through the native picker, tests actual CodeMirror input and exact native disk saves under CPU or confirmed growing-heap pressure, and rebuilds additional unsaved source. The immediate-allocation OOM fixture is unchanged and remains separate. Earlier Save Blob captures are historical evidence only; the current test does not substitute a Blob for an actual write. Set `NATIVE_EVIDENCE_DIR` to retain native screenshots and cgroup samples; stdout/stderr must also be retained.
 
@@ -220,7 +222,7 @@ The helper writes a sentinel only after it has received nonempty stdin. Also run
 
 The outer Codex workspace still has no user manager, delegated cgroups, GTK or display. Rootless Docker provides package installation but its cgroup driver is none, so it cannot validate containment directly. A full Ubuntu guest with its own kernel, systemd, cgroup v2 controllers, user bus and Xvfb supplied the missing boundary. KVM is not exposed by the outer host; the guest ran with QEMU TCG. No host cgroup was mounted writable and no security assertion was skipped for that infrastructure.
 
-See [the dated validation record](security-evidence/2026-11-17/README.md) for precise passes, failures and outstanding gates. CI compile results remain separate from runtime evidence. Native filesystem save, non-Linux supervisors, broad compromised-native-code containment and production packaging are not established by these tests. Visual editing remains deferred.
+See [the dated validation record](security-evidence/2026-11-17/README.md) for precise passes, failures and outstanding gates. CI compile results remain separate from runtime evidence. The2026-11-17 record alone does not establish native persistence or production packaging; subsequent package-specific evidence linked from implementation status covers their tested scope. Non-Linux supervisors and broad compromised-native-code containment remain unestablished. Supported literal visual editing now uses the trusted surface and strict patch contract in ADR005/007; arbitrary JSX stays opaque.
 
 ## Failure evidence and startup diagnosis
 

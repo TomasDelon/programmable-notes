@@ -237,14 +237,16 @@ or power-loss evidence. [Executed scope](security-evidence/2026-11-19-sync-error
 Snapshot capacity exhaustion requires explicit cleanup. These constrain durability
 claims, not permission to continue editor-side source-preserving work.
 
-The latest complete packaged matrix passed CPU/Stop, expiry, editor SIGKILL/recovery
-and window-close. **Memory acceptance failed:** the immediate-allocation fixture
-expired at 60 seconds before the required OOM cause, with a sampled 515,461,120-byte
-peak. The full command exited 1; it is not relabeled a pass. Both focused and full
-current editor-crash cases recovered Counter 0 → 1 → 2, but prior intermittent
-blank failures remain unexplained. Reporter fixes retain failed targets and
-per-case outcomes; deliberate observer/unsafe-profile negatives passed. [Exact
-current results and binary hashes](security-evidence/2026-11-19-current-stress/README.md).
+The latest complete installed six-case matrix exited1: CPU/Stop, original full-fill
+allocation OOM, expiry, editor SIGKILL/recovery and window-close passed. The added
+resident-page workload expired with528297984-byte peak/zero swap before its required
+OOM cause, so that case failed. Both memory cases now require trusted structured
+systemd sender/unit/result evidence, not broad OOM text. Original OOM peaked at
+512MiB with a manager kill notification59.339s after Started; all11recorded units
+were empty/gone and known identities terminal. A preceding selected page workload
+on the identical ELF/artifact did OOM and recover; it does not repair the failed
+full run. Prior original-memory expiry and intermittent blank failures remain
+retained, without an inferred timing fix. [Exact scope, failed gate and reproduction](security-evidence/2026-11-19-memory-pages/README.md).
 
 A separate current-binary startup diagnostic measured a JavaScript-free static
 button at 40.54 s and real React Counter at 43.88 s under identical production
@@ -284,9 +286,9 @@ multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
 screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: investigate resident-page memory pressure as a distinct additional native
-OOM workload, keeping the original failed allocation case and every cause/limit
-assertion. A cancellable visual-analysis worker remains a future stronger bound.
+Next: refresh the portable browser review for current Source navigation and dense
+read-only fallback, with real capture/extracted-build verification and immutable
+GitHub receipt. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.
