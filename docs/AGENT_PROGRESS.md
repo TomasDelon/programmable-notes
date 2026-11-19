@@ -254,3 +254,29 @@ found no important issue. Evidence: 2026-11-19-source-navigation. Next: commit
 feature, retain the separate partial resource matrix and finish startup timing
 probes before deciding the next reliability fix. Do not claim full native security
 readiness or green hosted CI.
+
+Resource checkpoint: fixed a concrete ESRCH race reading proc stat during task
+exit; retained group membership and all known-identity checks. Timed window-close
+then passed twice; the stricter version proved complete cleanup at 52.2 seconds
+from the request, before any 60-second expiry was possible. Strict CPU Stop also
+passed on the source-navigation package (real quota, whole group, before-expiry
+assertion and interactive recovery). The earlier blank startup and editor-crash
+recovery failures remain recorded/reproducible; no full fresh matrix pass claimed.
+Source-navigation native IPC regression and final check now running.
+
+Next safe core task after this checkpoint: a New note action creating a uniquely
+named empty unsaved buffer with no native grant. Reuse workspace groups, source
+histories, existing Save/Save As and recovery. Keep the 32-document bound and all
+other source bytes; empty creation adds no source bytes. Use a pure functional
+workspace update so queued editor changes cannot be replaced by a stale snapshot.
+Test browser creation/switch/save/reopen/undo and native cancel/explicit Save As.
+No aesthetics, new permissions, automatic original writes or grammar work.
+
+Final resource checkpoint: current-package native IPC suite passed all registered
+commands and recovery-action denials, actual network namespace/cgroup policy,
+private profile, real Counter 2 and HTTP/file CSP denial. Full repository check
+passed 42 unit / 22 Chromium tests. Strict CPU Stop and window-close before-expiry
+checks passed. Commit/push this test/evidence milestone, keep draft PR updated,
+then implement the pure empty New note action and its source-preservation tests.
+CI for c9570ee (44442555752) was refused before startup with the same billing
+annotation; no tests ran there. Last fully green hosted head remains 438f4b4.

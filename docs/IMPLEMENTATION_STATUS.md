@@ -101,6 +101,13 @@ Directory-fsync failure reporting after publication has not been fault-injected.
 Snapshot capacity exhaustion requires explicit cleanup. These constrain durability
 claims, not permission to continue editor-side source-preserving work.
 
+Current-package revalidation retained a repeated blank/startup failure after
+editor crash on QEMU TCG/Xvfb. CPU/Stop, memory/OOM, expiry and window-close have
+individual executed successes; the whole fresh matrix is not passing. A procfs
+ESRCH observer race was corrected without inferring empty groups. Strict Stop/close
+checks now exclude natural-expiry attribution; both passed. Native IPC/HTTP/file
+denial also passed. See [exact results and failures](security-evidence/2026-11-19-resource-repeat/README.md).
+
 Software rendering passed normal and stricter AppArmor desktop tests. Default
 llvmpipe failed on QEMU/Xvfb; physical GPU, Wayland, IME and other distributions
 remain untested compatibility targets. They do not block independent editor work.

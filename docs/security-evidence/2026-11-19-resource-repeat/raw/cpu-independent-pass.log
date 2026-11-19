@@ -1,0 +1,11 @@
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-6331-1795053441249147620.service","pid":"6441","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 6401, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 6401, "button": "CPU loop armed", "action": "find", "passed": true}
+WEBKIT_CPU {"unit":"programmable-notes-preview-6331-1795053441249147620.service","usage_usec":768785,"elapsed_ms":3042,"throttled_periods":30,"editor_response_ms":106}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-6331-1795053500387116300.service","pid":"6550","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 6497, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 6497, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 6497, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+WEBKIT_STRESS_PASS cpu-stop

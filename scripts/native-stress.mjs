@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
+import { performance } from 'node:perf_hooks';
 import {
   preflight,
   launch,
@@ -82,12 +83,16 @@ async function sample(root) {
         .split(' ');
       row.members[pid] = { state: stat[0], start: stat[19] };
     } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
+      // procfs can return ESRCH after opening a task's stat file if it exits
+      // before read. Keep the cgroup membership sample; do not infer emptiness.
+      if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
     }
   }
   return row;
 }
 async function start(code) {
+  const requestedAt = Date.now();
+  const requestedMonotonic = performance.now();
   const reply = await invoke('start_preview', { html: code });
   assert.equal(reply.ok, true, JSON.stringify(reply));
   const unit = reply.value;
@@ -102,17 +107,49 @@ async function start(code) {
   assert.equal(first['memory.swap.max'], '0');
   assert.equal(first['pids.max'], '128');
   assert.equal(first['cpu.max'], '25000 100000');
-  const target = { unit, root, pid, started: Date.now(), samples: [first] };
+  const target = {
+    unit,
+    root,
+    pid,
+    requestedAt,
+    requestedMonotonic,
+    started: Date.now(),
+    samples: [first],
+  };
   await sandbox(target);
+  console.log(
+    'PREVIEW_START_TIMING',
+    JSON.stringify({
+      unit,
+      pid,
+      invokeMs: target.started - requestedAt,
+      sandboxObservedMs: Date.now() - requestedAt,
+    }),
+  );
   return target;
 }
 function ui(target, name, action = 'click') {
-  const response = execFileSync(
-    'python3',
-    ['scripts/native-atspi.py', String(target.pid), name, action],
-    { encoding: 'utf8', timeout: 65000 },
-  );
-  console.log('NATIVE_UI', response.trim());
+  const began = Date.now();
+  try {
+    const response = execFileSync(
+      'python3',
+      ['scripts/native-atspi.py', String(target.pid), name, action],
+      { encoding: 'utf8', timeout: 65000 },
+    );
+    console.log('NATIVE_UI', response.trim());
+  } finally {
+    console.log(
+      'NATIVE_UI_TIMING',
+      JSON.stringify({
+        unit: target.unit,
+        pid: target.pid,
+        name,
+        action,
+        observerMs: Date.now() - began,
+        sinceRequestMs: Date.now() - target.requestedAt,
+      }),
+    );
+  }
 }
 async function stopped(target, seconds = 75) {
   const deadline = Date.now() + seconds * 1000;
@@ -139,7 +176,7 @@ async function stopped(target, seconds = 75) {
             `Live preview descendant survived: ${pid}`,
           );
         } catch (error) {
-          if (error.code !== 'ENOENT') throw error;
+          if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
         }
       }
       reports.push({ ...target, ended: Date.now(), noLiveDescendants: true });
@@ -288,6 +325,10 @@ try {
     );
     assert.equal((await invoke('stop_preview')).ok, true);
     await stopped(loop, 5);
+    assert.ok(
+      performance.now() - loop.requestedMonotonic < 60000,
+      'Stop overlapped the earliest possible expiry; cannot attribute termination to Stop',
+    );
     await recover('Stop while WebKit JS loop was busy');
   });
   await runCase('memory', async () => {
@@ -343,6 +384,15 @@ try {
       ).trim(),
     );
     await stopped(target, 5);
+    const closeElapsedMs = performance.now() - target.requestedMonotonic;
+    assert.ok(
+      closeElapsedMs < 60000,
+      'Window close overlapped the earliest possible expiry; cannot attribute termination to close',
+    );
+    console.log(
+      'WINDOW_CLOSED_BEFORE_EARLIEST_EXPIRY',
+      JSON.stringify({ unit: target.unit, closeElapsedMs }),
+    );
     await recover('Native preview window closed');
   });
   if (failures.length) {
