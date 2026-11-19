@@ -83,7 +83,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Current local application checks   | Formatting, ESLint, strict TypeScript, 56 unit and 26 Chromium tests passed.                                                                                                                                                             |
-| Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
+| Native document backend            | 36 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
 | Automatic native recovery          | Real independent histories, retention, restart, discovery, explicit restore/save, GUI ENOSPC/pause/Resume and original Save while recovery storage was full. [Evidence](security-evidence/2026-11-19-automatic-recovery/README.md).      |
@@ -143,7 +143,10 @@ limit is a security stop.
 Recovery can lag within debounce or unfinished writes. Checksums detect corruption,
 not hostile same-user rewriting. Advisory locks coordinate cooperating instances;
 a noncooperating same-user writer can race the final original-file conflict check
-and rename. Actual process-kill tests do not prove storage power-loss durability.
+and rename. Actual separate-process contention now also verifies busy denial, one successor,
+stale conflicts, exact prior/winner bytes and valid retry in five-round cloud and
+Ubuntu VM runs ([evidence](security-evidence/2026-11-19-process-contention/README.md)).
+Actual process-kill tests do not prove storage power-loss durability.
 External own-child syscall injection now verifies file-fsync failure,
 publication-directory uncertainty and retention-directory warnings without
 production failpoints. Prior bytes, exact restoration and explicit retry passed
@@ -186,7 +189,8 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: extend actual cross-process recovery contention/CAS regression coverage,
+Next: correct selected-document save/dirty notices without changing aggregate
+close protection,
 retain separate containment and interactive-recovery results, and investigate
 the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source
 compiler navigation passed installed acceptance. Hosted runners need owner billing

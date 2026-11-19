@@ -611,3 +611,34 @@ format/lint, Rust formatting and diff checks also passed after retaining evidenc
 Final observer SHA checks match both actual callback runs/negative and corrected
 packaged MDX report. Source hashes match the builder; installed package/ELF match
 inspection. Commit/push now, then begin the cross-process recovery test above.
+
+## 2026-11-19 — recovery contention in actual separate processes
+
+4aa81f1 was pushed and PR #1 verified draft; body now includes download hardening,
+scoped controls/limitations and the existing accessible browser ZIP. No merge,
+release or readiness change. Hosted run 44473135599 was refused before runner
+startup; the account billing blocker persists.
+
+New normal Rust regression executes five rounds / 20 actual exec'd writers,
+including held-lock busy refusal, three barrier-released contenders sharing one
+expected parent, exactly one head, exact old/winning bytes, stale retry rejection,
+explicit valid retry and unchanged synthetic original. Results bind actual Child
+PIDs. All owned children have bounded waits and failure cleanup. Read-only review
+caught fixture cleanup being registered before successful creation; fixed. Actual
+pre-existing-fixture negative proves the failed test retains an unowned sentinel.
+
+Final backend suite passed 36 normal tests. Source-matched Ubuntu build/test binary
+also passed all 20 writers in the disposable full-system VM (1.37 s). Production
+storage, installer and UI are unchanged. Evidence: 2026-11-19-process-contention.
+
+Next: finish full repository checks, commit/push this P0 regression checkpoint,
+update draft PR counts, then address the observed per-document status bug: a dirty
+sibling makes a clean/saved selected source look unsaved, while global notices can
+be attributed to the wrong selected buffer. Preserve aggregate dirty-close guards;
+use a selected-document status and source/revision-bound notices with real browser
+switch/save/delayed-operation regressions. This is behavior correctness, not a UI
+redesign. Refresh the portable browser artifact if frontend behavior changes.
+
+Final repository check passed 56 unit / 26 Chromium for this test-only milestone.
+Commit/push the verified contention checkpoint, then reproduce selected-document
+status in Chromium before changing notice ownership or aggregate dirty handling.
