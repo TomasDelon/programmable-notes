@@ -720,7 +720,7 @@ no-op returns original, equal-count edits retain ending sequence, changed-count
 edits retain raw equal prefix/suffix and inherit unambiguous local endings.
 All revision/range/context/size/candidate-parse guards remain.
 
-Initial focused tests and full 62-unit/28-browser check passed. A further repeated
+Initial focused tests and full 62-unit / 28-browser check passed. A further repeated
 line case exposed ambiguity in greedy alignment (Same/LF/Same/CRLF/Same deletion or
 insertion). Added failing unit, then conservative overlap-window mixed-ending
 rejection; final focused test running. Read-only review found no unsafe omission;
@@ -733,7 +733,7 @@ its original gates; adds paragraph undo/save/redo exact-byte checks. Old install
 7ef9a9c7 package reproduction is running first. Next: retain its exact failure,
 build/install final new package after source hashes match, run full native fidelity
 including real Counter, byte saves/recovery/restart/invalid data, rerun full current
-repository checks (now expected 63/28), document precise results and conservative
+repository checks (now expected 63 / 28), document precise results and conservative
 limits, commit/push fix, then refresh current browser delivery from committed code.
 Do not call earlier intermediate package/check output the final guard version.
 
@@ -746,13 +746,13 @@ save/undo/redo, mode0640, real Counter, dirty-close, actual restart, explicit le
 recovery, invalid UTF8 rejection/deletion and unchanged original. Separate IPC
 regression passed. Executed observer hash d4967c80… matches host/guest.
 
-Full 63-unit/28-browser check passed. Added focused real browser refusal/retention/
+Full 63-unit / 28-browser check passed. Added focused real browser refusal/retention/
 Escape test after that run; rerun final full check before source commit. Evidence
 is 2026-11-19-internal-eol. Document conservative Source fallback and retain old
 startup failure; never call it fixed from a successful retry. Then commit/push
 source/test/evidence, refresh/re-download current portable review and update PR.
 
-Final full check after browser refusal/retention assertions passed 63 unit /28
+Final full check after browser refusal/retention assertions passed 63 unit / 28
 Chromium. Native IPC on current 7d315faa… passed; source/observer/builder SHA
 parity and fixed actual disk bytes retained. Follow-up wildcard journal query for
 first startup could not add its unit filter (exit1); retained as unavailable, not
@@ -775,12 +775,12 @@ Current ZIP: 6,350,148 bytes /29 entries / SHA-256
 c175fbe7c7cc250347512e90de668b9aa7b84392d7b60c8454c1c3a24f4d6dee.
 Delivery evidence is 2026-11-19-eol-review. Next: finish required repository check,
 commit/push source+delivery, verify remote blob, update draft PR to fixed source
-and fresh immutable ZIP/counts63/28. Then investigate native cold-start failure
+and fresh immutable ZIP/counts63 / 28. Then investigate native cold-start failure
 with bounded actual observations; preserve the15-second compiler and60-second
 service deadlines. Independently measure long-paragraph editor usability before
 choosing another implementation; avoid speculative refactoring or aesthetic work.
 
-Delivery verification caught a one-off390px counter first-click failure (Count0
+Delivery verification caught a one-off 390 px counter first-click failure (Count0
 after click). No app source/test behavior changed to bypass it. Failed log, input
 timeline and screenshot retained; fulltrace cached /tmp/eol-delivery-mobile-failure-trace.zip.
 Ten serial +ten parallel targeted repeats passed, but cause is NOT resolved. Full
@@ -788,17 +788,25 @@ check rerunning alone now; preserve failure even if it passes. One probe formatt
 second pass was needed before checks; no acceptance predicate changed.
 
 Independent read-only real Chromium geometry measurement found a concrete next
-usability issue: a legal31,927-byte/1000-line paragraph opens a27,189.5px textarea
-in an800px viewport, though all input remains exact. After this checkpoint, bound
+usability issue: a legal31,927-byte / 1000-line paragraph opens a27,189.5 px textarea
+in an 800 px viewport, though all input remains exact. After this checkpoint, bound
 its editing viewport/retain internal scrolling, full text, focus/keyboard and
 exact source/history; this is functional control sizing, not an aesthetic redesign.
 Native cold-start and unexplained mobile click still need observations; no claimed
 fix from successful repeats. Source/evidence P2 remains verified separately.
 
-Final isolated full check passed63 unit/28 Chromium. Fresh extracted archive
+Final isolated full check passed 63 unit / 28 Chromium. Fresh extracted archive
 validation rerun after probe formatting also passed all mixed/refusal/old behavior
-and8negative controls. Mobile counter first-click cause remainsunresolved despite
-20targeted passes; failure andlatestpass bothretained. Commit/push source6f7d4c6
-anddeliverynow, re-download exact remoteGitblob, update draftPR fixedEOL/current
-63/28counts plus remaining startup/memory/mobilelimits. Then bounded long-field
-viewport improvement, proven by realinput geometry, keeping data/scroll/history.
+and 8 negative controls. Mobile counter first-click cause remains unresolved despite
+20 targeted passes; failure and latest pass both retained. Commit/push source 6f7d4c6
+and delivery now, re-download exact remote Git blob, update draft PR fixedEOL/current
+63 / 28counts plus remaining startup/memory/mobile limits. Then bounded long-field
+viewport improvement, proven by real input geometry, keeping data/scroll/history.
+
+Source 6f7d4c6 and delivery b45ffa6 are pushed. Current ZIP remote Git blob was
+actually re-downloaded and matched exact bytes/SHA; receipt retained. PR #1 head
+and draft verified, body now describes fixed mixed endings, conservative limits,
+63/28 checks and the unresolved mobile click. Latest hosted run 44484287256 for
+b45ffa6 was refused before runners/steps with the billing annotation. Continue
+with the measured long-paragraph viewport defect; no approval needed for this
+bounded editor-owned control improvement, and native/browser isolation stays intact.

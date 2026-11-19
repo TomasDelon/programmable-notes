@@ -33,6 +33,11 @@ targeted repeats passed without changing the test, but the cause is unresolved;
 these repeats do not establish a fix. This occurred before visual patching in that
 case. It is distinct from the passing standalone archive mixed-break checks.
 
-The subsequent complete repository check passed63unit/28Chromium with no changes
+The subsequent complete repository check passed 63 unit / 28 Chromium with no changes
 to the counter test. Final extracted-build validation was rerun after formatting
 and passed all cases. This passing run does not resolve the recorded missed click.
+
+Actual GitHub source Blob re-download matched all 6,350,148 bytes and the archive
+SHA above (delivery b45ffa6, blob e3a7fa33b22309e841e323efd30f58a8cd809f20).
+Hosted run 44484287256 for that head was refused before any runner/step because
+of the account payment/spending-limit restriction; exact jobs/annotation retained.
