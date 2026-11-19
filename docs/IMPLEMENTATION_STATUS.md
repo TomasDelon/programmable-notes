@@ -55,6 +55,11 @@ can be restored. Legacy migration preserves the old source.
 
 Restore always opens a separate dirty buffer without an original-file grant.
 Saving to disk remains an explicit action. Browser drafts are separately opt-in.
+The installed production app also passed automatic recovery of two entirely
+unbound new notes across actual SIGKILL/restart: null baselines, independent
+retention, exact source, explicit restoration, cancelled Save As and exact saving
+without modifying the sentinel original. The original-file variant passed again.
+[Package hashes, raw results and reproduction](security-evidence/2026-11-19-unbound-recovery/README.md).
 Actual SIGKILL and ENOSPC evidence is linked below. The recovery guard explicitly
 unlocks on drop so a forked child retaining a descriptor cannot cause a false busy
 error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
@@ -77,7 +82,11 @@ Compilation/package inspection is not native runtime evidence. CI builds and
 uploads the Debian testing package and browser demo but does not execute the
 full-system desktop matrix. Each dated record retains exact package/source hashes,
 failed attempts and limitations; earlier results do not certify later binaries.
-The cloud's artifact re-download is blocked by HTTP 403, even for verified uploads.
+Historical Actions artifact re-download returned HTTP 403 in this cloud. The
+current PR-accessible [portable browser review ZIP](demo/README.md) was successfully
+re-downloaded through GitHub's source Blob API and its SHA-256 matched. It includes
+a working offline-capable build, responsive screenshots and a recorded walkthrough;
+no public release or site was published.
 
 New native preview windows now start unfocused. Actual packaged testing proved
 continued source keyboard input and normal explicit preview keyboard interaction,

@@ -47,3 +47,28 @@ NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-acceptance.mjs
 ```
 
 The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is available as `playable-editor-demo` under Artifacts on successful PR workflow runs.
+
+## Automatic recovery after process death
+
+Use an initially empty recovery collection in a disposable desktop profile, the
+installed production package, external WebKit driver, and a fresh fixture
+environment as above. No security-test build is needed. Run each case separately
+with a newly generated fixture environment:
+
+```sh
+NATIVE_DISPOSABLE_PROFILE=1 NATIVE_CRASH_RESTART=1 \
+  node scripts/native-auto-recovery.mjs
+NATIVE_DISPOSABLE_PROFILE=1 NATIVE_CRASH_RESTART=1 \
+  node scripts/native-auto-recovery.mjs --new-notes
+```
+
+The first case opens the same synthetic original twice. The second creates two
+entirely unbound notes without selecting an original; their recovery baselines
+must be null. Both type through CodeMirror, verify independent bounded histories
+and complete retained source, SIGKILL the actual editor, discover versions in a
+new process, explicitly restore into an unsaved buffer, cancel Save As, and then
+save exact bytes to a separate chosen path. A synthetic sentinel original must
+remain unchanged. Only the test-created versions are deleted, followed by a
+verified clean process exit. The harness refuses a nonempty initial collection;
+never run it in a personal profile. These tests verify durable completed writes,
+not changes still within the debounce window or storage power loss.

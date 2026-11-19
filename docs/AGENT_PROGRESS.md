@@ -1,5 +1,8 @@
 # Agent progress
 
+Latest checkpoint: see the final dated entry below. Earlier milestone sections
+are chronological history, not the current task.
+
 ## Starting checkpoint — 2026-11-19 (Europe/Paris)
 
 - Revision inspected: `ebb2a2551fc13b0b4af6c6c0dc55869350936123`.
@@ -335,3 +338,29 @@ New note instead of picker opening; retain original-case behavior, handle option
 empty initial snapshots, verify full saved content/baseline null, dynamic retained
 counts, actual SIGKILL and explicit unsaved restore/Save As without touching a
 sentinel original. No new application filesystem permission is needed.
+
+## 2026-11-19 — unbound-note restart recovery
+
+Base c93968b is pushed; the portable review ZIP was re-downloaded through GitHub's
+source Blob API and matched its published SHA-256. PR #1 stays draft. Hosted run
+44453697227 was refused before both jobs started, with the same payment/spending
+limit annotation; no hosted execution is claimed.
+
+The installed d955aae production package passed automatic recovery of two never
+saved notes: actual typing, null baselines, independent identities, five-version B
+retention, exact initial A/B and latest B restoration, actual root SIGKILL,
+new-process discovery, explicit unsaved restore, cancelled Save As and exact saving
+to a new chosen target. The synthetic sentinel original stayed byte-identical.
+Only owned versions were removed, followed by verified clean process exit. The
+original-file BOM/CRLF variant also passed the final strengthened runner. Evidence
+and hashes: 2026-11-19-unbound-recovery. No app/native permission changed. Read-only
+review found no concrete issue. Full checks passed 45 unit / 23 Chromium tests.
+
+Next executable action: commit/push this acceptance milestone and update draft PR.
+Then close the documented directory-fsync error-reporting coverage gap using an
+external own-child ptrace failure test in the disposable Ubuntu VM. Verify the
+pre-publication file-sync error retains all prior records, and a post-publication
+directory-sync error reports uncertainty without pruning prior valid snapshots.
+Keep production code free of failpoints; explicitly distinguish syscall fault
+injection from physical filesystem/power-loss evidence. Native blank-preview
+startup remains unresolved and hosted CI remains account-billing blocked.
