@@ -1,0 +1,5 @@
+NATIVE_DIALOG {"pid": 9209, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-ZbqWR7/syntax-location.mdx"}
+NATIVE_COMPILER_ORIGINAL_LINE_FOCUS_EXACT_SAVE_AND_UNDO_PASS
+NATIVE_DIALOG {"pid": 9209, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 9209, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-ZbqWR7/new-native-note.mdx"}
+NATIVE_NEW_NOTE_CANCEL_EXPLICIT_SAVE_REOPEN_AND_ORIGINAL_UNCHANGED_PASS

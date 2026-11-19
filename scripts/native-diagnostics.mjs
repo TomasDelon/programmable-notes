@@ -78,6 +78,49 @@ try {
   await fileIdle();
   assert.equal(await readFile(file, 'utf8'), original);
   console.log('NATIVE_COMPILER_ORIGINAL_LINE_FOCUS_EXACT_SAVE_AND_UNDO_PASS');
+  if (process.argv.includes('--new-note')) {
+    await button('Stop preview');
+    assert.equal((await invoke('stop_preview')).ok, true);
+    await button('New note');
+    await waitUi(
+      "document.activeElement?.classList.contains('cm-content') && !document.querySelector('[aria-label=\"Native document\"]')",
+    );
+    await button('Save source');
+    dialog(pid, 'cancel', 'Save source as');
+    await fileIdle();
+    assert.equal(await readFile(file, 'utf8'), original);
+    execFileSync('xdotool', ['windowactivate', '--sync', windows[0]], {
+      timeout: 10000,
+    });
+    // The cancelled dialog returns focus to the editor. Reveal the empty source
+    // explicitly through the same user-visible Source action before typing.
+    await button('Source');
+    await script(
+      'const done=arguments[arguments.length-1];document.querySelector(".cm-content").focus();done(true);',
+    );
+    execFileSync(
+      'xdotool',
+      ['type', '--clearmodifiers', '--delay', '1', 'New native note.'],
+      { timeout: 10000 },
+    );
+    await waitUi(
+      "document.querySelector('.cm-content')?.textContent==='New native note.'",
+    );
+    const copy = join(process.env.NATIVE_FIXTURE_DIR, 'new-native-note.mdx');
+    await button('Save source');
+    dialog(pid, 'choose', 'Save source as', copy);
+    await fileIdle();
+    assert.equal(await readFile(copy, 'utf8'), 'New native note.');
+    assert.equal(await readFile(file, 'utf8'), original);
+    await button('Reopen source');
+    await fileIdle();
+    await waitUi(
+      "document.querySelector('.cm-content')?.textContent==='New native note.'",
+    );
+    console.log(
+      'NATIVE_NEW_NOTE_CANCEL_EXPLICIT_SAVE_REOPEN_AND_ORIGINAL_UNCHANGED_PASS',
+    );
+  }
   execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
     timeout: 10000,
   });

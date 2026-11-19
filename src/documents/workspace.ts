@@ -53,6 +53,21 @@ export function initialWorkspace(
     sequence: 0,
   };
 }
+/** Empty creation cannot increase source bytes or reuse an original file grant. */
+export function createNote(state: Workspace): Workspace {
+  if (Object.keys(state.files).length >= MAX_FILES) return state;
+  const sequence = state.sequence + 1;
+  const group = `opened-${sequence}`;
+  const key = `${group}/Untitled-${sequence}.mdx`;
+  return {
+    ...state,
+    sequence,
+    files: { ...state.files, [key]: '' },
+    groups: { ...state.groups, [key]: group },
+    selected: key,
+    entry: key,
+  };
+}
 export function addDocuments(
   state: Workspace,
   documents: { logicalPath: string; source: string; native?: NativeDocument }[],

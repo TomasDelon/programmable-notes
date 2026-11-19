@@ -6,7 +6,7 @@ import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDocuments } from './documents/useDocuments';
-import { compilerFiles, validateFiles } from './documents/workspace';
+import { compilerFiles, validateFiles, MAX_FILES } from './documents/workspace';
 import counter from '../docs/handoff/samples/fixtures/counter.mdx?raw';
 import imported from '../docs/handoff/samples/fixtures/widgets/ImportedCounter.tsx?raw';
 import {
@@ -213,6 +213,24 @@ export function App() {
         </p>
       )}
       <nav aria-label="Document actions">
+        <button
+          disabled={documents.busy || Object.keys(files).length >= MAX_FILES}
+          title={
+            Object.keys(files).length >= MAX_FILES
+              ? 'Close a source before creating another note (32-file limit).'
+              : undefined
+          }
+          onClick={() => {
+            documents.newNote();
+            setError('');
+            setLocations([]);
+            pendingLocation.current = { offset: 0, source: '' };
+            setMode('source');
+            setNavigation((value) => value + 1);
+          }}
+        >
+          New note
+        </button>
         {documents.native ? (
           <button
             disabled={documents.busy}

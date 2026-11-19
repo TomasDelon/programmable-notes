@@ -7,8 +7,37 @@ import {
   isDirty,
   removeDocument,
   validateFiles,
+  createNote,
 } from '../../src/documents/workspace';
 describe('authorized document workspace', () => {
+  it('creates separate unsaved empty notes without inheriting grants or replacing earlier bytes', () => {
+    const original = {
+      ...initialWorkspace({ 'note.mdx': 'saved' }, 'note.mdx'),
+      files: { 'note.mdx': 'unsaved\r\n😀' },
+      bindings: {
+        'note.mdx': { id: 'grant', revision: '1', name: 'note.mdx' },
+      },
+    };
+    const first = createNote(original);
+    const second = createNote(first);
+    expect(second.selected).not.toBe(first.selected);
+    expect(second.files[first.selected]).toBe('');
+    expect(second.files[second.selected]).toBe('');
+    expect(second.saved[second.selected]).toBeUndefined();
+    expect(second.bindings[second.selected]).toBeUndefined();
+    expect(second.bindings['note.mdx']).toEqual(original.bindings['note.mdx']);
+    expect(second.files['note.mdx']).toBe('unsaved\r\n😀');
+    expect(original.files).toEqual({ 'note.mdx': 'unsaved\r\n😀' });
+    expect(compilerFiles(second)).toEqual({ [second.selected]: '' });
+    expect(isDirty(second)).toBe(true);
+  });
+  it('refuses a thirty-third note without truncating existing source', () => {
+    const files = Object.fromEntries(
+      Array.from({ length: 32 }, (_, i) => [`${i}.mdx`, `Original ${i}\r\n`]),
+    );
+    const state = initialWorkspace(files, '0.mdx');
+    expect(createNote(state)).toBe(state);
+  });
   it('isolates separately opened note groups while preserving explicitly selected modules', () => {
     let s = initialWorkspace({ 'note.mdx': 'old' }, 'note.mdx');
     s = addDocuments(s, [

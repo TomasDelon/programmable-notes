@@ -236,3 +236,19 @@ it('a delayed version restore preserves edits made to the open original meanwhil
     h.result.current.workspace.files[h.result.current.workspace.selected],
   ).toBe('earlier version');
 });
+
+it('new notes retain queued source input and start without filesystem authorization', async () => {
+  const h = await opened();
+  act(() => {
+    h.result.current.change('queued original\r\n😀');
+    h.result.current.newNote();
+  });
+  const state = h.result.current.workspace;
+  expect(state.files['opened-1/local.mdx']).toBe('queued original\r\n😀');
+  expect(state.files[state.selected]).toBe('');
+  expect(state.bindings[state.selected]).toBeUndefined();
+  expect(state.saved[state.selected]).toBeUndefined();
+  expect(api.save).not.toHaveBeenCalled();
+  expect(api.saveAs).not.toHaveBeenCalled();
+  expect(h.result.current.dirty).toBe(true);
+});

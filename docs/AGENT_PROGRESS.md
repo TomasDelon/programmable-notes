@@ -280,3 +280,18 @@ checks passed. Commit/push this test/evidence milestone, keep draft PR updated,
 then implement the pure empty New note action and its source-preservation tests.
 CI for c9570ee (44442555752) was refused before startup with the same billing
 annotation; no tests ran there. Last fully green hosted head remains 438f4b4.
+
+New note validated: pure functional empty-buffer creation retains queued input,
+all sibling bytes/grants/histories and the 32-file bound; starts dirty without
+filesystem authorization. Source mode receives focus through the existing checked
+selection mechanism. Full checks passed 45 unit / 23 Chromium tests. The optimized
+installed package passed native create, picker cancellation, explicit exact save,
+reopen and unchanged original; normal process exit verified. Evidence retained in
+2026-11-19-new-notes. One initial formatting failure was fixed before final check.
+
+Next: commit/push New note, update draft PR, then reproduce whether automatically
+created unprivileged preview windows steal keyboard focus from source editing.
+Tao's focused(false) restores accept-focus after drawing, so it may prevent only
+initial focus theft without disabling later user interaction; verify real red/green
+focus and keyboard tests before changing production behavior. Do not relax any
+resource, namespace, CSP or IPC check.

@@ -759,3 +759,62 @@ test('JavaScript Unicode line terminators navigate to the original module offset
     original.replace(' const value', '//  const value'),
   );
 });
+
+test('new notes preserve siblings and independent history through save and reopen', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const original = '# Existing\r\n\r\nKeep <span>JSX</span> bytes.\r\n';
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.fill(original);
+  const selection = page.getByLabel('Source file');
+  const originalKey = await selection.inputValue();
+  await page.getByRole('button', { name: 'New note', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Source', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(source).toBeFocused();
+  await expect(source).toHaveText('');
+  const firstKey = await selection.inputValue();
+  expect(firstKey).toContain('Untitled-1.mdx');
+  const fresh = '# Fresh note\n\nA new paragraph.\n';
+  await page.keyboard.insertText(fresh);
+  await page.getByRole('button', { name: 'New note', exact: true }).click();
+  const secondKey = await selection.inputValue();
+  expect(secondKey).not.toBe(firstKey);
+  await page.keyboard.insertText('A separate dirty note.');
+  async function exported(target = page) {
+    const pending = target.waitForEvent('download');
+    await target
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    const file = await pending;
+    return {
+      name: file.suggestedFilename(),
+      bytes: readFileSync((await file.path())!),
+    };
+  }
+  await selection.selectOption(originalKey);
+  expect((await exported()).bytes).toEqual(Buffer.from(original));
+  await selection.selectOption(firstKey);
+  const saved = await exported();
+  expect(saved).toEqual({ name: 'Untitled-1.mdx', bytes: Buffer.from(fresh) });
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect((await exported()).bytes).toEqual(Buffer.from(''));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect((await exported()).bytes).toEqual(Buffer.from(fresh));
+  await selection.selectOption(secondKey);
+  expect((await exported()).bytes).toEqual(
+    Buffer.from('A separate dirty note.'),
+  );
+  const reopened = await context.newPage();
+  await reopened.goto('/');
+  await reopened.getByLabel('Open files').setInputFiles({
+    name: saved.name,
+    mimeType: 'text/plain',
+    buffer: saved.bytes,
+  });
+  expect((await exported(reopened)).bytes).toEqual(saved.bytes);
+});

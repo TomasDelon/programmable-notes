@@ -14,6 +14,7 @@ import {
   isDirty,
   removeDocument,
   validateFiles,
+  createNote,
   type Workspace,
 } from './workspace';
 export function useDocuments(
@@ -89,6 +90,12 @@ export function useDocuments(
       }
       setWorkspace(next);
     });
+  }
+  function newNote() {
+    if (running.current) return;
+    setFileError('');
+    setFileNotice('New unsaved note.');
+    setWorkspace(createNote);
   }
   async function restoreNativeVersion(file: string) {
     await operation(async () => {
@@ -319,6 +326,7 @@ export function useDocuments(
     fileError,
     fileNotice,
     openNative,
+    newNote,
     openBrowser,
     restoreBrowserDraft,
     nativeDraft,

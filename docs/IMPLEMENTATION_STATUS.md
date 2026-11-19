@@ -32,6 +32,11 @@ all validators still run. See [ADR-005](decisions/ADR-005-paragraph-editing.md),
 
 ## Documents and recovery
 
+New note creates a separate empty unsaved MDX buffer in Source mode without a
+file grant. It preserves queued input, sibling source and histories, and respects
+the 32-document limit. Save As remains explicit. [Browser/native acceptance](security-evidence/2026-11-19-new-notes/README.md)
+passed cancellation, exact saving and reopening without changing the original.
+
 Native paths come only from editor-side OS pickers. Commands use unpredictable
 grants and expected revisions, never renderer-supplied authorization paths.
 Atomic saves preserve exact UTF-8, modes and POSIX ACLs. Save As cancellation,
@@ -58,7 +63,7 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 | Layer                              | Executed evidence                                                                                                                                                                                                                        |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 42 unit and 22 Chromium tests passed.                                                                                                                                                             |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 45 unit and 23 Chromium tests passed.                                                                                                                                                             |
 | Native document backend            | 35 normal Rust tests; 15 snapshot tests repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                                                                                                     |
 | Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
 | Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
