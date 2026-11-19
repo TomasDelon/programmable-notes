@@ -73,6 +73,17 @@ missing-observation control retained failure/phase/count and unchanged original
 bytes after cleanup. These do not explain or fix earlier renderer crashes.
 [Exact scope](security-evidence/2026-11-19-long-transition/README.md).
 
+Visual analysis now conservatively falls back to one exact escaped read-only
+source block above4096 raw square-bracket/greater-than markers or the existing
+500000UTF16-unit bound. Source navigation remains trusted; patches/candidate growth
+above the budget fail closed. This targets measured dense-syntax stalls: one actual
+100KB browser probe improved5074ms→68ms transition/2944ms→24ms heartbeat gap. These
+are single observations, not universal parser deadlines or native crash repairs.
+Normal source/compiler/save limits still apply.86unit/34browser and the full
+new installed editing/recovery suite passed. A real directory-write refusal
+verified the new Save acknowledgment oracle cannot infer success from unchanged
+bytes. [Budget, exact artifacts and limitations](security-evidence/2026-11-19-visual-analysis-budget/README.md).
+
 ## Native session feedback
 
 Compilation feedback is separate from the native wait connection. The editor
@@ -273,8 +284,9 @@ multiline quote edits, exact exports, structural refusal, desktop/tablet/mobile
 screenshots and a paced walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: investigate bounded visual parsing costs for adversarial Markdown inputs,
-without changing source fidelity or preview/native authority.
+Next: investigate resident-page memory pressure as a distinct additional native
+OOM workload, keeping the original failed allocation case and every cause/limit
+assertion. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

@@ -1,0 +1,27 @@
+import { chromium } from 'playwright';
+import { writeFile } from 'node:fs/promises';
+const browser = await chromium.launch({ executablePath: '/usr/bin/chromium' });
+const timer = setTimeout(() => browser.close(), 25000);
+const report = {scope:'real Chromium editor on current production build; no native test or document execution', kind:'brackets', size:50000};
+try {
+  const page = await browser.newPage();
+  page.setDefaultTimeout(20000);
+  await page.goto('http://127.0.0.1:4189/');
+  await page.getByRole('textbox',{name:'MDX source'}).waitFor();
+  await page.getByRole('button',{name:'Stop preview',exact:true}).click();
+  const source='['.repeat(report.size)+'x'+']'.repeat(report.size);
+  await page.getByLabel('Open files').setInputFiles({name:'density.mdx',mimeType:'text/plain',buffer:Buffer.from(source)});
+  await page.waitForFunction(() => document.querySelector('[aria-label="Source file"]')?.selectedOptions[0]?.textContent.includes('density.mdx'));
+  report.selected = await page.getByLabel('Source file').inputValue();
+  await page.getByRole('button',{name:'Stop preview',exact:true}).click();
+  await page.evaluate(() => { let previous=performance.now(),maximum=0; const timer=setInterval(()=>{const now=performance.now();maximum=Math.max(maximum,now-previous);previous=now;},10);Object.defineProperty(window,'pnDensityProbe',{value:()=>({maximum,timer})}); });
+  const before=performance.now();
+  await page.getByRole('button',{name:'Visual',exact:true}).click();
+  await page.getByRole('region',{name:'Markdown editing'}).waitFor();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+  report.transitionMilliseconds=performance.now()-before;
+  report.heartbeat=await page.evaluate(()=>{const {maximum,timer}=Reflect.get(window,'pnDensityProbe')();clearInterval(timer);return maximum;});
+  report.readonlyBlocks=await page.locator('details.opaque-block').count();
+  report.outcome='observed';
+} catch(error) {report.outcome='failed';report.error=String(error).slice(0,500);}
+finally {clearTimeout(timer);await browser.close();await writeFile('.cache/visual-density-browser.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));}

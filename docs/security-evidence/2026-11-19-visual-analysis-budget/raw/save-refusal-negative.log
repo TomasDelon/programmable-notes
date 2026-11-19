@@ -1,0 +1,20 @@
+FIXTURE=/tmp/pn-native-jZJ14i
+NATIVE_FIDELITY_IDENTITY {"pid":37498,"executableSha256":"6e301bcee2a5bd38df027e4fa089a1cf2b06e27873b489509aeb4f789a2857bd","observerSha256":"a4f39d76777dea772c537a24d6d17b6e1d601167df420434107a9f4021fc9ed6","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 37498, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-jZJ14i/dense-visual.mdx", "dialogDismissed": true}
+SAVE_REFUSAL_ORACLE_FACTS {"originalUnchanged":true,"mode":416,"ui":{"status":"Source unchanged","error":"File operation failed: Permission denied (os error 13) Source retained.","saveEnabled":true}}
+NATIVE_FIDELITY_FAILURE_UI {
+  status: 'Source unchanged',
+  selected: 'opened-1/dense-visual.mdx',
+  alerts: [
+    'File operation failed: Permission denied (os error 13) Source retained.'
+  ]
+}
+file:///opt/pn/acceptance/scripts/native-visual-readonly-control.mjs:104
+  throw Error(`UI check did not pass: ${expression}`);
+        ^
+
+Error: UI check did not pass: document.querySelector('[aria-label="Document status"]')?.textContent==='Saved.' && !document.querySelector('[data-file-error]')
+    at waitUi (file:///opt/pn/acceptance/scripts/native-visual-readonly-control.mjs:104:9)
+    at async file:///opt/pn/acceptance/scripts/native-visual-readonly-control.mjs:296:5
+
+Node.js v24.22.1

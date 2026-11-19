@@ -410,3 +410,45 @@ it('edits explicit multiline quotes without changing prefixes, mixed endings or 
     }
   }
 });
+
+it('keeps over-budget visual syntax opaque without discarding original source or accepting patches', () => {
+  const source =
+    '\uFEFF# Retain title\r\n\r\n' +
+    '['.repeat(2049) +
+    'x' +
+    ']'.repeat(2049) +
+    '\r\n';
+  expect(editableMarkdown(source)).toEqual([]);
+  expect(markdownBlocks(source)).toEqual([{ from: 0, to: source.length }]);
+  expect(
+    patchMarkdown(
+      source,
+      {
+        from: source.indexOf('Retain title'),
+        to: source.indexOf('Retain title') + 'Retain title'.length,
+        text: 'Retain title',
+        headingDepth: 1,
+      },
+      'Replacement',
+    ),
+  ).toBeNull();
+});
+
+it('retains supported literal mapping at the visual syntax budget and refuses candidate growth beyond it', () => {
+  const source = '['.repeat(2048) + 'x' + ']'.repeat(2048);
+  const ranges = editableMarkdown(source);
+  expect(ranges).toHaveLength(1);
+  expect(ranges[0]?.text).toBe(source);
+  expect(patchMarkdown(source, ranges[0]!, source)).toBe(source);
+  expect(patchMarkdown(source, ranges[0]!, source + ']')).toBeNull();
+});
+
+it('keeps quote-only density and over-size documents as exact whole-source fallbacks', () => {
+  for (const source of [
+    '# Keep heading\r\n\r\n' + '>'.repeat(4097) + ' quote.\r\n',
+    '# Keep heading\r\n\r\n' + 'x'.repeat(500_000),
+  ]) {
+    expect(editableMarkdown(source)).toEqual([]);
+    expect(markdownBlocks(source)).toEqual([{ from: 0, to: source.length }]);
+  }
+});

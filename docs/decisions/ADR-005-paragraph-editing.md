@@ -91,3 +91,26 @@ and exact prefix/ending preservation. Lazy/nested/formatted/JSX and structural
 quote changes described above remain Source-only. The initial single-line evidence
 is historical; current behavior and verification are linked from implementation
 status and ADR010.
+
+## Dense-syntax fallback (2026-11-19)
+
+The existing length bound does not bound synchronous parser cost. Isolated Node
+quote/bracket probes exceeded3s, and an actual100KB bracket document caused a
+2944ms Chromium heartbeat gap during a5074ms Visual transition. A conservative
+linear preflight now permits at most4096 raw square-bracket/greater-than markers
+and the existing500000UTF16 units. It deliberately counts markers even in opaque
+strings/comments: this can refuse otherwise valid documents and is a visual-only
+support limit, never a rewrite or compiler grammar change.
+
+Above either budget there are no editable ranges or accepted candidate patches.
+Visual presents one escaped read-only block spanning the exact whole source,
+with explicit trusted Source navigation. Source authoring and requests for isolated runtime compilation remain available,
+subject to the existing file/compiler/workspace limits. Whole-source fallback
+spans are navigation/display positions, never edit authorizations. Captured-source,
+context and candidate validation still apply below the budget.
+
+The same single browser probe then measured68ms transition/24ms heartbeat gap;
+this is descriptive evidence, not a statistical or portable latency guarantee.
+This bounds the measured structural classes, not every parser or DOM workload.
+A cancellable worker remains the stronger future boundary for visual analysis;
+this change does not claim to fix native JSC crashes or all parser denial of service.

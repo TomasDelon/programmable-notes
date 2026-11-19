@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, useRef } from 'react';
 import {
   editableMarkdown,
   markdownBlocks,
+  visualAnalysisLimited,
   type MarkdownRange,
 } from './markdownEdits';
 
@@ -32,6 +33,10 @@ export function MarkdownEditor({
   const focusTarget = useRef<number | undefined>(undefined);
   const [error, setError] = useState('');
   const pending = edit !== undefined && edit.value !== edit.range.text;
+  const limited = useMemo(
+    () => active && visualAnalysisLimited(source),
+    [active, source],
+  );
   const blocks = useMemo(() => {
     if (!active) return [];
     const ranges = editableMarkdown(source);
@@ -118,6 +123,12 @@ export function MarkdownEditor({
         cancels. React and formatted blocks stay opaque; use Source to edit
         them.
       </p>
+      {limited && (
+        <p role="note">
+          This document is too complex for visual editing. Use Source; your
+          content is unchanged.
+        </p>
+      )}
       {!blocks.length && (
         <p role="note">
           No safe visual mapping is available. Use Source to edit this document.

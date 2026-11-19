@@ -30,6 +30,14 @@ const file = join(process.env.NATIVE_FIXTURE_DIR, 'fidelity-acceptance.mdx');
 const mixedEol = process.argv.includes('--mixed-eol');
 const quotes = process.argv.includes('--quotes');
 const sourceNavigation = process.argv.includes('--source-navigation');
+const visualBudget = process.argv.includes('--visual-budget');
+const denseFile = join(process.env.NATIVE_FIXTURE_DIR, 'dense-visual.mdx');
+const denseSource =
+  '\uFEFF# Dense original\r\n\r\n' +
+  '['.repeat(50_000) +
+  'x' +
+  ']'.repeat(50_000) +
+  '\r\n';
 const multilineQuotes = process.argv.includes('--multiline-quotes');
 assert.ok(!multilineQuotes || quotes, '--multiline-quotes requires --quotes');
 const multilineBefore =
@@ -80,6 +88,8 @@ const saved = beforeParagraph.replace(
 const unsaved = saved.replace('Second item', 'Recovered item');
 await writeFile(file, fixture, { flag: 'wx' });
 await chmod(file, 0o640);
+if (visualBudget)
+  await writeFile(denseFile, denseSource, { flag: 'wx', mode: 0o640 });
 
 async function waitUi(expression) {
   for (let i = 0; i < 100; i++) {
@@ -245,6 +255,46 @@ async function shutdown(pid, discard = false) {
 }
 try {
   const first = await start();
+  if (visualBudget) {
+    await button('Open files');
+    dialog(first, 'choose', 'Open documents and modules', denseFile);
+    await fileIdle();
+    await waitUi(
+      `document.querySelector('select')?.value.endsWith('dense-visual.mdx')`,
+    );
+    await button('Stop preview');
+    await button('Visual');
+    await waitUi(
+      `Array.from(document.querySelectorAll('[aria-label="Markdown editing"] [role="note"]')).some(e=>e.textContent.includes('too complex for visual editing'))`,
+    );
+    assert.equal(
+      await script(
+        `const done=arguments[arguments.length-1];const panel=document.querySelector('[aria-label="Markdown editing"]');const blocks=panel.querySelectorAll('details.opaque-block');done(blocks.length===1 && blocks[0].querySelector('pre')?.textContent===arguments[0] && panel.querySelectorAll('button').length===1);`,
+        [denseSource],
+      ),
+      true,
+    );
+    assert.equal(await readFile(denseFile, 'utf8'), denseSource);
+    assert.equal(
+      await script(
+        `const done=arguments[arguments.length-1];const d=document.querySelector('details.opaque-block');d.querySelector('summary').click();const b=d.querySelector('button');if(b.disabled||b.textContent!=='Show in Source')return done(false);b.click();done(true);`,
+      ),
+      true,
+    );
+    await waitUi(
+      `document.querySelector('[aria-label="MDX source"]')===document.activeElement && !document.querySelector('.source-editor').parentElement.hidden`,
+    );
+    await button('Save source');
+    await fileIdle();
+    await waitUi(
+      `document.querySelector('[aria-label="Document status"]')?.textContent==='Saved.' && !document.querySelector('[data-file-error]')`,
+    );
+    assert.equal(await readFile(denseFile, 'utf8'), denseSource);
+    assert.equal((await stat(denseFile)).mode & 0o777, 0o640);
+    console.log(
+      'NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS',
+    );
+  }
   await open();
   await button('Rebuild preview');
   let previewPid;

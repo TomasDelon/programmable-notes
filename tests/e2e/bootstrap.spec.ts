@@ -1548,3 +1548,54 @@ test('browser file budgets reject selections before reads, retain dirty history 
   );
   await expect(page.getByLabel('Workspace status')).toContainText('unsaved');
 });
+
+test('dense visual syntax falls back to exact read-only Source without preview edit authority', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const source =
+    '\uFEFF# Keep original\r\n\r\n' +
+    '['.repeat(50_000) +
+    'x' +
+    ']'.repeat(50_000) +
+    '\r\n';
+  await open(page, source, 'dense-visual.mdx');
+  await expect(page.getByLabel('Source file')).toHaveValue(
+    /dense-visual\.mdx$/,
+  );
+  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await expect(panel.getByRole('note')).toContainText(
+    'too complex for visual editing',
+  );
+  const block = panel.locator('details.opaque-block');
+  await expect(block).toHaveCount(1);
+  await block.locator('summary').click();
+  expect(await block.locator('pre').textContent()).toBe(source);
+  await expect(panel.getByRole('button')).toHaveCount(1);
+  await block.getByRole('button', { name: 'Show in Source' }).click();
+  await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeFocused();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save source', exact: true }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(source),
+  );
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.fill('# Ordinary again\n\nSafe paragraph.');
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await expect(panel.getByRole('note')).toHaveCount(0);
+  await panel
+    .getByRole('button', { name: 'Safe paragraph.', exact: true })
+    .click();
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Safe edited paragraph.');
+  await field.press('Enter');
+  await expect(
+    panel.getByRole('button', { name: 'Safe edited paragraph.', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(
+    panel.getByRole('button', { name: 'Safe paragraph.', exact: true }),
+  ).toBeVisible();
+});

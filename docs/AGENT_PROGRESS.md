@@ -1349,3 +1349,34 @@ parsing cost with bounded isolated synthetic inputs before proposing any change;
 source-size bounds alone may not establish a time bound. Keep known native
 SIGSEGV/startup/memory failures and old reviewZIP34dc906 scope. No inferred
 vulnerability or security-readiness claim without executed evidence.
+
+## 2026-11-19 — conservative visual analysis budget verified
+
+Base144da10 pushed; PRdraft/head verified, hosted44539390455 again refused both
+zero-step jobs for billing. Measured Node densequote/bracket3s deadlines and real
+100KB Chromium Visual5073ms/heartbeat2944ms. Firstvirtualizedtextreadinessprobe
+failed beforetransition; retained separate. Sameproducer afterguard measured68ms/
+24ms(single observations, no portable/universal guarantee). Above4096 raw[]/>
+markers or existing500000UTF16bound, no mappings/patches, one exact escaped whole
+source fallback/explicitSourceaction. Source/compiler/save limits remain.
+
+TDDunitRED→GREEN; exactbudget/growth/quote/size fallback, browser exactexport then
+normalediting/Undo and all86unit/34Chromium fullchecks passed. Read-onlyreview
+caught ImportantnewSaveoracle weakness: unchangedbytes+fileIdle insufficient.
+FixedexplicitcurrentSaved.+no-file-error, follow-upclear, observereslintpassed.
+
+New optimizedpackage6878294f… / installedELF6e301bce… passed full expandednative
+--mixed-eol --quotes --multiline-quotes --source-navigation --visual-budget, all
+priorcounter/editing/history/restart/explicitunsavedrecovery/invalid/delete gates.
+IndependentIPC passed sameELF;150shippingfiles matchbuilder, helperhashes match
+guest. No newRustbackend/fullpressure claim. Externalparentdirectory0550(control
+file0640) causedrealPermissionDenied: weakoraclepreconditions alltrue, corrected
+observerexited1/noPASSmarker; independentall100026originalbytes/mode/parentrestored/
+ownedRootgone verification passed. Evidence2026-11-19-visual-analysis-budget.
+
+Next: commit/push/update draftPR/check exactCI. Then add a distinct resident-page
+memory-pressure workload to native stress tests, retaining original16MiBfillcase
+and itsfailedOOM-before-expiry record. Enforced512MiB/0swap/25%CPU/60s, required
+actualOOMcause/cleanup/recovery must remain. Run in same disposableVM, no sandbox
+or productionlimit changes. OriginalrendererSIGSEGV/startup/blank failures remain;
+no nativecrash/all-parserDoS/security-readiness claim. ReviewZIP still34dc906.

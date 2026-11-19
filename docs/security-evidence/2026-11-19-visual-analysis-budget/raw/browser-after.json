@@ -1,0 +1,10 @@
+{
+  "scope": "real Chromium editor on current production build; no native test or document execution",
+  "kind": "brackets",
+  "size": 50000,
+  "selected": "opened-1/density.mdx",
+  "transitionMilliseconds": 68.29880200000025,
+  "heartbeat": 24.299999997019768,
+  "readonlyBlocks": 1,
+  "outcome": "observed"
+}

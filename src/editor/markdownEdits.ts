@@ -12,6 +12,21 @@ export interface MarkdownRange {
 }
 
 const plain = /^[\P{Cc}\t\r\n]+$/u;
+// Conservative synchronous-work budget for the measured dense quote/link classes.
+// This is not a universal parser deadline; complex documents remain Source-editable.
+export function visualAnalysisLimited(source: string): boolean {
+  if (source.length > 500_000) return true;
+  let markers = 0;
+  for (const character of source) {
+    if (
+      (character === '>' || character === '[' || character === ']') &&
+      ++markers > 4096
+    )
+      return true;
+  }
+  return false;
+}
+
 const processor = createProcessor();
 // One exact-source AST, shared only by this module's read-only projections.
 // Callers receive fresh ranges, never parser nodes. Public entry points retain
@@ -72,7 +87,7 @@ function parsedSource(source: string) {
 }
 
 export function editableMarkdown(source: string): MarkdownRange[] {
-  if (source.length > 500_000) return [];
+  if (visualAnalysisLimited(source)) return [];
   try {
     const { tree, end } = parsedSource(source);
     return tree.children.flatMap((root): MarkdownRange[] => {
@@ -336,9 +351,9 @@ export function patchMarkdown(
     : null;
 }
 
-/** Only parser-owned root positions are used. Opaque blocks are displayed as text. */
+/** Parser-owned positions, or one conservative whole-source fallback. Display as text. */
 export function markdownBlocks(source: string) {
-  if (source.length > 500_000) return [];
+  if (visualAnalysisLimited(source)) return [{ from: 0, to: source.length }];
   try {
     const { tree, end } = parsedSource(source);
     const blocks = tree.children.flatMap((node) => {

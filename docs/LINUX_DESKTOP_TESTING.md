@@ -162,3 +162,13 @@ default1) to record repeated exact Visual/Source transitions before the same
 keyboard/disk/history/reopen checks. Requested and verified phases remain distinct;
 its ordinary JSON progress writes are not fsynced crash-durable storage.
 [Actual five-cycle result, refusal control and unresolved crash scope](security-evidence/2026-11-19-long-transition/README.md).
+
+## Dense visual mapping fallback
+
+Append `--visual-budget` to the full fresh-fixture native fidelity command. Its
+additional100KB bracket-heavy document must show one exact read-only source block,
+no in-place edit controls, trusted Source navigation and an explicitly acknowledged
+unchanged native Save with mode0640. It then runs every earlier counter/editing/
+history/restart/recovery gate. The conservative visual-only structure budget is
+specified in ADR005; Source/save/compiler limits remain in force. This is not a
+universal parser deadline or a repair of the recorded native renderer SIGSEGV.
