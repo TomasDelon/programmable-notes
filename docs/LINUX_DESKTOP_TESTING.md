@@ -127,3 +127,10 @@ within three seconds before natural expiry. Original bytes and mode must remain
 unchanged. Direct native Stop is cleanup only, never the success oracle.
 The editor's connection status measures its owned wait handle, not renderer health
 or empty cgroups. See [exact results and failed controls](security-evidence/2026-11-19-session-status/README.md).
+
+For ordinary UI Stop and explicit-retry regression use a fresh fixture with
+`NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-stop-retry.mjs`. Its optional
+external EIO mode requires a second administrator terminal in a disposable VM;
+[exact instructions and evidence](security-evidence/2026-11-19-stop-retry/README.md)
+record the first failed Stop, live group, detachment and second UI click. Never
+substitute a direct cleanup RPC for successful UI Stop.

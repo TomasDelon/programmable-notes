@@ -1,0 +1,17 @@
+{
+  "scope": "installed UI-only Stop; optional external exec-failure and explicit retry",
+  "observerSha256": "3237cd9035600a7d89ec957e38cb1871ce90197a47815970727ed4df5308e280",
+  "editorPid": 30849,
+  "executableSha256": "5318edc9565757b503f061b45596f1bb0b8dbaa217a9b603f105e08ab3fe8773",
+  "outcome": "fail",
+  "error": "Error: UI condition failed: document.querySelector('.build-status')?.textContent.startsWith('Compiled')",
+  "failureUi": {
+    "alerts": [
+      "Compilation exceeded 15 seconds; source retained."
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Build timed out"
+  },
+  "sourceUnchanged": true
+}

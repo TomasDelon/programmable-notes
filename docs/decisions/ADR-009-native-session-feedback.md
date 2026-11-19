@@ -34,3 +34,20 @@ Native acceptance must retain actual expiry journal evidence, UI transition,
 manual rebuild/interaction and Stop, unchanged source, new command denial from
 preview, and all existing native boundary/fidelity regressions. Browser/mocked
 transport tests are separate from installed runtime proof.
+
+## Explicit Stop completion and retry
+
+An actual injected `systemctl` spawn EIO exposed a separate UI defect: clearing
+an artifact immediately claimed Stop success, while a second click with no
+artifact sent no command. The supervisor correctly retained unit ownership.
+The editor now displays pending/failure/confirmed Stop state and lets a later
+user click enqueue a retry through the same serialized operation queue. First
+Stop retains one existing cleanup command; there is no automatic second call
+that could hide failure. No native policy, permission or resource limit changes.
+
+The trusted owner captures each click's identity before awaiting completion.
+A later retry or rebuild supersedes old success and error feedback. Explicit Stop
+failure has one guarded owner; implicit cleanup during source changes still
+reports errors. A shared queue prevents toolbar retries overtaking component
+cleanup or a subsequent start. The boolean connection signal never authorizes
+this operation; only the trusted user action does.

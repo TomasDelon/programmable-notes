@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { enqueueNativeOperation } from './native-operations';
 
 // Preserve order across rapid edits and StrictMode mount/cleanup. No simultaneous
 // native starts, and cleanup cannot stop the preview belonging to a newer build.
-let queue: Promise<unknown> = Promise.resolve();
 // Status transport is shared across effect generations; Stop never waits on it.
 let connectionRead: Promise<unknown> | undefined;
 type Phase = 'starting' | 'connected' | 'ended' | 'unknown';
@@ -18,9 +18,12 @@ const feedback: Record<Phase, string> = {
 export function NativePreview({
   html,
   onError,
+  onStop,
 }: {
   html: string;
   onError: (message: string) => void;
+  // Return true when the trusted owner handles this request, including failures.
+  onStop?: (completion: Promise<void>) => boolean;
 }) {
   const [connection, setConnection] = useState<{
     artifact: string;
@@ -61,37 +64,34 @@ export function NativePreview({
         if (read && connectionRead === read) connectionRead = undefined;
       }
     }
-    queue = queue
-      .catch(() => undefined)
-      .then(async () => {
-        if (!current) return;
-        try {
-          setConnection({ artifact: html, phase: 'starting' });
-          await invoke('start_preview', { html });
-          if (current) timer = setTimeout(checkConnection, 1000);
-        } catch (error) {
-          if (current) {
-            setConnection({ artifact: html, phase: 'unknown' });
-            onError(
-              `Native preview unavailable: ${String(error).slice(0, 2000)}`,
-            );
-          }
+    void enqueueNativeOperation(async () => {
+      if (!current) return;
+      try {
+        setConnection({ artifact: html, phase: 'starting' });
+        await invoke('start_preview', { html });
+        if (current) timer = setTimeout(checkConnection, 1000);
+      } catch (error) {
+        if (current) {
+          setConnection({ artifact: html, phase: 'unknown' });
+          onError(
+            `Native preview unavailable: ${String(error).slice(0, 2000)}`,
+          );
         }
-      });
+      }
+    });
     return () => {
       current = false;
       if (timer !== undefined) clearTimeout(timer);
-      queue = queue
-        .catch(() => undefined)
-        .then(async () => {
-          try {
-            await invoke('stop_preview');
-          } catch (error) {
-            onError(`Native stop failed: ${String(error).slice(0, 2000)}`);
-          }
+      const completion = enqueueNativeOperation(() =>
+        invoke<void>('stop_preview'),
+      );
+      const handled = onStop?.(completion);
+      if (!handled)
+        void completion.catch((error) => {
+          onError(`Native stop failed: ${String(error).slice(0, 2000)}`);
         });
     };
-  }, [html, onError]);
+  }, [html, onError, onStop]);
   return (
     <>
       <p role="status" aria-label="Native preview status">

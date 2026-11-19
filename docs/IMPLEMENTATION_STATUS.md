@@ -66,6 +66,13 @@ production binary. Startup/rebuild failures remain preserved and unresolved.
 See [ADR009](decisions/ADR-009-native-session-feedback.md) and
 [exact scope and failed controls](security-evidence/2026-11-19-session-status/README.md).
 
+Native Stop now waits for native confirmation and reports failure. When an artifact
+has already been removed, another trusted Stop click issues a fresh serialized
+retry. Newer requests/rebuilds supersede old completion/error feedback; there are
+no automatic retries or expanded permissions. Actual injected native exec failure
+then UI retry/cgroup cleanup before expiry passed on the recorded production ELF.
+[Stop recovery, race tests and retained failures](security-evidence/2026-11-19-stop-retry/README.md).
+
 ## Documents and recovery
 
 Selected dirty/save status is independent of other buffers. Dirty siblings have

@@ -1,10 +1,11 @@
 import { RecoveryHistory } from './documents/RecoveryHistory';
 import { BrowserDraft } from './documents/BrowserDraft';
-import { isTauri } from '@tauri-apps/api/core';
+import { isTauri, invoke } from '@tauri-apps/api/core';
+import { enqueueNativeOperation } from './preview/native-operations';
 import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDocuments } from './documents/useDocuments';
 import { compilerFiles, validateFiles, MAX_FILES } from './documents/workspace';
 import counter from '../docs/handoff/samples/fixtures/counter.mdx?raw';
@@ -91,6 +92,27 @@ export function App() {
   const [status, setStatus] = useState('Waiting');
   const [stopped, setStopped] = useState(false);
   const [revision, setRevision] = useState(0);
+  const stopIntent = useRef<object | undefined>(undefined);
+  const observeNativeStop = useCallback((completion: Promise<void>) => {
+    const intent = stopIntent.current;
+    if (!intent) return false;
+    function settled(error?: string) {
+      // Only this user request owns feedback, even across retries and rebuilding.
+      if (stopIntent.current !== intent) return;
+      setStatus(error ? 'Preview stop failed' : 'Preview stopped');
+      if (error) setError(error);
+      else
+        setError((current) =>
+          current.startsWith('Native stop failed:') ? '' : current,
+        );
+    }
+    void completion.then(
+      () => settled(),
+      (error) => settled(`Native stop failed: ${String(error).slice(0, 2000)}`),
+    );
+    return true;
+  }, []);
+
   useEffect(() => {
     if (stopped) return;
     let active = true;
@@ -307,15 +329,25 @@ export function App() {
         </button>
         <button
           onClick={() => {
+            stopIntent.current = {};
             setHtml('');
-            setStatus('Preview stopped');
             setStopped(true);
+            if (isTauri()) {
+              setStatus('Stopping preview');
+              // A mounted artifact stops through its existing cleanup exactly once.
+              // After removal, a new user click is an explicit, serialized retry.
+              if (!html)
+                observeNativeStop(
+                  enqueueNativeOperation(() => invoke<void>('stop_preview')),
+                );
+            } else setStatus('Preview stopped');
           }}
         >
           Stop preview
         </button>
         <button
           onClick={() => {
+            stopIntent.current = undefined;
             setStopped(false);
             setRevision((n) => n + 1);
           }}
@@ -485,7 +517,11 @@ export function App() {
           <div className="pane-title">Live React preview</div>
           {html &&
             (isTauri() ? (
-              <NativePreview html={html} onError={setError} />
+              <NativePreview
+                html={html}
+                onError={setError}
+                onStop={observeNativeStop}
+              />
             ) : (
               <Preview html={html} onError={setError} />
             ))}

@@ -1116,3 +1116,61 @@ docs/package-script edits; full69unit/30browser run remains sameapplication sour
 Nativefeedback milestone readyforcommit/push; PRmuststaydraft. Next execute
 /tmp/pn-stop-retry-design.md via bounded plan/tests, newoptimizedpackage/faultretry
 acceptance, and preserveoldfailure. No automaticretry orresourcechange.
+
+## 2026-11-19 — native Stop retry implementation checkpoint
+
+Session milestone841e8a7 pushed and draftPR updated. CIrun44516472974 failed before
+steps; priorbillingrefusal stillneedsowneraction, notpassingCI. Next boundedplan
+2026-11-19-native-stop-retry implementsactualfaultfinding: toolbarpending/failed/
+confirmedfeedback and explicitretrywhenartifactalreadyremoved. Sharedexisting
+serializedqueue extractedinto native-operations.ts, no automaticretry/newnativeAPI.
+Per-clickidentityguardssettlementacrossnewStopandRebuild; implicitcleanupstillreports
+errors. FocusedinitialREDfalseStopped/missingretry, thenstalecompletionRED. Fresh
+read-onlyreviewfoundunconditionalcleanup onErrorbypassedrequestguard. Deferred
+oldrejection tests reproducedbothstalealertsRED; singlehandledcompletionownership
+fixed10focusedtestsGREEN. Fullcurrentcheckrunning /tmp/native-stop-retry-final-check.log.
+
+Initialfullcheck72unit/29browser passed but820px firstcounterclickstayedCount0;
+knownrareinteractionfailureatadifferentviewport, notsilentlyignored. Complete
+traceZIP210eaf0f… andscreenshotretained;20unchanged820pxrepeatsPASS. No speculative
+runtimechangeortestretry/timeoutweakening. Causeunresolved. Needfinalcheckresult.
+
+Finalreview-fixedoptimizedpackage1ee05d11… / ELF5318edc9… installed, nativefault/retry
+observerrunning /tmp/native-stop-retry-native.log, fixture /tmp/pn-native-vCwgmC.
+Rootexternalowned-processEIOcontroller /tmp/native-stop-retry-controller.log. Need
+actualfailurethenUIretry/cgroupcleanupbeforeunchangedexpiry; noRootdirectStoporacle.
+Afterpositive, runordinarysession/nativeIPC/fullmixed-EOLquotesfidelityserially,
+recordsourcetestobserverparity, updateADR009/status/evidence,commit/push/draftPR.
+Nativebackendpolicy unchanged; nofullmaliciouspressurematrixclaim. Newreviewbundle
+stillbinds f503644, explicitlynotthisnativeonlyfeedbackmilestone.
+
+## 2026-11-19 — Stop retry milestone verified
+
+Base 841e8a7 is pushed; the current native Stop retry changes are ready to commit.
+The installed production package is 1ee05d11… / ELF 5318edc9…. Actual injected
+exec EIO produced failed feedback with a live cgroup; an explicit second UI click
+at unit age 51.357028s removed that group within 3s before natural expiry and
+cleared the error only after confirmation. Source and mode 0640 stayed unchanged.
+Ordinary expiry/rebuild/counter/UI Stop and independent native IPC passed on the
+same binary. First full fidelity run FAILED to find its counter before 60s expiry;
+its journal recorded 14.403s CPU and 66.3MiB peak. Preserve this startup failure.
+The repeated full fidelity run PASSED all mixed-EOL/quote/disk/history, close,
+restart, explicit unsaved restore, invalid-UTF8/delete and original-file checks.
+A read-only startup monitor was ineffective due to sampling activation timestamp0;
+its data/source are retained as inconclusive, not cause or screenshot evidence.
+
+Final checks passed 74 unit /30 Chromium with system156 AND matching Playwright
+Headless Shell159.0.8154.6, plus format/lint/types. One earlier tablet first-click
+failure and full trace remain;20 unchanged tablet repetitions passed without test
+weakening. Fresh review's stale-error finding was reproduced and fixed, including
+preserving a current compiler diagnostic after superseded Stop rejection. Native
+source/builder and four observer copies match. No native policy/capability change.
+No new pressure matrix, production readiness, or physical GPU/Wayland claim.
+
+Next: commit/push this bounded fix, update draft PR and check exact new CI head.
+Continue with first-counter-click diagnostics: distinguish delivered input from
+reset/remount using read-only event/mutation observations and pinned/system browser
+controls. Draft diagnostic /tmp/pn-counter-first-click.mjs; do not change runtime
+or assertions without evidence. Current hosted head841e8a7 remains zero-step
+billing-refused. Browser review ZIP still binds f503644, deliberately separate
+from native-only session/Stop feedback changes. All owned test root PIDs exited.

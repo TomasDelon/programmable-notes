@@ -55,7 +55,7 @@ NativePreview props remain html/onError.
 - [x] Request read-only review of the complete feature; fix important findings
       with regression proof. Run npm run check and relevant Rust checks. Preserve
       exact package/source/observer hashes and all failures. Update status/ADR/ledger.
-- [ ] Commit/push verified feature and update draft PR; continue next safe task.
+- [x] Commit/push verified feature and update draft PR; continue next safe task.
 
 ## Execution rulings
 
