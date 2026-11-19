@@ -1174,3 +1174,25 @@ controls. Draft diagnostic /tmp/pn-counter-first-click.mjs; do not change runtim
 or assertions without evidence. Current hosted head841e8a7 remains zero-step
 billing-refused. Browser review ZIP still binds f503644, deliberately separate
 from native-only session/Stop feedback changes. All owned test root PIDs exited.
+
+## 2026-11-19 — bounded first-click investigation checkpoint
+
+0975b35 is pushed and PR#1 is still draft. Its new CIrun44520354949 again refused
+both zero-step jobs due billing; raw annotations are retained. No repository code
+can fix the account setting, and no hosted success is claimed.
+
+New read-only scripts/diagnose-counter-input.mjs passed30 instrumented +20 untouched
+warm-context trials per browser (system156, matching159), then10 fresh Node/browser
+one-round trials per version. No real miss reproduced:120 observations total,
+plus one positive event-pipeline control. A deliberate omitted first input exited1
+and remained failed after a real second click produced Count1. Actual trusted
+pointer/click, mutation and stable srcdoc timeOrigin proved observability. Existing-
+evidence collision failed at EEXIST before browser launch and did not change old
+bytes. Source/probe version hashes, failed prior trace and exact control receipts
+are retained. No production change or cause claim. Current full check74unit/
+30Chromium plus formatting/lint/types passed. Commit/push this diagnostic milestone
+and update draft PR, then continue the bounded multiline-quote mapping contract in
+IMPLEMENTATION_STATUS. Keep snapshots, JSX opacity, source revision and native
+limits unchanged. Do not rerun random clicks indefinitely or infer a fix from
+absence of reproduction. Browser demo remains the exact remotely verified f503644
+review ZIP; no native-only update is silently attributed to that older artifact.

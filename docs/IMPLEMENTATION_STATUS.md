@@ -212,6 +212,14 @@ limits. Both were heavily CPU-throttled; actual interaction and Stop before expi
 passed. This narrows common emulated startup cost but does not resolve the earlier
 editor-crash blank case. [Raw comparison and failed harness attempt](security-evidence/2026-11-19-startup-probe/README.md).
 
+The intermittent browser first-counter click has no established cause. A bounded
+investigation passed100 warm-context and20 cold-browser clicks across system156
+and matching Playwright159; a deliberate missing-input control retained failure
+after a second real click worked. Read-only event/mutation/navigation diagnostics
+are now reproducible, with exact probe versions and original failed traces retained.
+This is not a production fix or evidence of a React reset.
+[Executed scope](security-evidence/2026-11-19-counter-input/README.md).
+
 Software rendering passed normal and stricter AppArmor desktop tests. Default
 llvmpipe failed on QEMU/Xvfb; physical GPU, Wayland, IME and other distributions
 remain untested compatibility targets. They do not block independent editor work.
@@ -231,10 +239,12 @@ port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` cont
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
 linked in PR #1; new hosted uploads are blocked until account billing is resolved.
 
-Next: refresh review delivery for literal quotes and investigate native session-end
-feedback; diagnose
-remaining native cold-start observations without changing deadlines or isolation;
-retain separate containment and interactive-recovery results, and investigate
-the unresolved blank/startup and immediate-allocation memory matrix failures. Bounded mapping reuse and original-source
-compiler navigation passed installed acceptance. Hosted runners need owner billing
-action; physical GPU/Wayland compatibility can proceed independently.
+Next: expand conservative source-preserving editing to explicit multiline quoted
+paragraphs with unchanged line count, keeping every continuation marker/ending and
+all unrelated MDX bytes. Single-line-to-multiline, lazy, formatted, nested and JSX
+quotes remain outside that proposed contract until independently validated. Keep
+investigating native blank/startup, renderer SIGSEGV and the failed memory-pressure
+matrix without changing deadlines or isolation. Quote review delivery, native
+session-end feedback and explicit Stop recovery are implemented and verified in
+the dated evidence. Hosted runners still need owner billing action; physical
+GPU/Wayland compatibility can proceed independently.

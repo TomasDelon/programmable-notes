@@ -1,0 +1,126 @@
+{
+  "browser": "159.0.8154.6",
+  "sourceHead": "0975b35c98ef9a3133314923137fe7fdaaff1514",
+  "observerSha256": "636d4e3b86c617daf15c794a90ab54afaa1f12e542523d772c77ce8a6b97bb2b",
+  "indexSha256": "c8af4dc3d12007acd9b5434d0610a06f40caca9c406bf6bedcac15583dc5c2d6",
+  "instrumented": true,
+  "negativeControl": false,
+  "base": "http://127.0.0.1:4189",
+  "rounds": 1,
+  "scope": "Instrumented first click; a diagnostic second click never converts failure to success",
+  "results": [
+    {
+      "round": 0,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090215124
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090216497
+        }
+      ],
+      "outcome": "pass",
+      "frames": [
+        {
+          "origin": "http://127.0.0.1:4189/",
+          "timeOrigin": 1795090215094.5,
+          "events": [
+            {
+              "type": "blur",
+              "time": 1864.5,
+              "trusted": true,
+              "defaultPrevented": false
+            }
+          ],
+          "changes": [],
+          "errors": []
+        },
+        {
+          "origin": "about:srcdoc",
+          "timeOrigin": 1795090216492,
+          "events": [
+            {
+              "type": "pointerdown",
+              "time": 466.59999999403954,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67.66000366210938,
+              "y": 238.23065185546875,
+              "defaultPrevented": false
+            },
+            {
+              "type": "mousedown",
+              "time": 466.90000000596046,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            },
+            {
+              "type": "focus",
+              "time": 466.90000000596046,
+              "trusted": true,
+              "defaultPrevented": false
+            },
+            {
+              "type": "focus",
+              "time": 467,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "defaultPrevented": false
+            },
+            {
+              "type": "pointerup",
+              "time": 467.09999999403954,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67.66000366210938,
+              "y": 238.23065185546875,
+              "defaultPrevented": false
+            },
+            {
+              "type": "mouseup",
+              "time": 467.09999999403954,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            },
+            {
+              "type": "click",
+              "time": 467.29999999701977,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            }
+          ],
+          "changes": [
+            {
+              "time": 65.20000000298023,
+              "text": "Count: 0"
+            },
+            {
+              "time": 468.29999999701977,
+              "text": "Count: 1"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}
