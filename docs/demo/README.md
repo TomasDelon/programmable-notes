@@ -1,6 +1,6 @@
 # Downloadable editor review
 
-[Download the working review ZIP](programmable-notes-review-2026-11-19.zip?raw=true)
+[Download the working review ZIP](https://github.com/TomasDelon/programmable-notes/blob/247ee9a1de67c027a032ee1ba162fd03714611ba/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
 (8,540,754 bytes).
 
 This dated ZIP is the requested PR-accessible review attachment while hosted
@@ -68,3 +68,6 @@ Explicit multiline quoted paragraphs may change text while retaining line count.
 Every continuation marker and physical ending remains exact; use Source to change
 structure. Native session feedback and Stop retry are implemented in the source
 engine, but this browser attachment does not exercise native functionality.
+
+The exact remote Git blob was downloaded and matched every byte; its immutable
+link above is pinned to the verified delivery commit. [Download receipt](../security-evidence/2026-11-19-multiline-review/raw/remote-download.json).

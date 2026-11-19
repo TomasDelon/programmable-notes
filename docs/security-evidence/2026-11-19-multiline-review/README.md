@@ -47,3 +47,8 @@ matching browser:1440×1000, 21.32s, decoded frames observed, all18
 images loaded and no media error. The first6.44s recording was too fast for review;
 recording-only pauses now hold verified states without changing assertions. Its
 receipt is explicitly prepace; the final checksum above binds the paced version.
+
+Remote delivery commit `247ee9a1de67c027a032ee1ba162fd03714611ba` was downloaded through GitHub's Git
+Blob API. Decoded blob `af59a6f2e6a488b919059569b4beff5330ac8218` matched every local byte and the final
+SHA256. The download link is pinned to that immutable delivery; this is actual
+remote retrieval, not a merely prepared attachment or hosted CI success.

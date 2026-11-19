@@ -1268,3 +1268,17 @@ record receipt/update draft PR. Current source34dc906 hosted CIrun44527525920 ag
 refused both zero-step jobs for billing. Then begin bounded opaque-block Source
 navigation using existing revealSource snapshot/offset guards. No JSX reverse
 editing, privilege expansion, merge, public release or production-readiness claim.
+
+## 2026-11-19 — remote delivery receipt
+
+Delivery247ee9a pushed. Actual GitHub GitBlob download af59a6f2… matched all
+8,540,754bytes, SHA256ccc78029…, engine34dc906. Immutable README download now pins
+that delivery.21.32s video decoded in matching159;18images and standalone extracted
+app passed.75unit/31browser, nine artifact negatives and150 shipping-source parity
+checks retained. PR remains draft; no merge/release/readiness change.
+
+Next: update the PR around final implemented state and this verified download,
+then bounded opaque-block Source navigation via existing revealSource offset/full
+snapshot checks. Native fd151c78…/package287692f1… remains exact recorded baseline.
+Latest checked hosted34dc906 zero-step CI refusal is account billing; verify latest
+head again, never label local success hosted-green. Keep all known native failures.

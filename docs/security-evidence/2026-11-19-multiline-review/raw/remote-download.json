@@ -1,0 +1,10 @@
+{
+  "scope": "actual remote GitHub Git Blob API download; base64 decoded and every byte compared",
+  "deliveryCommit": "247ee9a1de67c027a032ee1ba162fd03714611ba",
+  "engineSource": "34dc906320d1ab6630c3008d53cae7d22d1efffa",
+  "blobSha": "af59a6f2e6a488b919059569b4beff5330ac8218",
+  "bytes": 8540754,
+  "sha256": "ccc780298173df68c25612d56989f0560889c1f0ee58e8dc1bd6c0995cd3febb",
+  "byteIdentical": true,
+  "downloadedAt": "2026-11-19T13:19:14.438521+00:00"
+}
