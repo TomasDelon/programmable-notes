@@ -84,3 +84,12 @@ This is a fallback to ordinary source authoring, not a reverse-editing contract.
 The private callback is never exposed through native IPC or the preview message
 protocol. Existing compiler navigation also captures document identity, preventing
 a queued location from being applied to another selected document.
+
+## Live source selection
+
+Source selection must reference an own file in the latest workspace. Validate
+inside the functional state updater so a delayed callback cannot select a closed
+source or inherited property. Invalid values retain the entire current state.
+Visible options include list-position ordinals to distinguish repeated filenames;
+ordinals can change on close and never become source keys, grants or persistent
+identities. Existing source/history and pending-inline guards remain authoritative.

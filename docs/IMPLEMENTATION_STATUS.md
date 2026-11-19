@@ -104,6 +104,13 @@ no automatic retries or expanded permissions. Actual injected native exec failur
 then UI retry/cgroup cleanup before expiry passed on the recorded production ELF.
 [Stop recovery, race tests and retained failures](security-evidence/2026-11-19-stop-retry/README.md).
 
+Same-named sources now have distinct numbered choices. Numbers are current list
+positions; underlying keys, native grants and histories are unchanged. Selecting
+a closed/unknown/inherited key is rejected against the latest workspace without
+changing source/entry. Real browser and installed separate-directory file edits,
+independent exact saves/history/reopen plus the full native recovery/IPC suites
+passed. [90 unit /35 browser checks and exact package scope](security-evidence/2026-11-19-safe-source-selection/README.md).
+
 ## Browser import budgets
 
 Browser Open preflights the existing workspace and selection metadata before
@@ -286,9 +293,9 @@ Source navigation, dense read-only fallback, multiline quote edits, exact export
 structural refusal, desktop/tablet/mobile screenshots and a paced 27.64-second walkthrough. Its archive and clean-extracted browser/media
 checks are independent of native acceptance.
 
-Next: verify the pushed portable review byte-for-byte and pin its immutable
-GitHub receipt, then investigate ambiguous labels when separate sources share
-a filename. A cancellable visual-analysis worker remains a future stronger bound.
+Next: make native fidelity CLI flags fail closed on unknown options so typos
+cannot silently skip requested coverage. The portable review is remote-verified
+and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.

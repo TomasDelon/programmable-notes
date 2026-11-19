@@ -1599,3 +1599,94 @@ test('dense visual syntax falls back to exact read-only Source without preview e
     panel.getByRole('button', { name: 'Safe paragraph.', exact: true }),
   ).toBeVisible();
 });
+
+test('same-named sources have distinct visible choices and retain separate exact bytes and undo histories', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const first =
+    '\uFEFF# First note\r\n\r\nFirst paragraph café.\r\n\r\n<div><span>First opaque JSX</span></div>\r\n';
+  const second =
+    '\uFEFF# Second note\n\nSecond paragraph 😀.\r\n\r\n<div>Second opaque JSX</div>\n';
+  const choices = page.getByLabel('Source file');
+  const initialCount = await choices.locator('option').count();
+  await open(page, first, 'repeat.mdx');
+  await expect(choices).toHaveValue(/\/repeat\.mdx$/);
+  const firstKey = await choices.inputValue();
+  await open(page, second, 'repeat.mdx');
+  await expect(choices).not.toHaveValue(firstKey);
+  const secondKey = await choices.inputValue();
+  const repeated = await choices.locator('option').evaluateAll((options) =>
+    options
+      .filter((option) => option.getAttribute('value')?.endsWith('/repeat.mdx'))
+      .map((option) => ({
+        value: option.getAttribute('value'),
+        label: option.textContent,
+      })),
+  );
+  expect(repeated).toHaveLength(2);
+  expect(new Set(repeated.map((option) => option.label)).size).toBe(2);
+  async function choose(key: string) {
+    const label = await choices
+      .locator('option')
+      .evaluateAll(
+        (options, key) =>
+          options.find((option) => option.getAttribute('value') === key)
+            ?.textContent,
+        key,
+      );
+    expect(label).toBeTruthy();
+    await choices.selectOption({ label: label! });
+    await expect(choices).toHaveValue(key);
+  }
+  async function exported() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  }
+  await choose(firstKey);
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await panel
+    .getByRole('button', { name: 'First paragraph café.', exact: true })
+    .click();
+  const input = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await input.fill('First edited paragraph café.');
+  await expect(choices).toBeDisabled();
+  await input.press('Enter');
+  await choose(secondKey);
+  expect(await exported()).toEqual(Buffer.from(second));
+  await expect(page.getByLabel('Workspace status')).toContainText('unsaved');
+  await choose(firstKey);
+  await expect(
+    panel.getByRole('button', {
+      name: 'First edited paragraph café.',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(first));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  const changed = first.replace(
+    'First paragraph café.',
+    'First edited paragraph café.',
+  );
+  const saved = await exported();
+  expect(saved).toEqual(Buffer.from(changed));
+  await choose(secondKey);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(second));
+  await choose(firstKey);
+  await page.getByRole('button', { name: 'Close source', exact: true }).click();
+  await expect(choices.locator('option')).toHaveCount(initialCount + 1);
+  const beforeReopen = await choices.inputValue();
+  await open(page, saved.toString('utf8'), 'repeat.mdx');
+  await expect(choices).not.toHaveValue(beforeReopen);
+  const reopenedKey = await choices.inputValue();
+  expect(reopenedKey).not.toBe(firstKey);
+  expect(await exported()).toEqual(saved);
+  await choose(secondKey);
+  expect(await exported()).toEqual(Buffer.from(second));
+});

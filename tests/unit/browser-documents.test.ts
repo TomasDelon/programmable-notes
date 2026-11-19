@@ -108,3 +108,39 @@ it('revalidates the latest workspace after asynchronous reads and never discards
     files['old-0.mdx'],
   );
 });
+
+it('ignores delayed selection of a closed source and keeps selected and entry files valid', async () => {
+  const hook = renderHook(() =>
+    useDocuments(
+      { 'first.mdx': '# First', 'second.mdx': '# Second' },
+      'first.mdx',
+    ),
+  );
+  const delayedSelect = hook.result.current.select;
+  await act(() => hook.result.current.close());
+  const remaining = hook.result.current.workspace;
+  expect(remaining.selected).toBe('second.mdx');
+  act(() => delayedSelect('first.mdx'));
+  expect(hook.result.current.workspace).toBe(remaining);
+  expect(hook.result.current.workspace.entry).toBe('second.mdx');
+});
+
+it('rejects empty, unknown and inherited source names without changing dirty bytes or workspace identity', () => {
+  const hook = renderHook(() =>
+    useDocuments(
+      { 'first.mdx': '# First', 'second.mdx': '# Second' },
+      'first.mdx',
+    ),
+  );
+  act(() => hook.result.current.change('# Keep dirty café 😀.\r\n'));
+  const before = hook.result.current.workspace;
+  for (const key of ['', 'missing.mdx', 'toString', '__proto__']) {
+    act(() => hook.result.current.select(key));
+    expect(hook.result.current.workspace).toBe(before);
+  }
+  act(() => hook.result.current.select('second.mdx'));
+  expect(hook.result.current.workspace.selected).toBe('second.mdx');
+  expect(hook.result.current.workspace.files['first.mdx']).toBe(
+    '# Keep dirty café 😀.\r\n',
+  );
+});

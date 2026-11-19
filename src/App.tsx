@@ -366,8 +366,9 @@ export function App() {
             disabled={pendingVisual}
             onChange={(e) => documents.select(e.target.value)}
           >
-            {Object.keys(files).map((path) => (
+            {Object.keys(files).map((path, index) => (
               <option key={path} value={path}>
+                {index + 1}.{' '}
                 {documents.workspace.bindings[path]?.name ||
                   path.replace(/^opened-\d+\//, '')}
                 {files[path] !== documents.workspace.saved[path] ? ' •' : ''}

@@ -2,7 +2,14 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn } from 'node:child_process';
-import { readFile, writeFile, lstat, chmod, stat } from 'node:fs/promises';
+import {
+  readFile,
+  writeFile,
+  lstat,
+  chmod,
+  stat,
+  mkdir,
+} from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -31,6 +38,14 @@ const mixedEol = process.argv.includes('--mixed-eol');
 const quotes = process.argv.includes('--quotes');
 const sourceNavigation = process.argv.includes('--source-navigation');
 const visualBudget = process.argv.includes('--visual-budget');
+const sameNames = process.argv.includes('--same-names');
+const pairFiles = ['first', 'second'].map((name) =>
+  join(process.env.NATIVE_FIXTURE_DIR, name, 'repeat.mdx'),
+);
+const pairSources = [
+  '\uFEFF# First copy\r\n\r\nFirst bytes café 😀.\r\n',
+  '\uFEFF# Second copy\n\nSecond bytes exact.\r\n',
+];
 const denseFile = join(process.env.NATIVE_FIXTURE_DIR, 'dense-visual.mdx');
 const denseSource =
   '\uFEFF# Dense original\r\n\r\n' +
@@ -90,6 +105,19 @@ await writeFile(file, fixture, { flag: 'wx' });
 await chmod(file, 0o640);
 if (visualBudget)
   await writeFile(denseFile, denseSource, { flag: 'wx', mode: 0o640 });
+
+if (sameNames) {
+  for (let index = 0; index < pairFiles.length; index++) {
+    await mkdir(
+      join(process.env.NATIVE_FIXTURE_DIR, index === 0 ? 'first' : 'second'),
+      { mode: 0o700 },
+    );
+    await writeFile(pairFiles[index], pairSources[index], {
+      flag: 'wx',
+      mode: 0o640,
+    });
+  }
+}
 
 async function waitUi(expression) {
   for (let i = 0; i < 100; i++) {
@@ -255,6 +283,97 @@ async function shutdown(pid, discard = false) {
 }
 try {
   const first = await start();
+  if (sameNames) {
+    const keys = [];
+    for (let index = 0; index < pairFiles.length; index++) {
+      const previous = await script(
+        'arguments[arguments.length-1](document.querySelector("select").value);',
+      );
+      await button('Open files');
+      dialog(first, 'choose', 'Open documents and modules', pairFiles[index]);
+      await fileIdle();
+      await waitUi(
+        `document.querySelector('select').value!==${JSON.stringify(previous)} && document.querySelector('.cm-content')?.innerText.includes(${JSON.stringify(index === 0 ? 'First bytes' : 'Second bytes')})`,
+      );
+      keys.push(
+        await script(
+          'arguments[arguments.length-1](document.querySelector("select").value);',
+        ),
+      );
+    }
+    const labels = await script(
+      'const done=arguments[arguments.length-1];done(Array.from(document.querySelector("select").options).filter(o=>arguments[0].includes(o.value)).map(o=>o.label));',
+      [keys],
+    );
+    assert.equal(labels.length, 2);
+    assert.equal(new Set(labels).size, 2);
+    async function choose(index) {
+      assert.equal(
+        await script(
+          `const done=arguments[arguments.length-1];const s=document.querySelector('select');const o=Array.from(s.options).find(o=>o.value===arguments[0]);if(!o||s.disabled)return done(false);const matches=Array.from(s.options).filter(candidate=>candidate.label===o.label);if(matches.length!==1)return done(false);s.value=matches[0].value;s.dispatchEvent(new Event('change',{bubbles:true}));done(true);`,
+          [keys[index]],
+        ),
+        true,
+      );
+      await waitUi(
+        `document.querySelector('select').value===${JSON.stringify(keys[index])} && document.querySelector('.cm-content')?.innerText.includes(${JSON.stringify(index === 0 ? 'First bytes' : 'Second bytes')})`,
+      );
+    }
+    async function savedPair(expected) {
+      await button('Save source');
+      await fileIdle();
+      await waitUi(
+        `document.querySelector('[aria-label="Document status"]')?.textContent==='Saved.' && !document.querySelector('[data-file-error]')`,
+      );
+      for (let index = 0; index < pairFiles.length; index++) {
+        assert.equal(await readFile(pairFiles[index], 'utf8'), expected[index]);
+        assert.equal((await stat(pairFiles[index])).mode & 0o777, 0o640);
+      }
+    }
+    await button('Source');
+    for (let index = 0; index < pairFiles.length; index++) {
+      await choose(index);
+      await script(
+        `document.querySelector('[aria-label="MDX source"]').focus();arguments[arguments.length-1](true);`,
+      );
+      await pressKey('ctrl+End');
+      await pressKey('space');
+      await waitUi(
+        `document.querySelector('[aria-label="Document status"]')?.textContent==='Unsaved changes'`,
+      );
+    }
+    await savedPair([pairSources[0], pairSources[1] + ' ']);
+    await choose(0);
+    await savedPair(pairSources.map((source) => source + ' '));
+    await history();
+    await savedPair([pairSources[0], pairSources[1] + ' ']);
+    await history(true);
+    await savedPair(pairSources.map((source) => source + ' '));
+    await history();
+    await savedPair([pairSources[0], pairSources[1] + ' ']);
+    await choose(1);
+    await history();
+    await savedPair(pairSources);
+    await history(true);
+    await savedPair([pairSources[0], pairSources[1] + ' ']);
+    await history();
+    await savedPair(pairSources);
+    for (let index = 0; index < pairFiles.length; index++) {
+      await choose(index);
+      await button('Reopen source');
+      await fileIdle();
+      await waitUi(
+        `document.querySelector('[aria-label="Document status"]')?.textContent==='Reopened from disk.' && !document.querySelector('[data-file-error]')`,
+      );
+      assert.equal(
+        await readFile(pairFiles[index], 'utf8'),
+        pairSources[index],
+      );
+    }
+    console.log(
+      'NATIVE_SAME_NAME_DISTINCT_CHOICES_INDEPENDENT_DIRTY_KEYS_BYTES_HISTORY_SAVE_REOPEN_PASS',
+    );
+  }
   if (visualBudget) {
     await button('Open files');
     dialog(first, 'choose', 'Open documents and modules', denseFile);

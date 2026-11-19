@@ -172,3 +172,13 @@ unchanged native Save with mode0640. It then runs every earlier counter/editing/
 history/restart/recovery gate. The conservative visual-only structure budget is
 specified in ADR005; Source/save/compiler limits remain in force. This is not a
 universal parser deadline or a repair of the recorded native renderer SIGSEGV.
+
+## Repeated filenames and independent buffers
+
+Append `--same-names` to the full fresh-fixture fidelity command. It opens
+same-named files in separate synthetic directories through actual OS choosers,
+checks unique visible choices, types end/space keys in each buffer, and verifies
+independent exact disk bytes/mode0640 through Save, Undo/Redo and acknowledged
+Reopen. The Root DOM driver operates selection; unchanged reopen alone does not
+prove external modification reloading. All prior fidelity/recovery gates follow.
+[Exact package and observed results](security-evidence/2026-11-19-safe-source-selection/README.md).

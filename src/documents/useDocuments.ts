@@ -351,11 +351,15 @@ export function useDocuments(
   }
   function select(key: string) {
     if (!allowDocumentOperation()) return;
-    setWorkspace((next) => ({
-      ...next,
-      selected: key,
-      entry: /\.mdx?$/.test(key) ? key : next.entry,
-    }));
+    setWorkspace((next) =>
+      Object.hasOwn(next.files, key)
+        ? {
+            ...next,
+            selected: key,
+            entry: /\.mdx?$/.test(key) ? key : next.entry,
+          }
+        : next,
+    );
   }
   function change(source: string) {
     const key = workspace.selected;

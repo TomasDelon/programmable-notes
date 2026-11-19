@@ -1476,3 +1476,27 @@ unknown/prototype keys, violating selected/entry membership if a stale event is
 delivered. Reproduce with unit/browser tests before fixing; reject unknownkeys in
 functional latest-workspace updater, preserve per-doc bytes/history, validate
 actualnative pair selection/saves. No aesthetic redesign or new permissions.
+
+## 2026-11-19 — safe source selection verified
+
+Basebc9a21d. Hook delayedclosed/unknown/prototype keys reproduced invalidstate;
+latestfunctional Object.hasOwn guard nowretainsstate. Realbrowserduplicate same-
+name choicesRED→presentationordinalsGREEN; values/grants unchanged, ordinalsnotIDs.
+Browser exactBOM/mixedEOL/Unicode/edit/save/independentUndoRedo/close/reopen passed.
+Full90unit/35Chromium check passed. Read-only review no Important/Critical.
+
+Optimizedpackage63c795d7… / installedELF4c0ab980… passed fullnative fidelity
+--mixed-eol --quotes --multiline-quotes --source-navigation --visual-budget
+--same-names. ActualOSpickers forfirst/repeat.mdx +second/repeat.mdx,2dirtybuffers,
+actualEOFspacekeys, independentacknowledgedSave/exactdisk/mode0640/UndoRedo/Reopen;
+thenalloldcounter/modes/quotes/fidelity/dirtyclose/restart/recovery/invaliddelete
+gates passed. Native selection usesRootDOMdriver; unchangedreopennotexternalreload
+proof. IndependentIPC passedsameELF;150shippingfilesmatchbuilder, observer2399a54d…
++GTK9fb7305b… hostguestparity. Evidence2026-11-19-safe-source-selection.
+
+Next: commit/push/update draftPR/check exactCI. Thenadd strict native-fidelity
+CLIflagvalidation beforepreflight/fixturecreation: unknownflags currentlyignored
+andcouldsilentlyskiprequestedoptionalcoverage. Testbothnegative+validpositive
+prerequisitecontrols, noapp/permissionschange. Existingreviewdownload16e8a3a is
+verifiedengine54c41a7, notthisnewlabelchange. Fullresource6case onolderELF6e301bce
+still5pass/1pageOOMfailure; RootJSC/startup/blank/billing limitationsremain.
