@@ -313,3 +313,25 @@ Next: commit focus correction, package a current PR-accessible review demo becau
 hosted Actions cannot start due account billing, then test automatic restart
 recovery for entirely unbound new notes. Do not include stale cache files or claim
 a new hosted artifact exists. Keep the PR draft and all isolation unchanged.
+
+Native focus correction is committed/pushed as d955aae. Refreshed browser delivery
+now has a current PR-accessible ZIP plus screenshots/video/saved source, complete
+asset/capture receipts, portable-path guards and explicit baseline/negative tests.
+Review found and reproduced index-only stale-asset and backslash-path gaps; both
+were fixed before publishing any ZIP. Final check passed 45 unit / 23 Chromium;
+eight artifact negatives and clean-extracted React/new-note/download/offline tests
+passed. Source is unchanged by the delivery tools. CI runs the same procedure but
+hosted startup is still billing-blocked. Raw evidence: 2026-11-19-review-demo.
+
+A final repetition caught a fixture issue, not a source-preservation change:
+contenteditable CRLF input was sometimes normalized before note creation. Exact
+before/after bytes were always preserved. The test now imports raw CRLF, checks
+its baseline and adds unsaved text; five repeats and full check passed.
+
+Next: commit/push the review attachment and CI tooling, update draft PR download
+links, then validate automatic recovery across real restart for entirely unbound
+new notes. Existing native-auto-recovery.mjs can gain a --new-notes variant using
+New note instead of picker opening; retain original-case behavior, handle optional
+empty initial snapshots, verify full saved content/baseline null, dynamic retained
+counts, actual SIGKILL and explicit unsaved restore/Save As without touching a
+sentinel original. No new application filesystem permission is needed.

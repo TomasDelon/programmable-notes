@@ -1,0 +1,22 @@
+[WebServer] (node:233416) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 2 workers
+
+(node:233440) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:233439) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/bootstrap.spec.ts:763:1 › new notes preserve siblings and independent history through save and reopen (2.6s)
+  ✓  2 [chromium] › tests/e2e/bootstrap.spec.ts:763:1 › new notes preserve siblings and independent history through save and reopen (2.7s)
+(node:233759) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:233768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 [chromium] › tests/e2e/bootstrap.spec.ts:763:1 › new notes preserve siblings and independent history through save and reopen (2.5s)
+  ✓  4 [chromium] › tests/e2e/bootstrap.spec.ts:763:1 › new notes preserve siblings and independent history through save and reopen (2.3s)
+(node:234081) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  5 [chromium] › tests/e2e/bootstrap.spec.ts:763:1 › new notes preserve siblings and independent history through save and reopen (1.4s)
+
+  5 passed (10.0s)

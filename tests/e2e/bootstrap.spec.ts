@@ -766,10 +766,15 @@ test('new notes preserve siblings and independent history through save and reope
 }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Source', exact: true }).click();
-  const original = '# Existing\r\n\r\nKeep <span>JSX</span> bytes.\r\n';
+  const diskSource = '# Existing\r\n\r\nKeep <span>JSX</span> bytes.\r\n';
+  await open(page, diskSource, 'existing.mdx');
   const source = page.getByRole('textbox', { name: 'MDX source' });
-  await source.fill(original);
   const selection = page.getByLabel('Source file');
+  await expect(selection).toHaveValue(/existing\.mdx$/);
+  expect((await exported()).bytes).toEqual(Buffer.from(diskSource));
+  await source.press('Control+End');
+  await page.keyboard.insertText('Unsaved tail.');
+  const original = diskSource + 'Unsaved tail.';
   const originalKey = await selection.inputValue();
   await page.getByRole('button', { name: 'New note', exact: true }).click();
   await expect(
@@ -778,7 +783,7 @@ test('new notes preserve siblings and independent history through save and reope
   await expect(source).toBeFocused();
   await expect(source).toHaveText('');
   const firstKey = await selection.inputValue();
-  expect(firstKey).toContain('Untitled-1.mdx');
+  expect(firstKey).toContain('Untitled-2.mdx');
   const fresh = '# Fresh note\n\nA new paragraph.\n';
   await page.keyboard.insertText(fresh);
   await page.getByRole('button', { name: 'New note', exact: true }).click();
@@ -800,7 +805,7 @@ test('new notes preserve siblings and independent history through save and reope
   expect((await exported()).bytes).toEqual(Buffer.from(original));
   await selection.selectOption(firstKey);
   const saved = await exported();
-  expect(saved).toEqual({ name: 'Untitled-1.mdx', bytes: Buffer.from(fresh) });
+  expect(saved).toEqual({ name: 'Untitled-2.mdx', bytes: Buffer.from(fresh) });
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   expect((await exported()).bytes).toEqual(Buffer.from(''));
   await page.getByRole('button', { name: 'Redo', exact: true }).click();

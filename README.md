@@ -6,6 +6,8 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile in a browser worker, interact with React hooks in an isolated preview, open local module files, and download source. The Linux desktop build adds native picker-authorized opening, atomic saving and reopening. See [implementation status](docs/IMPLEMENTATION_STATUS.md) and [runtime ADR](docs/decisions/ADR-001-runtime-build.md). This is not yet approved for hostile documents: the prior Linux native isolation/resource tests passed, and Milestone 3 production validation has its own [evidence record](docs/security-evidence/2026-11-18/README.md). Source, Split and Visual modes now separate source authoring, live React execution and safe in-place Markdown edits. Plain paragraphs, headings and simple lists support checked, undoable text patches; React and formatted blocks remain opaque in Visual mode. See the [workspace decision](docs/decisions/ADR-007-unified-workspace.md) and [downloadable demo instructions](docs/ux-evidence/README.md).
 
+[Download the current browser review demo, screenshots and walkthrough](docs/demo/README.md).
+
 ## Principles
 
 - Direct MDX, JSX/TSX, and React authoring is the foundation.
