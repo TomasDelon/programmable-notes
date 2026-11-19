@@ -1022,3 +1022,13 @@ actual Root UI compile/React interaction through natural60-second expiry, record
 compiler status and absent lifecycle feedback without changing any policy. Its
 /tmp/native-session-baseline.mjs and /tmp/native-session-baseline.log identify
 the pending observation; do not claim new status functionality yet.
+
+Delivery7645952 pushed; exact7,075,909-byte Git blob24d2533d… remotely fetched
+and matched SHA89c78c59… . New native baseline on4a14f61b… observed actual
+Counter interaction and60-second systemd expiry, while Root UI still said
+Compiled/requesting native preview and exposed no session status before or after.
+Original source unchanged. Baseline /tmp/pn-native-1nECJ7/evidence/session-baseline.json
+with observer3e46e816… establishes next concrete feedback improvement. Preserve
+unit identity after connection exit; new UI must never claim empty cgroup or
+auto-restart from a timer. Next: read-only connection-status design/tests, guarded
+Root-only permission, serial UI polling, actual expiry/rebuild/IPC validation.

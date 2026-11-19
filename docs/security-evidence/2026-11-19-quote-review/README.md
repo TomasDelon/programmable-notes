@@ -20,4 +20,6 @@ in a clean extracted production build. Provisional design remains reference only
 [Download/run instructions](../../demo/README.md). GitHub run44505000119 for
 f503644 again had zero executed steps and the billing annotation in raw evidence.
 The Git-tracked ZIP supplies the PR-accessible attachment without a public site
-or release. Exact remote byte retrieval must still be checked after push.
+or release. Exact remote Git blob `24d2533d760577296210565e349c5f3cf38876f7` was downloaded
+and matched all bytes/SHA256. Immutable delivery commit:
+`76459520176adb898756d1e1a90f97533f5c718c`. Receipt is retained in raw evidence.
