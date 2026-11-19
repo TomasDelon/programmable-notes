@@ -26,3 +26,13 @@ ADR-007 replaces the separate panel presentation with Source/Split/Visual modes.
 The validator now accepts literal punctuation and soft multiline text using
 parser round trips. The revision, context and untouched-byte guarantees above
 remain required; the original single-line allowlist is historical.
+
+## Opaque mapping-style front matter
+
+A leading YAML-style mapping block is protected source, not an editable Setext
+heading. Physical LF/CRLF delimiter scanning avoids Unicode separator confusion;
+an ordinary leading rule with prose remains Markdown. An incomplete mapping
+header falls back to Source. The editor masks the protected prefix only in its
+private AST analysis, preserving UTF-16 offsets and line endings. It never
+rewrites document bytes or changes the runtime grammar. Metadata/fences/JSX and
+Unicode are covered by exact-byte browser and installed-native tests.

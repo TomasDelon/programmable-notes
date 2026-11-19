@@ -11,10 +11,51 @@ export interface MarkdownRange {
 const plain = /^[\P{Cc}\t\r\n]+$/u;
 const processor = createProcessor();
 
+// Front matter is opaque source, not a new MDX grammar or runtime transform.
+function metadataEnd(source: string) {
+  const opening = /^\uFEFF?---[ \t]*\r?\n/.exec(source);
+  if (!opening) return 0;
+  let mapping = false;
+  let inspected = false;
+  let offset = opening[0].length;
+  while (offset < source.length) {
+    const newline = source.indexOf('\n', offset);
+    const end = newline < 0 ? source.length : newline + 1;
+    const line = source
+      .slice(offset, newline < 0 ? source.length : newline)
+      .replace(/\r$/, '');
+    // Only physical LF/CRLF lines delimit this source contract. JS multiline
+    // anchors also match Unicode separators inside a metadata value.
+    const marker = line.replace(/[ \t]+$/, '');
+    if (marker === '---' || marker === '...') return mapping ? end : 0;
+    if (!inspected && line.trim() && !line.trimStart().startsWith('#')) {
+      inspected = true;
+      mapping =
+        /^[ \t]*(?:[\p{L}\p{N}_-]+|"[^"\n]+"|'[^'\n]+')[ \t]*:(?:[ \t]|$)/u.test(
+          line,
+        );
+      if (!mapping) return 0;
+    }
+    offset = end;
+  }
+  // An incomplete mapping-style header stays in Source rather than guessing
+  // where its body begins. Plain leading Markdown rules remain ordinary.
+  return mapping ? source.length : 0;
+}
+function parsedSource(source: string) {
+  const end = metadataEnd(source);
+  // Preserve UTF-16 offsets and line endings. No author bytes are rewritten.
+  const masked =
+    source.slice(0, end).replace(/[^\r\n]/g, ' ') + source.slice(end);
+  return { end, tree: processor.parse(masked) };
+}
+
 export function editableMarkdown(source: string): MarkdownRange[] {
   if (source.length > 500_000) return [];
   try {
-    return processor.parse(source).children.flatMap((root): MarkdownRange[] => {
+    const { tree, end } = parsedSource(source);
+    return tree.children.flatMap((root): MarkdownRange[] => {
+      if ((root.position?.start.offset ?? -1) < end) return [];
       if (root.type === 'list') {
         const from = root.position?.start.offset;
         if (from === undefined || root.spread) return [];
@@ -133,11 +174,15 @@ export function patchMarkdown(
 export function markdownBlocks(source: string) {
   if (source.length > 500_000) return [];
   try {
-    return processor.parse(source).children.flatMap((node) => {
+    const { tree, end } = parsedSource(source);
+    const blocks = tree.children.flatMap((node) => {
       const from = node.position?.start.offset;
       const to = node.position?.end.offset;
       return from === undefined || to === undefined ? [] : [{ from, to }];
     });
+    return end
+      ? [{ from: 0, to: end }, ...blocks.filter((block) => block.from >= end)]
+      : blocks;
   } catch {
     return [];
   }

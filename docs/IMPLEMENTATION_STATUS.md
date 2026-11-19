@@ -163,3 +163,13 @@ restart/discovery, explicit restore/save and real filesystem ENOSPC pause/resume
 See `docs/security-evidence/2026-11-19-automatic-recovery` for exact inputs, hashes,
 failed driver attempts, commands and limitations. Local checks passed 34 unit and
 18 Chromium tests; GitHub CI must be read separately for each pushed revision.
+
+### Mixed-source correctness (P2)
+
+The trusted visual surface protects mapping-style front matter, instead of
+misidentifying metadata as editable Setext headings. It preserves physical line
+boundaries and UTF-16 offsets across BOM, emoji and combining characters. No YAML
+metadata/runtime grammar feature was introduced. New exact-byte browser and
+installed WebKitGTK acceptance covers metadata, imports, JSX, fences, real React
+interaction, visual patches, undo/redo, no-op save and reopening. Local checks
+passed 39 unit and 19 Chromium tests. See the dated source-fidelity evidence.

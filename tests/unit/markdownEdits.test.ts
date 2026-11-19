@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   editableMarkdown,
+  markdownBlocks,
   patchMarkdown,
 } from '../../src/editor/markdownEdits';
 
@@ -83,4 +84,58 @@ it('accepts literal punctuation and multiline CRLF text while rejecting syntax c
       'Other',
     ),
   ).toBeNull();
+});
+
+it('keeps leading YAML-style metadata opaque while preserving body edit spans', () => {
+  const source =
+    '\uFEFF---\r\ntitle: A note\r\nsummary: "Keep exact spaces"\r\n---\r\n\r\nBody 😀 paragraph.\r\n\r\n```tsx\r\nconst x = <Widget value={{a: 1}} />\r\n```\r\n\r\n<Widget />\r\n';
+  const ranges = editableMarkdown(source);
+  expect(ranges.map((range) => range.text)).toEqual(['Body 😀 paragraph.']);
+  expect(patchMarkdown(source, ranges[0]!, 'Updated 😀 paragraph.')).toBe(
+    source.replace('Body 😀 paragraph.', 'Updated 😀 paragraph.'),
+  );
+});
+
+it('preserves UTF-16 offsets across opaque Unicode metadata and alternative terminators', () => {
+  const source =
+    '\uFEFF---\ntitle: "😀"\nvalue: {not: MDX}\n...\n\nCafe\u0301 body.\n';
+  const [body] = editableMarkdown(source);
+  expect(body?.from).toBe(source.indexOf('Cafe'));
+  expect(body?.text).toBe('Cafe\u0301 body.');
+  expect(markdownBlocks(source)[0]).toEqual({
+    from: 0,
+    to: source.indexOf('...') + 4,
+  });
+  expect(patchMarkdown(source, body!, body!.text)).toBe(source);
+  expect(patchMarkdown(source, body!, 'Updated 😀 body.')).toBe(
+    source.replace('Cafe\u0301 body.', 'Updated 😀 body.'),
+  );
+});
+
+it('falls back for incomplete mapping headers while allowing a plain leading rule', () => {
+  const incomplete = '---\ntitle: unfinished\n\nDo not guess a body span.\n';
+  expect(editableMarkdown(incomplete)).toEqual([]);
+  expect(markdownBlocks(incomplete)).toEqual([
+    { from: 0, to: incomplete.length },
+  ]);
+  expect(
+    editableMarkdown('---\n\nOrdinary paragraph.\n').map((range) => range.text),
+  ).toEqual(['Ordinary paragraph.']);
+});
+
+it('keeps ordinary paragraphs between leading rules editable', () => {
+  const source = '---\n\nOrdinary paragraph.\n\n---\n\nBody.\n';
+  expect(editableMarkdown(source).map((range) => range.text)).toEqual([
+    'Ordinary paragraph.',
+    'Body.',
+  ]);
+});
+
+it('does not treat Unicode separators inside metadata as physical delimiter lines', () => {
+  const source =
+    '---\ntitle: "A\u2028---\n# Protected header content\n"\n---\n\nBody.\n';
+  expect(editableMarkdown(source).map((range) => range.text)).toEqual([
+    'Body.',
+  ]);
+  expect(markdownBlocks(source)[0]?.to).toBe(source.lastIndexOf('---') + 4);
 });

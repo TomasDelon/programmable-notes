@@ -109,3 +109,22 @@ source-fidelity regressions for front matter, fences, Unicode and unchanged
 save/reopen. In particular, verify that YAML-style front matter is kept opaque
 rather than offered as editable Setext headings. Keep generated artifacts and
 synthetic recovery records out of Git; only evidence/logs and source belong here.
+
+## P2 source-fidelity checkpoint
+
+P1 is committed/pushed as `124a413`; both CI jobs passed in run `44427094638`.
+P2 now protects mapping-style metadata from visual heading edits. Review fixes
+for ordinary horizontal rules and Unicode separator lines are regression-tested.
+Full repository checks passed 39 unit and 19 Chromium tests. The installed P2
+package passed actual React preview interaction, no-op BOM/CRLF save, opaque
+metadata/fences, visual patches, undo/redo, exact source/mode preservation,
+restart/reopen and legacy recovery. Exact hashes and failed harness observations
+are in `docs/security-evidence/2026-11-19-source-fidelity`.
+
+Next action: commit P2, then complete real SIGKILL publication-stage recovery
+validation. An uncommitted `native-documents/tests/process_crash.rs` is a test
+prototype: its first libtest-child ptrace attempt timed out because tracing a
+libtest worker is not a main-process syscall trace. Do not claim that test passes.
+Move the traced writer to a separate main-thread validation executable, retain
+an external timeout/owned-child cleanup, and run only in the disposable VM before
+enabling a CI gate. No production recovery code needs modification yet.

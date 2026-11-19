@@ -582,3 +582,62 @@ test('pending visual input survives mode changes and rejects a changed source re
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
   await expect(page.getByRole('note')).toContainText('No safe visual mapping');
 });
+
+test('opaque metadata, fences and Unicode survive visual edits, stale revisions and exact reopen', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF---\r\ntitle: "A 😀 note"\r\n---\r\n\r\nimport {useState} from "react"\r\n\r\nexport function Widget(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Clicks: {n}</button>}\r\n\r\nCafe\u0301 😀 paragraph.\r\n\r\n```tsx\r\nconst nested = <Widget value={{literal: true}} />\r\n```\r\n\r\n{/* keep comment exactly */}\r\n\r\n<Widget />\r\n';
+  await open(page, original, 'metadata.mdx');
+  const counter = page
+    .frameLocator('iframe')
+    .getByRole('button', { name: 'Clicks: 0' });
+  await counter.click();
+  await expect(
+    page.frameLocator('iframe').getByRole('button', { name: 'Clicks: 1' }),
+  ).toBeVisible();
+  async function exported() {
+    const pending = page.waitForEvent('download');
+    await page
+      .getByRole('button', { name: 'Save source', exact: true })
+      .click();
+    return readFileSync((await (await pending).path())!);
+  }
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Markdown editing' });
+  await expect(panel.getByRole('button', { name: /title:/ })).toHaveCount(0);
+  await panel
+    .getByRole('button', { name: 'Cafe\u0301 😀 paragraph.', exact: true })
+    .click();
+  const field = panel.getByRole('textbox', { name: 'Paragraph text' });
+  await field.fill('Updated 😀 paragraph.');
+  await field.press('Enter');
+  const updated = original.replace(
+    'Cafe\u0301 😀 paragraph.',
+    'Updated 😀 paragraph.',
+  );
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(original));
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  expect(await exported()).toEqual(Buffer.from(updated));
+  await panel
+    .getByRole('button', { name: 'Updated 😀 paragraph.', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Source', exact: true }).click();
+  const changed = updated.replace('A 😀 note', 'B 😀 note');
+  await page.getByRole('textbox', { name: 'MDX source' }).fill(changed);
+  await page.getByRole('button', { name: 'Visual', exact: true }).click();
+  await field.press('Enter');
+  await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
+  expect(await exported()).toEqual(Buffer.from(changed));
+  await page.reload();
+  await page.getByLabel('Open files').setInputFiles({
+    name: 'reopened.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(changed),
+  });
+  expect(await exported()).toEqual(Buffer.from(changed));
+});
