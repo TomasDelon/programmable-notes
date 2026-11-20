@@ -1,0 +1,9 @@
+   Compiling native-documents v0.1.0 (/workspace/programmable-notes/native-documents)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running tests/save_crash.rs (native-documents/target/debug/build/native-documents/3eba8eb435b93bef/out/save_crash-3eba8eb435b93bef)
+
+running 1 test
+test late_terminal_observation_records_reaping_before_rejecting ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

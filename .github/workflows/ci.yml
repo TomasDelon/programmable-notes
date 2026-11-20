@@ -116,6 +116,12 @@ jobs:
           for stage in write synced published durable; do
             grep -F "REAL_DOCUMENT_SAVE_CRASH_PASS stage=$stage " /tmp/document-save-crash.log
           done
+      - name: Verify original Save sync error reporting (external syscall injection)
+        shell: bash
+        run: |
+          PN_SAVE_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/document-save-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_crash -- --ignored --exact injected_sync_errors_preserve_original_and_report_publication --nocapture | tee /tmp/document-save-sync-errors.log
+          grep -F 'INJECTED_DOCUMENT_SYNC_ERROR_PASS stage=file ' /tmp/document-save-sync-errors.log
+          grep -F 'INJECTED_DOCUMENT_SYNC_ERROR_PASS stage=directory ' /tmp/document-save-sync-errors.log
       - name: Verify recovery sync error reporting (external syscall injection)
         shell: bash
         run: |

@@ -2180,3 +2180,30 @@ No productionStorechange required. Host own-childptrace available; no runningGUI
 Next:commit publicpatch, cleanclonecheck+push, observe hostedCI/update draftPR;
 thenaddmandatorySaveEIOgate/docs/evidence andcontinue native reliability roadmap.
 No merge/release/historyrewrite/visibility/promotion/budgetchange.
+
+## 2026-11-20 — clean public checkout and original Save EIO gate
+
+Publicsafeguardcommit7226bcc pushed. Anonymouspublicclone then exact7226bcc
+checkout/npmci/fullcheckPASS114unit37Chromium4tooling/no skips; generatedruntime
+andbuildstartedabsent. Sharedbrowserbinaryonly. Fullhistory/archivescan0additional.
+NewworkflowCIstarted; actualresultmuststillbeobserved (8a8e44c bothgreenbaseline).
+
+Continuedtechnicalwork: resumedhostownchildptraceworks. OriginalSaveEIORED101
+provedmissingexternalhelperJSONreportmode (not productionStorebug). Reportmode
+implementedexternalexampleonly; bothfile andpublished-dir EIOcasesPASS. Exactbytes/
+mode0640/sibling/noorphan/publicEIOornewrevisiondurablefalse/reopen+saveverified.
+ExistingrealSIGKILL4stagegatePASSagain. Reviewedtestcleanupfoundreapingbefore
+deadlineassert risk; helpernowrecordsreap/ECHILDbeforeunwind, late-terminal
+regressionPASS(waitidWNOWAIT+expireddeadline). Fullignoredgate2pass. Needfinal
+Rustsuite/fullNodecheck/reviewthencommitpushsyncgate, observe latesthostedhead.
+No prodStore/failpoint/authority/UIchange. NextinspectrealENOSPCSavecoverage and
+restartnativeVMforreproducibleJSC/startupinvestigationifavailable. Rootlicensing/
+rights/historyremediationownerdecisionsremain; don'tpauseordinaryengineering.
+
+SyncEIOverificationcheckpoint: fullNodecheck114unit37Chromium4toolingPASS; ordinary
+Rust40document/7policyPASS (ignoredgatesexcluded); finalexplicitSaveSIGKILL+EIO
+gates2PASS/fourcrashstages+twoEIOstages. Late-reapregressionPASS. Reviewfoundno
+otheroracleflaw. FullsystemVMdisksurvivedworkspacepause; originaldisposable
+pn-m3-buildcontainer restarted andguestbootinprogress, no newGUIclaim. Public
+7226bccCIinprogress. Next add isolated realENOSPC originalSavegate (recovery-only
+ENOSPCCIpresent), run in2MBdisposabletmpfs, thenverifyfinalhostedhead/updatePR.

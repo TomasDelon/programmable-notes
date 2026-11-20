@@ -407,3 +407,15 @@ project license and supplied-material rights remain owner decisions. See
 installer redistribution notices are incomplete, so automatic installer upload is
 paused while mandatory production build/inspection continue. No runtime security
 restriction or document behavior was changed for this remediation.
+
+## Original Save sync-error gate (2026-11-20)
+
+A new external own-child Linux tracer tests actual Store Save handling when a
+successful file or post-publication directory fsync return is substituted with
+EIO. Exact original/new bytes, mode0640, unchanged sibling, no handled-error orphan,
+public error/new revision with durable=false, fresh reopen and explicit re-save
+all passed. This tests error reporting after successful kernel fsync, not physical
+media failure or power loss. The old helper's missing reporting mode failed first;
+no production Store correction was necessary. Late-terminal cleanup now records
+reaping before rejecting a missed deadline, with an ordinary regression. The
+four-stage real SIGKILL gate passed again. [Evidence and reproduction](security-evidence/2026-11-20-document-save-sync-errors/README.md).

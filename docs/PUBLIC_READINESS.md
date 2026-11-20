@@ -111,8 +111,11 @@ guarantee that future account-level restrictions cannot occur.
   workflow must be observed separately.
 - Fresh demo capture, manifest/CRC verification, ten malformed-artifact refusal
   controls and clean-extracted real Chromium interaction/playback checks passed.
-  Missing notices are one of the refused cases. Clean-clone verification is
-  pending and is tracked separately from these cached-workspace results.
+  Missing notices are one of the refused cases. An anonymous public clone checked out exact commit `7226bcc`, installed from
+  scratch with `npm ci`, and passed the full check: 114 unit, 37 Chromium and
+  four tooling controls (none skipped). Its history/archive scan also returned
+  zero additional findings. Browser binaries were shared; generated runtime,
+  dependencies and build output were absent before installation.
 - Existing native evidence remains valid only for its recorded builds. The
   resumed cloud environment has no running native validation VM. No new
   WebKitGTK/cgroup GUI matrix is claimed by this remediation.

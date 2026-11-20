@@ -1,7 +1,7 @@
 //! External synthetic validation writer, never linked into the desktop app.
 #[cfg(target_os = "linux")]
 fn main() {
-    use native_documents::Store;
+    use native_documents::{Error, Store};
     use std::{os::unix::fs::MetadataExt, path::PathBuf};
     let root = PathBuf::from(
         std::env::var_os("PN_DOCUMENT_SAVE_CRASH_ROOT")
@@ -48,9 +48,27 @@ fn main() {
         "\u{feff}import React from 'react'\r\n\r\n{{/* opaque */}}\n\n# New Café 😀\r\n{}\n",
         "Literal text. ".repeat(16000)
     );
-    store
-        .save(&document.id, &document.revision, &source)
-        .unwrap();
+    let result = store.save(&document.id, &document.revision, &source);
+    // External harness mode only; this example is never linked into the app.
+    if std::env::var_os("PN_SAVE_REPORT_RESULT").is_some_and(|value| value == "1") {
+        let report = match result {
+            Ok(saved) => serde_json::json!({
+                "ok": true, "saved": saved, "previousRevision": document.revision,
+            }),
+            Err(error) => {
+                let io_error_code = match &error {
+                    Error::Io(value) => value.raw_os_error(),
+                    _ => None,
+                };
+                serde_json::json!({
+                    "ok": false, "error": error.to_string(), "ioErrorCode": io_error_code,
+                })
+            }
+        };
+        println!("{report}");
+        return;
+    }
+    result.unwrap();
     panic!("The parent must interrupt this writer at the selected actual Save syscall boundary");
 }
 #[cfg(not(target_os = "linux"))]

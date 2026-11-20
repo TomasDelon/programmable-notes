@@ -1,0 +1,25 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/save_crash.rs (native-documents/target/debug/build/native-documents/3eba8eb435b93bef/out/save_crash-3eba8eb435b93bef)
+
+running 1 test
+DOCUMENT_SAVE_SYNC_INJECTION stage=file writer_pid=70600 start_tick=3741271 executable_sha256=9785928b00f1878754b21da356cca463dc5f258a11eecb8a64c4fdb98a392955 syscall=74 fd=Some("/tmp/pn-document-save-crash-eio-file-70598/.pn-save-e1461d0f4c34580e91a268442f635e5e") injected_errno=EIO actual_fsync_had_succeeded=true
+
+thread 'main' (70600) panicked at examples/document-save-crash-writer.rs:53:10:
+called `Result::unwrap()` on an `Err` value: Io(Os { code: 5, kind: InputOutputError, message: "Input/output error" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'injected_sync_errors_preserve_original_and_report_publication' (70599) panicked at tests/save_crash.rs:421:9:
+assertion `left == right` failed: Validation writer must report the public Save result as JSON
+  left: 101
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test injected_sync_errors_preserve_original_and_report_publication ... FAILED
+
+failures:
+
+failures:
+    injected_sync_errors_preserve_original_and_report_publication
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.42s
+
+error: test failed, to rerun pass `--test save_crash`
