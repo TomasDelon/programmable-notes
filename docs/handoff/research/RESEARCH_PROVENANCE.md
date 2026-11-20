@@ -4,7 +4,7 @@
 
 1. **Broad Deep Research:** `reports/01_Architectures_for_Programmable_Notes_ORIGINAL.md`. Topics: MDX compilation, editors, native packaging, sandboxing, AI editing, media, open-source projects, architecture and roadmap.
 2. **Targeted Deep Research:** `reports/02_Targeted_React_Execution_ORIGINAL.md`. Topics: malicious MDX/React isolation, unsaved-buffer compilation/imports, source-preserving visual edits, engineering spikes.
-3. **Original product overview:** `original/programmable_notes_overview_ORIGINAL.md` and corresponding Drive source [overview.md](https://drive.google.com/file/d/1LOQ_M7qCemVvzawMbaIJdLas05l-zL-d/view). This predates the later decision to prioritize direct MDX authoring.
+3. **Original product overview:** `original/programmable_notes_overview_ORIGINAL.md` and corresponding Drive source a private original-source reference (withheld from this version). This predates the later decision to prioritize direct MDX authoring.
 
 The two Deep Research report bodies were copied **verbatim**, including their numbered citations, from recovered report documents. Their citation metadata is reproduced in `SOURCE_INDEX.md` and `citation_sources.json` (only public-source reference fields).
 

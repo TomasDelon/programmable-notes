@@ -12,3 +12,29 @@ test-results/
 
 **/target/
 src-tauri/gen/
+
+# Local credentials, signing material, and private audit output
+.ssh/
+.aws/
+.kube/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa
+id_ed25519
+credentials.json
+service-account*.json
+gitleaks-report.*
+public-audit/
+
+# Unbundled local release output; reviewed evidence stays explicitly tracked
+*.deb
+*.rpm
+*.AppImage
+*.msi
+*.dmg

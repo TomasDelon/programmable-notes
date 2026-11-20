@@ -2082,3 +2082,66 @@ postpubdirsyncdurable=false underexternalEIOinjection, NOTrealstoragefailure.
 Firstfailingtest thenminimalwriterreportmode, no productchangeunlessprovenbug.
 AfterwardinspectrealENOSPCcoverage. KeepallnativeJSC/startup/instantPIDoldfailure/
 distribution/hardware/billinglimits. No merge/release/readiness/securityclaim.
+
+## 2026-11-19 — user priority: public-visibility preparation audit
+
+Usernowauthorizesrepositorypublic-readinessaudit/preparation ONLY, NOTvisibility
+change/historyrewrite/evidence deletion/merge/release. Preserveallpriorwork.
+HEADb8402d18b9a09bf4b2173e42da82133e327acc27 pushed/draftPRverified. Newpublictask
+supersedesimmediateP0continuationbutallowsindependenttechnicalworkafteraudit.
+
+Currentuncommittednative-documents/tests/save_crash.rs addsignoredsyncEIOtest.
+ActualREDexecuted /tmp/pn-save-sync-missing-report-red.log/.exit101: filefsync
+EIOinjectedbutoldwriterdoesnotreportJSON; helperreportmodeNOTimplementedyet.
+NoactiveGUI/tracerworkleft; onlyordinarycachedbinaries/VMremain. KeepthisWIP
+separatefrompublicauditcommit anddon'tclaimsyncerrorgatepassed.
+
+Publicauditstarting: local87reachablecommits, branchesmain+feat/mdx-react-engine,
+GitHubprivateconfirmed, rootlicenseabsent(APIlicense null). Needfetchauditrefs,
+allreachablehistory/objectinventory, redactedsecretscanner, archives+mediaOCR/
+manualreview, commitmetadata privacy, workflowpermissions/freepublicLinuxrunner
+authoritativesources/billingrestriction assessment. Donotprintsecretvalues.
+Auditoutputstoolcachesinignored.cache/public-audit; no personalcredentialstore
+reading. PreparePUBLIC_READINESS.md withGO/NO-GO/limits, preservehistory andevidence.
+Workflowhardening+ignore/prevention+cleancloneverification thenreviewablecommit/
+push/draftPRupdate. License/IP/historyissuesrequiringapprovalreportwithout
+choosinglicenseorrewritingautomatically. No paidinfrastructureorvisibilitychange.
+
+## 2026-11-20 — public baseline resumed, immediate privacy remediation
+
+OwnerintentionallymadeRepoPUBLIC;confirmedAPIvisibilitypublic. DoNOTreverseor
+requestpublicationpermission. HEADb8402d1/draftPR1verified;workspacepreserved
+AGENTlog+syncEIOtestWIP. FreshCIrerun44610581513 nowexecutesactualstepsinboth
+standardUbuntu jobs; oldbillingpre-runblockNOTblockingthisattempt. Awaitresults.
+
+Recoveredcacheaudit:88reachablecommits/bothremoteheads/PRrefs,1812blobs92MB,
+10ZIPs/288logical115uniquemembers/noarchivefailures. Gitleaks8.30.1 officialSHA
+verified:history+allblobscans4matches each, allpublicX509kernelcertfingerprints.
+Personalprovideremail86commitswithheld, currentlocalGitidentitywaspersonal:
+setONLYfuturelocalemailtoownerverifiedGitHubnoreply(nohistoryrewrite). Current
+privateDrivepointerwithheldinRESEARCH_PROVENANCE; bodies/publiccitationspreserved.
+Oldhistorystillpublic. NoLiveCredentialconfirmed; dontclaimallmediaclear.
+
+PUBLIC_READINESS interimcreated;ignoreguardsadded. Needquickverifiedprivacy
+commit/pushthencontinuemediaOCR/manualreview, fullthirdpartynotices/license/IP
+ownerdecisions, futureartifactpackager/CIhardening+freepolicy docs, cleanclone
+checks, finalreport/draftPR. KeepfailingignoredsyncEIOtestuncommitted/separate;
+oldwriterreportmodeNOTyetimplemented (actualRED101). NativeDockerpscurrentlyempty
+followingrecovery; don'tclaimnewnativeexecutionwithoutrebuildinginfra.
+No visibility/historyrewrite/evidencedeletion/merge/release/paidservices.
+
+## 2026-11-20 — immediate privacy patch verified
+
+Current-pointerredaction+futureGitnoreply+ignoreguards+interimPUBLIC_READINESS
+verifiedbyfullNodecheck114unit/37Chromium/format/lint/types/freshbuild(exit0).
+Historicalpersonaladdress86/88commitsremains; nopublicvalueorfingerprintprinted
+orcommitted. No historyrewrite. Freshpublichostedrerunb840 checkjobSUCCESS13steps;
+nativejobstillrunning18completedsteps, notyetclaimwholeCIgreen.
+
+Next:pushsmallprivacycommitexcludingnative-documents/tests/save_crash.rs WIP,
+thenfinishallmediaOCR/manualreview,addfullredistributionnoticesandfuturepackaging
+checks,CIcredentialpersistence/actionpin/optional-democostoptimization,official
+publicrunnerpolicyreference,cleancloneverification, finalPUBLIC_READINESSreport.
+Originalresearchbodies/evidencearchivespreserved; ownerlicense/IP/historychoices
+remainexplicit. Continuetechnicalroadmapafterpublicremediation. No visibility/
+merge/release/historyrewrite/promotion/costchanges.
