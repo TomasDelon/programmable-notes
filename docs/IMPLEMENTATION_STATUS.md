@@ -419,3 +419,12 @@ media failure or power loss. The old helper's missing reporting mode failed firs
 no production Store correction was necessary. Late-terminal cleanup now records
 reaping before rejecting a missed deadline, with an ordinary regression. The
 four-stage real SIGKILL gate passed again. [Evidence and reproduction](security-evidence/2026-11-20-document-save-sync-errors/README.md).
+
+## Original Save real ENOSPC gate (2026-11-20)
+
+On a dedicated2MB tmpfs in the restored disposable UbuntuVM, an unprivileged
+standalone Store test verified real Save ENOSPC, exact original bytes/mode0640,
+sibling preservation, temporary cleanup, reuse of the existing grant/revision
+after freeing space, and fresh exact reopen. Explicit mountinfo guards refuse
+shared subtree bind mounts; that refusal also passed in the actual VM. CI now
+runs this alongside recovery ENOSPC. No production behavior changed. [Evidence](security-evidence/2026-11-20-document-save-enospc/README.md).

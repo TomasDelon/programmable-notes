@@ -2207,3 +2207,34 @@ otheroracleflaw. FullsystemVMdisksurvivedworkspacepause; originaldisposable
 pn-m3-buildcontainer restarted andguestbootinprogress, no newGUIclaim. Public
 7226bccCIinprogress. Next add isolated realENOSPC originalSavegate (recovery-only
 ENOSPCCIpresent), run in2MBdisposabletmpfs, thenverifyfinalhostedhead/updatePR.
+
+## 2026-11-20 — real original Save ENOSPC and public workflow green
+
+Actual7226bccpublicworkflow44697972078 BOTH jobsSUCCESS, including pinnedactions,
+credentialguard/canaries, productionpackagebuild/inspection and releaseTauri tests.
+7fd8ee2syncEIOcommittedlocally(not yetpushed, batchingcoherentverifiedgates toavoid
+cancellingnativebuilds). NewSaveENOSPCstandalonebinaryactualUbuntuVM2MBtmpfs
+unprivilegedPASS:realerrno,exactoriginal/mode/sibling/noorphan,samegrantretry,
+freshreopen. Reviewedmount-subtreehazardfixedusingmountinfowholefs/uniqueentry
+guard; realbindrefusalPASS/sentinelunchanged/nonmountrefusalPASS/no filescreated.
+No prodStorechange. FinalfullNode/Rustchecks andread-onlyreviewbeforecommit/push.
+
+VMrestoredpn-m3-build/guestboot/systemd/AppArmor/desktop+externaldriverready.
+InstalledELFa6d00cbb…unchanged. Firstlongparagraphdiagnostic did NOT launch app:
+newobserverdirectorylacked@mdx-js/mdx dependency (ERR_MODULE_NOT_FOUND), no new
+crashclaim. Resolveharnessdeps thenrepeat bounded20cycles andcaptureactualresults;
+retain oldJSC/startup/PIDfailures. No isolation/JIT/quota/graphicssettingchange.
+
+RealENOSPCfinalverification: fullcheck114unit37Chromium4toolingPASS, ordinary
+Rust41documentPASS (ptrace/ENOSPCignoredexcluded), realUbuntu2MBENOSPCPASS,
+actualsubtreebindrefusalPASS/sentinelunchanged/no writes, nonmountrefusalPASS.
+Read-onlyreviewno remainingconcretefindings. Futurehistory/archive summary0.
+CommitandpushENOSPC+previous7fd8ee2batch; awaitactualhostedhead beforeclaiming
+newCIgatesgreen. RestoredexternalWebDriverlong20cyclesobservercurrentlyrunning
+oninstalleda6d00cbb…withsamecacheddependencylock; firstmissingmoduleattempt
+retained separately (appnotlaunched). No inheritednativefailuredeclaredfixed.
+
+Native-resumeactualresult: firstmodule-prerequisitefailure retained, nextindependent
+long20cyclescommandPASS20Visual/19Source,geometry360px/exactfull1000lines, actual
+endtyping/diskSave/UndoRedo/reopen/mode0640/cleanexit. ELFa6d00cbb…unchanged,
+observer787d0a5e…. No priorJSC/startupcausefixedclaim. Retainedin2026-11-20-native-resume.

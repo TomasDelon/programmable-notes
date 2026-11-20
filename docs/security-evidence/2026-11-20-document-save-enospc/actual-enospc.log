@@ -1,0 +1,8 @@
+6a0cb187fb2d8d45a3d902e091dff5484feb62d19cc8cb5e82e054be0ef6e6e5  /work/document-save-enospc-test
+
+running 1 test
+REAL_DOCUMENT_SAVE_ENOSPC_PASS actual_errno=ENOSPC original_exact=true mode=0640 sibling_unchanged=true no_orphan=true same_grant_retry=true fresh_reopen_exact=true
+test real_enospc_preserves_original_save_and_grant ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.34s
+

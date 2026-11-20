@@ -82,8 +82,10 @@ on `8a8e44c` executed and passed **both** `check` and `native-check`. This inclu
 TypeScript/Vitest/Chromium, Rust/Tauri, real ENOSPC, writer-crash/sync-error gates,
 Wry verification and optimized Debian package inspection. It is evidence that the
 former private-account pre-run billing refusal did not block this public run.
-The revised workflow still needs its own completed hosted run before claiming
-that revision green. Compilation/package inspection is not native GUI acceptance.
+The revised pinned/scanning workflow also executed and passed both jobs in
+[44697972078](https://github.com/TomasDelon/programmable-notes/actions/runs/44697972078)
+on `7226bcc`, including the synthetic-key controls and production package build.
+New Save EIO/ENOSPC gates are later changes and need their own hosted result. Compilation/package inspection is not native GUI acceptance.
 
 Only standard `ubuntu-24.04` runners are used. Tokens have `contents: read`;
 there is no `pull_request_target`, self-hosted runner, paid service or secret-based
@@ -107,8 +109,8 @@ guarantee that future account-level restrictions cannot occur.
   Chromium tests passed. The notice generator produced 167 complete package
   notices. Tooling controls verify license/version/path refusal and synthetic
   key rejection; see the dated progress checkpoint for final command results.
-- Actual baseline public CI: both jobs passed as linked above. The latest pushed
-  workflow must be observed separately.
+- Both baseline and revised public CI executed and passed as linked above.
+  Subsequent new Save acceptance steps must be observed separately.
 - Fresh demo capture, manifest/CRC verification, ten malformed-artifact refusal
   controls and clean-extracted real Chromium interaction/playback checks passed.
   Missing notices are one of the refused cases. An anonymous public clone checked out exact commit `7226bcc`, installed from
@@ -117,8 +119,9 @@ guarantee that future account-level restrictions cannot occur.
   zero additional findings. Browser binaries were shared; generated runtime,
   dependencies and build output were absent before installation.
 - Existing native evidence remains valid only for its recorded builds. The
-  resumed cloud environment has no running native validation VM. No new
-  WebKitGTK/cgroup GUI matrix is claimed by this remediation.
+  disposable Ubuntu VM has since been restored and a standalone real original
+  Save ENOSPC gate passed there. This is separate from native GUI acceptance;
+  no new full WebKitGTK/cgroup matrix is claimed by this remediation.
 - Native JavaScriptCore/WebKitGTK renderer crashes, startup reliability and the
   earlier instantaneous PID observation remain technical risks. The later bounded
   six-case observer run passed but did not establish the cause of the old failure.
