@@ -42,9 +42,10 @@ with tempfile.TemporaryDirectory(prefix='review-positive-', dir='.cache') as tem
         assert current['capture'] == manifest['capture']
         assert current['sha256'] == manifest['sha256']
 
-cases = ['capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
+cases = ['notice-missing', 'capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
          'backslash-path', 'windows-dot-space-path', 'symlink', 'failed-capture']
 reasons = {
+    'notice-missing': 'Missing dependency redistribution notices',
     'capture-change': 'Capture checksum mismatch',
     'capture-script-change': 'Capture script changed since recording',
     'asset-change': 'Build files changed since verified capture',
@@ -66,7 +67,9 @@ for case in cases:
             target = capture / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(Path('.cache/editor-demo') / name, target)
-        if case == 'capture-change':
+        if case == 'notice-missing':
+            (build / 'THIRD_PARTY_NOTICES.txt').unlink()
+        elif case == 'capture-change':
             with (capture / 'lesson.mdx').open('ab') as file:
                 file.write(b'\nchanged')
         elif case == 'capture-script-change':

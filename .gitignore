@@ -38,3 +38,6 @@ public-audit/
 *.AppImage
 *.msi
 *.dmg
+
+# Generated from pinned installed dependencies by prepare:notices
+/public/THIRD_PARTY_NOTICES.txt

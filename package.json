@@ -18,10 +18,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:e2e",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:tooling && npm run test:e2e",
     "prepare:runtime": "node scripts/runtime.mjs",
     "predev": "npm run prepare:runtime",
-    "prebuild": "npm run prepare:runtime",
+    "prebuild": "npm run prepare:runtime && npm run prepare:notices",
     "tauri": "tauri",
     "native:dev": "tauri dev",
     "native:build": "tauri build --no-bundle",
@@ -40,7 +40,9 @@
     "pretest:watch": "npm run prepare:runtime",
     "native:session:test": "node scripts/native-session-status.mjs",
     "native:renderer:test": "node scripts/native-renderer-failure.mjs",
-    "native:preview-renderer:test": "node scripts/native-preview-renderer.mjs"
+    "native:preview-renderer:test": "node scripts/native-preview-renderer.mjs",
+    "prepare:notices": "node scripts/third-party-notices.mjs",
+    "test:tooling": "node --test tests/tooling/*.test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

@@ -120,4 +120,17 @@ Codex Cloud installation and restart instructions are saved in the environment c
 
 `npm run native:package` builds an optimized Debian package without test features. Follow [installation and desktop checks](docs/LINUX_DESKTOP_TESTING.md). Native source files are authorized through OS pickers; document code receives no filesystem capability. Conflicts, read-only errors and cancelled dialogs preserve the editor buffer. Automatic private versioned recovery snapshots are implemented, with explicit unsaved restoration and no automatic writes to original files; see [ADR-008](docs/decisions/ADR-008-versioned-recovery.md). The native preview requires actual network namespaces and delegated cgroup controllers and fails closed when unavailable.
 
-CI is configured to build and inspect the package and upload a temporary testing artifact. Latest hosted runs are blocked before runner startup by account billing; local results are recorded separately. It does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.
+CI builds and inspects the production package. Both jobs actually passed on public head `8a8e44c`; the earlier private-account billing refusal is no longer blocking that run. Automatic native installer uploads are paused until the full native redistribution notice inventory is complete. CI does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.
+
+## Public repository and licensing
+
+This repository is public. No project open-source license has been selected;
+visibility alone does not grant a general reuse license. Existing upstream
+licenses remain applicable. Browser builds include `THIRD_PARTY_NOTICES.txt`;
+[the preserved review demo notices](docs/demo/THIRD_PARTY_NOTICES.txt) and
+[design font license](docs/design-reference/2026-11-18/FONT_LICENSES.txt) accompany
+older materials. Native binary redistribution notices remain incomplete.
+
+See [public remediation and owner decisions](docs/PUBLIC_READINESS.md) and
+[security reporting](SECURITY.md). Standard public Ubuntu Actions compute is free;
+artifact/storage allowances are separate. No paid infrastructure is required.

@@ -43,7 +43,14 @@ if sha(read_inside(args.dist, 'index.html')) != receipt['buildIndexSha256']:
 if sha(Path('scripts/demo-editor.mjs').read_bytes()) != receipt['captureScriptSha256']:
     raise ValueError('Capture script changed since recording')
 
-entries = {'walkthrough/capture.json': receipt_bytes}
+notice_path = args.dist / 'THIRD_PARTY_NOTICES.txt'
+if not notice_path.is_file():
+    raise ValueError('Missing dependency redistribution notices')
+notices = read_inside(args.dist, 'THIRD_PARTY_NOTICES.txt')
+if b'THIRD-PARTY NOTICES' not in notices or b'Permission is hereby granted' not in notices:
+    raise ValueError('Incomplete dependency redistribution notices')
+entries = {'walkthrough/capture.json': receipt_bytes,
+           'THIRD_PARTY_NOTICES.txt': notices}
 allowed = {'01-preview.png', '02-inline-edit.png', '03-updated.png', '04-new-note.png',
            '05-dirty-sibling.png', '06-long-input.png', 'long-note.mdx',
            '07-quote.png', 'quoted-note.mdx',

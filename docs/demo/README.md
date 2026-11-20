@@ -50,15 +50,17 @@ and nine malformed-artifact rejection controls passed. [Raw evidence and scope](
 
 Native filesystem permissions, WebKitGTK, recovery and cgroups have separate
 Linux acceptance procedures. No native installer is included. Browser CPU/memory
-quotas and production security readiness are not claimed. The latest native
-six-case command has five passes and one failed additional OOM gate; native
-renderer/startup issues remain. [Current native evidence](../security-evidence/2026-11-19-memory-pages/README.md).
+quotas and production security readiness are not claimed. The later bounded-observer native six-case run passed all six cases; earlier
+instant-observer and OOM/startup failures remain retained. This does not establish
+why the earlier instantaneous PID observation occurred or fix the underlying
+renderer/startup crashes. [Current native evidence](../security-evidence/2026-11-19-bounded-cleanup/README.md).
 
 Regenerate with a fresh production build on loopback port 4188, then
 `node scripts/demo-editor.mjs`, `python3 scripts/package-review-demo.py` and
 `python3 scripts/verify-review-demo.py --browser`. `DEMO_URL` selects another
-loopback port. CI uploads the unpacked `playable-editor-demo` when account billing
-allows runners to start. In Codex Cloud, system Chromium is selected with
+loopback port. CI can upload the unpacked `playable-editor-demo` on an explicit
+workflow dispatch with `review_artifacts` enabled (seven-day retention). Normal PR
+CI retains browser testing and avoids recording the demo on every push. In Codex Cloud, system Chromium is selected with
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium`; matching downloaded
 Playwright uses `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` with the
 executable override unset.
@@ -66,3 +68,14 @@ executable override unset.
 [Previous immutable engine 34dc906 review](https://github.com/TomasDelon/programmable-notes/blob/247ee9a1de67c027a032ee1ba162fd03714611ba/docs/demo/programmable-notes-review-2026-11-19.zip?raw=true)
 and its [remote receipt](../security-evidence/2026-11-19-multiline-review/raw/remote-download.json)
 remain historical. The current remote Git blob was downloaded and matched every byte. [Current download receipt](../security-evidence/2026-11-19-engine54-review/raw/remote-download.json).
+
+## Redistribution notices
+
+Retain [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) alongside the historical
+ZIP above. It contains full upstream texts for the installed production npm
+dependencies and direct build tools. The historical demo engine `54c41a7` and the
+current notice inventory use identical dependency lockfiles. The original archive
+and checksum remain unchanged as evidence. New builds generate the notices into
+the build, and the packager refuses to assemble a demo without them. These
+notices do not assign a license to Programmable Notes or establish rights in the
+supplied design/research. See [public remediation](../PUBLIC_READINESS.md).

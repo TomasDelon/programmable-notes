@@ -1,0 +1,10 @@
+✔ secret guard rejects an unused synthetic Git private key without printing its contents (1078.531017ms)
+✔ secret guard rejects an unused synthetic archived private key without printing its contents (1198.45238ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2378.343272

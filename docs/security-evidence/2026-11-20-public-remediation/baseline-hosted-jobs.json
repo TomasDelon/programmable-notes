@@ -1,0 +1,20 @@
+{
+  "run": 44694104501,
+  "head": "8a8e44ccd0fb50989aaaef83a7f465c70b7dbf21",
+  "jobs": [
+    {
+      "name": "native-check",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-20T07:19:42Z",
+      "completed_at": "2026-11-20T07:30:46Z"
+    },
+    {
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-20T07:19:42Z",
+      "completed_at": "2026-11-20T07:22:20Z"
+    }
+  ]
+}

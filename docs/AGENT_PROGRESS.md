@@ -2145,3 +2145,38 @@ publicrunnerpolicyreference,cleancloneverification, finalPUBLIC_READINESSreport.
 Originalresearchbodies/evidencearchivespreserved; ownerlicense/IP/historychoices
 remainexplicit. Continuetechnicalroadmapafterpublicremediation. No visibility/
 merge/release/historyrewrite/promotion/costchanges.
+
+## 2026-11-20 — public safeguards and notices, hosted execution restored
+
+Actual public CI run44694104501/head8a8e44c executed BOTH jobs SUCCESS. The former
+private pre-start billing restriction did not block that run. No paid settings
+changed. New workflow pins actions/disables persisted credentials/full-history
+checkout, adds mandatory redacted history+ZIP scan and unused-key canaries,
+makes recording opt-in7days and builds production package before release-profile
+security tests. Native installer upload paused pending full native notices;
+mandatory build/inspection/security gates retained. Must verify new hosted head.
+
+Gitleaks8.30.1 verifiedSHA: original4findings all independently publicX509certs;
+exacthistoricalfingerprints only ignored. Content-based archive discovery fixed
+reviewed path-alias false negative: sameZIP as a.bin/b.zip REDfalse0, GREENrefusal.
+PlainGit and ZIP synthetickey canaries2pass, no keydata output. Actualhistory/archive
+summary0additionalfindings. Fullmedia2096frames/8videos,2095distinctOCRcontents,
+196imagemetadatarecords and59originalimagecontactsheetchecks: no configured
+privacycandidate; no exhaustive human frame-review claim. Originals/reportsignored.
+
+167fullnpmupstreamnotices generated; legacy54c41a7lockidentical. Browsernotice
+sidecar + actualfontOFLtext additive, originalZIPs preserved. Packager rejects
+missingnotice; freshcapture/extractedChromium/CRC+10negativecontrolsPASS. Rootlicense,
+research/designrights and historical86commitpersonalemail/privatepointer remain
+ownerdecisions; NO-GOunqualifiedremediation/generalredistribution, not visibility
+reversal. FuturelocalGitnoreply. PUBLIC_READINESS/SECURITY/READMEupdated.
+
+FullNodecheck114unit+37Chromium and4toolingcontrols passed (scanner supplied),
+format/lint/types/buildpassed. Publicanonymousclone8a succeeded; candidate exact
+committed-source npmci/check still to run before push. Keep native-documents Save
+syncEIOwork separate: resumedactualRED101 writerunwrap, externalreportmode now
+GREENbothfile/dir EIO cases, mode0640/bytes/sibling/reopen+save. Notcommittedyet.
+No productionStorechange required. Host own-childptrace available; no runningGUIVM.
+Next:commit publicpatch, cleanclonecheck+push, observe hostedCI/update draftPR;
+thenaddmandatorySaveEIOgate/docs/evidence andcontinue native reliability roadmap.
+No merge/release/historyrewrite/visibility/promotion/budgetchange.

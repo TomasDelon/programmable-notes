@@ -122,7 +122,7 @@ receipts and the initial rename-observer failure are retained. A pre-publication
 crash can leave an orphan temporary; the application neither promotes nor
 arbitrarily scavenges it. This is process interruption, not power loss or a new
 packaged-GUI restart test. CI adds a mandatory timeout and explicit stage checks;
-hosted billing remains blocked.114unit/37browser and ordinary Rust39document/
+public hosted CI was subsequently restored (see PUBLIC_READINESS.md).114unit/37browser and ordinary Rust39document/
 7policy passed; the new ignored integration case was manually executed separately.
 [Exact results and limits](security-evidence/2026-11-19-document-save-crashes/README.md).
 
@@ -184,17 +184,17 @@ error. See [ADR-008](decisions/ADR-008-versioned-recovery.md).
 
 ## Verified checks and evidence
 
-| Layer                              | Executed evidence                                                                                                                                                                                                                        |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Current local application checks   | Formatting, ESLint, strict TypeScript, 98 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                        |
-| Native document backend            | 39 ordinary Rust tests passed; four infrastructure-only cases are excluded from that count. Earlier 15 snapshot tests were repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                  |
-| Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                     |
-| Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md). |
-| Automatic native recovery          | Real independent histories, retention, restart, discovery, explicit restore/save, GUI ENOSPC/pause/Resume and original Save while recovery storage was full. [Evidence](security-evidence/2026-11-19-automatic-recovery/README.md).      |
-| Process crashes and lock fix       | Actual writer SIGKILL at write/fsync/rename/directory-fsync, red/green inherited-lock test, rebuilt installed-app SIGKILL/restart and exact restoration. [Evidence and hashes](security-evidence/2026-11-19-process-crashes/README.md).  |
-| Native IPC and filesystem boundary | Production registered-command denial, recovery-action denial, parent DOM/storage isolation, HTTP/file denial, private profile/network and Stop. [Recovery UI evidence](security-evidence/2026-11-19-recovery-ui/README.md).              |
-| Production resource stress         | CPU throttling, whole-group Stop, 512 MiB OOM, 60-second expiry, parent-death backstop and exact disk saves under attack. [Original package scope](security-evidence/2026-11-18/README.md); not rerun for every frontend commit.         |
-| Hosted GitHub CI                   | Both jobs passed for `438f4b4`, run 44430453610. Run 44436506110 for `83d1e4a` was refused before jobs started: account payment/spending-limit annotation. Owner billing action is required before CI can execute again.                 |
+| Layer                              | Executed evidence                                                                                                                                                                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current local application checks   | Formatting, ESLint, strict TypeScript, 98 unit and 37 Chromium tests passed, including extension-only import mismatch and simultaneous case-distinct TSX modules.                                                                            |
+| Native document backend            | 39 ordinary Rust tests passed; four infrastructure-only cases are excluded from that count. Earlier 15 snapshot tests were repeated ten times. Real tmpfs ENOSPC and four real writer SIGKILL stages passed separately.                      |
+| Mixed MDX browser behavior         | Exact import/export/reopen, stale revision rejection, opaque JSX/metadata/fences, multiline edits, undo/redo and React interaction; desktop/tablet/mobile viewports.                                                                         |
+| Installed source fidelity          | Optimized Ubuntu/WebKitGTK package passed BOM/CRLF no-op save, heading/paragraph/list edits, undo/redo, mode 0640, reopen, actual React interaction and recovery. [Exact scope](security-evidence/2026-11-19-source-fidelity/README.md).     |
+| Automatic native recovery          | Real independent histories, retention, restart, discovery, explicit restore/save, GUI ENOSPC/pause/Resume and original Save while recovery storage was full. [Evidence](security-evidence/2026-11-19-automatic-recovery/README.md).          |
+| Process crashes and lock fix       | Actual writer SIGKILL at write/fsync/rename/directory-fsync, red/green inherited-lock test, rebuilt installed-app SIGKILL/restart and exact restoration. [Evidence and hashes](security-evidence/2026-11-19-process-crashes/README.md).      |
+| Native IPC and filesystem boundary | Production registered-command denial, recovery-action denial, parent DOM/storage isolation, HTTP/file denial, private profile/network and Stop. [Recovery UI evidence](security-evidence/2026-11-19-recovery-ui/README.md).                  |
+| Production resource stress         | CPU throttling, whole-group Stop, 512 MiB OOM, 60-second expiry, parent-death backstop and exact disk saves under attack. [Original package scope](security-evidence/2026-11-18/README.md); not rerun for every frontend commit.             |
+| Hosted GitHub CI                   | Both jobs actually passed for public head `8a8e44c`, run 44694104501, including native package inspection. Earlier private-account billing refusals remain historical evidence. Revised workflow results are tracked in PUBLIC_READINESS.md. |
 
 Compilation/package inspection is not native runtime evidence. CI builds and
 uploads the Debian testing package and browser demo but does not execute the
@@ -396,3 +396,14 @@ Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressur
 matrix without changing deadlines or isolation. Hosted runners still need owner
 billing action; physical GPU/Wayland compatibility can proceed independently.
 No production security readiness is claimed.
+
+## Public repository remediation (2026-11-20)
+
+Public visibility is the intentional owner baseline. Current private-source pointer
+withheld, future commits use GitHub noreply, complete browser/font notices added,
+and redacted history/ZIP credential scanning is mandatory. Historical metadata,
+project license and supplied-material rights remain owner decisions. See
+[scope, actual hosted results and residual risks](PUBLIC_READINESS.md). Native
+installer redistribution notices are incomplete, so automatic installer upload is
+paused while mandatory production build/inspection continue. No runtime security
+restriction or document behavior was changed for this remediation.
