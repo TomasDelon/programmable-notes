@@ -1,0 +1,23 @@
+FIXTURE_ENV=/tmp/pn-native-SEhUOq/env.sh
+NATIVE_DIALOG {"pid": 2097, "title": "Open documents and modules", "action": "choose", "argument": "/mnt/pn-native-save-ui-Wxzsjr/note.mdx", "dialogDismissed": true}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'C'
+- 'Changed: 75% + tax.'
+
+    at file:///work/resumed-20261120/scripts/native-save-enospc.mjs:139:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'C',
+  expected: 'Changed: 75% + tax.',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

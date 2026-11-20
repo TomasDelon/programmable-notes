@@ -1,0 +1,12 @@
+{
+  "observerSha256": "6662880201d0c94accfbaa0ef71a5e1bb8d507d97572f37aaef14000e1951d61",
+  "originalSha256": "70d216dd672b283277b83c1976601adcf36e8732ae5f5f8e3af48b40f1fe7603",
+  "phase": "fixtures-created",
+  "root": {
+    "pid": 2097,
+    "start": "180995",
+    "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+  },
+  "errorThrown": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'C'\n- 'Changed: 75% + tax.'\n",
+  "outcome": "fail"
+}

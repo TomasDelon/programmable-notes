@@ -2260,3 +2260,42 @@ acceptance usingfreshdedicatedguardedtmpfs; preservecurrentstandalonegates. Then
 continueboundedJSC/startupreproduction/symbolicdiagnosticswithoutJIT/sandbox/quota
 changes. Ownerhistory/license/IPdecisionsremain, not a reason topauseengineering.
 No visibility/historyrewrite/evidencedeletion/merge/release/paidsettings.
+
+## 2026-11-20 — continued packaged original Save ENOSPC GUI milestone
+
+7a5c103pushed and actualrun44701581169 BOTHjobsSUCCESS (publicscan+allSavegates
+andproductionpackage). Continuednextsafe milestoneinstead ofstopping. Newexternal
+`native-save-enospc.mjs` +readonly`native-disposable-filesystem.mjs` guard actual
+UbuntuUI2MBtmpfsPASS onexistinga6d00cbb ELF:realvisibleENOSPC/Source retained,
+unchangedoriginalBOMUTF8CRLF/mode0640/sibling, Visualbuffer+dirtyflag+UndoRedo,
+freeonlyfiller, explicitSave/reopenexact, cleanRootexit. Actualscreenshot+source
+exports+hashedreportretained. No prodStore/app/UI/authority/JIT/quota changes.
+
+Firstobserver666288…failedbeforeapply/fill (immediatexdotoolreadC); rawfailure
+andexactsourceSHA-verifiedreconstruction retained. Nextobserver30de85…added
+boundedcomplete-exact-inputwait, sameassertion, PASS. Failedrunstaysfailed.
+Safety:canonicalprivateownedemptywhole1–4MBtmpfs, kernelmountinfo unique root,
+no subtree/stackedmount; boundedfiller; externalpidfdthenidentitycheck, no PID-only
+signal fallback. Actualescapedspacemountpositive+subtreebindrefusal/sentinel
+unchanged PASS; ordinary/symlinkrefusal2testsPASS. Read-onlyreviewnoCritical/
+Importantfindings. NeedfullNodecheck6tooling/control+cleanclonelatest+secretscan,
+commit/push, actualhostedheadCI andPRbodyupdate. ExistingGUIprofile/VMstillrunning
+onlyexternaldriver; verifiedRoots2097/2269shouldbegone; preserveallrawtestdata.
+Next: audit/reuse destructive-test filesystem guards in older recovery tests,
+thenboundedrenderer/startupdiagnostics; no speculativeJIT workaround. Rootlicense/
+history/IPownerdecisionsremain. No merge/release/visibility/historyrewrite/cost.
+
+### Native Save GUI verification checkpoint
+
+The full local check passed: 114 unit, 37 Chromium and six tooling tests, with
+formatting, lint, strict types and a fresh build. Exported final MDX independently
+matched the fixture's exact BOM/UTF8/CRLF bytes and report hash; sibling bytes
+matched. Both failed/passing test Roots were independently absent afterward.
+All GUI evidence is under `2026-11-20-native-save-enospc`. The first observer source
+was reconstructed byte-for-byte and matched its original recorded SHA256.
+
+Next: commit the verified external observer/guard and documentation, run a fresh
+anonymous-checkout install/full check against that exact commit, scan committed
+history, then push. Wait for the actual final hosted jobs and update draft PR #1
+with their result. The VM remains disposable; preserve evidence and stop it
+gracefully when finished. No important test data or shared history is to be deleted.

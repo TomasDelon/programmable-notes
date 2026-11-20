@@ -16,6 +16,18 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - For cloud browser tests, export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` to use the preinstalled system browser. CI uses Playwright's matching downloaded browser. If installing browsers in the cloud, export `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` before installation and tests; the required download domains must be active.
 - No application secrets, backend, or database are required for this scaffold.
 
+## Public repository privacy
+
+The owner intentionally made this repository public. Read `docs/PUBLIC_READINESS.md`
+for historical exposure and licensing decisions; do not reverse visibility or
+rewrite shared history automatically. In this owner workspace, verify Git author
+and committer configuration uses the owner's verified GitHub noreply identity
+before committing. Never print a private address while checking it. This changes
+future local metadata only; do not alter existing authors. Keep raw audit reports,
+private originals and signing material ignored. Run `bash scripts/scan-secrets.sh`
+before pushing; do not upload its raw reports. Preserve upstream license texts
+and do not invent a project license.
+
 ## Development and checks
 
 - `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` starts development. Verify an HTTP response and use a browser smoke test for rendered behavior; a listening process alone is not validation.

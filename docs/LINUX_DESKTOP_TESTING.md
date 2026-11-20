@@ -314,3 +314,20 @@ can leave an orphan temporary in the chosen directory; it is never promoted or
 arbitrarily removed by the application. Synthetic fixture cleanup is test-owned.
 This is library process-interruption evidence, not packaged-GUI restart or
 power-loss evidence. [Exact executed results and failed observer assumption](security-evidence/2026-11-19-document-save-crashes/README.md).
+
+## Original Save when its filesystem is full
+
+`npm run native:save-enospc:test` is a separate actual packaged-editor acceptance
+command. It needs the external driver/disposable profile above plus an explicit
+empty owned private1–4MB whole tmpfs mount in `NATIVE_SAVE_ENOSPC_DIR`. It refuses
+ordinary directories, symlinks, shared subtrees and ambiguous mounts before
+creating files. It checks visible real ENOSPC, retained visual input/dirty state,
+exact original bytes/mode/sibling, Undo/Redo, then explicit retry/reopen after
+freeing the bounded synthetic filler. Failure cleanup uses an identity-checked
+pidfd; no production failure API is added. See [actual results, screenshot and
+complete commands](security-evidence/2026-11-20-native-save-enospc/README.md).
+
+Hosted compilation or a normal `npm run check` does not execute this GUI command.
+It was actually executed on the recorded disposable Ubuntu/WebKitGTK desktop
+against the existing optimized production ELF. Keep that binary scope distinct
+from newer CI-generated packages.

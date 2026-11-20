@@ -42,7 +42,8 @@
     "native:renderer:test": "node scripts/native-renderer-failure.mjs",
     "native:preview-renderer:test": "node scripts/native-preview-renderer.mjs",
     "prepare:notices": "node scripts/third-party-notices.mjs",
-    "test:tooling": "node --test tests/tooling/*.test.mjs"
+    "test:tooling": "node --test tests/tooling/*.test.mjs",
+    "native:save-enospc:test": "node scripts/native-save-enospc.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

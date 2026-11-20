@@ -144,3 +144,14 @@ No visibility change, merge, public release, history rewrite or PR readiness
 promotion is performed. These decisions do not require pausing ordinary safe
 engineering. Next technical work is the already-reproduced original Save sync-error
 regression, followed by native renderer/startup investigation in a disposable VM.
+
+## Continued independent native reliability work
+
+After the audit, a further actual packaged-editor test passed real original-Save
+ENOSPC UI handling: visible **Source retained**, exact original bytes/mode/sibling,
+retained Visual input and Undo/Redo, then explicit Save/reopen after freeing space.
+Its guarded external-only filler and pidfd cleanup add no application privilege.
+The first input-observer failure is retained with its exact source fingerprint.
+[Actual screenshot, exports, results and reproduction](security-evidence/2026-11-20-native-save-enospc/README.md).
+Two added refusal controls make the latest local tooling count six; prior
+clean-checkout and hosted counts above keep their earlier scope.

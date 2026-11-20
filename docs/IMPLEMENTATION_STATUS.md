@@ -442,3 +442,14 @@ notice-bearing installer. [Scope, first harness prerequisite failure and results
 Both hosted jobs actually passed on367626f/run44699786688 including new original
 Save EIO and real ENOSPC gates. Later documentation-only heads need their own
 workflow result; consult PR #1. Historical intermittent crashes remain unresolved.
+
+## Packaged original Save disk-full recovery (2026-11-20)
+
+Actual optimized Ubuntu GUI acceptance now verifies visible real Save ENOSPC with
+original bytes/mode/sibling unchanged, edited Visual text and dirty state retained,
+working Undo/Redo, explicit retry after freeing space, exact reopen and clean exit.
+A new external-only command reproduces this on a guarded tiny tmpfs; its bounded
+filler and pidfd cleanup cannot grant authority to document code. The first input
+observer failed before storage filling and is retained alongside the corrected
+exact-value wait and successful command. [Evidence and screenshot](security-evidence/2026-11-20-native-save-enospc/README.md).
+No application behavior, isolation, resource limit or UI design changed.

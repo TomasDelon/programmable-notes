@@ -1,0 +1,13 @@
+{
+  "observerSha256": "30de85b0b52a97cedc8755507d925ff50e48c173a42a76de8d6f510988a41923",
+  "originalSha256": "70d216dd672b283277b83c1976601adcf36e8732ae5f5f8e3af48b40f1fe7603",
+  "phase": "clean-exit-verified",
+  "root": {
+    "pid": 2269,
+    "start": "194320",
+    "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+  },
+  "error": "File operation failed: No space left on device (os error 28) Source retained.",
+  "savedSha256": "ce499d28207d6765330545c023dfce2e5d687bba1aa80cc4095f23695904815c",
+  "outcome": "pass"
+}

@@ -1,0 +1,3 @@
+FIXTURE_ENV=/tmp/pn-native-2q5yii/env.sh
+NATIVE_DIALOG {"pid": 2269, "title": "Open documents and modules", "action": "choose", "argument": "/mnt/pn-native-save-ui-hGpZO4/note.mdx", "dialogDismissed": true}
+NATIVE_REAL_SAVE_ENOSPC_VISIBLE_ERROR_EXACT_ORIGINAL_BUFFER_HISTORY_RETRY_REOPEN_PASS
