@@ -1,0 +1,214 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/editor.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/editor.test.tsx (4 tests | 2 failed) 248ms
+   × navigates an opaque block using its exact captured source without applying an edit 24ms
+   × keeps pending visual text protected from opaque-block navigation and busy actions 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/editor.test.tsx > navigates an opaque block using its exact captured source without applying an edit
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Show in Source"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Markdown editing":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Markdown editing"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"edit-hint"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Note":
+  [36m<h1 />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Note":
+  [36m<button[39m
+    [33mclass[39m=[32m"rendered-text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"opaque-block"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Markdown editing"[39m
+    [36m>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"edit-hint"[39m
+      [36m>[39m
+        [0mClick text to edit. Enter applies, Shift+Enter adds a line, Escape cancels. React and formatted blocks stay opaque; use Source to edit them.[0m
+      [36m</p>[39m
+      [36m<div>[39m
+        [36m<h1>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"rendered-text"[39m
+          [36m>[39m
+            [0mNote[0m
+          [36m</button>[39m
+        [36m</h1>[39m
+      [36m</div>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"opaque-block"[39m
+        [33mopen[39m=[32m""[39m
+      [36m>[39m
+        [36m<summary>[39m
+          [0mSource block · read only[0m
+        [36m</summary>[39m
+        [36m<pre>[39m
+          [0m&lt;div&gt;&lt;span&gt;Opaque JSX&lt;/span&gt;&lt;/div&gt;[0m
+        [36m</pre>[39m
+      [36m</details>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/editor.test.tsx:76:26
+     74|   render(<MarkdownEditor {...props} />);
+     75|   fireEvent.click(screen.getByText('Source block · read only'));
+     76|   fireEvent.click(screen.getByRole('button', { name: 'Show in Source' …
+       |                          ^
+     77|   expect(showSource).toHaveBeenCalledWith(source.indexOf('<div>'), sou…
+     78|   expect(apply).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/editor.test.tsx > keeps pending visual text protected from opaque-block navigation and busy actions
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Show in Source"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Markdown editing":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Markdown editing"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"edit-hint"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Paragraph text":
+  [36m<textarea[39m
+    [33maria-label[39m=[32m"Paragraph text"[39m
+    [33mclass[39m=[32m"inline-markdown"[39m
+    [33mrows[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "":
+  [36m<details[39m
+    [33mclass[39m=[32m"opaque-block"[39m
+    [33mopen[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Markdown editing"[39m
+    [36m>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"edit-hint"[39m
+      [36m>[39m
+        [0mClick text to edit. Enter applies, Shift+Enter adds a line, Escape cancels. React and formatted blocks stay opaque; use Source to edit them.[0m
+      [36m</p>[39m
+      [36m<div>[39m
+        [36m<p>[39m
+          [36m<textarea[39m
+            [33maria-label[39m=[32m"Paragraph text"[39m
+            [33mclass[39m=[32m"inline-markdown"[39m
+            [33mrows[39m=[32m"1"[39m
+          [36m>[39m
+            [0mKeep this pending value.[0m
+          [36m</textarea>[39m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<details[39m
+        [33mclass[39m=[32m"opaque-block"[39m
+        [33mopen[39m=[32m""[39m
+      [36m>[39m
+        [36m<summary>[39m
+          [0mSource block · read only[0m
+        [36m</summary>[39m
+        [36m<pre>[39m
+          [0m&lt;div&gt;Opaque JSX&lt;/div&gt;[0m
+        [36m</pre>[39m
+      [36m</details>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/editor.test.tsx:95:25
+     93|   const field = screen.getByRole('textbox', { name: 'Paragraph text' }…
+     94|   fireEvent.change(field, { target: { value: 'Keep this pending value.…
+     95|   const action = screen.getByRole('button', { name: 'Show in Source' }…
+       |                         ^
+     96|   expect(action).toBeDisabled();
+     97|   fireEvent.click(action);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  13:29:54
+   Duration  1.71s (environment 57%, tests 16%, import 15%, setup 7%, transform 4%)
+

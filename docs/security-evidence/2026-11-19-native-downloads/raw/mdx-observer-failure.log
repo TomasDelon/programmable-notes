@@ -1,0 +1,12 @@
+NATIVE_UI {"pid": 16225, "button": "Automatic download attempts complete", "action": "find", "passed": true}
+NATIVE_UI {"pid": 16225, "button": "Automatic download attempts complete", "action": "click", "passed": true}
+NATIVE_UI {"pid": 16225, "button": "User download attempts complete", "action": "find", "passed": true}
+NATIVE_MDX_DOWNLOAD_EVIDENCE /tmp/pn-native-HIfwBI/evidence/mdx-downloads.json
+file:///opt/pn/acceptance/scripts/native-download-sandbox.mjs:148
+  report.stopCleanupElapsedMs = performance.now() - requested;
+                                                    ^
+
+ReferenceError: requested is not defined
+    at file:///opt/pn/acceptance/scripts/native-download-sandbox.mjs:148:53
+
+Node.js v24.22.1

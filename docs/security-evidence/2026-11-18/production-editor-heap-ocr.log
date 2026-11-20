@@ -1,0 +1,30 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_DIALOG {"pid": 13940, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/attack-edit.mdx"}
+NATIVE_ATTACK_STARTED {"unit":"programmable-notes-preview-13940-1794966323693226470.service","pid":14065,"root":"/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-13940-1794966323693226470.service","mode":"heap","time":1794966326103}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-visible-text.py 14065 Heap pressure active /tmp/pn-native-zZyvzb/evidence
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at visiblePreviewText (file:///opt/pn/project/scripts/native-ui-lib.mjs:94:5)
+    at file:///opt/pn/project/scripts/native-editor.mjs:114:5
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '{"pid": 14065, "expectedText": "Heap pressure active", "passed": false, "evidenceDirectory": "/tmp/pn-native-zZyvzb/evidence/visible-14065-1794966327303547840", "identity": {"pid": 14065, "startTicks": "889586", "exe": "/usr/bin/programmable-notes"}, "error": "Preview is outside visible screen bounds", "elapsedMs": 55001, "attemptCount": 51}\n',
+    ''
+  ],
+  pid: 14076,
+  stdout: '{"pid": 14065, "expectedText": "Heap pressure active", "passed": false, "evidenceDirectory": "/tmp/pn-native-zZyvzb/evidence/visible-14065-1794966327303547840", "identity": {"pid": 14065, "startTicks": "889586", "exe": "/usr/bin/programmable-notes"}, "error": "Preview is outside visible screen bounds", "elapsedMs": 55001, "attemptCount": 51}\n',
+  stderr: ''
+}
+
+Node.js v24.22.1

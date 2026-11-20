@@ -1,0 +1,31 @@
+NATIVE_UI {"pid": 5101, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5101, "button": "CPU loop armed", "action": "find", "passed": true}
+WEBKIT_CPU {"unit":"programmable-notes-preview-5051-1794952413447358650.service","usage_usec":774655,"elapsed_ms":3072,"throttled_periods":31,"editor_response_ms":193}
+NATIVE_UI {"pid": 5194, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5194, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5194, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+PRESSURE_UNIT programmable-notes-preview-5051-1794952522242864160.service
+NATIVE_UI {"pid": 5421, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5421, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5421, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Memory-pressure termination
+CASE_PASS memory
+NATIVE_UI {"pid": 5540, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5540, "button": "CPU loop armed", "action": "find", "passed": true}
+EXPIRY_UNIT programmable-notes-preview-5051-1794952635127875530.service
+NATIVE_UI {"pid": 5649, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5649, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5649, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Native loop lifetime expiry
+CASE_PASS expiry
+NATIVE_UI {"pid": 5742, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5742, "button": "CPU loop armed", "action": "find", "passed": true}
+EDITOR_KILLED {"editorPid":5051,"unit":"programmable-notes-preview-5051-1794952749526187840.service"}
+NATIVE_UI {"pid": 5873, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5873, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5873, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Independent preview expiry after editor SIGKILL
+CASE_PASS editor-crash
+WEBKIT_STRESS_PASS all

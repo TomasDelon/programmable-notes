@@ -1,0 +1,36 @@
+{
+  "scope": "Native WebKit/Tauri callback harness, not production MDX escape evidence",
+  "executableSha256": "b4c7ca465484457d1d249727be577d08fb2d62ba45b18f7708fa2e0c675cfd2f",
+  "observerSha256": "530434260e6693c1da18b824174a3c9a222fada304e28324b0f8339fd6883a56",
+  "cases": [
+    {
+      "mode": "default",
+      "name": "pn-download-d1fe603e-9e36-4833-8b24-b3ff3eb903cc.txt",
+      "outcome": "pass",
+      "code": 0,
+      "signal": null,
+      "stdout": "DOWNLOAD_RESULT {\"destination\":\"/opt/pn/acceptance/pn-download-d1fe603e-9e36-4833-8b24-b3ff3eb903cc.txt\"}\n",
+      "stderr": "libEGL warning: DRI3 error: Could not get DRI3 device\nlibEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\n",
+      "requests": 1,
+      "nativeResult": {
+        "destination": "/opt/pn/acceptance/pn-download-d1fe603e-9e36-4833-8b24-b3ff3eb903cc.txt"
+      },
+      "writtenSha256": "74eca67ee1ee4ea3ddee7f5582521534089657313eb57ce11dc64ca8ce658242",
+      "writtenBytes": 79
+    },
+    {
+      "mode": "deny",
+      "name": "pn-download-b65b8cec-5a3a-424a-94db-950a5986fa94.txt",
+      "outcome": "pass",
+      "code": 0,
+      "signal": null,
+      "stdout": "DOWNLOAD_RESULT {\"destination\":null}\n",
+      "stderr": "libEGL warning: DRI3 error: Could not get DRI3 device\nlibEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\nDOWNLOAD_DENIED\nDOWNLOAD_FAILED User cancelled the download\n",
+      "requests": 1,
+      "nativeResult": {
+        "destination": null
+      }
+    }
+  ],
+  "outcome": "pass"
+}

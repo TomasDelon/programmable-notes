@@ -1,0 +1,43 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-stop.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-stop.test.tsx (2 tests | 1 failed) 139ms
+   × confirms native Stop only after success and allows a fresh explicit retry after failure 116ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-stop.test.tsx > confirms native Stop only after success and allows a fresh explicit retry after failure
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Stopping preview
+Received:
+  Preview stopped
+ ❯ tests/unit/native-stop.test.tsx:78:38
+     76|   await start();
+     77|   fireEvent.click(screen.getByRole('button', { name: 'Stop preview' })…
+     78|   expect(screen.getByRole('status')).toHaveTextContent('Stopping previ…
+       |                                      ^
+     79|   await act(async () => {
+     80|     reject(Error('injected Stop failure'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  11:38:28
+   Duration  1.67s (environment 53%, transform 29%, tests 9%, setup 7%, import 1%)
+

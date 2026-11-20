@@ -1,0 +1,49 @@
+{
+  "app": {
+    "pid": 9437,
+    "ppid": 450,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes --preview-child",
+    "uid": 1000,
+    "no_new_privs": 1,
+    "seccomp": 0,
+    "seccomp_filters": 0,
+    "apparmor": "programmable-notes (unconfined)",
+    "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963255393477550.service",
+    "namespaces": {
+      "mnt": "mnt:[4026532321]",
+      "net": "net:[4026532264]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026532263]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "cgroup": "cgroup:[4026531835]"
+    }
+  },
+  "web_processes": [
+    {
+      "pid": 9491,
+      "ppid": 9490,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "cmdline": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 18",
+      "uid": 1000,
+      "no_new_privs": 1,
+      "seccomp": 2,
+      "seccomp_filters": 1,
+      "apparmor": "programmable-notes (unconfined)",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963255393477550.service",
+      "namespaces": {
+        "mnt": "mnt:[4026532329]",
+        "net": "net:[4026532332]",
+        "pid": "pid:[4026532331]",
+        "user": "user:[4026532387]",
+        "uts": "uts:[4026532330]",
+        "ipc": "ipc:[4026531839]",
+        "cgroup": "cgroup:[4026531835]"
+      }
+    }
+  ],
+  "errors": [],
+  "passed": true
+}
+PASS: installed app WebKit sandbox process assertion

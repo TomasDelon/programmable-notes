@@ -1,0 +1,6 @@
+# Audited immutable historical public X.509 certificate fingerprints only.
+# No credential is accepted by this list; new commits are scanned normally.
+0275bdcf3793c90aae88ee096636bb8ddcc5e25e:docs/security-evidence/2026-11-17/kernel-journal.log:generic-api-key:375
+0275bdcf3793c90aae88ee096636bb8ddcc5e25e:docs/security-evidence/2026-11-17/kernel-journal.log:generic-api-key:395
+90c952b303b29455646ac58f39a24baaa7b5bc46:docs/security-evidence/2026-11-18/production-kernel-journal.log:generic-api-key:399
+90c952b303b29455646ac58f39a24baaa7b5bc46:docs/security-evidence/2026-11-18/production-kernel-journal.log:generic-api-key:419

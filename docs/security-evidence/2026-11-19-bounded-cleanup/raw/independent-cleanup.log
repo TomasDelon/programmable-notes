@@ -1,0 +1,5 @@
+total 8
+drwx------ 2 ubuntu ubuntu 4096 Nov 19 19:10 .
+drwxrwxr-x 8 ubuntu ubuntu 4096 Nov 18 15:58 ..
+-rw------- 1 ubuntu ubuntu    0 Nov 18 23:37 .lock
+a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195  /usr/bin/programmable-notes

@@ -1,0 +1,22 @@
+   Compiling native-documents v0.1.0 (/workspace/programmable-notes/native-documents)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.54s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 1 test
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... FAILED
+
+failures:
+
+---- finished_writer_unlocks_even_while_a_forked_child_retains_descriptors stdout ----
+
+thread 'finished_writer_unlocks_even_while_a_forked_child_retains_descriptors' (181656) panicked at tests/snapshots.rs:460:10:
+A finished writer must release its lock before an inherited descriptor closes: "Recovery is busy in another operation"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    finished_writer_unlocks_even_while_a_forked_child_retains_descriptors
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test snapshots`

@@ -1,0 +1,8 @@
+{
+  "observerSha256": "7f9df29317bdc1edd682bcddc52546cf40c9fd2ccd7d06c880455da4bd8ba13e",
+  "executableSha256": "7ef9a9c735e4fdf8717054a50ab552fbe75e912552a14f78ccb68af666689224",
+  "savedSiblingAndActualDirtyCloseCancel": true,
+  "exactBomCrlfSavesMode0640ReopenAndNoticeOwnership": true,
+  "actualCleanExit": true,
+  "outcome": "pass"
+}

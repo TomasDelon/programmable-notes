@@ -1,0 +1,96 @@
+NATIVE_STRESS_IDENTITY {"pid":51824,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"bc7354315ce3f7ec847c124e1372dba2bf88eb1189f94d22ae719d5a23df3295","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118623666354370.service","pid":"51932","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118623666354370.service","pid":51893,"invokeMs":2942,"sandboxObservedMs":16534}
+NATIVE_UI {"pid": 51893, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118623666354370.service","pid":51893,"name":"Arm CPU loop","action":"click","observerMs":33147,"sinceRequestMs":49694}
+NATIVE_UI {"pid": 51893, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118623666354370.service","pid":51893,"name":"CPU loop armed","action":"find","observerMs":1341,"sinceRequestMs":51036}
+WEBKIT_CPU {"unit":"programmable-notes-preview-51824-1795118623666354370.service","usage_usec":774393,"elapsed_ms":3046,"throttled_periods":31,"editor_response_ms":529}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118683139307050.service","pid":"52021","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118683139307050.service","pid":51984,"invokeMs":3091,"sandboxObservedMs":14918}
+NATIVE_UI {"pid": 51984, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118683139307050.service","pid":51984,"name":"Count: 0","action":"click","observerMs":31862,"sinceRequestMs":46783}
+NATIVE_UI {"pid": 51984, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118683139307050.service","pid":51984,"name":"Count: 1","action":"click","observerMs":1699,"sinceRequestMs":48482}
+NATIVE_UI {"pid": 51984, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118683139307050.service","pid":51984,"name":"Count: 2","action":"find","observerMs":2286,"sinceRequestMs":50770}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118735544856680.service","pid":"52112","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118735544856680.service","pid":52072,"invokeMs":3457,"sandboxObservedMs":15186}
+PRESSURE_UNIT programmable-notes-preview-51824-1795118735544856680.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118795523080260.service","pid":"52207","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118795523080260.service","pid":52167,"invokeMs":3219,"sandboxObservedMs":14633}
+NATIVE_UI {"pid": 52167, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118795523080260.service","pid":52167,"name":"Count: 0","action":"click","observerMs":38742,"sinceRequestMs":53385}
+NATIVE_UI {"pid": 52167, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118795523080260.service","pid":52167,"name":"Count: 1","action":"click","observerMs":2117,"sinceRequestMs":55504}
+NATIVE_UI {"pid": 52167, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118795523080260.service","pid":52167,"name":"Count: 2","action":"find","observerMs":1391,"sinceRequestMs":56897}
+RECOVERY_PASS Memory-pressure termination
+CASE_PASS memory
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118853739927860.service","pid":"52298","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118853739927860.service","pid":52260,"invokeMs":3178,"sandboxObservedMs":14720}
+PAGE_PRESSURE_UNIT programmable-notes-preview-51824-1795118853739927860.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118903817094000.service","pid":"52390","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118903817094000.service","pid":52352,"invokeMs":3564,"sandboxObservedMs":15438}
+NATIVE_UI {"pid": 52352, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118903817094000.service","pid":52352,"name":"Count: 0","action":"click","observerMs":32589,"sinceRequestMs":48034}
+NATIVE_UI {"pid": 52352, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118903817094000.service","pid":52352,"name":"Count: 1","action":"click","observerMs":1780,"sinceRequestMs":49824}
+NATIVE_UI {"pid": 52352, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118903817094000.service","pid":52352,"name":"Count: 2","action":"find","observerMs":1516,"sinceRequestMs":51344}
+RECOVERY_PASS Resident-page memory-pressure termination
+CASE_PASS memory-pages
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795118956546368740.service","pid":"52483","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795118956546368740.service","pid":52443,"invokeMs":3111,"sandboxObservedMs":15060}
+NATIVE_UI {"pid": 52443, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118956546368740.service","pid":52443,"name":"Arm CPU loop","action":"click","observerMs":30240,"sinceRequestMs":45301}
+NATIVE_UI {"pid": 52443, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795118956546368740.service","pid":52443,"name":"CPU loop armed","action":"find","observerMs":1300,"sinceRequestMs":46604}
+EXPIRY_UNIT programmable-notes-preview-51824-1795118956546368740.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795119019031075560.service","pid":"52575","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795119019031075560.service","pid":52537,"invokeMs":3286,"sandboxObservedMs":18491}
+NATIVE_UI {"pid": 52537, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795119019031075560.service","pid":52537,"name":"Count: 0","action":"click","observerMs":31925,"sinceRequestMs":50447}
+NATIVE_UI {"pid": 52537, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795119019031075560.service","pid":52537,"name":"Count: 1","action":"click","observerMs":1863,"sinceRequestMs":52312}
+NATIVE_UI {"pid": 52537, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795119019031075560.service","pid":52537,"name":"Count: 2","action":"find","observerMs":1438,"sinceRequestMs":53750}
+RECOVERY_PASS Native loop lifetime expiry
+CASE_PASS expiry
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51824-1795119073828134460.service","pid":"52665","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51824-1795119073828134460.service","pid":52627,"invokeMs":3032,"sandboxObservedMs":14433}
+NATIVE_UI {"pid": 52627, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795119073828134460.service","pid":52627,"name":"Arm CPU loop","action":"click","observerMs":31589,"sinceRequestMs":46023}
+NATIVE_UI {"pid": 52627, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51824-1795119073828134460.service","pid":52627,"name":"CPU loop armed","action":"find","observerMs":1417,"sinceRequestMs":47440}
+EDITOR_KILLED {"editorPid":51824,"unit":"programmable-notes-preview-51824-1795119073828134460.service"}
+NATIVE_STRESS_IDENTITY {"pid":52713,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"bc7354315ce3f7ec847c124e1372dba2bf88eb1189f94d22ae719d5a23df3295","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-52713-1795119146469914580.service","pid":"52818","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-52713-1795119146469914580.service","pid":52780,"invokeMs":2703,"sandboxObservedMs":13893}
+NATIVE_UI {"pid": 52780, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119146469914580.service","pid":52780,"name":"Count: 0","action":"click","observerMs":37053,"sinceRequestMs":50955}
+NATIVE_UI {"pid": 52780, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119146469914580.service","pid":52780,"name":"Count: 1","action":"click","observerMs":1692,"sinceRequestMs":52652}
+NATIVE_UI {"pid": 52780, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119146469914580.service","pid":52780,"name":"Count: 2","action":"find","observerMs":1488,"sinceRequestMs":54142}
+RECOVERY_PASS Independent preview expiry after editor SIGKILL
+CASE_PASS editor-crash
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-52713-1795119201907858370.service","pid":"52909","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-52713-1795119201907858370.service","pid":52870,"invokeMs":3081,"sandboxObservedMs":14466}
+NATIVE_UI {"pid": 52870, "button": "Count: 0", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119201907858370.service","pid":52870,"name":"Count: 0","action":"find","observerMs":28927,"sinceRequestMs":43393}
+NATIVE_WINDOW_CLOSE {"pid": 52870, "window": 12582915, "sent": "WM_DELETE_WINDOW"}
+WINDOW_CLOSED_BEFORE_EARLIEST_EXPIRY {"unit":"programmable-notes-preview-52713-1795119201907858370.service","closeElapsedMs":44861.23060999997}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-52713-1795119247172859210.service","pid":"52999","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-52713-1795119247172859210.service","pid":52960,"invokeMs":3290,"sandboxObservedMs":15096}
+NATIVE_UI {"pid": 52960, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119247172859210.service","pid":52960,"name":"Count: 0","action":"click","observerMs":34280,"sinceRequestMs":49379}
+NATIVE_UI {"pid": 52960, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119247172859210.service","pid":52960,"name":"Count: 1","action":"click","observerMs":1807,"sinceRequestMs":51196}
+NATIVE_UI {"pid": 52960, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-52713-1795119247172859210.service","pid":52960,"name":"Count: 2","action":"find","observerMs":1422,"sinceRequestMs":52619}
+RECOVERY_PASS Native preview window closed
+CASE_PASS window-close
+WEBKIT_STRESS_PASS all

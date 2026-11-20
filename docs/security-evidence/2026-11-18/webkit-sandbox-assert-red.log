@@ -1,0 +1,59 @@
+910d5d7f08b174b2a2f3ab1867bad069587df07235a3c13b8fa361df6791eb54  /usr/bin/programmable-notes
+TARGET_APP_PID=4270
+{
+  "app": {
+    "pid": 4270,
+    "ppid": 1,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "no_new_privs": 0,
+    "seccomp": 0,
+    "seccomp_filters": 0,
+    "apparmor": "unconfined",
+    "cgroup": "0::/user.slice/user-0.slice/session-54.scope",
+    "namespaces": {
+      "mnt": "mnt:[4026531841]",
+      "net": "net:[4026531840]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "cgroup": "cgroup:[4026531835]"
+    }
+  },
+  "web_processes": [
+    {
+      "pid": 4291,
+      "ppid": 4270,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "cmdline": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 16",
+      "uid": 1000,
+      "no_new_privs": 0,
+      "seccomp": 0,
+      "seccomp_filters": 0,
+      "apparmor": "unconfined",
+      "cgroup": "0::/user.slice/user-0.slice/session-54.scope",
+      "namespaces": {
+        "mnt": "mnt:[4026531841]",
+        "net": "net:[4026531840]",
+        "pid": "pid:[4026531836]",
+        "user": "user:[4026531837]",
+        "uts": "uts:[4026531838]",
+        "ipc": "ipc:[4026531839]",
+        "cgroup": "cgroup:[4026531835]"
+      }
+    }
+  ],
+  "errors": [
+    "WebProcess 4291 NoNewPrivs is 0, expected1",
+    "WebProcess 4291 Seccomp is 0 with 0 filters, expected2 and >=1",
+    "WebProcess 4291 mnt namespace equals app's namespace",
+    "WebProcess 4291 net namespace equals app's namespace",
+    "WebProcess 4291 pid namespace equals app's namespace",
+    "WebProcess 4291 user namespace equals app's namespace"
+  ],
+  "passed": false
+}
+FAIL: installed app WebKit sandbox process assertion
+OBSERVER_EXIT=1

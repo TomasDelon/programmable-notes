@@ -1,0 +1,361 @@
+[
+  {
+    "type": "before",
+    "callId": "meqz@1141",
+    "startTime": 26318.241,
+    "class": "BrowserContext",
+    "method": "newPage",
+    "params": {}
+  },
+  {
+    "type": "after",
+    "callId": "meqz@1141",
+    "endTime": 26443.237,
+    "result": {
+      "page": "<Page>"
+    }
+  },
+  {
+    "type": "before",
+    "callId": "meqz@1143",
+    "startTime": 26449.449,
+    "class": "Page",
+    "method": "setViewportSize",
+    "params": {
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  },
+  {
+    "type": "after",
+    "callId": "meqz@1143",
+    "endTime": 26467.747
+  },
+  {
+    "type": "before",
+    "callId": "meqz@1145",
+    "startTime": 26471.443,
+    "class": "Frame",
+    "method": "goto",
+    "params": {
+      "url": "/",
+      "waitUntil": "load"
+    }
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1145",
+    "time": 26482.441,
+    "message": "navigating to \"http://127.0.0.1:4173/\", waiting until \"load\""
+  },
+  {
+    "type": "after",
+    "callId": "meqz@1145",
+    "endTime": 26768.535,
+    "result": {
+      "response": "<Response>"
+    }
+  },
+  {
+    "type": "before",
+    "callId": "meqz@1147",
+    "startTime": 26829.603,
+    "class": "Frame",
+    "method": "click",
+    "params": {
+      "selector": "iframe >> internal:control=enter-frame >> internal:role=button[name=/^Count:/]",
+      "strict": true
+    }
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 26852.124,
+    "message": "waiting for locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ })"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28191.85,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28193.729,
+    "message": "attempting click action"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28194.154,
+    "message": "  waiting for element to be visible, enabled and stable"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28231.791,
+    "message": "  element is visible, enabled and stable"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28231.811,
+    "message": "  scrolling into view if needed"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28232.322,
+    "message": "  done scrolling"
+  },
+  {
+    "type": "input",
+    "callId": "meqz@1147",
+    "point": {
+      "x": 80.66,
+      "y": 520.26
+    },
+    "box": {
+      "x": 37,
+      "y": 499.28125,
+      "width": 87.328125,
+      "height": 41.96875
+    }
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28277.194,
+    "message": "  performing click action"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28285.944,
+    "message": "  click action done"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28285.966,
+    "message": "  waiting for scheduled navigations to finish"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1147",
+    "time": 28286.476,
+    "message": "  navigations have finished"
+  },
+  {
+    "type": "after",
+    "callId": "meqz@1147",
+    "endTime": 28286.547
+  },
+  {
+    "type": "before",
+    "callId": "meqz@1149",
+    "startTime": 28294.014,
+    "title": "Expect \"toHaveText\"",
+    "class": "Frame",
+    "method": "expect",
+    "params": {
+      "selector": "iframe >> internal:control=enter-frame >> internal:role=button[name=/^Count:/]",
+      "expression": "to.have.text",
+      "expectedText": [
+        {
+          "string": "Count: 1",
+          "normalizeWhiteSpace": true
+        }
+      ],
+      "expectedValue": {
+        "value": {
+          "v": "undefined"
+        },
+        "handles": []
+      },
+      "isNot": false,
+      "timeout": 5000
+    }
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28298.042,
+    "message": "Expect \"toHaveText\" locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ }) with timeout 5000ms"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28298.047,
+    "message": "waiting for locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ })"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28369.446,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28369.465,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28406.43,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28406.444,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28480.522,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28480.537,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28596.83,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28596.845,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28717.648,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 28717.664,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 29232.457,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 29232.557,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 29744.895,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 29744.911,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 30266.214,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 30266.231,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 30778.069,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 30778.086,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 31318.511,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 31318.529,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 31832.22,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 31832.233,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 32344.517,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 32344.535,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 32855.677,
+    "message": "  locator resolved to <button>Count: 0</button>"
+  },
+  {
+    "type": "log",
+    "callId": "meqz@1149",
+    "time": 32855.692,
+    "message": "  unexpected value \"Count: 0\""
+  },
+  {
+    "type": "after",
+    "callId": "meqz@1149",
+    "endTime": 33305.014,
+    "error": {
+      "message": "Expect failed",
+      "stack": "ExpectError: Expect failed\n    at _Frame2.expect (/workspace/programmable-notes/node_modules/playwright-core/lib/coreBundle.js:25949:17)\n    at _FrameDispatcher.expect (/workspace/programmable-notes/node_modules/playwright-core/lib/coreBundle.js:56766:11)\n    at _ProgressController.run (/workspace/programmable-notes/node_modules/playwright-core/lib/coreBundle.js:13338:27)\n    at DispatcherConnection.dispatch (/workspace/programmable-notes/node_modules/playwright-core/lib/coreBundle.js:20521:27)",
+      "name": "ExpectError"
+    }
+  }
+]

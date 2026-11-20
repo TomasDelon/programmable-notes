@@ -1,0 +1,46 @@
+   Compiling native-documents v0.1.0 (/workspace/programmable-notes/native-documents)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.72s
+     Running unittests src/lib.rs (native-documents/target/debug/build/native-documents/bfff297c7d598912/out/native_documents-bfff297c7d598912)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/draft.rs (native-documents/target/debug/build/native-documents/bd6a407a75bf10cd/out/draft-bd6a407a75bf10cd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/process_contention.rs (native-documents/target/debug/build/native-documents/11cb0dc66ded7f74/out/process_contention-11cb0dc66ded7f74)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/process_crash.rs (native-documents/target/debug/build/native-documents/42f43e91df075d61/out/process_crash-42f43e91df075d61)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 1 test
+test mixed_case_snapshot_names_round_trip_without_allowing_other_formats ... FAILED
+
+failures:
+
+---- mixed_case_snapshot_names_round_trip_without_allowing_other_formats stdout ----
+
+thread 'mixed_case_snapshot_names_round_trip_without_allowing_other_formats' (490683) panicked at tests/snapshots.rs:472:43:
+called `Result::unwrap()` on an `Err` value: "Invalid recovery input or source exceeds 500 KB"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    mixed_case_snapshot_names_round_trip_without_allowing_other_formats
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test snapshots`

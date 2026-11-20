@@ -1,0 +1,293 @@
+   Compiling equivalent v1.0.3
+   Compiling hashbrown v0.17.1
+    Checking libc v0.2.191
+    Checking serde_core v1.0.229
+   Compiling indexmap v2.14.2
+   Compiling siphasher v1.0.4
+   Compiling toml_edit v0.20.2
+   Compiling phf_shared v0.13.1
+   Compiling phf_generator v0.13.1
+   Compiling cfg-if v1.0.5
+    Checking memchr v2.8.3
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.4
+   Compiling zerovec v0.11.9
+    Checking smallvec v1.16.5
+   Compiling toml v0.8.2
+   Compiling phf_macros v0.13.1
+   Compiling system-deps v6.2.2
+   Compiling time-core v0.1.9
+   Compiling num-conv v0.2.2
+   Compiling tinystr v0.8.5
+   Compiling phf_codegen v0.13.1
+   Compiling glib-sys v0.18.1
+   Compiling gobject-sys v0.18.0
+   Compiling gio-sys v0.18.1
+   Compiling gdk-sys v0.18.2
+   Compiling itoa v1.0.19
+   Compiling utf_types v1.0.0
+   Compiling litemap v0.8.3
+   Compiling writeable v0.6.4
+   Compiling utf8_iter v1.1.0
+   Compiling icu_locale_core v2.4.0
+   Compiling potential_utf v0.1.6
+   Compiling zerotrie v0.2.5
+   Compiling icu_collections v2.4.0
+    Checking futures-core v0.3.34
+   Compiling scopeguard v1.2.0
+    Checking pin-project-lite v0.2.17
+   Compiling lock_api v0.4.14
+   Compiling phf v0.13.1
+   Compiling icu_provider v2.4.0
+   Compiling parking_lot_core v0.9.12
+   Compiling icu_normalizer_data v2.4.0
+   Compiling icu_properties_data v2.4.0
+   Compiling string_cache_codegen v0.6.1
+    Checking slab v0.4.12
+    Checking once_cell v1.21.4
+    Checking futures-task v0.3.34
+    Checking futures-util v0.3.34
+   Compiling icu_properties v2.4.0
+   Compiling web_atoms v0.2.6
+   Compiling icu_normalizer v2.4.0
+   Compiling parking_lot v0.12.5
+   Compiling atk-sys v0.18.2
+   Compiling pango-sys v0.18.0
+   Compiling gdk-pixbuf-sys v0.18.0
+   Compiling cairo-sys-rs v0.18.2
+   Compiling proc-macro-crate v2.0.2
+   Compiling zmij v1.0.23
+    Checking bitflags v2.13.2
+    Checking stable_deref_trait v1.2.1
+   Compiling winnow v1.0.5
+   Compiling serde_json v1.0.154
+   Compiling glib-macros v0.18.5
+   Compiling toml_parser v1.1.5+spec-1.1.0
+    Checking thiserror v1.0.69
+    Checking futures-executor v0.3.34
+   Compiling idna_adapter v1.2.2
+   Compiling string_cache v0.9.0
+    Checking futures-channel v0.3.34
+   Compiling getrandom v0.4.3
+   Compiling serde_spanned v1.1.3
+   Compiling toml_datetime v1.1.3+spec-1.1.0
+   Compiling toml_writer v1.2.0+spec-1.1.0
+   Compiling log v0.4.35
+   Compiling form_urlencoded v1.2.2
+   Compiling toml v1.2.1+spec-1.1.0
+   Compiling uuid v1.29.3
+   Compiling idna v1.1.0
+    Checking glib v0.18.5
+   Compiling selectors v0.38.0
+   Compiling aho-corasick v1.1.5
+   Compiling alloc-no-stdlib v3.0.0
+   Compiling regex-syntax v0.8.11
+   Compiling alloc-stdlib v0.3.0
+   Compiling cssparser v0.37.0
+   Compiling regex-automata v0.4.18
+   Compiling markup5ever v0.39.0
+   Compiling url v2.5.8
+    Checking serde v1.0.229
+   Compiling gtk-sys v0.18.2
+   Compiling typeid v1.0.3
+   Compiling thiserror v2.0.21
+   Compiling deranged v0.5.9
+   Compiling powerfmt v0.2.1
+   Compiling fnv v1.0.7
+   Compiling web-time v1.1.0
+   Compiling cfb v0.14.0
+   Compiling time v0.3.55
+   Compiling erased-serde v0.4.11
+   Compiling regex v1.13.1
+   Compiling html5ever v0.39.0
+   Compiling brotli-decompressor v6.3.2
+   Compiling jsonptr v0.7.1
+   Compiling quick-xml v0.42.0
+   Compiling base64 v0.23.1
+   Compiling bytes v1.12.2
+   Compiling same-file v1.0.6
+   Compiling dunce v1.0.5
+   Compiling dom_query v0.28.0
+   Compiling http v1.5.0
+   Compiling schemars v0.8.22
+   Compiling walkdir v2.5.0
+   Compiling plist v1.10.4
+   Compiling cargo_metadata v0.19.2
+   Compiling json-patch v4.2.0
+   Compiling brotli v9.1.3
+   Compiling urlpattern v0.6.0
+   Compiling serde-untagged v0.1.9
+   Compiling infer v0.22.0
+   Compiling serde_with v3.24.0
+   Compiling anyhow v1.0.104
+   Compiling glob v0.3.4
+    Checking futures-io v0.3.34
+   Compiling ctor v1.0.14
+    Checking gio v0.18.4
+   Compiling tauri-utils v2.10.3
+    Checking cairo-rs v0.18.5
+   Compiling toml_edit v0.19.15
+    Checking percent-encoding v2.3.2
+   Compiling proc-macro-crate v1.3.1
+    Checking memoffset v0.9.1
+   Compiling soup3-sys v0.5.0
+   Compiling javascriptcore-rs-sys v1.1.1
+   Compiling gtk v0.18.2
+    Checking field-offset v0.3.6
+   Compiling gtk3-macros v0.18.2
+    Checking atk v0.18.2
+    Checking gdk-pixbuf v0.18.5
+    Checking pango v0.18.3
+   Compiling webkit2gtk-sys v2.0.2
+   Compiling time-macros v0.2.32
+    Checking gdk v0.18.2
+   Compiling typenum v1.20.1
+   Compiling hybrid-array v0.4.15
+   Compiling gdkx11-sys v0.18.2
+    Checking bitflags v1.3.2
+    Checking x11 v2.21.0
+   Compiling crc32fast v1.5.5
+    Checking dpi v0.1.2
+    Checking raw-window-handle v0.6.2
+   Compiling flate2 v1.1.11
+    Checking crossbeam-utils v0.8.23
+    Checking javascriptcore-rs v1.1.2
+    Checking soup3 v0.5.0
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling tauri v2.12.6
+   Compiling tauri-plugin v2.7.3
+    Checking option-ext v0.2.0
+   Compiling const-oid v0.10.3
+   Compiling digest v0.11.3
+    Checking dirs-sys v0.5.0
+   Compiling png v0.18.1
+    Checking crossbeam-channel v0.5.17
+    Checking cookie v0.18.2
+    Checking x11-dl v2.21.0
+    Checking libdbus-sys v0.2.7
+    Checking semver v1.0.28
+   Compiling cpufeatures v0.3.1
+   Compiling sha2 v0.11.1
+   Compiling wry v0.57.2 (/accept-build/src-tauri/vendor/wry)
+   Compiling ico v0.6.0
+    Checking dlopen2 v0.8.2
+    Checking dbus v0.9.12
+    Checking webkit2gtk v2.0.2
+    Checking dirs v7.0.0
+   Compiling tauri-plugin-fs v2.7.1
+    Checking gdkx11 v0.18.2
+    Checking gdkwayland-sys v0.18.2
+    Checking tao v0.37.2
+   Compiling tauri-codegen v2.7.5
+   Compiling embed-resource v3.0.12
+    Checking keyboard-types v0.8.3
+    Checking serialize-to-javascript v0.1.2
+   Compiling tauri-macros v2.7.5
+    Checking muda v0.20.0
+warning: unexpected `cfg` condition value: `v2_42`
+   --> vendor/wry/src/webkitgtk/mod.rs:618:17
+    |
+618 |           #[cfg(feature = "v2_42")]
+    |                 ^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `default`, `devtools`, `gdkx11`, `javascriptcore-rs`, `linux-body`, `mac-proxy`, `os-webview`, `serde`, `soup3`, `tracing`, `webkit2gtk`, `webkit2gtk-sys`, `x11`, and `x11-dl`
+    = help: consider adding `v2_42` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+    = note: requested on the command line with `-W unexpected-cfgs`
+
+warning: unexpected `cfg` condition value: `v2_42`
+   --> vendor/wry/src/webkitgtk/mod.rs:620:21
+    |
+620 |           #[cfg(not(feature = "v2_42"))]
+    |                     ^^^^^^^^^^^^^^^^^
+    |
+    = note: expected values for `feature` are: `default`, `devtools`, `gdkx11`, `javascriptcore-rs`, `linux-body`, `mac-proxy`, `os-webview`, `serde`, `soup3`, `tracing`, `webkit2gtk`, `webkit2gtk-sys`, `x11`, and `x11-dl`
+    = help: consider adding `v2_42` as a feature in `Cargo.toml`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg/cargo-specifics.html> for more information about checking conditional configuration
+
+    Checking tauri-runtime v2.12.3
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+  --> vendor/wry/src/webkitgtk/synthetic_mouse_events.rs:22:17
+   |
+22 |         webview.run_javascript(
+   |                 ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+  --> vendor/wry/src/webkitgtk/synthetic_mouse_events.rs:32:17
+   |
+32 |         webview.run_javascript(
+   |                 ^^^^^^^^^^^^^^
+
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+  --> vendor/wry/src/webkitgtk/synthetic_mouse_events.rs:56:17
+   |
+56 |         webview.run_javascript(
+   |                 ^^^^^^^^^^^^^^
+
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+  --> vendor/wry/src/webkitgtk/synthetic_mouse_events.rs:66:17
+   |
+66 |         webview.run_javascript(
+   |                 ^^^^^^^^^^^^^^
+
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+   --> vendor/wry/src/webkitgtk/mod.rs:386:21
+    |
+386 |             webview.run_javascript(&script, cancellable, |_result| {
+    |                     ^^^^^^^^^^^^^^
+
+warning: use of deprecated method `webkit2gtk::WebViewExt::run_javascript`: Since 2.40
+   --> vendor/wry/src/webkitgtk/mod.rs:820:20
+    |
+820 |       self.webview.run_javascript(js, cancellable, |result| {
+    |                    ^^^^^^^^^^^^^^
+
+   Compiling tauri-winres v0.3.7
+warning: `wry` (lib) generated 8 warnings
+    Checking tauri-runtime-wry v2.12.4
+    Checking getrandom v0.3.4
+   Compiling tauri-plugin-dialog v2.8.4
+    Checking tokio v1.54.1
+   Compiling cargo_toml v1.0.1
+    Checking mime v0.3.18
+   Compiling rfd v0.17.2
+   Compiling tauri-build v2.7.5
+    Checking native-documents v0.1.0 (/accept-build/native-documents)
+   Compiling programmable-notes v0.1.0 (/accept-build/src-tauri)
+    Checking preview-policy v0.1.0 (/accept-build/native-policy)
+error[E0432]: unresolved import `webkit2gtk::prelude`
+ --> src/renderer_failure.rs:5:18
+  |
+5 | use webkit2gtk::{prelude::WebViewExt, WebProcessTerminationReason};
+  |                  ^^^^^^^ could not find `prelude` in `webkit2gtk`
+
+error[E0599]: no method named `connect_web_process_terminated` found for struct `WebView` in the current scope
+    --> src/renderer_failure.rs:14:14
+     |
+  12 |         platform
+  13 |             .inner()
+  14 |             .connect_web_process_terminated(move |_, reason| {
+     |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+    ::: /opt/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/webkit2gtk-2.0.2/src/auto/web_view.rs:2853:6
+     |
+2853 |   fn connect_web_process_terminated<F: Fn(&Self, WebProcessTerminationReason) + 'static>(
+     |      ------------------------------ the method is available for `WebView` here
+     |
+     = help: items from traits can only be used if the trait is in scope
+help: trait `WebViewExt` which provides `connect_web_process_terminated` is implemented but not in scope; perhaps you want to import it
+     |
+   2 + use webkit2gtk::WebViewExt;
+     |
+help: there is a method `connect_web_process_crashed` with a similar name
+     |
+  14 -             .connect_web_process_terminated(move |_, reason| {
+  14 +             .connect_web_process_crashed(move |_, reason| {
+     |
+
+Some errors have detailed explanations: E0432, E0599.
+For more information about an error, try `rustc --explain E0432`.
+error: could not compile `programmable-notes` (bin "programmable-notes") due to 2 previous errors

@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { readdir, readFile, mkdir, writeFile, readlink } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import process from 'node:process';
+import { preflight, launch, close, script, wd, session } from './native-webdriver-lib.mjs';
+import { waitUi, button, pause } from './native-ui-lib.mjs';
+await preflight();
+assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE,'1');
+await mkdir(join(homedir(),'Downloads'),{mode:0o700,recursive:true});
+for(const kind of ['editor','preview']){
+ const prefix='pn-download-'+randomUUID();
+ try {
+ await launch([],kind==='editor'?process.env.NATIVE_BINARY:process.env.NATIVE_PREVIEW_WRAPPER);
+ await waitUi(kind==='editor'?"!!document.querySelector('.cm-content')":"!!document.querySelector('iframe')");
+ if(kind==='editor')await button('Stop preview');
+ for(const type of ['self','blob','data']){
+ await script(`const done=arguments[arguments.length-1];document.getElementById('dl-probe')?.remove();const b=document.createElement('button');b.id='dl-probe';b.textContent='Download test';b.onclick=()=>{const a=document.createElement('a');a.download=arguments[0]+'.txt';a.href=arguments[1]==='self'?location.href:arguments[1]==='blob'?URL.createObjectURL(new Blob(['synthetic download canary'],{type:'text/plain'})):'data:text/plain,synthetic%20download%20canary';document.body.append(a);a.click();a.remove();b.textContent='Attempted '+arguments[1]};document.body.prepend(b);done(location.href);`,[prefix+'-'+type,type]).then(x=>console.log('LOCATION',kind,x));
+ const el=await wd(`/session/${session}/element`,{using:'css selector',value:'#dl-probe'});
+ await wd(`/session/${session}/element/${el['element-6066-11e4-a52e-4f735466cecf']}/click`,{});
+ await pause(3500);
+ }
+ for(const dir of [homedir(),join(homedir(),'Downloads'),process.cwd()])console.log('FOUND',kind,dir,(await readdir(dir)).filter(n=>n.startsWith(prefix)));
+ }finally{await close();}
+}

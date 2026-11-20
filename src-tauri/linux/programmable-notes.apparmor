@@ -1,0 +1,7 @@
+# App-specific Ubuntu user-namespace opt-in for WebKit's bubblewrap sandbox.
+# This is not a claim of complete AppArmor filesystem confinement.
+abi <abi/4.0>,
+include <tunables/global>
+profile programmable-notes /usr/bin/programmable-notes flags=(unconfined) {
+  userns,
+}

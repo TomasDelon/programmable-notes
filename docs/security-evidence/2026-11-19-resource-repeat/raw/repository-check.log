@@ -1,0 +1,212 @@
+
+> programmable-notes@0.0.0 check
+> npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:e2e
+
+
+> programmable-notes@0.0.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> programmable-notes@0.0.0 lint
+> eslint . --max-warnings 0
+
+
+> programmable-notes@0.0.0 typecheck
+> tsc --noEmit
+
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+
+ Test Files  11 passed (11)
+      Tests  42 passed (42)
+   Start at  02:23:29
+   Duration  5.35s (environment 74%, setup 9%, tests 9%, import 5%, transform 3%, worker 1%)
+
+Environment  jsdom was created 11 times · 9.96s total, 74% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+
+> programmable-notes@0.0.0 test:e2e
+> npm run build && playwright test
+
+
+> programmable-notes@0.0.0 prebuild
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 build
+> npm run typecheck && vite build
+
+
+> programmable-notes@0.0.0 typecheck
+> tsc --noEmit
+
+vite v8.3.8 building client environment for production...
+transforming...
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js:48:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m48 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js:11:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m11 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-create.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/estree-util-create.js:6:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m6 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/comment.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/hast-util-to-estree/lib/handlers/comment.js:12:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m12 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/text.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/hast-util-to-estree/lib/handlers/text.js:9:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m9 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+✓ 318 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.51 kB │ gzip:     0.32 kB
+dist/assets/esbuild-BaXVPFT2.wasm  13,978.85 kB │ gzip: 3,801.42 kB
+dist/assets/index-RbpGptNf.css          4.71 kB │ gzip:     1.48 kB
+dist/assets/index-CkBOtXAD.js       2,016.72 kB │ gzip:   638.25 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js:48:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m48 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js:11:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m11 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-create.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/@mdx-js/mdx/lib/util/estree-util-create.js:6:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m6 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/text.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/hast-util-to-estree/lib/handlers/text.js:9:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m9 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+[33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/comment.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/hast-util-to-estree/lib/handlers/comment.js:12:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m12 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+✓ built in 1.03s
+[WebServer] (node:207790) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 22 tests using 2 workers
+
+(node:207814) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:207813) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [chromium] › tests/e2e/bootstrap.spec.ts:62:1 › sandbox denies DOM, storage, network, resources, popup, top navigation and forged messages (4.5s)
+  ✓   3 [chromium] › tests/e2e/bootstrap.spec.ts:130:1 › original handoff malicious fixture is confined (2.7s)
+  ✓   1 [chromium] › tests/e2e/bootstrap.spec.ts:16:1 › unsaved MDX hooks, editor updates, errors, TSX imports, pinned package, and source fidelity (10.3s)
+  ✓   4 [chromium] › tests/e2e/bootstrap.spec.ts:148:1 › runtime crash is contained and source remains editable; forbidden imports fail closed (4.0s)
+  ✓   6 [chromium] › tests/e2e/bootstrap.spec.ts:225:1 › browser import preserves a UTF-8 BOM and refuses malformed UTF-8 (926ms)
+  ✓   7 [chromium] › tests/e2e/bootstrap.spec.ts:246:1 › paragraph edits preserve mixed MDX bytes and support exact undo and redo (1.8s)
+  ✓   8 [chromium] › tests/e2e/bootstrap.spec.ts:290:1 › an edited heading can be downloaded and reopened without rewriting its markers (2.8s)
+  ✓   5 [chromium] › tests/e2e/bootstrap.spec.ts:169:1 › new workspace TSX imports work offline; CRLF no-op save and Stop cancellation (6.9s)
+  ✓   9 [chromium] › tests/e2e/bootstrap.spec.ts:323:1 › the rendered list editor patches only a simple item (3.0s)
+  ✓  10 [chromium] › tests/e2e/bootstrap.spec.ts:348:1 › compiler diagnostics identify the syntax error in the imported file (3.5s)
+  ✓  12 [chromium] › tests/e2e/bootstrap.spec.ts:409:1 › explicit browser draft survives reload and restores into a separate buffer (1.3s)
+  ✓  11 [chromium] › tests/e2e/bootstrap.spec.ts:396:1 › rebuild retries after a transient compiler download failure (3.3s)
+  ✓  13 [chromium] › tests/e2e/bootstrap.spec.ts:435:1 › automatic drafts require opt-in and track only the selected source (2.6s)
+  ✓  14 [chromium] › tests/e2e/bootstrap.spec.ts:461:1 › Setext inline editing cancels with Escape and preserves the underline on save (2.9s)
+  ✓  15 [chromium] › tests/e2e/bootstrap.spec.ts:499:3 › unified modes preserve React state and lossless multiline edits at 1440px (4.5s)
+  ✓  16 [chromium] › tests/e2e/bootstrap.spec.ts:499:3 › unified modes preserve React state and lossless multiline edits at 820px (4.3s)
+  ✓  18 [chromium] › tests/e2e/bootstrap.spec.ts:570:1 › pending visual input survives mode changes and rejects a changed source revision (2.0s)
+  ✓  17 [chromium] › tests/e2e/bootstrap.spec.ts:499:3 › unified modes preserve React state and lossless multiline edits at 390px (3.8s)
+  ✓  20 [chromium] › tests/e2e/bootstrap.spec.ts:662:1 › preserves mixed physical line endings through checked patches, source edits and undo (2.0s)
+  ✓  19 [chromium] › tests/e2e/bootstrap.spec.ts:603:1 › opaque metadata, fences and Unicode survive visual edits, stale revisions and exact reopen (4.0s)
+  ✓  22 [chromium] › tests/e2e/bootstrap.spec.ts:734:1 › JavaScript Unicode line terminators navigate to the original module offset (2.0s)
+  ✓  21 [chromium] › tests/e2e/bootstrap.spec.ts:704:1 › MDX compiler navigation uses original physical lines without changing source (4.1s)
+
+  22 passed (41.2s)

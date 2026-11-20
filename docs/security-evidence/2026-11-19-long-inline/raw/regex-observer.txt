@@ -1,0 +1,30 @@
+/** Temporary diagnostic: same production JSC, no policy/configuration changes. */
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
+import process from 'node:process';
+import {preflight,launch,close,script,invoke} from './native-webdriver-lib.mjs';
+import {rootPid,waitUi,button,pause} from './native-ui-lib.mjs';
+await preflight();assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE,'1');
+const output=join(process.env.NATIVE_EVIDENCE_DIR,'regex-diagnostic.json');
+const paragraph=Array.from({length:1000},(_,i)=>`Line ${i}: source remains exact.`).join('\n');
+const report={scope:'controlled JavaScript diagnostic, not a sandbox acceptance test',samples:[]};
+const tick=async(pid)=>(await readFile(`/proc/${pid}/stat`,'utf8')).split(') ').at(-1).split(' ')[19];
+let pid,start,failure;
+try{
+ await launch();pid=await rootPid();start=await tick(pid);report.pid=pid;report.startTick=start;
+ await waitUi("!!document.querySelector('.cm-content')");await button('Stop preview');assert.equal((await invoke('stop_preview')).ok,true);
+ report.executableSha256=createHash('sha256').update(await readFile(`/proc/${pid}/exe`)).digest('hex');
+ for(const kind of ['narrow','wide-bom','wide-astral']){
+  const row={kind,outcome:'incomplete'};report.samples.push(row);await writeFile(output,JSON.stringify(report,null,2));
+  row.result=await script(String.raw`const done=arguments[arguments.length-1];const text=arguments[1]==='narrow'?arguments[0]:arguments[1]==='wide-bom'?('\uFEFF'+arguments[0]).slice(1):('\u{1F600}'+arguments[0]).slice(2);const pattern=/^[\P{Cc}\t\r\n]+$/u;const values=[];for(let i=0;i<50;i++)values.push(pattern.test(text));done({count:values.length,all:values.every(Boolean),length:text.length});`,[paragraph,kind]);
+  row.outcome='observed';
+ }
+}catch(error){failure=error;report.error=String(error);}
+finally{
+ await close().catch(error=>{report.closeError=String(error)});
+ if(pid){try{if(await tick(pid)===start){process.kill(pid,'SIGTERM');for(let i=0;i<100;i++){try{if(await tick(pid)!==start)break;}catch(error){if(error.code==='ENOENT')break;throw error;}await pause(50);}try{assert.notEqual(await tick(pid),start);}catch(error){if(error.code!=='ENOENT')throw error;}report.ownedRootTerminated=true;}}catch(error){report.cleanupError=String(error);failure||=error;}}
+ report.outcome=failure?'fail':'observed';await writeFile(output,JSON.stringify(report,null,2)+'\n');console.log('NATIVE_REGEX_EVIDENCE',output);
+}
+if(failure)throw failure;

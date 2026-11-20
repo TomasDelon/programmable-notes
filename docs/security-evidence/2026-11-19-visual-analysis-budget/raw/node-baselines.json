@@ -1,0 +1,45 @@
+{
+  "scope": "isolated Node MDX parser, not actual browser/native UI or vulnerability proof",
+  "rows": [
+    {
+      "kind": "plain",
+      "size": 1000,
+      "bytes": 17000,
+      "milliseconds": 29.121437,
+      "roots": 1,
+      "outcome": "parsed"
+    },
+    {
+      "kind": "quotes",
+      "size": 500,
+      "bytes": 507,
+      "milliseconds": 11.792735000000008,
+      "roots": 1,
+      "outcome": "parsed"
+    },
+    {
+      "kind": "quotes",
+      "size": 2000,
+      "bytes": 2007,
+      "milliseconds": 42.65786,
+      "roots": 1,
+      "outcome": "parsed"
+    },
+    {
+      "kind": "quotes",
+      "size": 10000,
+      "bytes": 10007,
+      "milliseconds": 152.55784599999998,
+      "roots": 1,
+      "outcome": "parsed"
+    },
+    {
+      "kind": "brackets",
+      "size": 20000,
+      "bytes": 40001,
+      "milliseconds": 578.5093390000001,
+      "roots": 1,
+      "outcome": "parsed"
+    }
+  ]
+}

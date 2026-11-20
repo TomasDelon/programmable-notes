@@ -1,0 +1,22 @@
+
+running 1 test
+REAL_DOCUMENT_SAVE_CRASH_PASS stage=write writer_pid=53306 start_tick=7575570 executable="/work/document-save-crash-writer" executable_sha256=45a07e9813684ab420c6567838f0c501b7a88fe685ca5ebec7817c4851acbdb3 observed_syscall=1 syscall_return=224067 matched_fd=Some("/tmp/pn-document-save-crash-write-53304/.pn-save-66d8d4241fec56bdadc64d6e481894a9") signal=SIGKILL complete_bytes=true mode=0640 sibling_unchanged=true reopened_and_saved=true orphan_temporaries=1
+REAL_DOCUMENT_SAVE_CRASH_PASS stage=synced writer_pid=53307 start_tick=7575985 executable="/work/document-save-crash-writer" executable_sha256=45a07e9813684ab420c6567838f0c501b7a88fe685ca5ebec7817c4851acbdb3 observed_syscall=74 syscall_return=0 matched_fd=Some("/tmp/pn-document-save-crash-synced-53304/.pn-save-e54443308ae68c59d3ff6565a73e9405") signal=SIGKILL complete_bytes=true mode=0640 sibling_unchanged=true reopened_and_saved=true orphan_temporaries=1
+DOCUMENT_SAVE_RENAME_OBSERVATION syscall=264 result=0 fd=Some("/tmp/pn-document-save-crash-published-53304")
+
+thread 'main' (53308) panicked at examples/document-save-crash-writer.rs:54:5:
+The parent must interrupt this writer at the selected actual Save syscall boundary
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'actual_save_crashes_preserve_complete_document_and_permissions' (53305) panicked at tests/save_crash.rs:133:13:
+writer exited before published
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test actual_save_crashes_preserve_complete_document_and_permissions ... FAILED
+
+failures:
+
+failures:
+    actual_save_crashes_preserve_complete_document_and_permissions
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.40s
+

@@ -1,0 +1,3 @@
+#!/bin/sh
+printf '%s\n' "$$" > '/tmp/pn-native-t2o9o8/editor.pid'
+exec env JSC_useDFGJIT=false '/usr/bin/programmable-notes' "$@"

@@ -1,0 +1,52 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "24f3537cb8682564e1c12902c36b782f43436715ce417add2a70b9e10eba4f77",
+  "editorPid": 29604,
+  "executableSha256": "d74850a5418b014a4107315ff5c76ca12668affadcd4a3545cee002f1422eb2f",
+  "unit": "programmable-notes-preview-29604-1795087899784820260.service",
+  "previewPid": 29708,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-29604-1795087899784820260.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "rebuiltUnit": "programmable-notes-preview-29604-1795087899784820260.service",
+  "rebuiltPid": 29708,
+  "afterRebuild": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "stopRequestedMsAfterRebuild": 54969,
+  "stopAgeUsec": 48020256,
+  "uiStopFailedBeforeObserverCleanup": {
+    "alerts": [
+      "Native stop failed: Input/output error (os error 5)"
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  },
+  "uiStopExecFaultObserved": true,
+  "connectionBeforeCleanup": {
+    "ok": true,
+    "value": true
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Stop button did not remove its cgroup within 3 seconds\n+ actual - expected\n\n+ undefined\n- true\n",
+  "outcome": "fail",
+  "failureUi": {
+    "alerts": [
+      "Native stop failed: Input/output error (os error 5)"
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  }
+}

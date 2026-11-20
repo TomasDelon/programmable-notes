@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      review_artifacts:
+        description: Capture browser walkthrough and upload testing artifacts
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,19 +20,46 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
+      - name: Scan complete history and archived sources for credentials
+        run: bash scripts/scan-secrets.sh
+      - name: Verify the secret scanner refuses a synthetic key
+        run: PN_GITLEAKS_BIN="$PWD/.cache/security-tools/gitleaks" node --test tests/tooling/secret-scan.test.mjs
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Generate preview runtime for tests
+        run: npm run prepare:runtime
       - run: npm run check
-      - uses: actions/upload-artifact@v4
+      - name: Capture the browser walkthrough
+        if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4188 --strictPort > /tmp/editor-demo-server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4188/ -o /dev/null
+          node scripts/demo-editor.mjs
+          python3 scripts/package-review-demo.py
+          python3 scripts/verify-review-demo.py --browser
+          python3 -m zipfile -e .cache/review-demo.zip .cache/review-demo-unpacked
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
+        with:
+          name: playable-editor-demo
+          path: .cache/review-demo-unpacked/**
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: playwright-results
@@ -35,3 +67,70 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  native-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          components: rustfmt
+      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf
+      - run: npm ci
+      - run: npm run native:wry:verify
+      - run: npm run native:package
+      - name: Inspect production package (does not claim runtime validation)
+        run: node scripts/verify-linux-package.mjs "src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb"
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-policy/Cargo.toml --locked
+      - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - name: Verify recovery and original Save under real ENOSPC on a disposable tmpfs
+        shell: bash
+        run: |
+          pn_recovery_fs=$(mktemp -d)
+          sudo mount -t tmpfs -o "size=2M,uid=$(id -u),gid=$(id -g),mode=0700" tmpfs "$pn_recovery_fs"
+          trap 'sudo umount "$pn_recovery_fs"; rmdir "$pn_recovery_fs"' EXIT
+          PN_RECOVERY_SMALL_FS="$pn_recovery_fs" cargo test --manifest-path native-documents/Cargo.toml --locked --test snapshots -- --ignored --exact real_enospc_preserves_previous_snapshot --nocapture | tee /tmp/recovery-enospc.log
+          grep -F 'test real_enospc_preserves_previous_snapshot ... ok' /tmp/recovery-enospc.log
+          PN_DOCUMENT_SMALL_FS="$pn_recovery_fs" timeout -k 5s 30s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_enospc -- --ignored --exact real_enospc_preserves_original_save_and_grant --nocapture | tee /tmp/document-save-enospc.log
+          grep -F 'REAL_DOCUMENT_SAVE_ENOSPC_PASS actual_errno=ENOSPC ' /tmp/document-save-enospc.log
+      - name: Verify recovery after real writer process crashes
+        shell: bash
+        run: |
+          cargo build --manifest-path native-documents/Cargo.toml --locked --example recovery-crash-writer
+          PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact process_crashes_preserve_durable_recovery_at_each_publication_stage --nocapture | tee /tmp/recovery-crash.log
+          grep -F 'REAL_PROCESS_CRASH_PASS stage=durable' /tmp/recovery-crash.log
+      - name: Verify original document Save across real writer crashes
+        shell: bash
+        run: |
+          cargo build --manifest-path native-documents/Cargo.toml --locked --example document-save-crash-writer
+          PN_SAVE_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/document-save-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_crash -- --ignored --exact actual_save_crashes_preserve_complete_document_and_permissions --nocapture | tee /tmp/document-save-crash.log
+          for stage in write synced published durable; do
+            grep -F "REAL_DOCUMENT_SAVE_CRASH_PASS stage=$stage " /tmp/document-save-crash.log
+          done
+      - name: Verify original Save sync error reporting (external syscall injection)
+        shell: bash
+        run: |
+          PN_SAVE_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/document-save-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test save_crash -- --ignored --exact injected_sync_errors_preserve_original_and_report_publication --nocapture | tee /tmp/document-save-sync-errors.log
+          grep -F 'INJECTED_DOCUMENT_SYNC_ERROR_PASS stage=file ' /tmp/document-save-sync-errors.log
+          grep -F 'INJECTED_DOCUMENT_SYNC_ERROR_PASS stage=directory ' /tmp/document-save-sync-errors.log
+      - name: Verify recovery sync error reporting (external syscall injection)
+        shell: bash
+        run: |
+          PN_CRASH_WRITER_BINARY="$PWD/native-documents/target/debug/examples/recovery-crash-writer" timeout -k 5s 90s cargo test --manifest-path native-documents/Cargo.toml --locked --test process_crash -- --ignored --exact sync_failures_preserve_recovery_and_report_publication_state --nocapture | tee /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=file ' /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=publication ' /tmp/recovery-sync-errors.log
+          grep -F 'INJECTED_SYNC_ERROR_PASS stage=retention ' /tmp/recovery-sync-errors.log
+      - run: cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol,security-test --locked
+      # Native installers remain local to this job until their complete native
+      # redistribution notice inventory is implemented. Build/inspection stay mandatory.

@@ -1,0 +1,40 @@
+"""External one-fault controller; only a verified synthetic editor PID."""
+import hashlib,json,os,pathlib,subprocess,time
+pointer=pathlib.Path('/tmp/pn-stop-kernel-current')
+end=time.monotonic()+160
+while time.monotonic()<end:
+ if pointer.exists():
+  folder=pathlib.Path(pointer.read_text().strip())
+  if (folder/'fault-request.json').exists():break
+ time.sleep(.1)
+else:raise RuntimeError('No owned fault request')
+assert str(folder).startswith('/tmp/pn-native-') and folder.name=='evidence'
+assert folder.stat().st_uid==1000
+request=json.loads((folder/'fault-request.json').read_text());pid=request['pid']
+assert int((folder.parent/'editor.pid').read_text())==pid
+root=pathlib.Path(f'/proc/{pid}')
+assert root.stat().st_uid==1000
+assert os.readlink(root/'exe')=='/usr/bin/programmable-notes'
+assert (root/'stat').read_text().rsplit(') ',1)[1].split()[19]==request['startTicks']
+assert hashlib.sha256((root/'exe').read_bytes()).hexdigest()==request['executableSha256']
+assert b'--preview-child' not in (root/'cmdline').read_bytes().split(b'\0')
+trace=folder/'stop-exec.trace'
+p=subprocess.Popen(['strace','-f','-qq','-e','trace=execve,execveat','-e','inject=execve:error=EIO:when=1','-e','inject=execveat:error=EIO:when=1','-p',str(pid),'-o',str(trace)],stderr=subprocess.PIPE,text=True)
+try:
+ for _ in range(100):
+  status=(root/'status').read_text()
+  if f'TracerPid:\t{p.pid}\n' in status:break
+  if p.poll() is not None:raise RuntimeError(p.stderr.read())
+  time.sleep(.02)
+ else:raise RuntimeError('Tracer did not attach')
+ (folder/'fault-ready').write_text('attached\n');(folder/'fault-ready').chmod(0o644)
+ deadline=time.monotonic()+25
+ while not (folder/'fault-observed').exists():
+  if time.monotonic()>deadline:raise RuntimeError('No confirmed UI Stop failure')
+  time.sleep(.05)
+finally:
+ if p.poll() is None:p.terminate()
+ p.wait(timeout=5)
+ (folder/'fault-detached').write_text('detached\n');(folder/'fault-detached').chmod(0o644)
+print('OWNED_STOP_EXEC_FAULT',json.dumps({'pid':pid,'trace':str(trace),'injected': 'INJECTED' in trace.read_text()}))
+assert 'INJECTED' in trace.read_text()

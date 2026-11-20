@@ -1,0 +1,22 @@
+● programmable-notes-preview-28987-1795087713455384250.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child
+     Loaded: loaded (/run/user/1000/systemd/transient/programmable-notes-preview-28987-1795087713455384250.service; transient)
+  Transient: yes
+     Active: active (running) since Thu 2026-11-19 11:28:34 UTC; 46s ago
+      Until: Thu 2026-11-19 11:29:34 UTC; 13s left
+   Main PID: 29141 (programmable-no)
+      Tasks: 47 (limit: 128)
+     Memory: 62.7M (max: 512.0M swap max: 0B available: 449.2M peak: 64.2M)
+        CPU: 11.872s
+     CGroup: /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-28987-1795087713455384250.service
+             ├─29141 /usr/bin/programmable-notes --preview-child
+             ├─29167 /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitNetworkProcess 1 15
+             ├─29173 /usr/bin/bwrap --args 28 -- /usr/bin/xdg-dbus-proxy --args=24
+             ├─29174 /usr/bin/bwrap --args 28 -- /usr/bin/xdg-dbus-proxy --args=24
+             ├─29176 /usr/bin/xdg-dbus-proxy --args=24
+             ├─29192 /usr/bin/bwrap --args 24 -- /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 18
+             ├─29199 /usr/bin/bwrap --args 24 -- /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 18
+             └─29202 /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 18
+
+Nov 19 11:28:33 pn-m3-guest systemd[446]: Starting programmable-notes-preview-28987-1795087713455384250.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...
+Nov 19 11:28:34 pn-m3-guest systemd[446]: Started programmable-notes-preview-28987-1795087713455384250.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.
+do_poll.constprop.0

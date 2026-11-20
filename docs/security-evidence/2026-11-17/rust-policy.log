@@ -1,0 +1,21 @@
+
+> programmable-notes@0.0.0 native:policy:test
+> cargo test --manifest-path native-policy/Cargo.toml --locked
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (native-policy/target/debug/build/preview-policy/8f031cd8ec45cd8a/out/preview_policy-8f031cd8ec45cd8a)
+
+running 4 tests
+test tests::preview_and_unknown_labels_never_authorized ... ok
+test tests::launcher_has_hard_boundaries_and_no_shell_or_author_arguments ... ok
+test tests::effective_limits_must_be_bounded_and_no_weaker_than_policy ... ok
+test tests::oversized_artifact_is_rejected_before_any_process_launch ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests preview_policy
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

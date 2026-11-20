@@ -1,0 +1,14 @@
+
+running 2 tests
+test process_crashes_preserve_durable_recovery_at_each_publication_stage ... REAL_PROCESS_CRASH_PASS stage=write prior_version_retained=true incomplete_records_exposed=false
+REAL_PROCESS_CRASH_PASS stage=synced prior_version_retained=true incomplete_records_exposed=false
+REAL_PROCESS_CRASH_PASS stage=published prior_version_retained=true incomplete_records_exposed=false
+REAL_PROCESS_CRASH_PASS stage=durable prior_version_retained=true incomplete_records_exposed=false
+ok
+test sync_failures_preserve_recovery_and_report_publication_state ... INJECTED_SYNC_ERROR_PASS stage=file selected_fsync_skipped=true prior_records_verified=true explicit_retry=true
+INJECTED_SYNC_ERROR_PASS stage=publication selected_fsync_skipped=true prior_records_verified=true explicit_retry=true
+INJECTED_SYNC_ERROR_PASS stage=retention selected_fsync_skipped=true prior_records_verified=true explicit_retry=true
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.89s
+

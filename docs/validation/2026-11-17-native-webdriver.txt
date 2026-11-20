@@ -1,0 +1,5 @@
+
+> programmable-notes@0.0.0 native:test
+> node scripts/native-webdriver.mjs
+
+NOT RUN: native WebKitGTK prerequisites: ENOENT: no such file or directory, access '/workspace/programmable-notes/src-tauri/target/debug/programmable-notes'

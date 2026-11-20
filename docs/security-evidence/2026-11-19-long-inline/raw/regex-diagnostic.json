@@ -1,0 +1,37 @@
+{
+  "scope": "controlled JavaScript diagnostic, not a sandbox acceptance test",
+  "samples": [
+    {
+      "kind": "narrow",
+      "outcome": "observed",
+      "result": {
+        "length": 31889,
+        "all": true,
+        "count": 50
+      }
+    },
+    {
+      "kind": "wide-bom",
+      "outcome": "observed",
+      "result": {
+        "length": 31889,
+        "all": true,
+        "count": 50
+      }
+    },
+    {
+      "kind": "wide-astral",
+      "outcome": "observed",
+      "result": {
+        "length": 31889,
+        "all": true,
+        "count": 50
+      }
+    }
+  ],
+  "pid": 20630,
+  "startTick": "3396747",
+  "executableSha256": "d37cf787536f68f3fa808c2695d3a539765987d134c3b23b33ba296cef38fbe6",
+  "ownedRootTerminated": true,
+  "outcome": "observed"
+}

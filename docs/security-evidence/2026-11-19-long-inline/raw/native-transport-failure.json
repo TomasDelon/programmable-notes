@@ -1,0 +1,8 @@
+{
+  "observerSha256": "0368ee5601438861f7baca7681c427d7484599d6e036b31f92603b81b69c7313",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "d37cf787536f68f3fa808c2695d3a539765987d134c3b23b33ba296cef38fbe6",
+  "error": "Error: {\"value\":{\"error\":\"unknown error\",\"message\":\"Could not parse script result\",\"stacktrace\":\"\"}}",
+  "outcome": "fail"
+}

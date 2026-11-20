@@ -1,0 +1,12 @@
+IPC_EDITOR {"ok":true,"value":"editor-host-only"}
+NATIVE_OS_POLICY {"editorNetwork":"net:[4026531840]","previewNetwork":"net:[4026532286]","noNewPrivileges":true}
+PRODUCTION_AUTOMATION {"pid":"9039","automation":"false","sandboxDisableVariableAbsent":true}
+EFFECTIVE_LIMITS {"unit":"programmable-notes-preview-8984-1794954368677232510.service","group":"/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-8984-1794954368677232510.service","memoryMax":"536870912","swapMax":"0","cpuMax":"25000 100000","pidsMax":"128"}
+PASS: editor positive IPC control, resource-unit limits and full-group Stop
+PRIVATE_STORAGE editor canary absent from incognito preview
+IPC_DENIED {"error":"host_probe not allowed on window \"preview\", webview \"preview\", URL: local\n\nallowed on: [windows: \"editor\", webviews: \"editor\", URL: local]\n\nreferenced by: capability: editor, permission: allow-host-probe","ok":false}
+IPC_DENIED {"error":"start_preview not allowed on window \"preview\", webview \"preview\", URL: local\n\nallowed on: [windows: \"editor\", webviews: \"editor\", URL: local]\n\nreferenced by: capability: editor, permission: allow-start-preview","ok":false}
+IPC_DENIED {"error":"stop_preview not allowed on window \"preview\", webview \"preview\", URL: local\n\nallowed on: [windows: \"editor\", webviews: \"editor\", URL: local]\n\nreferenced by: capability: editor, permission: allow-stop-preview","ok":false}
+WEBKIT_COUNTER Count: 2
+PASS: preview native ACL denial, absent privileged plugins, real WebKitGTK React counter and iframe DOM/storage denial
+Native IPC/WebKitGTK suite passed. Resource stress/lifetime gates remain separate; follow docs/NATIVE_SECURITY.md.

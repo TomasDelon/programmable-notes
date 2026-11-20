@@ -1,0 +1,2 @@
+NATIVE_DIALOG {"pid": 26778, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-1nECJ7/session-status.mdx", "dialogDismissed": true}
+NATIVE_SESSION_BASELINE /tmp/pn-native-1nECJ7/evidence/session-baseline.json

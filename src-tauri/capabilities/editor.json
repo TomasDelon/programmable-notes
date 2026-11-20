@@ -1,0 +1,21 @@
+{
+  "identifier": "editor",
+  "description": "Only the local editor may manage its preview and explicitly authorized document grants through native dialogs. No generic filesystem, shell, HTTP, window creation, event or dialog plugin permission.",
+  "local": true,
+  "windows": ["editor"],
+  "webviews": ["editor"],
+  "permissions": [
+    "allow-start-preview",
+    "allow-stop-preview",
+    "allow-preview-connection-active",
+    "allow-host-probe",
+    "allow-open-documents",
+    "allow-save-document",
+    "allow-save-document-as",
+    "allow-reopen-document",
+    "allow-close-document",
+    "allow-confirm-discard",
+    "allow-set-documents-dirty",
+    "allow-recovery-draft"
+  ]
+}

@@ -1,0 +1,9 @@
+NATIVE_DIALOG {"pid": 11044, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-V78Spi/automatic-original.mdx"}
+NATIVE_DIALOG {"pid": 11044, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-V78Spi/automatic-original.mdx"}
+NATIVE_AUTOMATIC_MULTI_BUFFER_INDEPENDENT_RETENTION_AND_UNCHANGED_ORIGINAL_PASS
+NATIVE_ACTUAL_ROOT_SIGKILL 11044
+NATIVE_AUTOMATIC_DISCOVERY_AFTER_ACTUAL_RESTART_PASS
+NATIVE_DIALOG {"pid": 11172, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 11172, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-V78Spi/automatic-restored.mdx"}
+NATIVE_AUTOMATIC_RESTORE_UNSAVED_CANCEL_AND_EXPLICIT_EXACT_SAVE_PASS
+NATIVE_AUTOMATIC_OWNED_VERSIONS_REMOVED_AND_CLEAN_EXIT_PASS

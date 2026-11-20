@@ -1,0 +1,21 @@
+FIXTURE=/tmp/pn-native-NJO8Dt
+NATIVE_FIDELITY_IDENTITY {"pid":36764,"executableSha256":"6e301bcee2a5bd38df027e4fa089a1cf2b06e27873b489509aeb4f789a2857bd","observerSha256":"915efc473a2d621c544191f2ac9f0fa5cb6ca21e189faeb500bc440eb76ea516","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 36764, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-NJO8Dt/dense-visual.mdx", "dialogDismissed": true}
+NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS
+NATIVE_DIALOG {"pid": 36764, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-NJO8Dt/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS
+NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS
+NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640
+NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS
+NATIVE_OPAQUE_SOURCE_JUMP_PENDING_GUARD_EXACT_CARET_BYTES_UNDO_REDO_PASS
+NATIVE_DIALOG {"pid": 36764, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 36764, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS
+NATIVE_FIDELITY_IDENTITY {"pid":37304,"executableSha256":"6e301bcee2a5bd38df027e4fa089a1cf2b06e27873b489509aeb4f789a2857bd","observerSha256":"915efc473a2d621c544191f2ac9f0fa5cb6ca21e189faeb500bc440eb76ea516","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 37304, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-NJO8Dt/fidelity-acceptance.mdx", "dialogDismissed": true}
+NATIVE_EXPLICIT_RECOVERY_PASS original unchanged
+NATIVE_DIALOG {"pid": 37304, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 37304, "title": "Unsaved source", "action": "button", "argument": "OK", "dialogDismissed": true}
+NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS

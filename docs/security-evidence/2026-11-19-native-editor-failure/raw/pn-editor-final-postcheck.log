@@ -1,0 +1,5 @@
+{"scope": "independent ordinary-fidelity post-run fixture hashes/modes, known identities gone and recovery cleanup", "files": [{"path": "fidelity-acceptance.MdX", "sha256": "5a7339b13fce56a0af4d76a00a7bc08909a7a89dec6088d25b987bdb55abb5b9", "bytes": 638, "mode": 416}, {"path": "first/repeat.mdx", "sha256": "d70398b72f833f96c0f60d2143f73213a4f090fd33677b6c0cadcef88aede7e9", "bytes": 44, "mode": 416}, {"path": "second/repeat.mdx", "sha256": "304ccbaa96330616671f52a6df57af03d62536eecc443e0b84f82422094473ae", "bytes": 39, "mode": 416}, {"path": "dense-visual.mdx", "sha256": "195bb9e2fcc03da93c8162636ed5497d8eb5d512e76ef06cc742affac4a1a548", "bytes": 100026, "mode": 416}], "identitiesGone": [47277, 47882], "recoveryEntries": [".lock"]}
+b646aa4091106f588a63bb0d67ce2bac00a2593c835db8d584df36e3179c9ab0  scripts/native-renderer-failure.mjs
+5ca487ecebe8c96b6cf814d02aa3a51b60904fa93cf9014e344a1716a1537b7f  scripts/native-auto-recovery.mjs
+7faebddcc934769fc46fb9d8ac9188e199f958f9607ba08643fbf695f32c5184  scripts/native-fidelity.mjs
+9fb7305b21012ebe35a5bdbecb75326dcbabddf191666c5a6d754627f14ba5ca  scripts/native-dialog.py

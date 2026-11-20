@@ -1,0 +1,4 @@
+pn-m3-build
+pn-m3-build
+Guest poweroff confirmed before removing task-owned pn-m3-build container.
+Task SSH keys and obsolete candidate packages removed; final .cache/release artifact retained.

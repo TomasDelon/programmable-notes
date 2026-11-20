@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import process from 'node:process';
+import {preflight,launch,close,script,invoke,wd,session} from './native-webdriver-lib.mjs';
+import {rootPid,waitUi,button,pause} from './native-ui-lib.mjs';
+await preflight();assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE,'1');
+const path=join(process.env.NATIVE_FIXTURE_DIR,'dialog-control.mdx');
+const source='\uFEFF# Quote control\r\n\r\n  >\tQuoted café 😀.\r\n';
+await writeFile(path,source,{flag:'wx',mode:0o640});
+const report={scope:'actual existing chooser driver instrumentation only',path};
+let failure;
+try{
+ await launch();const pid=await rootPid();report.pid=pid;
+ await waitUi("!!document.querySelector('.cm-content')");await button('Stop preview');await invoke('stop_preview');
+ await button('Open files');
+ report.firstAction=execFileSync('python3',['scripts/native-dialog.py',String(pid),'choose','Open documents and modules',path],{encoding:'utf8',timeout:40000});
+ report.immediateUi=await script(`arguments[arguments.length-1]({source:document.querySelector('select')?.value,status:document.querySelector('[aria-label="Document status"]')?.textContent});`);
+ await pause(2000);
+ report.laterUi=await script(`arguments[arguments.length-1]({source:document.querySelector('select')?.value,status:document.querySelector('[aria-label="Document status"]')?.textContent});`);
+ if(!report.laterUi.source.endsWith('dialog-control.mdx')){
+  report.delayedOpen=execFileSync('python3',['scripts/native-dialog.py',String(pid),'button','Open documents and modules','Open'],{encoding:'utf8',timeout:40000});
+ }
+ await waitUi("document.querySelector('select')?.value.endsWith('dialog-control.mdx')");
+ await waitUi("!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source')?.disabled");
+ assert.equal(await readFile(path,'utf8'),source);report.loadedAfterActions=true;
+ await button('Visual');await button('Quoted café 😀.');
+ const value=()=>script(`arguments[arguments.length-1](document.querySelector('textarea').value);`);
+ report.initialValue=await value();
+ const element=await wd(`/session/${session}/element`,{using:'css selector',value:'textarea'});
+ const id=element['element-6066-11e4-a52e-4f735466cecf'];
+ await wd(`/session/${session}/element/${id}/clear`,{});
+ report.afterClear=await value();
+ await wd(`/session/${session}/element/${id}/value`,{text:'Quoted café 😀.'});
+ report.afterRetype=await value();
+ report.retypeExact=report.afterRetype===report.initialValue;
+ report.codePoints=[...report.afterRetype].map(c=>c.codePointAt(0));
+ report.outcome='observed';
+
+}catch(error){failure=error;report.error=String(error);}
+finally{await close().catch(error=>{report.closeError=String(error)});await writeFile(join(process.env.NATIVE_EVIDENCE_DIR,'quote-input-diagnostic.json'),JSON.stringify(report,null,2)+'\n');console.log('NATIVE_OPEN_DIAGNOSTIC',process.env.NATIVE_EVIDENCE_DIR);}
+if(failure)throw failure;

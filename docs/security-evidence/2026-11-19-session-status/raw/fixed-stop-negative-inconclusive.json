@@ -1,0 +1,19 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "35126da2ba994b87fd4e099f76fcb9281d47b3f967deb5a9a443896ac6c1e9c5",
+  "editorPid": 28676,
+  "executableSha256": "d74850a5418b014a4107315ff5c76ca12668affadcd4a3545cee002f1422eb2f",
+  "unit": "programmable-notes-preview-28676-1795087594787090080.service",
+  "previewPid": 28798,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-28676-1795087594787090080.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "error": "Error: Command failed: python3 scripts/native-atspi.py 28798 Session count 0 click\nTraceback (most recent call last):\n  File \"/opt/pn/acceptance/scripts/native-atspi.py\", line 43, in <module>\n    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\nRuntimeError: Native accessible button not found: Session count 0 for PID 28798\n",
+  "outcome": "fail",
+  "failureUi": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  }
+}

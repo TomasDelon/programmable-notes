@@ -2,7 +2,7 @@
 
 ## Current scope
 
-This repository currently contains the development toolchain and a minimal placeholder page. Wait for the technical handoff before implementing application features or choosing storage, desktop packaging, or document execution architecture.
+The technical handoff is preserved in `docs/handoff`; current implementation and limits are in `docs/IMPLEMENTATION_STATUS.md` and `docs/decisions`. MDX/React source authoring is the priority. Keep visual editing gated on the runtime and full security matrix. Treat the original research as supporting evidence, not validated decisions.
 
 Preserve the README's local-first and document-isolation principles. Build-time repository MDX is trusted source code; never treat the MDX compiler as a sandbox for untrusted documents.
 
@@ -16,6 +16,18 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - For cloud browser tests, export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` to use the preinstalled system browser. CI uses Playwright's matching downloaded browser. If installing browsers in the cloud, export `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` before installation and tests; the required download domains must be active.
 - No application secrets, backend, or database are required for this scaffold.
 
+## Public repository privacy
+
+The owner intentionally made this repository public. Read `docs/PUBLIC_READINESS.md`
+for historical exposure and licensing decisions; do not reverse visibility or
+rewrite shared history automatically. In this owner workspace, verify Git author
+and committer configuration uses the owner's verified GitHub noreply identity
+before committing. Never print a private address while checking it. This changes
+future local metadata only; do not alter existing authors. Keep raw audit reports,
+private originals and signing material ignored. Run `bash scripts/scan-secrets.sh`
+before pushing; do not upload its raw reports. Preserve upstream license texts
+and do not invent a project license.
+
 ## Development and checks
 
 - `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` starts development. Verify an HTTP response and use a browser smoke test for rendered behavior; a listening process alone is not validation.
@@ -24,6 +36,12 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - Use `npm run format` for formatting fixes, then rerun the affected checks.
 - Unit tests live in `tests/unit`; browser tests live in `tests/e2e`. Add meaningful tests when implementing behavior. Keep browser and unit test discovery separate.
 - Keep changes focused and avoid committing caches, `dist/`, test results, or reports.
+
+## Native Linux work
+
+Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before changing native authority or packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native document paths come only from editor-side OS dialogs; renderer commands use opaque grants/revisions. Never add a generic filesystem permission for preview code.
+
+Actual native validation requires a disposable full-system Linux desktop/VM with systemd, cgroup delegation, working namespaces and WebKitGTK. Compilation and package inspection do not prove runtime behavior. Keep production child automation/inspector disabled, resource limits fixed and failed observations in the dated evidence. WebDriver changes WebKit's networking configuration; verify normal production namespace/seccomp behavior separately from automated ACL probes. No public release or PR readiness change is implied by a passing local suite.
 
 ## Code conventions
 

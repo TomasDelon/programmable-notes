@@ -1,0 +1,53 @@
+cf5fa481f4bc083695252d04a10415565baf4aa4c0353efd2728ef7e7c4cda21  /usr/bin/programmable-notes
+4d171904c26634d98cb61d5edce518d3a54cc3da1ae22eb536feeac7407a19f3  /usr/local/lib/assert-webkit-sandbox.py
+TARGET_APP_PID=4728
+{
+  "app": {
+    "pid": 4728,
+    "ppid": 1,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "no_new_privs": 0,
+    "seccomp": 0,
+    "seccomp_filters": 0,
+    "apparmor": "programmable-notes (unconfined)",
+    "cgroup": "0::/user.slice/user-0.slice/session-66.scope",
+    "namespaces": {
+      "mnt": "mnt:[4026531841]",
+      "net": "net:[4026531840]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]",
+      "uts": "uts:[4026531838]",
+      "ipc": "ipc:[4026531839]",
+      "cgroup": "cgroup:[4026531835]"
+    }
+  },
+  "web_processes": [
+    {
+      "pid": 4760,
+      "ppid": 4759,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "cmdline": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess 4 16",
+      "uid": 1000,
+      "no_new_privs": 1,
+      "seccomp": 2,
+      "seccomp_filters": 1,
+      "apparmor": "programmable-notes (unconfined)",
+      "cgroup": "0::/user.slice/user-0.slice/session-66.scope",
+      "namespaces": {
+        "mnt": "mnt:[4026532259]",
+        "net": "net:[4026532262]",
+        "pid": "pid:[4026532261]",
+        "user": "user:[4026532319]",
+        "uts": "uts:[4026532260]",
+        "ipc": "ipc:[4026531839]",
+        "cgroup": "cgroup:[4026531835]"
+      }
+    }
+  ],
+  "errors": [],
+  "passed": true
+}
+PASS: installed app WebKit sandbox process assertion
+OBSERVER_EXIT=0

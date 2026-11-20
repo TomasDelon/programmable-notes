@@ -1,0 +1,5 @@
+
+> programmable-notes@0.0.0 native:wry:verify
+> node scripts/verify-wry.mjs
+
+WRY_FORK_VERIFIED {"version":"0.57.2","originalSha256":"a490119196d02a51d0871df7b9119a1f3e46d75b7e90053a801454d5c6b3491c","changed":["src/webkitgtk/mod.rs","src/webkitgtk/web_context.rs"],"omitted":["Cargo.lock"]}

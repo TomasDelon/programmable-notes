@@ -1,0 +1,80 @@
+# External disposable-VM administrator diagnostic; never loaded by the app.
+import hashlib,json,os,re,signal,subprocess,sys,tempfile,time
+from pathlib import Path
+fixture=Path(sys.argv[1]);assert fixture.parent==Path('/tmp') and re.fullmatch(r'pn-native-[A-Za-z0-9]+',fixture.name)
+evidence=fixture/'evidence';barrier=evidence/'before-main-visual.json'
+expected='ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf'
+def state(pid):
+    p=Path('/proc')/str(pid);s=(p/'stat').read_text().rsplit(') ',1)[1].split()
+    fields={line.split(':',1)[0]:line.split(':',1)[1].strip() for line in (p/'status').read_text().splitlines() if ':' in line}
+    return {'pid':pid,'startTick':s[19],'parent':int(s[1]),'exe':os.readlink(p/'exe'),'uid':int(fields['Uid'].split()[0]),'namespacePids':[int(v) for v in fields['NSpid'].split()],'tracer':int(fields['TracerPid'])}
+def descends(pid,parent):
+    seen=set()
+    while pid>1 and pid not in seen:
+        if pid==parent:return True
+        seen.add(pid)
+        try:pid=state(pid)['parent']
+        except (FileNotFoundError,ProcessLookupError):return False
+    return False
+end=time.monotonic()+300
+while not barrier.exists():
+    assert time.monotonic()<end,'Observer did not reach debugger barrier'
+    time.sleep(.1)
+b=json.loads(barrier.read_text());root=state(int(b['pid']))
+assert root['uid']==1000 and root['exe']=='/usr/bin/programmable-notes'
+assert root['startTick']==b['startTick']
+assert hashlib.sha256(Path('/proc',str(root['pid']),'exe').read_bytes()).hexdigest()==b['executableSha256']==expected
+assert int((fixture/'editor.pid').read_text())==root['pid']
+candidates=[]
+for path in Path('/proc').iterdir():
+    if not path.name.isdigit():continue
+    try:
+        p=state(int(path.name))
+        if p['exe']=='/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess' and p['uid']==1000 and descends(p['pid'],root['pid']):candidates.append(p)
+    except (FileNotFoundError,ProcessLookupError,PermissionError):pass
+print('GUTTER_DEBUGGER_OWNED_CANDIDATES',json.dumps({'root':root,'candidates':candidates}),flush=True)
+assert len(candidates)==1,'Require one owned Root renderer, never choose by name alone'
+target=candidates[0];assert target['tracer']==0 and target['pid']>1
+targetMount=os.readlink(f'/proc/{target["pid"]}/ns/mnt')
+targetPidNamespace=os.readlink(f'/proc/{target["pid"]}/ns/pid')
+assert state(target['pid'])==target
+fd,trace=tempfile.mkstemp(prefix='pn-owned-gutter-gdb-',suffix='.log')
+commands=['set debuginfod enabled off','set pagination off','set confirm off','handle SIGPIPE nostop noprint pass','handle SIGUSR1 nostop noprint pass','handle SIGUSR2 nostop noprint pass','handle SIGTERM nostop noprint pass',f'attach {target["namespacePids"][-1]}','continue','thread apply all bt 12','info registers','x/8i $pc','detach']
+args=['nsenter','--target',str(target['pid']),'--pid','--','unshare','--mount','--propagation','private','--mount-proc','--','gdb','-nx','-q','-batch']
+for command in commands:args.extend(['-ex',command])
+tracer=None;failure=None
+with os.fdopen(fd,'w+') as output:
+    p=subprocess.Popen(args,stdout=output,stderr=subprocess.STDOUT)
+    try:
+        end=time.monotonic()+40
+        while True:
+            assert time.monotonic()<end,'GDB did not attach before readiness deadline'
+            if p.poll() is not None:raise RuntimeError('GDB exited before attachment')
+            now=state(target['pid']);assert now['startTick']==target['startTick']
+            if now['tracer']:
+                tracer=state(now['tracer']);assert tracer['exe']=='/usr/bin/gdb' and tracer['uid']==0 and descends(tracer['pid'],p.pid)
+                break
+            time.sleep(.1)
+        assert os.readlink(f'/proc/{target["pid"]}/ns/mnt')==targetMount
+        assert os.readlink(f'/proc/{tracer["pid"]}/ns/pid')==targetPidNamespace
+        assert os.readlink(f'/proc/{tracer["pid"]}/ns/mnt')!=targetMount
+        subprocess.run(['runuser','-u','ubuntu','--','python3','-c','import os,sys; f=os.open(sys.argv[1],os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600); os.write(f,b"READY\\n"); os.close(f)',str(evidence/'debugger-ready')],check=True)
+        print('GUTTER_DEBUGGER_ATTACHED',json.dumps({'target':target,'debugger':tracer,'privateMountProc':True}),flush=True)
+        p.wait(timeout=180)
+    except BaseException as e:
+        failure=str(e)
+    finally:
+        if p.poll() is None and tracer:
+            try:
+                current=state(tracer['pid']);assert current['startTick']==tracer['startTick'] and current['exe']==tracer['exe']
+                os.kill(tracer['pid'],signal.SIGINT)
+                p.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                current=state(tracer['pid']);assert current['startTick']==tracer['startTick'] and current['exe']==tracer['exe']
+                os.kill(tracer['pid'],signal.SIGTERM);p.wait(timeout=10)
+        elif p.poll() is None:
+            p.terminate();p.wait(timeout=10)
+        output.flush();output.seek(0);data=output.read()
+        print('GUTTER_DEBUGGER_TRACE_BEGIN',flush=True);print(data,flush=True)
+        print('GUTTER_DEBUGGER_RESULT',json.dumps({'debuggerExitCode':p.returncode,'controllerError':failure,'targetPid':target['pid'],'targetStartTick':target['startTick'],'scope':'instrumented diagnostic; not ordinary acceptance or a crash fix'}),flush=True)
+if failure:raise RuntimeError(failure)

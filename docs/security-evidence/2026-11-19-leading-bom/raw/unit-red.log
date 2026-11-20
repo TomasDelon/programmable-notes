@@ -1,0 +1,138 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/markdownEdits.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/markdownEdits.test.ts (17 tests | 6 failed) 132ms
+   × maps leading-BOM paragraph using original offsets without changing opaque source 8ms
+   × maps leading-BOM ATX heading using original offsets without changing opaque source 2ms
+   × maps leading-BOM Setext heading using original offsets without changing opaque source 1ms
+   × maps leading-BOM list using original offsets without changing opaque source 2ms
+   × maps leading-BOM import first using original offsets without changing opaque source 2ms
+   × maps leading-BOM JSX first using original offsets without changing opaque source 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM paragraph using original offsets without changing opaque source
+AssertionError: expected [] to deeply equal [ 'First paragraph.' ]
+
+- Expected
++ Received
+
+- [
+-   "First paragraph.",
+- ]
++ []
+
+ ❯ tests/unit/markdownEdits.test.ts:209:33
+    207| ])('maps leading-BOM $kind using original offsets without changing opa…
+    208|   const ranges=editableMarkdown(source);
+    209|   expect(ranges.map(r=>r.text)).toEqual(texts);
+       |                                 ^
+    210|   expect(markdownBlocks(source)[0]?.from).toBe(1);
+    211|   expect(patchMarkdown(source,ranges[0]!,'Updated text')).toBe(patched…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM ATX heading using original offsets without changing opaque source
+AssertionError: expected [] to deeply equal [ 'Heading' ]
+
+- Expected
++ Received
+
+- [
+-   "Heading",
+- ]
++ []
+
+ ❯ tests/unit/markdownEdits.test.ts:209:33
+    207| ])('maps leading-BOM $kind using original offsets without changing opa…
+    208|   const ranges=editableMarkdown(source);
+    209|   expect(ranges.map(r=>r.text)).toEqual(texts);
+       |                                 ^
+    210|   expect(markdownBlocks(source)[0]?.from).toBe(1);
+    211|   expect(patchMarkdown(source,ranges[0]!,'Updated text')).toBe(patched…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM Setext heading using original offsets without changing opaque source
+AssertionError: expected [] to deeply equal [ 'Title' ]
+
+- Expected
++ Received
+
+- [
+-   "Title",
+- ]
++ []
+
+ ❯ tests/unit/markdownEdits.test.ts:209:33
+    207| ])('maps leading-BOM $kind using original offsets without changing opa…
+    208|   const ranges=editableMarkdown(source);
+    209|   expect(ranges.map(r=>r.text)).toEqual(texts);
+       |                                 ^
+    210|   expect(markdownBlocks(source)[0]?.from).toBe(1);
+    211|   expect(patchMarkdown(source,ranges[0]!,'Updated text')).toBe(patched…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM list using original offsets without changing opaque source
+AssertionError: expected [] to deeply equal [ 'One', 'Two' ]
+
+- Expected
++ Received
+
+- [
+-   "One",
+-   "Two",
+- ]
++ []
+
+ ❯ tests/unit/markdownEdits.test.ts:209:33
+    207| ])('maps leading-BOM $kind using original offsets without changing opa…
+    208|   const ranges=editableMarkdown(source);
+    209|   expect(ranges.map(r=>r.text)).toEqual(texts);
+       |                                 ^
+    210|   expect(markdownBlocks(source)[0]?.from).toBe(1);
+    211|   expect(patchMarkdown(source,ranges[0]!,'Updated text')).toBe(patched…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM import first using original offsets without changing opaque source
+ FAIL  tests/unit/markdownEdits.test.ts > maps leading-BOM JSX first using original offsets without changing opaque source
+AssertionError: expected [] to deeply equal [ 'Literal paragraph.' ]
+
+- Expected
++ Received
+
+- [
+-   "Literal paragraph.",
+- ]
++ []
+
+ ❯ tests/unit/markdownEdits.test.ts:209:33
+    207| ])('maps leading-BOM $kind using original offsets without changing opa…
+    208|   const ranges=editableMarkdown(source);
+    209|   expect(ranges.map(r=>r.text)).toEqual(texts);
+       |                                 ^
+    210|   expect(markdownBlocks(source)[0]?.from).toBe(1);
+    211|   expect(patchMarkdown(source,ranges[0]!,'Updated text')).toBe(patched…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 11 passed (17)
+   Start at  04:28:49
+   Duration  1.41s (environment 67%, tests 11%, import 9%, setup 8%, transform 4%, worker 1%)
+

@@ -1,0 +1,51 @@
+Read-only WebKit automation/network-sandbox scope finding
+Source version: upstream WebKitGTK tag webkitgtk-2.52.6.
+Installed library version previously verified: 2.52.6-0ubuntu0.24.04.2.
+
+WebDriver intentionally requests a remote inspector endpoint:
+https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/WebDriver/glib/SessionHostGlib.cpp#L149-L171
+Relevant line159:
+  g_subprocess_launcher_setenv(launcher.get(), "WEBKIT_INSPECTOR_SERVER", inspectorAddress.get(), TRUE);
+Retained source SHA256:
+15a4237f04f98e25e745aac7dd5da1cdb57a1844df0c7535fa32ae073b9572a4  SessionHostGlib-webkitgtk-2.52.6.cpp
+
+The engine sandbox explicitly shares networking when that endpoint is set:
+https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/WebKit/UIProcess/Launcher/glib/BubblewrapLauncher.cpp#L81-L90
+  const char* env = g_getenv("WEBKIT_INSPECTOR_SERVER");
+  enabled = env && *env;
+https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/WebKit/UIProcess/Launcher/glib/BubblewrapLauncher.cpp#L714-L741
+  if (remoteInspectorEnabled())
+      return false;
+https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/WebKit/UIProcess/Launcher/glib/BubblewrapLauncher.cpp#L877-L878
+  if (shouldUnshareNetwork(launchOptions.processType, argv))
+      sandboxArgs.append("--unshare-net");
+Retained source SHA256:
+b147eb0b048c086f639316923f76ae5f3b4d251d5dea8cf6cedfdc787e788165  BubblewrapLauncher-webkitgtk-2.52.6.cpp
+
+Actual metadata captured during the current run (only these two environment keys
+were selected; no complete environment was dumped):
+  Automated editor PID9367, net:[4026531840]:
+    WEBKIT_INSPECTOR_SERVER=127.0.0.1:37711
+    TAURI_WEBVIEW_AUTOMATION=true
+  Supervised production child PID9437, net:[4026532264]:
+    WEBKIT_INSPECTOR_SERVER absent
+    TAURI_WEBVIEW_AUTOMATION=false
+
+The original automated editor8959 and WebProcess8991 had already exited before
+inspection, so their exact environment was not captured. Their retained observer
+record showed the WebProcess had Seccomp2/filter1, NoNewPrivs1, distinct mount/PID/
+user namespaces, and the editor's same network namespace. The matching upstream
+code plus current live inspector metadata explains this WebDriver-specific scope.
+It does not establish network isolation for automated editor WebProcesses.
+
+The unchanged strict observer correctly rejects that automated-editor network
+scope. It must not be softened or reported as an all-namespaces pass. Production
+children sanitize the inspector variable and disable automation; their actual
+namespace observations are separate evidence. A current-package normal desktop
+launch without automation must also be observed separately by the parent task.
+The retained /tmp/pn-m3-current-preview-sandbox.log was read after completion:
+its strict observer reports errors:[], passed:true and the PASS assertion for the
+production preview identified by the parent as PID9437.
+
+No UI, WebDriver, service, profile, environment, or sysctl mutation was performed
+during this follow-up. Only /proc metadata and upstream source were read.

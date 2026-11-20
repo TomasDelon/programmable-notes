@@ -1,0 +1,113 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running unittests src/lib.rs (native-documents/target/debug/build/native-documents/bfff297c7d598912/out/native_documents-bfff297c7d598912)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/draft.rs (native-documents/target/debug/build/native-documents/bd6a407a75bf10cd/out/draft-bd6a407a75bf10cd)
+
+running 2 tests
+test concurrent_snapshots_never_replace_the_winner ... ok
+test recovery_uses_one_private_copy_and_never_replaces_an_existing_draft ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/process_contention.rs (native-documents/target/debug/build/native-documents/11cb0dc66ded7f74/out/process_contention-11cb0dc66ded7f74)
+
+running 2 tests
+test snapshot_process_worker ... ignored, worker invoked only by its owning contention test with synthetic fixtures
+test actual_process_writers_preserve_one_head_and_recover_from_busy_and_stale_revisions ... ok
+
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests/process_crash.rs (native-documents/target/debug/build/native-documents/42f43e91df075d61/out/process_crash-42f43e91df075d61)
+     Running tests/save_crash.rs (native-documents/target/debug/build/native-documents/3eba8eb435b93bef/out/save_crash-3eba8eb435b93bef)
+
+running 2 tests
+test process_crashes_preserve_durable_recovery_at_each_publication_stage ... ignored, requires a disposable Linux x86_64 environment permitting own-child ptrace
+test sync_failures_preserve_recovery_and_report_publication_state ... ignored, requires a disposable Linux x86_64 environment permitting own-child ptrace
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test actual_save_crashes_preserve_complete_document_and_permissions ... ignored, requires disposable Linux x86_64 own-child ptrace and explicit validation writer
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+; finished in 0.00s
+
+
+running 17 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test mixed_case_snapshot_names_round_trip_without_allowing_other_formats ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+     Running tests/store.rs (native-documents/target/debug/build/native-documents/7f180d80475ded9c/out/store-7f180d80475ded9c)
+test full_quota_retains_every_previous_record ... ok
+
+test result: ok. 16 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.66s
+
+
+running 20 tests
+test confirmed_save_as_conflicts_if_target_changes_while_dialog_is_open ... ok
+test disk_replacement_symlink_cannot_redirect_a_save ... ok
+test atomic_save_preserves_extended_attributes ... ok
+test explicit_selected_module_paths_share_a_logical_root_without_loading_neighbors ... ok
+test forged_tokens_stale_revisions_and_external_changes_do_not_overwrite ... ok
+test explicit_reopen_refreshes_conflicted_source_and_revision ... ok
+test invalid_logical_name_does_not_leak_partial_batch_grants ... ok
+test mixed_case_source_extensions_preserve_distinct_paths_and_exact_bytes ... ok
+test open_batch_is_transactional_and_limits_grants ... ok
+test opened_document_saves_atomically_and_reopens_exact_utf8_crlf ... ok
+test picker_filters_only_accept_existing_source_formats_with_ascii_case_variants ... ok
+test read_only_failure_retains_original_and_does_not_leave_temp_files ... ok
+test parent_rename_keeps_saves_in_the_authorized_directory ... ok
+test refuses_symlinks_fifo_invalid_utf8_oversize_and_unlisted_extensions ... ok
+test save_as_rejects_non_utf8_filename_before_any_commit ... ok
+test save_as_selection_does_not_clobber_a_later_created_file ... ok
+test save_as_new_file_grants_only_its_selected_target ... ok
+test saving_selected_hardlink_does_not_modify_an_unselected_alias ... ok
+test concurrent_readers_observe_only_complete_old_or_new_source ... ok
+test aggregate_source_bytes_and_multibyte_save_size_are_bounded ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+   Doc-tests native_documents
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running unittests src/lib.rs (native-policy/target/debug/build/preview-policy/8f031cd8ec45cd8a/out/preview_policy-8f031cd8ec45cd8a)
+
+running 7 tests
+test tests::effective_limits_must_be_bounded_and_no_weaker_than_policy ... ok
+test tests::launcher_has_hard_boundaries_and_no_shell_or_author_arguments ... ok
+test tests::oversized_artifact_is_rejected_before_any_process_launch ... ok
+test tests::preview_and_unknown_labels_never_authorized ... ok
+test tests::runtime_identity_refuses_silent_namespace_fallback_and_privileges ... ok
+test tests::service_environment_cannot_disable_sandbox_or_enable_inspection ... ok
+test tests::connection_reads_track_real_child_without_releasing_stop_identity ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests preview_policy
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,4 @@
+FIXTURE=/tmp/pn-native-F5oFku EVIDENCE=/tmp/pn-native-F5oFku/evidence
+NATIVE_DIALOG {"pid": 35977, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-F5oFku/long-paragraph.mdx", "dialogDismissed": true}
+NATIVE_LONG_PARAGRAPH_EVIDENCE /tmp/pn-native-F5oFku/evidence/long-paragraph.json
+PASS native long-paragraph bounded geometry, scrolling, actual keys and exact disk history

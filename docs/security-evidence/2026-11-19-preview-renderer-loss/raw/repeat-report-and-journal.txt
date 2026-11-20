@@ -1,0 +1,92 @@
+{
+  "scope": "installed production preview renderer loss, explicit restart and Stop",
+  "observerSha256": "332ecf7a017dcbd96e20c6b7ca6f2348c0bb30677e022f505ca4fc2d13af044a",
+  "root": {
+    "pid": 49129,
+    "startTick": "7269198",
+    "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+  },
+  "unit": "programmable-notes-preview-49129-1795116679552987730.service",
+  "preview": {
+    "pid": 49205,
+    "startTick": "7270380",
+    "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+  },
+  "group": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-49129-1795116679552987730.service",
+  "beforeKillCounter": true,
+  "receipt": {
+    "root": {
+      "pid": 49129,
+      "startTick": "7269198",
+      "parent": 625,
+      "exe": "/usr/bin/programmable-notes",
+      "uid": 1000,
+      "namespacePids": [
+        49129
+      ],
+      "tracer": 0,
+      "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+    },
+    "preview": {
+      "pid": 49205,
+      "startTick": "7270380",
+      "parent": 446,
+      "exe": "/usr/bin/programmable-notes",
+      "uid": 1000,
+      "namespacePids": [
+        49205
+      ],
+      "tracer": 0
+    },
+    "unit": "programmable-notes-preview-49129-1795116679552987730.service",
+    "renderer": {
+      "pid": 49246,
+      "startTick": "7271731",
+      "parent": 49245,
+      "exe": "/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess",
+      "uid": 1000,
+      "namespacePids": [
+        49246,
+        2
+      ],
+      "tracer": 0,
+      "executableSha256": "792ac17c51235fdce369903e9ee1198ac3d467094f25ec1778ce731aea4e1838"
+    },
+    "signal": "SIGKILL",
+    "killMonotonicNs": "72751231415720",
+    "rootSurvived": true
+  },
+  "samples": [
+    {
+      "elapsedMs": 48444.76332,
+      "sinceKillMs": 453.09662,
+      "connectionActive": true
+    },
+    {
+      "elapsedMs": 49017.025,
+      "sinceKillMs": 1025.02095,
+      "connectionActive": false
+    }
+  ],
+  "noEditorNotice": true,
+  "failedGroupEmpty": true,
+  "restartedUnit": "programmable-notes-preview-49129-1795116729058419240.service",
+  "restartedGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-49129-1795116729058419240.service",
+  "restartedPreview": {
+    "pid": 49302,
+    "startTick": "7275321",
+    "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195"
+  },
+  "restartedCounter": true,
+  "stopRequestElapsedMs": 47181.32203,
+  "stopBeforeExpiry": true,
+  "noEditorNoticeAfterRestart": true,
+  "outcome": "pass",
+  "cleanupGroupEmpty": true,
+  "ownedRootAbsent": true
+}
+{"_CMDLINE":"/usr/lib/systemd/systemd --user","_COMM":"systemd","PRIORITY":"6","_HOSTNAME":"pn-m3-guest","_GID":"1000","__SEQNUM":"22932","_AUDIT_SESSION":"1","_PID":"446","_SYSTEMD_USER_SLICE":"-.slice","_SOURCE_REALTIME_TIMESTAMP":"1795116679799297","JOB_TYPE":"start","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","TID":"446","__MONOTONIC_TIMESTAMP":"72703830243","_TRANSPORT":"journal","CODE_FUNC":"job_emit_start_message","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/init.scope","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=5994;b=c3cef4a769294bb08a8a268dced15162;m=10ed7c68e3;t=660a62c07a393;x=c9968a494ed2ddf6","_SYSTEMD_SLICE":"user-1000.slice","_CAP_EFFECTIVE":"800000000","MESSAGE_ID":"7d4958e842da4a758f6c1cdc7b36dcc5","__REALTIME_TIMESTAMP":"1795116679799699","_RUNTIME_SCOPE":"system","_SYSTEMD_USER_UNIT":"init.scope","CODE_FILE":"src/core/job.c","_AUDIT_LOGINUID":"1000","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","USER_UNIT":"programmable-notes-preview-49129-1795116679552987730.service","_SELINUX_CONTEXT":"pn-m3-systemd-executor (unconfined)\n","JOB_ID":"1164","_SYSTEMD_UNIT":"user@1000.service","SYSLOG_FACILITY":"3","_UID":"1000","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","SYSLOG_IDENTIFIER":"systemd","MESSAGE":"Starting programmable-notes-preview-49129-1795116679552987730.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...","_EXE":"/usr/lib/systemd/systemd","_SYSTEMD_OWNER_UID":"1000","USER_INVOCATION_ID":"25221f0216dd4d4c80621ddd4629c201","CODE_LINE":"609"}
+{"_SYSTEMD_USER_UNIT":"init.scope","JOB_RESULT":"done","_EXE":"/usr/lib/systemd/systemd","__REALTIME_TIMESTAMP":"1795116680588136","CODE_FUNC":"job_emit_done_message","MESSAGE":"Started programmable-notes-preview-49129-1795116679552987730.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.","__SEQNUM":"22933","_TRANSPORT":"journal","SYSLOG_IDENTIFIER":"systemd","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=5995;b=c3cef4a769294bb08a8a268dced15162;m=10ed8870b9;t=660a62c13ab68;x=5dfa556e7edca43d","_GID":"1000","_CMDLINE":"/usr/lib/systemd/systemd --user","_RUNTIME_SCOPE":"system","_COMM":"systemd","_SYSTEMD_OWNER_UID":"1000","_SELINUX_CONTEXT":"pn-m3-systemd-executor (unconfined)\n","SYSLOG_FACILITY":"3","_UID":"1000","_HOSTNAME":"pn-m3-guest","_SYSTEMD_USER_SLICE":"-.slice","_SYSTEMD_UNIT":"user@1000.service","_AUDIT_LOGINUID":"1000","__MONOTONIC_TIMESTAMP":"72704618681","CODE_FILE":"src/core/job.c","USER_INVOCATION_ID":"25221f0216dd4d4c80621ddd4629c201","USER_UNIT":"programmable-notes-preview-49129-1795116679552987730.service","TID":"446","_AUDIT_SESSION":"1","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","JOB_TYPE":"start","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","_SYSTEMD_SLICE":"user-1000.slice","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/init.scope","_SOURCE_REALTIME_TIMESTAMP":"1795116680587977","PRIORITY":"6","MESSAGE_ID":"39f53479d3a045ac8e11786248231fbf","CODE_LINE":"796","_CAP_EFFECTIVE":"800000000","JOB_ID":"1164","_PID":"446"}
+{"__REALTIME_TIMESTAMP":"1795116727794826","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","EXIT_STATUS":"1","CODE_LINE":"6066","_CAP_EFFECTIVE":"800000000","_RUNTIME_SCOPE":"system","_PID":"446","_AUDIT_LOGINUID":"1000","PRIORITY":"5","CODE_FILE":"src/core/unit.c","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","_SYSTEMD_SLICE":"user-1000.slice","__SEQNUM":"22943","_SOURCE_REALTIME_TIMESTAMP":"1795116727792882","SYSLOG_FACILITY":"3","_SYSTEMD_USER_SLICE":"-.slice","_SELINUX_CONTEXT":"pn-m3-systemd-executor (unconfined)\n","CODE_FUNC":"unit_log_process_exit","_GID":"1000","_HOSTNAME":"pn-m3-guest","MESSAGE_ID":"98e322203f7a4ed290d09fe03c09fe15","USER_INVOCATION_ID":"25221f0216dd4d4c80621ddd4629c201","__MONOTONIC_TIMESTAMP":"72751825370","_AUDIT_SESSION":"1","COMMAND":"ExecStart","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","TID":"446","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=599f;b=c3cef4a769294bb08a8a268dced15162;m=10f058c1da;t=660a62ee3fc8a;x=a8009cceb90c6d7d","_CMDLINE":"/usr/lib/systemd/systemd --user","_UID":"1000","_TRANSPORT":"journal","_SYSTEMD_USER_UNIT":"init.scope","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/init.scope","_SYSTEMD_OWNER_UID":"1000","_EXE":"/usr/lib/systemd/systemd","_COMM":"systemd","EXIT_CODE":"exited","_SYSTEMD_UNIT":"user@1000.service","USER_UNIT":"programmable-notes-preview-49129-1795116679552987730.service","SYSLOG_IDENTIFIER":"systemd","MESSAGE":"programmable-notes-preview-49129-1795116679552987730.service: Main process exited, code=exited, status=1/FAILURE"}
+{"__REALTIME_TIMESTAMP":"1795116727900432","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","SYSLOG_FACILITY":"3","_SOURCE_REALTIME_TIMESTAMP":"1795116727899638","_AUDIT_LOGINUID":"1000","TID":"446","CODE_FUNC":"unit_log_failure","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","_TRANSPORT":"journal","MESSAGE":"programmable-notes-preview-49129-1795116679552987730.service: Failed with result 'exit-code'.","_RUNTIME_SCOPE":"system","UNIT_RESULT":"exit-code","_GID":"1000","SYSLOG_IDENTIFIER":"systemd","USER_UNIT":"programmable-notes-preview-49129-1795116679552987730.service","_SYSTEMD_OWNER_UID":"1000","_AUDIT_SESSION":"1","_CAP_EFFECTIVE":"800000000","__MONOTONIC_TIMESTAMP":"72751930970","_SYSTEMD_SLICE":"user-1000.slice","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=59a0;b=c3cef4a769294bb08a8a268dced15162;m=10f05a5e5a;t=660a62ee59910;x=d29c49def6dee9f","USER_INVOCATION_ID":"25221f0216dd4d4c80621ddd4629c201","_UID":"1000","_SYSTEMD_USER_SLICE":"-.slice","_SYSTEMD_USER_UNIT":"init.scope","_HOSTNAME":"pn-m3-guest","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/init.scope","_CMDLINE":"/usr/lib/systemd/systemd --user","_PID":"446","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","CODE_LINE":"6024","MESSAGE_ID":"d9b373ed55a64feb8242e02dbe79a49c","__SEQNUM":"22944","_SYSTEMD_UNIT":"user@1000.service","_COMM":"systemd","_SELINUX_CONTEXT":"pn-m3-systemd-executor (unconfined)\n","CODE_FILE":"src/core/unit.c","_EXE":"/usr/lib/systemd/systemd","PRIORITY":"4"}
+{"_EXE":"/usr/lib/systemd/systemd","_SYSTEMD_UNIT":"user@1000.service","SYSLOG_FACILITY":"3","PRIORITY":"6","_TRANSPORT":"journal","_RUNTIME_SCOPE":"system","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/init.scope","_AUDIT_LOGINUID":"1000","MESSAGE_ID":"ae8f7b866b0347b9af31fe1c80b127c0","CODE_FUNC":"unit_log_resources","_GID":"1000","CODE_LINE":"2577","TID":"446","_SYSTEMD_SLICE":"user-1000.slice","SYSLOG_IDENTIFIER":"systemd","_SYSTEMD_OWNER_UID":"1000","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","_HOSTNAME":"pn-m3-guest","__SEQNUM":"22945","CODE_FILE":"src/core/unit.c","MEMORY_SWAP_PEAK":"0","USER_UNIT":"programmable-notes-preview-49129-1795116679552987730.service","_SYSTEMD_USER_UNIT":"init.scope","_SELINUX_CONTEXT":"pn-m3-systemd-executor (unconfined)\n","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","__REALTIME_TIMESTAMP":"1795116727908344","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","MESSAGE":"programmable-notes-preview-49129-1795116679552987730.service: Consumed 11.621s CPU time, 65.2M memory peak, 0B memory swap peak.","CPU_USAGE_NSEC":"11621716000","_UID":"1000","USER_INVOCATION_ID":"25221f0216dd4d4c80621ddd4629c201","_COMM":"systemd","_SOURCE_REALTIME_TIMESTAMP":"1795116727908198","__MONOTONIC_TIMESTAMP":"72751938888","MEMORY_PEAK":"68374528","_PID":"446","_CMDLINE":"/usr/lib/systemd/systemd --user","_SYSTEMD_USER_SLICE":"-.slice","_CAP_EFFECTIVE":"800000000","_AUDIT_SESSION":"1","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=59a1;b=c3cef4a769294bb08a8a268dced15162;m=10f05a7d48;t=660a62ee5b7f8;x=ebd34dc52f3181de"}

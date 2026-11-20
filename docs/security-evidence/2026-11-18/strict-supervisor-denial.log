@@ -1,0 +1,29 @@
+UTC: Wed Nov 18 00:09:23 UTC 2026
+50a161268fa6c47eea6ac553c9f99297ea91652e01d73ec5e342d7d50891153e  /opt/pn/m3-resource-gates
+PAYLOAD_SENTINELS_BEFORE:
+
+3729c1ec82ab5384de6553afab455a236ce90096dac9c0e6cb65c133c10e18b3  /etc/apparmor.d/unprivileged_userns
+EXECUTOR_OPTIN_UNLOADED
+kernel.unprivileged_userns_clone = 1
+kernel.apparmor_restrict_unprivileged_userns = 1
+User manager profile: unconfined
+NOT RUN: resource backend unavailable or rejected: Preview network namespace is not isolated; systemd may have silently skipped PrivateNetwork
+STRICT_HELPER_EXIT=2
+PAYLOAD_SENTINELS_AFTER:
+
+NO_NEW_PAYLOAD_SENTINELS
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
+To show all installed unit files use 'systemctl list-unit-files'.
+Nov 18 00:09:25 pn-m3-guest systemd[450]: Starting programmable-notes-preview-4577-1794960565215487220.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 /opt/pn/m3-resource-gates --preview-child...
+Nov 18 00:09:26 pn-m3-guest (env)[4582]: programmable-notes-preview-4577-1794960565215487220.service: PrivateNetwork=yes is configured, but the kernel does not support or we lack privileges for network namespace, proceeding without.
+Nov 18 00:09:26 pn-m3-guest systemd[450]: Started programmable-notes-preview-4577-1794960565215487220.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 /opt/pn/m3-resource-gates --preview-child.
+Nov 18 00:09:27 pn-m3-guest systemd[450]: Stopping programmable-notes-preview-4577-1794960565215487220.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 /opt/pn/m3-resource-gates --preview-child...
+Nov 18 00:09:27 pn-m3-guest systemd[450]: Stopped programmable-notes-preview-4577-1794960565215487220.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 /opt/pn/m3-resource-gates --preview-child.
+Nov 18 00:09:24 pn-m3-guest kernel: audit: type=1400 audit(1794960564.693:115): apparmor="STATUS" operation="profile_remove" profile="unconfined" name="pn-m3-systemd-executor" pid=4571 comm="apparmor_parser"
+Nov 18 00:09:26 pn-m3-guest kernel: audit: type=1400 audit(1794960566.573:116): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=4582 comm="(env)" requested="userns_create" target="unprivileged_userns"
+3729c1ec82ab5384de6553afab455a236ce90096dac9c0e6cb65c133c10e18b3  /etc/apparmor.d/unprivileged_userns
+PASS: strict supervisor refused before payload delivery
+TASK_EXECUTOR_PROFILE_RESTORED
+Running as unit: pn-m3-native-driver.service; invocation ID: d2a32f073a8b41e99868eac48b657fee

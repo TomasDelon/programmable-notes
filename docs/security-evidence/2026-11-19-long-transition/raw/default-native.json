@@ -1,0 +1,20 @@
+{
+  "observerSha256": "4d74a5ed79539a6be0613d0b5543a1efe349c6307c1ad74ff677910752af2e17",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "46f65e87ad853e0147fcbce28037b16a671e4f31d75f123b5a9a49f2e8794846",
+  "pid": 35977,
+  "startTick": "5225381",
+  "geometry": {
+    "rows": 1000,
+    "viewport": 600,
+    "focused": true,
+    "exact": true,
+    "height": 360,
+    "client": 358,
+    "scroll": 27000
+  },
+  "actualEndTypingSaveUndoRedoReopenExact": true,
+  "actualCleanExit": true,
+  "outcome": "pass"
+}

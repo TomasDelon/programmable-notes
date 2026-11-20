@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/work/native-stop-exec-controller.py", line 10, in <module>
+    else:raise RuntimeError('No owned fault request')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: No owned fault request

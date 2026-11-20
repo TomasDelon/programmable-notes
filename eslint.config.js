@@ -9,6 +9,9 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 export default defineConfig([
   globalIgnores([
     'dist/**',
+    '**/target/**',
+    'src-tauri/gen/**',
+    'src-tauri/vendor/**',
     'node_modules/**',
     '.cache/**',
     'coverage/**',
@@ -18,7 +21,7 @@ export default defineConfig([
   js.configs.recommended,
   tseslint.configs.recommended,
   {
-    files: ['**/*.{js,ts,tsx}'],
+    files: ['**/*.{js,mjs,ts,tsx}'],
     languageOptions: { globals: globals.node },
   },
   {

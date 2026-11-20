@@ -1,0 +1,38 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "dd75901b87d6830d05e148579197442cfa54c96bf6e44c0473a7d0e74c7acfd1",
+  "editorPid": 27968,
+  "executableSha256": "d74850a5418b014a4107315ff5c76ca12668affadcd4a3545cee002f1422eb2f",
+  "unit": "programmable-notes-preview-27968-1795086683755205080.service",
+  "previewPid": 28079,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-27968-1795086683755205080.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "rebuiltUnit": "programmable-notes-preview-27968-1795086683755205080.service",
+  "rebuiltPid": 28079,
+  "afterRebuild": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "stopRequestedMsAfterRebuild": 60181,
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n",
+  "outcome": "fail",
+  "failureUi": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  }
+}

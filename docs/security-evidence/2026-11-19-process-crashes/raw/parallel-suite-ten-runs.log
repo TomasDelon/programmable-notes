@@ -1,0 +1,230 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+test full_quota_retains_every_previous_record ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 8.20s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+test full_quota_retains_every_previous_record ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 6.57s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test concurrent_writers_never_create_two_heads ... ok
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 5.15s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.72s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.01s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+test full_quota_retains_every_previous_record ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.09s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.48s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.44s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+test full_quota_retains_every_previous_record ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.56s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.02s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.41s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/snapshots.rs (native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee)
+
+running 16 tests
+test cooperating_processes_are_locked_and_traversal_is_refused ... ok
+test concurrent_writers_never_create_two_heads ... ok
+test finished_writer_unlocks_even_while_a_forked_child_retains_descriptors ... ok
+test corrupt_head_is_reported_while_older_source_remains_recoverable ... ok
+test failed_write_does_not_remove_prior_version_or_leave_pending_data ... ok
+test interrupted_temporary_write_is_cleaned_without_touching_valid_snapshots ... ok
+test legacy_interrupted_temp_does_not_block_migration ... ok
+test real_enospc_preserves_previous_snapshot ... ignored, requires PN_RECOVERY_SMALL_FS on a disposable small tmpfs
+test migration_keeps_legacy_bytes_and_is_idempotent ... ok
+test retention_is_bounded_and_latest_versions_are_exact ... ok
+test symlinks_hardlinks_and_public_records_fail_closed ... ok
+test versions_survive_restart_and_stale_writers_cannot_replace_them ... ok
+test write_failure_child ... ok
+test repeated_interrupted_retention_is_reconciled_before_new_writes ... ok
+test full_quota_retains_every_previous_record ... ok
+test inventory_uses_real_file_lengths_for_one_record_crash_headroom ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.56s
+

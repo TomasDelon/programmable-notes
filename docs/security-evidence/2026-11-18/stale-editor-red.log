@@ -1,0 +1,35 @@
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-documents.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-documents.test.ts (7 tests | 1 failed) 38ms
+   ❯ native document UI state (mocked OS transport, not native security proof) (7)
+     × a queued editor callback cannot overwrite a newly selected document 23ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-documents.test.ts > native document UI state (mocked OS transport, not native security proof) > a queued editor callback cannot overwrite a newly selected document
+AssertionError: expected 'example' to be 'late input from original editor' // Object.is equality
+
+Expected: "late input from original editor"
+Received: "example"
+
+ ❯ tests/unit/native-documents.test.ts:59:58
+     57|     });
+     58|     act(() => previousEditorChange('late input from original editor'));
+     59|     expect(h.result.current.workspace.files['note.mdx']).toBe(
+       |                                                          ^
+     60|       'late input from original editor',
+     61|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  23:53:23
+   Duration  1.33s (environment 78%, setup 11%, transform 7%, tests 3%, import 1%)
+

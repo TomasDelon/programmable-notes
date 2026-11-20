@@ -1,0 +1,63 @@
+[New LWP 21815]
+[New LWP 21814]
+[New LWP 21812]
+[New LWP 21771]
+[New LWP 21755]
+[New LWP 21752]
+[New LWP 21751]
+[New LWP 21750]
+[New LWP 21741]
+[New LWP 21740]
+[New LWP 21739]
+[New LWP 21738]
+[New LWP 21737]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x000071224eb1b75d in poll () from target:/lib/x86_64-linux-gnu/libc.so.6
+
+Thread 1 "WebKitWebProces" received signal SIGSEGV, Segmentation fault.
+0x0000712200a002a1 in ?? ()
+#0  0x0000712200a002a1 in ?? ()
+#1  0x00007ffc9471e480 in ?? ()
+#2  0x0000712200c25655 in ?? ()
+#3  0x00007122422190c0 in ?? ()
+#4  0x00007122421c1260 in ?? ()
+#5  0x0000000200000001 in ?? ()
+#6  0x0000712243b1e7f0 in ?? ()
+#7  0x00007122428a6e60 in ?? ()
+#8  0x00007122428b1020 in ?? ()
+#9  0x0000712200000004 in ?? ()
+#10 0x00007122410517c8 in ?? ()
+#11 0x00007122421c1200 in ?? ()
+#12 0x00007122428babb0 in ?? ()
+#13 0x0000712243a0bf00 in ?? ()
+#14 0x00007122428cda80 in ?? ()
+#15 0x00007122428c92d0 in ?? ()
+#16 0x0000712243a0bf00 in ?? ()
+#17 0x00007122428c92d0 in ?? ()
+#18 0x0000712243407000 in ?? ()
+#19 0x00007122418dfb00 in ?? ()
+#20 0x0000712241557040 in ?? ()
+#21 0xfffe000000000000 in ?? ()
+#22 0xfffe000000000002 in ?? ()
+#23 0x00007ffc9471e550 in ?? ()
+#24 0x0000712200c2062c in ?? ()
+#25 0x00007122421ed520 in ?? ()
+#26 0x00007122428d0160 in ?? ()
+#27 0x0000000100000002 in ?? ()
+#28 0x000000000000000a in ?? ()
+#29 0xfffe0000fffffffc in ?? ()
+=> 0x712200a002a1:	call   *0x38(%rdx)
+   0x712200a002a4:	movabs $0x712243407008,%r11
+   0x712200a002ae:	mov    (%r11),%r11
+   0x712200a002b1:	test   %r11,%r11
+   0x712200a002b4:	jne    0x712200a08000
+   0x712200a002ba:	pop    %rbp
+   0x712200a002bb:	ret
+   0x712200a002bc:	int3
+   0x712200a002bd:	int3
+   0x712200a002be:	int3
+No symbol matches $pc.
+[Inferior 1 (process 21736) detached]

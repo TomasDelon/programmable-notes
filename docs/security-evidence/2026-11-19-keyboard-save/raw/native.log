@@ -1,0 +1,13 @@
+NATIVE_DIALOG {"pid": 12160, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-9tZINO/pending-inline.mdx"}
+NATIVE_DIALOG {"pid": 12160, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_PENDING_GUARDS_UNCHANGED_ORIGINAL_AND_ACTUAL_DIRTY_CLOSE_CANCEL_PASS
+NATIVE_PENDING_ESCAPE_APPLY_EXACT_BOM_CRLF_SAVE_UNDO_REDO_REOPEN_0640_PASS
+NATIVE_DIALOG {"pid": 12160, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 12160, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-9tZINO/keyboard-save-as.mdx"}
+X Error of failed request:  BadWindow (invalid Window parameter)
+  Major opcode of failed request:  15 (X_QueryTree)
+  Resource id in failed request:  0x20557d
+  Serial number of failed request:  600
+  Current serial number in output stream:  600
+NATIVE_TRUSTED_CTRL_SAVE_PENDING_GUARD_AND_SHIFT_SAVE_AS_CANCEL_EXACT_COPY_PASS
+NATIVE_PENDING_CLEAN_EXIT_PASS

@@ -1,0 +1,149 @@
+{
+  "browser": "159.0.8154.6",
+  "sourceHead": "0975b35c98ef9a3133314923137fe7fdaaff1514",
+  "observerSha256": "636d4e3b86c617daf15c794a90ab54afaa1f12e542523d772c77ce8a6b97bb2b",
+  "indexSha256": "c8af4dc3d12007acd9b5434d0610a06f40caca9c406bf6bedcac15583dc5c2d6",
+  "instrumented": true,
+  "negativeControl": true,
+  "base": "http://127.0.0.1:4189",
+  "rounds": 1,
+  "scope": "Deliberately omitted first input; not an application failure",
+  "results": [
+    {
+      "round": 0,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090213521
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090215155
+        }
+      ],
+      "outcome": "fail",
+      "error": "Error: expect(locator).toHaveText(expected) failed\n\nLocator:  locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ })\nExpected: \"Count: 1\"\nReceived: \"Count: 0\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveText\" locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ }) with timeout 5000ms\n  - waiting for locator('iframe').contentFrame().getByRole('button', { name: /^Count:/ })\n    7 × locator resolved to <button>Count: 0</button>\n      - unexpected value \"Count: 0\"\n",
+      "frames": [
+        {
+          "origin": "http://127.0.0.1:4189/",
+          "timeOrigin": 1795090213511.7,
+          "events": [],
+          "changes": [],
+          "errors": []
+        },
+        {
+          "origin": "about:srcdoc",
+          "timeOrigin": 1795090215138.6,
+          "events": [],
+          "changes": [
+            {
+              "time": 117.90000000596046,
+              "text": "Count: 0"
+            }
+          ],
+          "errors": []
+        }
+      ],
+      "secondClick": "responded",
+      "secondFrames": [
+        {
+          "origin": "http://127.0.0.1:4189/",
+          "timeOrigin": 1795090213511.7,
+          "events": [
+            {
+              "type": "blur",
+              "time": 5474.70000000298,
+              "trusted": true,
+              "defaultPrevented": false
+            }
+          ],
+          "changes": [],
+          "errors": []
+        },
+        {
+          "origin": "about:srcdoc",
+          "timeOrigin": 1795090215138.6,
+          "events": [
+            {
+              "type": "pointerdown",
+              "time": 3847.5,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67.66000366210938,
+              "y": 238.23065185546875,
+              "defaultPrevented": false
+            },
+            {
+              "type": "mousedown",
+              "time": 3847.7000000029802,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            },
+            {
+              "type": "focus",
+              "time": 3847.7999999970198,
+              "trusted": true,
+              "defaultPrevented": false
+            },
+            {
+              "type": "focus",
+              "time": 3847.7999999970198,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "defaultPrevented": false
+            },
+            {
+              "type": "pointerup",
+              "time": 3848,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67.66000366210938,
+              "y": 238.23065185546875,
+              "defaultPrevented": false
+            },
+            {
+              "type": "mouseup",
+              "time": 3848,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            },
+            {
+              "type": "click",
+              "time": 3848.2000000029802,
+              "trusted": true,
+              "target": "BUTTON",
+              "text": "Count: 0",
+              "x": 67,
+              "y": 238,
+              "defaultPrevented": false
+            }
+          ],
+          "changes": [
+            {
+              "time": 117.90000000596046,
+              "text": "Count: 0"
+            },
+            {
+              "time": 3849.2000000029802,
+              "text": "Count: 1"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

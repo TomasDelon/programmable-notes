@@ -1,0 +1,29 @@
+✔ secret guard rejects an unused synthetic Git private key without printing its contents (1124.965374ms)
+✖ secret guard rejects an unused synthetic archived private key without printing its contents (1056.449247ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2240.666231
+
+✖ failing tests:
+
+test at tests/tooling/secret-scan.test.mjs:11:3
+✖ secret guard rejects an unused synthetic archived private key without printing its contents (1056.449247ms)
+  AssertionError [ERR_ASSERTION]: Guard must refuse the committed synthetic key
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/programmable-notes/tests/tooling/secret-scan.test.mjs:69:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

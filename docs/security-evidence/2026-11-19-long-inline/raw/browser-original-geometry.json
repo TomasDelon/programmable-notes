@@ -1,0 +1,12 @@
+{
+  "scope": "actual Chromium input geometry, not timing benchmark",
+  "sourceBytes": 31927,
+  "lines": 1000,
+  "exactInput": true,
+  "height": 27189.5,
+  "rows": 1000,
+  "viewportHeight": 800,
+  "clientHeight": 27188,
+  "scrollHeight": 27188,
+  "focused": true
+}

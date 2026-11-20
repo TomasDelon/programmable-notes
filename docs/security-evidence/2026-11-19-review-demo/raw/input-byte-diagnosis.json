@@ -1,0 +1,37 @@
+[
+  {
+    "run": 0,
+    "rawCrlf": true,
+    "beforeCreationCrlf": true,
+    "afterSwitchCrlf": true,
+    "preserved": true
+  },
+  {
+    "run": 1,
+    "rawCrlf": true,
+    "beforeCreationCrlf": true,
+    "afterSwitchCrlf": true,
+    "preserved": true
+  },
+  {
+    "run": 2,
+    "rawCrlf": true,
+    "beforeCreationCrlf": false,
+    "afterSwitchCrlf": false,
+    "preserved": true
+  },
+  {
+    "run": 3,
+    "rawCrlf": true,
+    "beforeCreationCrlf": false,
+    "afterSwitchCrlf": false,
+    "preserved": true
+  },
+  {
+    "run": 4,
+    "rawCrlf": true,
+    "beforeCreationCrlf": false,
+    "afterSwitchCrlf": false,
+    "preserved": true
+  }
+]

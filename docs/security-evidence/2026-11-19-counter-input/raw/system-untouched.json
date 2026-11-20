@@ -1,0 +1,333 @@
+{
+  "browser": "156.0.8078.79",
+  "sourceHead": "0975b35c98ef9a3133314923137fe7fdaaff1514",
+  "observerSha256": "6308626941da22685d40d6eafd239b665fac8245ca02e99c8b1cea0216b7b07a",
+  "indexSha256": "c8af4dc3d12007acd9b5434d0610a06f40caca9c406bf6bedcac15583dc5c2d6",
+  "instrumented": false,
+  "negativeControl": false,
+  "base": "http://127.0.0.1:4189",
+  "rounds": 20,
+  "scope": "Untouched first click; a diagnostic second click never converts failure to success",
+  "results": [
+    {
+      "round": 0,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090139380
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090141716
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 1,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090142410
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090144239
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 2,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090144886
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090146346
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 3,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090146926
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090148393
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 4,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090148944
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090150539
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 5,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090151068
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090152524
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 6,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090153220
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090155098
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 7,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090156093
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090157811
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 8,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090158426
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090160101
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 9,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090160514
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090161992
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 10,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090162605
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090164156
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 11,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090164701
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090166161
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 12,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090166964
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090168630
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 13,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090169421
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090170863
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 14,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090171354
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090173031
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 15,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090173544
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090174886
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 16,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090175722
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090177381
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 17,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090178032
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090179364
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 18,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090180147
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090181725
+        }
+      ],
+      "outcome": "pass"
+    },
+    {
+      "round": 19,
+      "navigations": [
+        {
+          "url": "http://127.0.0.1:4189/",
+          "main": true,
+          "time": 1795090182100
+        },
+        {
+          "url": "about:srcdoc",
+          "main": false,
+          "time": 1795090183386
+        }
+      ],
+      "outcome": "pass"
+    }
+  ]
+}

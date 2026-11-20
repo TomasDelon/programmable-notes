@@ -1,0 +1,49 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/markdownEdits.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/markdownEdits.test.ts (22 tests | 1 failed) 131ms
+   × refuses mixed-break deletions and insertions whose repeated text has different valid alignments 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/markdownEdits.test.ts > refuses mixed-break deletions and insertions whose repeated text has different valid alignments
+AssertionError: expected 'Same\nSame\n\n<Keep />\r\n' to be null
+
+- Expected:
+null
+
++ Received:
+"Same
+Same
+
+<Keep />
+"
+
+ ❯ tests/unit/markdownEdits.test.ts:289:54
+    287|   const source = 'Same\nSame\r\nSame\n\n<Keep />\r\n';
+    288|   const range = editableMarkdown(source)[0]!;
+    289|   expect(patchMarkdown(source, range, 'Same\nSame')).toBeNull();
+       |                                                      ^
+    290|   expect(patchMarkdown(source, range, 'Same\nSame\nSame\nSame')).toBeN…
+    291|   expect(patchMarkdown(source, range, 'Same\nSame\nSame')).toBe(source…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 21 passed (22)
+   Start at  07:13:16
+   Duration  1.36s (environment 67%, tests 10%, setup 9%, import 9%, transform 5%)
+

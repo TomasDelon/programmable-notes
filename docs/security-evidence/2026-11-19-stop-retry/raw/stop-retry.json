@@ -1,0 +1,39 @@
+{
+  "scope": "installed UI-only Stop; optional external exec-failure and explicit retry",
+  "observerSha256": "3237cd9035600a7d89ec957e38cb1871ce90197a47815970727ed4df5308e280",
+  "editorPid": 31098,
+  "executableSha256": "5318edc9565757b503f061b45596f1bb0b8dbaa217a9b603f105e08ab3fe8773",
+  "unit": "programmable-notes-preview-31098-1795088880104251020.service",
+  "previewPid": 31206,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-31098-1795088880104251020.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "stopAgeUsec": 49696599,
+  "externalFaultRequested": true,
+  "failedStop": {
+    "alerts": [
+      "Native stop failed: Input/output error (os error 5)"
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stop failed"
+  },
+  "failedStopRetainedLiveGroup": true,
+  "explicitRetry": true,
+  "retryAgeUsec": 51357028,
+  "uiStopRemovedCgroup": true,
+  "afterStop": {
+    "alerts": [],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  },
+  "outcome": "pass",
+  "sourceUnchanged": true
+}

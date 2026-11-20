@@ -1,0 +1,53 @@
+{
+  "package": "esbuild-wasm",
+  "packageVersion": "0.28.2",
+  "goVersion": "go1.26.5",
+  "wasmSha256": "b1831a5c0f6cf688034fb94d0419812f165ea316a3380d3fc00a151e562d2eaf",
+  "sources": [
+    {
+      "path": "LICENSE",
+      "gitBlob": "2a7cf70da6e498df9c11ab6a5eaa2ddd7af34da4"
+    },
+    {
+      "path": "PATENTS",
+      "gitBlob": "733099041f84fa1e58611ab2e11af51c1f26d1d2"
+    },
+    {
+      "path": "src/crypto/internal/boring/LICENSE",
+      "gitBlob": "05b0963f5e36370edeeec2239a97838a77e1fc7a"
+    },
+    {
+      "path": "src/vendor/golang.org/x/crypto/LICENSE",
+      "gitBlob": "2a7cf70da6e498df9c11ab6a5eaa2ddd7af34da4"
+    },
+    {
+      "path": "src/vendor/golang.org/x/crypto/PATENTS",
+      "gitBlob": "733099041f84fa1e58611ab2e11af51c1f26d1d2"
+    },
+    {
+      "path": "src/vendor/golang.org/x/net/LICENSE",
+      "gitBlob": "2a7cf70da6e498df9c11ab6a5eaa2ddd7af34da4"
+    },
+    {
+      "path": "src/vendor/golang.org/x/net/PATENTS",
+      "gitBlob": "733099041f84fa1e58611ab2e11af51c1f26d1d2"
+    },
+    {
+      "path": "src/vendor/golang.org/x/sys/LICENSE",
+      "gitBlob": "2a7cf70da6e498df9c11ab6a5eaa2ddd7af34da4"
+    },
+    {
+      "path": "src/vendor/golang.org/x/sys/PATENTS",
+      "gitBlob": "733099041f84fa1e58611ab2e11af51c1f26d1d2"
+    },
+    {
+      "path": "src/vendor/golang.org/x/text/LICENSE",
+      "gitBlob": "2a7cf70da6e498df9c11ab6a5eaa2ddd7af34da4"
+    },
+    {
+      "path": "src/vendor/golang.org/x/text/PATENTS",
+      "gitBlob": "733099041f84fa1e58611ab2e11af51c1f26d1d2"
+    }
+  ],
+  "noticesSha256": "fc84e50cfc00a34c05cb952da4af505ea2ef13dd72fe8faf2aada2efe224345f"
+}

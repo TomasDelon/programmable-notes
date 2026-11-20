@@ -1,0 +1,5 @@
+NATIVE_DIALOG {"pid": 11946, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-DHDXiF/pending-inline.mdx"}
+NATIVE_DIALOG {"pid": 11946, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_PENDING_GUARDS_UNCHANGED_ORIGINAL_AND_ACTUAL_DIRTY_CLOSE_CANCEL_PASS
+NATIVE_PENDING_ESCAPE_APPLY_EXACT_BOM_CRLF_SAVE_UNDO_REDO_REOPEN_0640_PASS
+NATIVE_PENDING_CLEAN_EXIT_PASS

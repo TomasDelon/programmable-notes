@@ -1,0 +1,137 @@
+
+> programmable-notes@0.0.0 check
+> npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:e2e
+
+
+> programmable-notes@0.0.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> programmable-notes@0.0.0 lint
+> eslint . --max-warnings 0
+
+
+> programmable-notes@0.0.0 typecheck
+> tsc --noEmit
+
+
+> programmable-notes@0.0.0 test
+> vitest run
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+
+ Test Files  5 passed (5)
+      Tests  6 passed (6)
+   Start at  19:57:57
+   Duration  2.25s (environment 78%, setup 10%, tests 6%, import 4%, transform 1%)
+
+Environment  jsdom was created 5 times · 4.02s total, 78% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+
+> programmable-notes@0.0.0 test:e2e
+> npm run build && playwright test
+
+
+> programmable-notes@0.0.0 prebuild
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 build
+> npm run typecheck && vite build
+
+
+> programmable-notes@0.0.0 typecheck
+> tsc --noEmit
+
+vite v8.3.8 building client environment for production...
+transforming...
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js" may not be preserved when bundling.
+    ╭─[ node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js:11:1 ]
+    │
+ 11 │ ''
+    │ ─┬
+    │  ╰── module level directive may not be preserved
+    │
+    │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+────╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/estree-util-create.js" may not be preserved when bundling.
+   ╭─[ node_modules/@mdx-js/mdx/lib/util/estree-util-create.js:6:1 ]
+   │
+ 6 │ ''
+   │ ─┬
+   │  ╰── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "" in "node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js" may not be preserved when bundling.
+    ╭─[ node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js:48:1 ]
+    │
+ 48 │ ''
+    │ ─┬
+    │  ╰── module level directive may not be preserved
+    │
+    │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+────╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/text.js" may not be preserved when bundling.
+   ╭─[ node_modules/hast-util-to-estree/lib/handlers/text.js:9:1 ]
+   │
+ 9 │ ''
+   │ ─┬
+   │  ╰── module level directive may not be preserved
+   │
+   │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+───╯
+
+[MODULE_LEVEL_DIRECTIVE] The semantics of the module level directive "" in "node_modules/hast-util-to-estree/lib/handlers/comment.js" may not be preserved when bundling.
+    ╭─[ node_modules/hast-util-to-estree/lib/handlers/comment.js:12:1 ]
+    │
+ 12 │ ''
+    │ ─┬
+    │  ╰── module level directive may not be preserved
+    │
+    │ Help: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+────╯
+
+✓ 48 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.51 kB │ gzip:     0.32 kB
+dist/assets/esbuild-BaXVPFT2.wasm  13,978.85 kB │ gzip: 3,801.42 kB
+dist/assets/index-DLDJDTSt.css          0.62 kB │ gzip:     0.37 kB
+dist/assets/index-BnQSbzgf.js       1,993.59 kB │ gzip:   530.25 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 625ms
+[WebServer] (node:28282) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 2 workers
+
+(node:28306) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28305) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/bootstrap.spec.ts:62:1 › sandbox denies DOM, storage, network, resources, popup, top navigation and forged messages (4.4s)
+  ✓  3 [chromium] › tests/e2e/bootstrap.spec.ts:122:1 › original handoff malicious fixture is confined (2.1s)
+  ✓  2 [chromium] › tests/e2e/bootstrap.spec.ts:16:1 › unsaved MDX hooks, editor updates, errors, TSX imports, pinned package, and source fidelity (9.9s)
+  ✓  4 [chromium] › tests/e2e/bootstrap.spec.ts:140:1 › runtime crash is contained and source remains editable; forbidden imports fail closed (3.8s)
+  ✓  5 [chromium] › tests/e2e/bootstrap.spec.ts:161:1 › new workspace TSX imports work offline; CRLF no-op save and Stop cancellation (5.5s)
+
+  5 passed (16.6s)

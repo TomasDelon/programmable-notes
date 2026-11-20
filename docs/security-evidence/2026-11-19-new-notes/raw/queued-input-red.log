@@ -1,0 +1,42 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run --run tests/unit/native-documents.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-documents.test.ts (12 tests | 1 failed) 44ms
+   × new notes retain queued source input and start without filesystem authorization 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-documents.test.ts > new notes retain queued source input and start without filesystem authorization
+TypeError: h.result.current.newNote is not a function
+ ❯ tests/unit/native-documents.test.ts:244:22
+    242|   act(() => {
+    243|     h.result.current.change('queued original\r\n😀');
+    244|     h.result.current.newNote();
+       |                      ^
+    245|   });
+    246|   const state = h.result.current.workspace;
+ ❯ node_modules/@testing-library/react/dist/act-compat.js:47:24
+ ❯ process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:890:22
+ ❯ Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:46:25
+ ❯ tests/unit/native-documents.test.ts:242:3
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  02:28:15
+   Duration  1.20s (environment 78%, setup 10%, transform 6%, tests 4%, import 1%)
+

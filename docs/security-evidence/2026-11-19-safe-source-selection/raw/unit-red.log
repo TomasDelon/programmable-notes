@@ -1,0 +1,76 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/browser-documents.test.ts (7 tests | 2 failed) 264ms
+   × ignores delayed selection of a closed source and keeps selected and entry files valid 11ms
+   × rejects empty, unknown and inherited source names without changing dirty bytes or history identity 8ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/browser-documents.test.ts > ignores delayed selection of a closed source and keeps selected and entry files valid
+AssertionError: expected { …(7) } to be { …(7) } // Object.is equality
+
+- Expected
++ Received
+
+  {
+    "bindings": {},
+-   "entry": "second.mdx",
++   "entry": "first.mdx",
+    "files": {
+      "second.mdx": "# Second",
+    },
+    "groups": {
+      "second.mdx": "initial",
+    },
+    "saved": {
+      "second.mdx": "# Second",
+    },
+-   "selected": "second.mdx",
++   "selected": "first.mdx",
+    "sequence": 0,
+  }
+
+ ❯ tests/unit/browser-documents.test.ts:124:41
+    122|   expect(remaining.selected).toBe('second.mdx');
+    123|   act(() => delayedSelect('first.mdx'));
+    124|   expect(hook.result.current.workspace).toBe(remaining);
+       |                                         ^
+    125|   expect(hook.result.current.workspace.entry).toBe('second.mdx');
+    126| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/browser-documents.test.ts > rejects empty, unknown and inherited source names without changing dirty bytes or history identity
+AssertionError: expected { files: { …(2) }, …(6) } to be { files: { …(2) }, …(6) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -12,8 +12,8 @@
+    },
+    "saved": {
+      "first.mdx": "# First",
+      "second.mdx": "# Second",
+    },
+-   "selected": "first.mdx",
++   "selected": "",
+    "sequence": 0,
+  }
+
+ ❯ tests/unit/browser-documents.test.ts:139:43
+    137|   for (const key of ['', 'missing.mdx', 'toString', '__proto__']) {
+    138|     act(() => hook.result.current.select(key));
+    139|     expect(hook.result.current.workspace).toBe(before);
+       |                                           ^
+    140|   }
+    141|   act(() => hook.result.current.select('second.mdx'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  15:10:03
+   Duration  1.43s (environment 64%, tests 21%, setup 9%, transform 5%, import 1%)
+

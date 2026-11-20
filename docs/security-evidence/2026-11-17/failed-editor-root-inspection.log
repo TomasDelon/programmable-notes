@@ -1,0 +1,6 @@
+LAUNCH
+CONNECTED
+url tauri://localhost
+title 
+source <html><head></head><body></body></html>
+SYNC { resources: [], origin: 'null', body: '', ready: 'complete' }

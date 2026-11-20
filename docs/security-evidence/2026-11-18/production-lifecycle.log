@@ -1,0 +1,8 @@
+NATIVE_DIALOG {"pid": 11610, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/lifecycle.mdx"}
+{"pid": 11610, "window": 8388611, "sent": "WM_DELETE_WINDOW"}
+NATIVE_DIALOG {"pid": 11610, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+DIRTY_WINDOW_CLOSE_CANCEL_PASS
+{"pid": 11610, "window": 8388611, "sent": "WM_DELETE_WINDOW"}
+CLEAN_SHUTDOWN_PASS
+NATIVE_DIALOG {"pid": 11726, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/lifecycle.mdx"}
+FRESH_LAUNCH_REOPEN_PASS

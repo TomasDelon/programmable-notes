@@ -1,0 +1,11 @@
+Actual successful retry process exit: 0.
+Captured from tools.write_stdin(session_id=63862), completion chunk cf7d1f.
+The tool response explicitly returned exit_code:0. This is not inferred from result.json.
+Executed outer command copied the completed harness then invoked SSH with:
+  install -o root -g root -m 644 /work/final-desktop-probe-complete.py /opt/pn/final-desktop/probe-complete.py; python3 /opt/pn/final-desktop/probe-complete.py baseline
+
+Initial attempt: whole-controller work budget64s, cleanup budget75s; it cut the
+readiness command short after desktop compilation had consumed part of the budget.
+Retry: work budget110s, cleanup budget120s; actual elapsed73.964s. The child service
+RuntimeMaxSec60,55s external readiness deadline and every resource/sandbox guard
+were unchanged. Raw initial results remain in final-desktop-baseline/.

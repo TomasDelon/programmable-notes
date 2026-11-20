@@ -1,0 +1,19 @@
+/tmp/pn-native-RWVam8
+NATIVE_DIALOG {"pid": 27695, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-RWVam8/session-status.mdx", "dialogDismissed": true}
+NATIVE_SESSION_STATUS /tmp/pn-native-RWVam8/evidence/old-stop-only-oracle.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Stop must precede earliest possible expiry
+    at file:///opt/pn/acceptance/scripts/native-session-stop-only-before.mjs:127:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

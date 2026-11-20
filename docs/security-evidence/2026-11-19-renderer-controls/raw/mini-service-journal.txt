@@ -1,0 +1,33 @@
+Nov 19 09:10:11 pn-m3-guest systemd[446]: Started pn-mini-browser-control-server.service - /usr/bin/python3 -m http.server 9556 --bind 127.0.0.1 --directory /work/pn-mini-control-build.
+Nov 19 09:10:11 pn-m3-guest systemd[446]: Started pn-mini-browser-control-driver.service - /usr/bin/WebKitWebDriver --port=9555.
+Nov 19 09:10:43 pn-m3-guest WebKitWebDriver[22240]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 09:10:43 pn-m3-guest WebKitWebDriver[22240]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 09:10:46 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:10:46] "GET / HTTP/1.1" 200 -
+Nov 19 09:10:46 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:10:46] "GET /assets/index-CXZ7Axpb.js HTTP/1.1" 200 -
+Nov 19 09:10:46 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:10:46] "GET /assets/index-CpE1tWiR.css HTTP/1.1" 200 -
+Nov 19 09:10:50 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:10:50] "GET /assets/esbuild-BaXVPFT2.wasm HTTP/1.1" 200 -
+Nov 19 09:14:03 pn-m3-guest WebKitWebDriver[22363]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 09:14:03 pn-m3-guest WebKitWebDriver[22363]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 09:14:06 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:06] "GET / HTTP/1.1" 200 -
+Nov 19 09:14:07 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:07] "GET /assets/index-CXZ7Axpb.js HTTP/1.1" 200 -
+Nov 19 09:14:07 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:07] "GET /assets/index-CpE1tWiR.css HTTP/1.1" 200 -
+Nov 19 09:14:12 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:12] "GET /assets/esbuild-BaXVPFT2.wasm HTTP/1.1" 200 -
+Nov 19 09:14:31 pn-m3-guest WebKitWebDriver[22436]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 09:14:31 pn-m3-guest WebKitWebDriver[22436]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 09:14:34 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:34] "GET / HTTP/1.1" 200 -
+Nov 19 09:14:35 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:35] "GET /assets/index-CXZ7Axpb.js HTTP/1.1" 200 -
+Nov 19 09:14:35 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:35] "GET /assets/index-CpE1tWiR.css HTTP/1.1" 200 -
+Nov 19 09:14:40 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:14:40] "GET /assets/esbuild-BaXVPFT2.wasm HTTP/1.1" 200 -
+Nov 19 09:14:57 pn-m3-guest WebKitWebDriver[22509]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 09:14:57 pn-m3-guest WebKitWebDriver[22509]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 09:15:00 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:15:00] "GET / HTTP/1.1" 200 -
+Nov 19 09:15:01 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:15:01] "GET /assets/index-CXZ7Axpb.js HTTP/1.1" 200 -
+Nov 19 09:15:01 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:15:01] "GET /assets/index-CpE1tWiR.css HTTP/1.1" 200 -
+Nov 19 09:15:04 pn-m3-guest python3[22202]: 127.0.0.1 - - [19/Nov/2026 09:15:04] "GET /assets/esbuild-BaXVPFT2.wasm HTTP/1.1" 200 -
+Nov 19 09:15:11 pn-m3-guest systemd[446]: pn-mini-browser-control-server.service: Service reached runtime time limit. Stopping.
+Nov 19 09:15:11 pn-m3-guest systemd[446]: pn-mini-browser-control-driver.service: Service reached runtime time limit. Stopping.
+Nov 19 09:15:12 pn-m3-guest systemd[446]: pn-mini-browser-control-server.service: Failed with result 'timeout'.
+Nov 19 09:15:12 pn-m3-guest systemd[446]: pn-mini-browser-control-server.service: Consumed 5.156s CPU time.
+Nov 19 09:15:12 pn-m3-guest systemd[446]: pn-mini-browser-control-driver.service: Failed to kill control group /user.slice/user-1000.slice/user@1000.service/app.slice/pn-mini-browser-control-driver.service, ignoring: Invalid argument
+Nov 19 09:15:12 pn-m3-guest systemd[446]: pn-mini-browser-control-driver.service: Failed with result 'timeout'.
+Nov 19 09:15:12 pn-m3-guest systemd[446]: pn-mini-browser-control-driver.service: Consumed 2min 42.738s CPU time, 204.8M memory peak, 0B memory swap peak.

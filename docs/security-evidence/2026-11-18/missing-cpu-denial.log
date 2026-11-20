@@ -1,0 +1,4 @@
+cpuset io memory pids
+NOT RUN: resource backend unavailable or rejected: Cannot verify cpu.max: No such file or directory (os error 2)
+HELPER_EXIT=2
+PASS: missing CPU controller refused before payload delivery

@@ -1,0 +1,57 @@
+"""Read-only synthetic first-editor/unit startup monitor; no focus or clicks."""
+import hashlib,json,os,pathlib,re,subprocess,time
+import gi
+gi.require_version('Gdk','3.0')
+gi.require_version('GdkX11','3.0')
+from gi.repository import Gdk,GdkX11
+base=pathlib.Path(os.environ['NATIVE_EVIDENCE_DIR'])
+pid_file=pathlib.Path(os.environ['NATIVE_PID_FILE'])
+assert str(base).startswith('/tmp/pn-native-') and base.name=='evidence'
+assert base.stat().st_uid==os.geteuid()!=0
+out=base/'startup-monitor';out.mkdir()
+def cmd(argv):return subprocess.check_output(argv,text=True,stderr=subprocess.STDOUT,timeout=5).strip()
+def identity(pid):
+ p=pathlib.Path(f'/proc/{pid}')
+ assert p.stat().st_uid==os.geteuid()
+ assert os.readlink(p/'exe')=='/usr/bin/programmable-notes'
+ return p.joinpath('stat').read_text().rsplit(') ',1)[1].split()[19]
+end=time.monotonic()+180
+while not pid_file.exists():
+ if time.monotonic()>end:raise TimeoutError('No owned editor PID')
+ time.sleep(.1)
+ready=time.monotonic()+10
+while time.monotonic()<ready:
+ try:pid=int(pid_file.read_text());start=identity(pid);break
+ except (OSError,ValueError,AssertionError):time.sleep(.1)
+else:raise RuntimeError('Owned editor executable did not appear')
+seen=set();records=[]
+while time.monotonic()<end:
+ try:
+  if identity(pid)!=start:break
+ except FileNotFoundError:break
+ for line in cmd(['systemctl','--user','list-units','--all','--plain','--no-legend',f'programmable-notes-preview-{pid}-*.service']).splitlines():
+  unit=line.strip().split()[0]
+  try:
+   props=dict(v.split('=',1) for v in cmd(['systemctl','--user','show',unit,'--property=MainPID,ActiveEnterTimestampMonotonic,ControlGroup,ActiveState,CPUUsageNSec,MemoryCurrent,MemoryPeak']).splitlines())
+   age=time.clock_gettime_ns(time.CLOCK_MONOTONIC)//1000-int(props['ActiveEnterTimestampMonotonic'])
+   for threshold in (45000000,52000000):
+    if age<threshold or (unit,threshold) in seen:continue
+    seen.add((unit,threshold));row={'unit':unit,'ageUsec':age,'properties':props};records.append(row)
+    child=int(props['MainPID']);identity(child)
+    assert b'--preview-child' in pathlib.Path(f'/proc/{child}/cmdline').read_bytes().split(b'\0')
+    windows=cmd(['xdotool','search','--onlyvisible','--pid',str(child)]).split()
+    assert len(windows)==1
+    window=int(windows[0],0)
+    assert int(cmd(['xdotool','getwindowpid',str(window)]))==child
+    assert cmd(['xdotool','getwindowname',str(window)])=='Unprivileged document preview'
+    d=Gdk.Display.get_default();w=GdkX11.X11Window.foreign_new_for_display(d,window)
+    width,height=w.get_width(),w.get_height()
+    image=Gdk.pixbuf_get_from_window(w,0,0,width,height)
+    assert image
+    name=f'{child}-{threshold}.png';image.savev(str(out/name),'png',[],[])
+    row.update(pid=child,window=window,width=width,height=height,screenshot=name,sha256=hashlib.sha256((out/name).read_bytes()).hexdigest())
+  except (OSError,ValueError,KeyError,AssertionError,subprocess.SubprocessError) as error:
+   if records:records[-1]['diagnosticError']=str(error)
+ (out/'observations.json').write_text(json.dumps({'editorPid':pid,'editorStartTicks':start,'records':records},indent=2)+'\n')
+ time.sleep(1)
+print(json.dumps({'editorPid':pid,'records':len(records),'directory':str(out)}))

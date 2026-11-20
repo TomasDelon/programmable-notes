@@ -1,0 +1,6 @@
+{
+  "producerExit": 7,
+  "markerPrinted": true,
+  "gateExit": 7,
+  "shell": "bash --noprofile --norc -eo pipefail"
+}

@@ -5,3 +5,13 @@ coverage
 playwright-report
 test-results
 package-lock.json
+
+docs/handoff
+
+**/target
+src-tauri/gen
+
+src-tauri/vendor
+
+# Preserve raw runtime evidence bytes and producer checksums.
+docs/security-evidence/**/raw

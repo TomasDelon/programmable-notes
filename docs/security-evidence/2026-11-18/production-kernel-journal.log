@@ -1,0 +1,816 @@
+Nov 17 23:17:18 pn-m3-guest kernel: Linux version 6.8.0-149-generic (buildd@lcy02-amd64-099) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #149-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:21:10 UTC 2026 (Ubuntu 6.8.0-149.149-generic 6.8.12)
+Nov 17 23:17:18 pn-m3-guest kernel: Command line: root=/dev/vda rw console=ttyS0 systemd.unified_cgroup_hierarchy=1 apparmor=1 security=apparmor
+Nov 17 23:17:18 pn-m3-guest kernel: KERNEL supported cpus:
+Nov 17 23:17:18 pn-m3-guest kernel:   Intel GenuineIntel
+Nov 17 23:17:18 pn-m3-guest kernel:   AMD AuthenticAMD
+Nov 17 23:17:18 pn-m3-guest kernel:   Hygon HygonGenuine
+Nov 17 23:17:18 pn-m3-guest kernel:   Centaur CentaurHauls
+Nov 17 23:17:18 pn-m3-guest kernel:   zhaoxin   Shanghai  
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-provided physical RAM map:
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x0000000000100000-0x00000000bffdcfff] usable
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x00000000bffdd000-0x00000000bfffffff] reserved
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x0000000100000000-0x000000023fffffff] usable
+Nov 17 23:17:18 pn-m3-guest kernel: BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+Nov 17 23:17:18 pn-m3-guest kernel: NX (Execute Disable) protection: active
+Nov 17 23:17:18 pn-m3-guest kernel: APIC: Static calls initialized
+Nov 17 23:17:18 pn-m3-guest kernel: SMBIOS 3.0.0 present.
+Nov 17 23:17:18 pn-m3-guest kernel: DMI: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Nov 17 23:17:18 pn-m3-guest kernel: tsc: Fast TSC calibration using PIT
+Nov 17 23:17:18 pn-m3-guest kernel: tsc: Detected 2596.124 MHz processor
+Nov 17 23:17:18 pn-m3-guest kernel: e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+Nov 17 23:17:18 pn-m3-guest kernel: e820: remove [mem 0x000a0000-0x000fffff] usable
+Nov 17 23:17:18 pn-m3-guest kernel: last_pfn = 0x240000 max_arch_pfn = 0x10000000000
+Nov 17 23:17:18 pn-m3-guest kernel: MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+Nov 17 23:17:18 pn-m3-guest kernel: x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+Nov 17 23:17:18 pn-m3-guest kernel: last_pfn = 0xbffdd max_arch_pfn = 0x10000000000
+Nov 17 23:17:18 pn-m3-guest kernel: found SMP MP-table at [mem 0x000f5470-0x000f547f]
+Nov 17 23:17:18 pn-m3-guest kernel: Using GB pages for direct mapping
+Nov 17 23:17:18 pn-m3-guest kernel: RAMDISK: [mem 0xbc17b000-0xbffcffff]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Early table checksum verification disabled
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: RSDP 0x00000000000F5260 000014 (v00 BOCHS )
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: RSDT 0x00000000BFFE1D75 000034 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: FACP 0x00000000BFFE1C11 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: DSDT 0x00000000BFFE0040 001BD1 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: FACS 0x00000000BFFE0000 000040
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: APIC 0x00000000BFFE1C85 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: HPET 0x00000000BFFE1D15 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: WAET 0x00000000BFFE1D4D 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving FACP table memory at [mem 0xbffe1c11-0xbffe1c84]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving DSDT table memory at [mem 0xbffe0040-0xbffe1c10]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving FACS table memory at [mem 0xbffe0000-0xbffe003f]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving APIC table memory at [mem 0xbffe1c85-0xbffe1d14]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving HPET table memory at [mem 0xbffe1d15-0xbffe1d4c]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Reserving WAET table memory at [mem 0xbffe1d4d-0xbffe1d74]
+Nov 17 23:17:18 pn-m3-guest kernel: No NUMA configuration found
+Nov 17 23:17:18 pn-m3-guest kernel: Faking a node at [mem 0x0000000000000000-0x000000023fffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: NODE_DATA(0) allocated [mem 0x23ffd5000-0x23fffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: Zone ranges:
+Nov 17 23:17:18 pn-m3-guest kernel:   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+Nov 17 23:17:18 pn-m3-guest kernel:   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+Nov 17 23:17:18 pn-m3-guest kernel:   Normal   [mem 0x0000000100000000-0x000000023fffffff]
+Nov 17 23:17:18 pn-m3-guest kernel:   Device   empty
+Nov 17 23:17:18 pn-m3-guest kernel: Movable zone start for each node
+Nov 17 23:17:18 pn-m3-guest kernel: Early memory node ranges
+Nov 17 23:17:18 pn-m3-guest kernel:   node   0: [mem 0x0000000000001000-0x000000000009efff]
+Nov 17 23:17:18 pn-m3-guest kernel:   node   0: [mem 0x0000000000100000-0x00000000bffdcfff]
+Nov 17 23:17:18 pn-m3-guest kernel:   node   0: [mem 0x0000000100000000-0x000000023fffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: Initmem setup node 0 [mem 0x0000000000001000-0x000000023fffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+Nov 17 23:17:18 pn-m3-guest kernel: On node 0, zone DMA: 97 pages in unavailable ranges
+Nov 17 23:17:18 pn-m3-guest kernel: On node 0, zone Normal: 35 pages in unavailable ranges
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PM-Timer IO Port: 0x608
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+Nov 17 23:17:18 pn-m3-guest kernel: IOAPIC[0]: apic_id 0, version 32, address 0xfec00000, GSI 0-23
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Using ACPI (MADT) for SMP configuration information
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: HPET id: 0x8086a201 base: 0xfed00000
+Nov 17 23:17:18 pn-m3-guest kernel: smpboot: Allowing 4 CPUs, 0 hotplug CPUs
+Nov 17 23:17:18 pn-m3-guest kernel: PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+Nov 17 23:17:18 pn-m3-guest kernel: PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+Nov 17 23:17:18 pn-m3-guest kernel: PM: hibernation: Registered nosave memory: [mem 0xbffdd000-0xffffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: [mem 0xc0000000-0xfffbffff] available for PCI devices
+Nov 17 23:17:18 pn-m3-guest kernel: Booting paravirtualized kernel on bare hardware
+Nov 17 23:17:18 pn-m3-guest kernel: clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+Nov 17 23:17:18 pn-m3-guest kernel: setup_percpu: NR_CPUS:8192 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+Nov 17 23:17:18 pn-m3-guest kernel: percpu: Embedded 86 pages/cpu s229376 r8192 d114688 u524288
+Nov 17 23:17:18 pn-m3-guest kernel: pcpu-alloc: s229376 r8192 d114688 u524288 alloc=1*2097152
+Nov 17 23:17:18 pn-m3-guest kernel: pcpu-alloc: [0] 0 1 2 3 
+Nov 17 23:17:18 pn-m3-guest kernel: Kernel command line: root=/dev/vda rw console=ttyS0 systemd.unified_cgroup_hierarchy=1 apparmor=1 security=apparmor
+Nov 17 23:17:18 pn-m3-guest kernel: random: crng init done
+Nov 17 23:17:18 pn-m3-guest kernel: Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: Fallback order for Node 0: 0 
+Nov 17 23:17:18 pn-m3-guest kernel: Built 1 zonelists, mobility grouping on.  Total pages: 2064093
+Nov 17 23:17:18 pn-m3-guest kernel: Policy zone: Normal
+Nov 17 23:17:18 pn-m3-guest kernel: mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+Nov 17 23:17:18 pn-m3-guest kernel: software IO TLB: area num 4.
+Nov 17 23:17:18 pn-m3-guest kernel: Memory: 8057792K/8388076K available (22528K kernel code, 4444K rwdata, 14456K rodata, 4948K init, 4756K bss, 330080K reserved, 0K cma-reserved)
+Nov 17 23:17:18 pn-m3-guest kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+Nov 17 23:17:18 pn-m3-guest kernel: ftrace: allocating 57855 entries in 228 pages
+Nov 17 23:17:18 pn-m3-guest kernel: ftrace: allocated 228 pages with 4 groups
+Nov 17 23:17:18 pn-m3-guest kernel: Dynamic Preempt: voluntary
+Nov 17 23:17:18 pn-m3-guest kernel: rcu: Preemptible hierarchical RCU implementation.
+Nov 17 23:17:18 pn-m3-guest kernel: rcu:         RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=4.
+Nov 17 23:17:18 pn-m3-guest kernel:         Trampoline variant of Tasks RCU enabled.
+Nov 17 23:17:18 pn-m3-guest kernel:         Rude variant of Tasks RCU enabled.
+Nov 17 23:17:18 pn-m3-guest kernel:         Tracing variant of Tasks RCU enabled.
+Nov 17 23:17:18 pn-m3-guest kernel: rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+Nov 17 23:17:18 pn-m3-guest kernel: rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+Nov 17 23:17:18 pn-m3-guest kernel: RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+Nov 17 23:17:18 pn-m3-guest kernel: RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+Nov 17 23:17:18 pn-m3-guest kernel: RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+Nov 17 23:17:18 pn-m3-guest kernel: NR_IRQS: 524544, nr_irqs: 456, preallocated irqs: 16
+Nov 17 23:17:18 pn-m3-guest kernel: rcu: srcu_init: Setting srcu_struct sizes based on contention.
+Nov 17 23:17:18 pn-m3-guest kernel: Console: colour VGA+ 80x25
+Nov 17 23:17:18 pn-m3-guest kernel: printk: legacy console [ttyS0] enabled
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Core revision 20230628
+Nov 17 23:17:18 pn-m3-guest kernel: clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+Nov 17 23:17:18 pn-m3-guest kernel: APIC: Switch to symmetric I/O mode setup
+Nov 17 23:17:18 pn-m3-guest kernel: ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+Nov 17 23:17:18 pn-m3-guest kernel: tsc: Marking TSC unstable due to TSCs unsynchronized
+Nov 17 23:17:18 pn-m3-guest kernel: Calibrating delay loop (skipped), value calculated using timer frequency.. 5192.24 BogoMIPS (lpj=2596124)
+Nov 17 23:17:18 pn-m3-guest kernel: x86/cpu: User Mode Instruction Prevention (UMIP) activated
+Nov 17 23:17:18 pn-m3-guest kernel: Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
+Nov 17 23:17:18 pn-m3-guest kernel: Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
+Nov 17 23:17:18 pn-m3-guest kernel: Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+Nov 17 23:17:18 pn-m3-guest kernel: Spectre V2 : Mitigation: Retpolines
+Nov 17 23:17:18 pn-m3-guest kernel: Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+Nov 17 23:17:18 pn-m3-guest kernel: Speculative Store Bypass: Vulnerable
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: xstate_offset[3]:  960, xstate_sizes[3]:   64
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: xstate_offset[4]: 1024, xstate_sizes[4]:   64
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: xstate_offset[9]: 2688, xstate_sizes[9]:    8
+Nov 17 23:17:18 pn-m3-guest kernel: x86/fpu: Enabled xstate features 0x21f, context size is 2696 bytes, using 'standard' format.
+Nov 17 23:17:18 pn-m3-guest kernel: Freeing SMP alternatives memory: 48K
+Nov 17 23:17:18 pn-m3-guest kernel: pid_max: default: 32768 minimum: 301
+Nov 17 23:17:18 pn-m3-guest kernel: LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,integrity
+Nov 17 23:17:18 pn-m3-guest kernel: landlock: Up and running.
+Nov 17 23:17:18 pn-m3-guest kernel: Yama: becoming mindful.
+Nov 17 23:17:18 pn-m3-guest kernel: AppArmor: AppArmor initialized
+Nov 17 23:17:18 pn-m3-guest kernel: Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: smpboot: CPU0: AMD QEMU TCG CPU version 2.5+ (family: 0x6, model: 0x6, stepping: 0x3)
+Nov 17 23:17:18 pn-m3-guest kernel: Performance Events: PMU not available due to virtualization, using software events only.
+Nov 17 23:17:18 pn-m3-guest kernel: signal: max sigframe size: 3632
+Nov 17 23:17:18 pn-m3-guest kernel: rcu: Hierarchical SRCU implementation.
+Nov 17 23:17:18 pn-m3-guest kernel: rcu:         Max phase no-delay instances is 400.
+Nov 17 23:17:18 pn-m3-guest kernel: NMI watchdog: Perf NMI watchdog permanently disabled
+Nov 17 23:17:18 pn-m3-guest kernel: smp: Bringing up secondary CPUs ...
+Nov 17 23:17:18 pn-m3-guest kernel: smpboot: x86: Booting SMP configuration:
+Nov 17 23:17:18 pn-m3-guest kernel: .... node  #0, CPUs:      #1 #2 #3
+Nov 17 23:17:18 pn-m3-guest kernel: calibrate_delay_direct() dropping max bogoMips estimate 4 = 3364966
+Nov 17 23:17:18 pn-m3-guest kernel: calibrate_delay_direct() dropping max bogoMips estimate 3 = 3114935
+Nov 17 23:17:18 pn-m3-guest kernel: smp: Brought up 1 node, 4 CPUs
+Nov 17 23:17:18 pn-m3-guest kernel: smpboot: Max logical packages: 1
+Nov 17 23:17:18 pn-m3-guest kernel: smpboot: Total of 4 processors activated (20969.13 BogoMIPS)
+Nov 17 23:17:18 pn-m3-guest kernel: devtmpfs: initialized
+Nov 17 23:17:18 pn-m3-guest kernel: x86/mm: Memory block size: 128MB
+Nov 17 23:17:18 pn-m3-guest kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+Nov 17 23:17:18 pn-m3-guest kernel: futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: pinctrl core: initialized pinctrl subsystem
+Nov 17 23:17:18 pn-m3-guest kernel: PM: RTC time: 23:17:09, date: 2026-11-17
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: DMA: preallocated 1024 KiB GFP_KERNEL pool for atomic allocations
+Nov 17 23:17:18 pn-m3-guest kernel: DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+Nov 17 23:17:18 pn-m3-guest kernel: DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+Nov 17 23:17:18 pn-m3-guest kernel: audit: initializing netlink subsys (disabled)
+Nov 17 23:17:18 pn-m3-guest kernel: audit: type=2000 audit(1794957428.807:1): state=initialized audit_enabled=0 res=1
+Nov 17 23:17:18 pn-m3-guest kernel: thermal_sys: Registered thermal governor 'fair_share'
+Nov 17 23:17:18 pn-m3-guest kernel: thermal_sys: Registered thermal governor 'bang_bang'
+Nov 17 23:17:18 pn-m3-guest kernel: thermal_sys: Registered thermal governor 'step_wise'
+Nov 17 23:17:18 pn-m3-guest kernel: thermal_sys: Registered thermal governor 'user_space'
+Nov 17 23:17:18 pn-m3-guest kernel: thermal_sys: Registered thermal governor 'power_allocator'
+Nov 17 23:17:18 pn-m3-guest kernel: cpuidle: using governor ladder
+Nov 17 23:17:18 pn-m3-guest kernel: cpuidle: using governor menu
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: Using configuration type 1 for base access
+Nov 17 23:17:18 pn-m3-guest kernel: mtrr: your CPUs had inconsistent fixed MTRR settings
+Nov 17 23:17:18 pn-m3-guest kernel: mtrr: your CPUs had inconsistent variable MTRR settings
+Nov 17 23:17:18 pn-m3-guest kernel: mtrr: your CPUs had inconsistent MTRRdefType settings
+Nov 17 23:17:18 pn-m3-guest kernel: mtrr: probably your BIOS does not setup all CPUs.
+Nov 17 23:17:18 pn-m3-guest kernel: mtrr: corrected configuration.
+Nov 17 23:17:18 pn-m3-guest kernel: kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+Nov 17 23:17:18 pn-m3-guest kernel: HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+Nov 17 23:17:18 pn-m3-guest kernel: HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+Nov 17 23:17:18 pn-m3-guest kernel: HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+Nov 17 23:17:18 pn-m3-guest kernel: HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Added _OSI(Module Device)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Added _OSI(Processor Device)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Added _OSI(Processor Aggregator Device)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: 1 ACPI AML tables successfully acquired and loaded
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: _OSC evaluation for CPUs failed, trying _PDC
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Interpreter enabled
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PM: (supports S0 S3 S4 S5)
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Using IOAPIC for interrupt routing
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: Using E820 reservations for host bridge windows
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: Enabled 2 GPEs in block 00 to 0F
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+Nov 17 23:17:18 pn-m3-guest kernel: acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI EDR HPX-Type3]
+Nov 17 23:17:18 pn-m3-guest kernel: acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+Nov 17 23:17:18 pn-m3-guest kernel: acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [3] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [4] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [5] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [6] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [7] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [8] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [9] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [10] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [11] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [12] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [13] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [14] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [15] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [16] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [17] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [18] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [19] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [20] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [21] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [22] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [23] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [24] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [25] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [26] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [27] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [28] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [29] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [30] registered
+Nov 17 23:17:18 pn-m3-guest kernel: acpiphp: Slot [31] registered
+Nov 17 23:17:18 pn-m3-guest kernel: PCI host bridge to bus 0000:00
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [mem 0xc000000000-0xc07fffffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: root bus resource [bus 00-ff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: BAR 4 [io  0xc0c0-0xc0cf]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: [1234:1111] type 00 class 0x030000 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: BAR 0 [mem 0xfd000000-0xfdffffff pref]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: BAR 2 [mem 0xfeb90000-0xfeb90fff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: ROM [mem 0xfeb80000-0xfeb8ffff pref]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:03.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:03.0: BAR 0 [io  0xc080-0xc09f]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:03.0: BAR 1 [mem 0xfeb91000-0xfeb91fff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:03.0: BAR 4 [mem 0xc000000000-0xc000003fff 64bit pref]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:03.0: ROM [mem 0xfeb00000-0xfeb7ffff pref]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:04.0: [1af4:1009] type 00 class 0x000200 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:04.0: BAR 0 [io  0xc0a0-0xc0bf]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:04.0: BAR 1 [mem 0xfeb92000-0xfeb92fff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:04.0: BAR 4 [mem 0xc000004000-0xc000007fff 64bit pref]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:05.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:05.0: BAR 0 [io  0xc000-0xc07f]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:05.0: BAR 1 [mem 0xfeb93000-0xfeb93fff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:05.0: BAR 4 [mem 0xc000008000-0xc00000bfff 64bit pref]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+Nov 17 23:17:18 pn-m3-guest kernel: iommu: Default domain type: Translated
+Nov 17 23:17:18 pn-m3-guest kernel: iommu: DMA domain TLB invalidation policy: lazy mode
+Nov 17 23:17:18 pn-m3-guest kernel: SCSI subsystem initialized
+Nov 17 23:17:18 pn-m3-guest kernel: libata version 3.00 loaded.
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: bus type USB registered
+Nov 17 23:17:18 pn-m3-guest kernel: usbcore: registered new interface driver usbfs
+Nov 17 23:17:18 pn-m3-guest kernel: usbcore: registered new interface driver hub
+Nov 17 23:17:18 pn-m3-guest kernel: usbcore: registered new device driver usb
+Nov 17 23:17:18 pn-m3-guest kernel: pps_core: LinuxPPS API ver. 1 registered
+Nov 17 23:17:18 pn-m3-guest kernel: pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+Nov 17 23:17:18 pn-m3-guest kernel: PTP clock support registered
+Nov 17 23:17:18 pn-m3-guest kernel: EDAC MC: Ver: 3.0.0
+Nov 17 23:17:18 pn-m3-guest kernel: NetLabel: Initializing
+Nov 17 23:17:18 pn-m3-guest kernel: NetLabel:  domain hash size = 128
+Nov 17 23:17:18 pn-m3-guest kernel: NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+Nov 17 23:17:18 pn-m3-guest kernel: NetLabel:  unlabeled traffic allowed by default
+Nov 17 23:17:18 pn-m3-guest kernel: mctp: management component transport protocol core
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_MCTP protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: Using ACPI for IRQ routing
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: pci_cache_line_size set to 64 bytes
+Nov 17 23:17:18 pn-m3-guest kernel: e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+Nov 17 23:17:18 pn-m3-guest kernel: e820: reserve RAM buffer [mem 0xbffdd000-0xbfffffff]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: vgaarb: setting as boot VGA device
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: vgaarb: bridge control possible
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:02.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+Nov 17 23:17:18 pn-m3-guest kernel: vgaarb: loaded
+Nov 17 23:17:18 pn-m3-guest kernel: hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+Nov 17 23:17:18 pn-m3-guest kernel: hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+Nov 17 23:17:18 pn-m3-guest kernel: clocksource: Switched to clocksource hpet
+Nov 17 23:17:18 pn-m3-guest kernel: VFS: Disk quotas dquot_6.6.0
+Nov 17 23:17:18 pn-m3-guest kernel: VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+Nov 17 23:17:18 pn-m3-guest kernel: AppArmor: AppArmor Filesystem Enabled
+Nov 17 23:17:18 pn-m3-guest kernel: pnp: PnP ACPI init
+Nov 17 23:17:18 pn-m3-guest kernel: pnp 00:02: [dma 2]
+Nov 17 23:17:18 pn-m3-guest kernel: pnp: PnP ACPI: found 6 devices
+Nov 17 23:17:18 pn-m3-guest kernel: clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_INET protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: TCP: Hash tables configured (established 65536 bind 65536)
+Nov 17 23:17:18 pn-m3-guest kernel: MPTCP token hash table entries: 8192 (order: 6, 196608 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: UDP hash table entries: 4096 (order: 5, 131072 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: UDP-Lite hash table entries: 4096 (order: 5, 131072 bytes, linear)
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_UNIX/PF_LOCAL protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_XDP protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci_bus 0000:00: resource 8 [mem 0xc000000000-0xc07fffffff window]
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:01.0: PIIX3: Enabling Passive Release
+Nov 17 23:17:18 pn-m3-guest kernel: pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+Nov 17 23:17:18 pn-m3-guest kernel: PCI: CLS 0 bytes, default 64
+Nov 17 23:17:18 pn-m3-guest kernel: PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+Nov 17 23:17:18 pn-m3-guest kernel: software IO TLB: mapped [mem 0x00000000b817b000-0x00000000bc17b000] (64MB)
+Nov 17 23:17:18 pn-m3-guest kernel: Trying to unpack rootfs image as initramfs...
+Nov 17 23:17:18 pn-m3-guest kernel: Initialise system trusted keyrings
+Nov 17 23:17:18 pn-m3-guest kernel: Key type blacklist registered
+Nov 17 23:17:18 pn-m3-guest kernel: workingset: timestamp_bits=36 max_order=21 bucket_order=0
+Nov 17 23:17:18 pn-m3-guest kernel: zbud: loaded
+Nov 17 23:17:18 pn-m3-guest kernel: squashfs: version 4.0 (2009/01/31) Phillip Lougher
+Nov 17 23:17:18 pn-m3-guest kernel: fuse: init (API version 7.39)
+Nov 17 23:17:18 pn-m3-guest kernel: integrity: Platform Keyring initialized
+Nov 17 23:17:18 pn-m3-guest kernel: integrity: Machine keyring initialized
+Nov 17 23:17:18 pn-m3-guest kernel: Key type asymmetric registered
+Nov 17 23:17:18 pn-m3-guest kernel: Asymmetric key parser 'x509' registered
+Nov 17 23:17:18 pn-m3-guest kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 243)
+Nov 17 23:17:18 pn-m3-guest kernel: io scheduler mq-deadline registered
+Nov 17 23:17:18 pn-m3-guest kernel: shpchp: Standard Hot Plug PCI Controller Driver version: 0.4
+Nov 17 23:17:18 pn-m3-guest kernel: input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: button: Power Button [PWRF]
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: \_SB_.LNKC: Enabled at IRQ 11
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: \_SB_.LNKD: Enabled at IRQ 10
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: \_SB_.LNKA: Enabled at IRQ 10
+Nov 17 23:17:18 pn-m3-guest kernel: Serial: 8250/16550 driver, 32 ports, IRQ sharing enabled
+Nov 17 23:17:18 pn-m3-guest kernel: 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+Nov 17 23:17:18 pn-m3-guest kernel: Linux agpgart interface v0.103
+Nov 17 23:17:18 pn-m3-guest kernel: loop: module loaded
+Nov 17 23:17:18 pn-m3-guest kernel: virtio_blk virtio2: 4/0/0 default/read/poll queues
+Nov 17 23:17:18 pn-m3-guest kernel: virtio_blk virtio2: [vda] 50331648 512-byte logical blocks (25.8 GB/24.0 GiB)
+Nov 17 23:17:18 pn-m3-guest kernel: ata_piix 0000:00:01.1: version 2.13
+Nov 17 23:17:18 pn-m3-guest kernel: scsi host0: ata_piix
+Nov 17 23:17:18 pn-m3-guest kernel: scsi host1: ata_piix
+Nov 17 23:17:18 pn-m3-guest kernel: ata1: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc0c0 irq 14 lpm-pol 0
+Nov 17 23:17:18 pn-m3-guest kernel: ata2: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc0c8 irq 15 lpm-pol 0
+Nov 17 23:17:18 pn-m3-guest kernel: ACPI: bus type drm_connector registered
+Nov 17 23:17:18 pn-m3-guest kernel: tun: Universal TUN/TAP device driver, 1.6
+Nov 17 23:17:18 pn-m3-guest kernel: PPP generic driver version 2.4.2
+Nov 17 23:17:18 pn-m3-guest kernel: i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+Nov 17 23:17:18 pn-m3-guest kernel: serio: i8042 KBD port at 0x60,0x64 irq 1
+Nov 17 23:17:18 pn-m3-guest kernel: serio: i8042 AUX port at 0x60,0x64 irq 12
+Nov 17 23:17:18 pn-m3-guest kernel: mousedev: PS/2 mouse device common for all mice
+Nov 17 23:17:18 pn-m3-guest kernel: rtc_cmos 00:05: RTC can wake from S4
+Nov 17 23:17:18 pn-m3-guest kernel: input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input1
+Nov 17 23:17:18 pn-m3-guest kernel: rtc_cmos 00:05: registered as rtc0
+Nov 17 23:17:18 pn-m3-guest kernel: rtc_cmos 00:05: setting system clock to 2026-11-17T23:17:10 UTC (1794957430)
+Nov 17 23:17:18 pn-m3-guest kernel: rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+Nov 17 23:17:18 pn-m3-guest kernel: i2c_dev: i2c /dev entries driver
+Nov 17 23:17:18 pn-m3-guest kernel: device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+Nov 17 23:17:18 pn-m3-guest kernel: device-mapper: uevent: version 1.0.3
+Nov 17 23:17:18 pn-m3-guest kernel: device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@redhat.com
+Nov 17 23:17:18 pn-m3-guest kernel: amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+Nov 17 23:17:18 pn-m3-guest kernel: ledtrig-cpu: registered to indicate activity on CPUs
+Nov 17 23:17:18 pn-m3-guest kernel: drop_monitor: Initializing network drop monitor service
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_INET6 protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: ata2: found unknown device (class 0)
+Nov 17 23:17:18 pn-m3-guest kernel: ata2.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+Nov 17 23:17:18 pn-m3-guest kernel: scsi 1:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+Nov 17 23:17:18 pn-m3-guest kernel: sr 1:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+Nov 17 23:17:18 pn-m3-guest kernel: cdrom: Uniform CD-ROM driver Revision: 3.20
+Nov 17 23:17:18 pn-m3-guest kernel: sr 1:0:0:0: Attached scsi CD-ROM sr0
+Nov 17 23:17:18 pn-m3-guest kernel: sr 1:0:0:0: Attached scsi generic sg0 type 5
+Nov 17 23:17:18 pn-m3-guest kernel: Freeing initrd memory: 63828K
+Nov 17 23:17:18 pn-m3-guest kernel: Segment Routing with IPv6
+Nov 17 23:17:18 pn-m3-guest kernel: In-situ OAM (IOAM) with IPv6
+Nov 17 23:17:18 pn-m3-guest kernel: NET: Registered PF_PACKET protocol family
+Nov 17 23:17:18 pn-m3-guest kernel: Key type dns_resolver registered
+Nov 17 23:17:18 pn-m3-guest kernel: IPI shorthand broadcast: enabled
+Nov 17 23:17:18 pn-m3-guest kernel: registered taskstats version 1
+Nov 17 23:17:18 pn-m3-guest kernel: Loading compiled-in X.509 certificates
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Build time autogenerated kernel key: 9a137e402f355547be6108f074230bd270d34d14'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Live Patch Signing 2025 Kmod: d541cef61dc7e793b7eb7e899970a2eef0b5dc8c'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Live Patch Signing: 14df34d1a87cf37625abec039ef2bf521249b969'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing 2025 Kmod: 4627603d2357a2a3f81006370894c221175893e9'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Kernel Module Signing: 88f752e560a1e0737e31163a466ad7b70a850c19'
+Nov 17 23:17:18 pn-m3-guest kernel: blacklist: Loading compiled-in revocation X.509 certificates
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing: 61482aa2830d0ab2ad5af10b7250da9033ddcef0'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2017): 242ade75ac4a15e50d50c84b0d45ff3eae707a03'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (ESM 2018): 365188c1d374d6b07c3c8f240f8ef722433d6a8b'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2019): c0746fd6c5da3ae827864651ad66ae47fe24b3e8'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v1): a8d54bbb3825cfb94fa13c9f8a594a195c107b8d'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v2): 4cf046892d6fd3c9a5b03f98d845f90851dc6a8c'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (2021 v3): 100437bb6de6e469b581e61cd66bce3ef4ed53af'
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Canonical Ltd. Secure Boot Signing (Ubuntu Core 2019): c1d57b8f6b743f23ee41f4f7ee292f06eecadfb9'
+Nov 17 23:17:18 pn-m3-guest kernel: Key type .fscrypt registered
+Nov 17 23:17:18 pn-m3-guest kernel: Key type fscrypt-provisioning registered
+Nov 17 23:17:18 pn-m3-guest kernel: Key type encrypted registered
+Nov 17 23:17:18 pn-m3-guest kernel: AppArmor: AppArmor sha256 policy hashing enabled
+Nov 17 23:17:18 pn-m3-guest kernel: ima: No TPM chip found, activating TPM-bypass!
+Nov 17 23:17:18 pn-m3-guest kernel: Loading compiled-in module X.509 certificates
+Nov 17 23:17:18 pn-m3-guest kernel: Loaded X.509 cert 'Build time autogenerated kernel key: 9a137e402f355547be6108f074230bd270d34d14'
+Nov 17 23:17:18 pn-m3-guest kernel: ima: Allocated hash algorithm: sha256
+Nov 17 23:17:18 pn-m3-guest kernel: ima: No architecture policies found
+Nov 17 23:17:18 pn-m3-guest kernel: evm: Initialising EVM extended attributes:
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.selinux
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.SMACK64
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.SMACK64EXEC
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.SMACK64TRANSMUTE
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.SMACK64MMAP
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.apparmor
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.ima
+Nov 17 23:17:18 pn-m3-guest kernel: evm: security.capability
+Nov 17 23:17:18 pn-m3-guest kernel: evm: HMAC attrs: 0x1
+Nov 17 23:17:18 pn-m3-guest kernel: PM:   Magic number: 2:470:302
+Nov 17 23:17:18 pn-m3-guest kernel: tty tty31: hash matches
+Nov 17 23:17:18 pn-m3-guest kernel: RAS: Correctable Errors collector initialized.
+Nov 17 23:17:18 pn-m3-guest kernel: Unstable clock detected, switching default tracing clock to "global"
+                                    If you want to keep using the local clock, then add:
+                                      "trace_clock=local"
+                                    on the kernel command line
+Nov 17 23:17:18 pn-m3-guest kernel: clk: Disabling unused clocks
+Nov 17 23:17:18 pn-m3-guest kernel: Freeing unused decrypted memory: 2028K
+Nov 17 23:17:18 pn-m3-guest kernel: Freeing unused kernel image (initmem) memory: 4948K
+Nov 17 23:17:18 pn-m3-guest kernel: Write protecting the kernel read-only data: 38912k
+Nov 17 23:17:18 pn-m3-guest kernel: Freeing unused kernel image (rodata/data gap) memory: 1928K
+Nov 17 23:17:18 pn-m3-guest kernel: x86/mm: Checked W+X mappings: passed, no W+X pages found.
+Nov 17 23:17:18 pn-m3-guest kernel: Run /init as init process
+Nov 17 23:17:18 pn-m3-guest kernel:   with arguments:
+Nov 17 23:17:18 pn-m3-guest kernel:     /init
+Nov 17 23:17:18 pn-m3-guest kernel:   with environment:
+Nov 17 23:17:18 pn-m3-guest kernel:     HOME=/
+Nov 17 23:17:18 pn-m3-guest kernel:     TERM=linux
+Nov 17 23:17:18 pn-m3-guest kernel: Floppy drive(s): fd0 is 2.88M AMI BIOS
+Nov 17 23:17:18 pn-m3-guest kernel: FDC 0 is a S82078B
+Nov 17 23:17:18 pn-m3-guest kernel: virtio_net virtio0 ens3: renamed from eth0
+Nov 17 23:17:18 pn-m3-guest kernel: EXT4-fs (vda): mounted filesystem 2e6e4ee9-6f97-4e8d-a534-b811f6fd457e r/w with ordered data mode. Quota mode: none.
+Nov 17 23:17:18 pn-m3-guest kernel: input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Inserted module 'autofs4'
+Nov 17 23:17:18 pn-m3-guest systemd[1]: systemd 255.4-1ubuntu8.18 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Detected virtualization qemu.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Detected architecture x86-64.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Hostname set to <pn-m3-guest>.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Initializing machine ID from D-Bus machine ID.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Queued start job for default target graphical.target.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Created slice user.slice - User and Session Slice.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Created slice user-1000.slice - User Slice of UID 1000.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Expecting device dev-ttyS0.device - /dev/ttyS0...
+Nov 17 23:17:18 pn-m3-guest systemd[1]: Reached target cryptsetup.target - Local Encrypted Volumes.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target paths.target - Path Units.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target slices.target - Slice Units.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target swap.target - Swaps.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-fsckd.socket - fsck to fsckd communication Socket.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-journald.socket - Journal Socket.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-networkd.socket - Network Service Netlink Socket.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-pcrextend.socket - TPM2 PCR Extension (Varlink) was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-journald.service - Journal Service...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting kmod-static-nodes.service - Create List of Static Device Nodes...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@dm_mod.service - Load Kernel Module dm_mod...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting modprobe@loop.service - Load Kernel Module loop...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-fsck-root.service - File System Check on Root Device was skipped because of an unmet condition check (ConditionPathIsReadWrite=!/).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-network-generator.service - Generate network units from Kernel command line...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-pcrmachine.service - TPM2 PCR Machine ID Measurement was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-tpm2-setup-early.service - TPM2 SRK Setup (Early) was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted sys-kernel-debug.mount - Kernel Debug File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@dm_mod.service - Load Kernel Module dm_mod.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished kmod-static-nodes.service - Create List of Static Device Nodes.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-tmpfiles-setup-dev-early.service - Create Static Device Nodes in /dev gracefully...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@configfs.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting sys-kernel-config.mount - Kernel Configuration File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@drm.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished systemd-network-generator.service - Generate network units from Kernel command line.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Reached target network-pre.target - Preparation for Network.
+Nov 17 23:17:19 pn-m3-guest systemd-journald[206]: Collecting audit messages is disabled.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@loop.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@loop.service - Load Kernel Module loop.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: modprobe@fuse.service: Deactivated successfully.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted sys-kernel-config.mount - Kernel Configuration File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-repart.service - Repartition Root Disk was skipped because no trigger condition checks were met.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+Nov 17 23:17:19 pn-m3-guest kernel: EXT4-fs (vda): re-mounted 2e6e4ee9-6f97-4e8d-a534-b811f6fd457e.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Finished systemd-remount-fs.service - Remount Root and Kernel File Systems.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-hwdb-update.service - Rebuild Hardware Database was skipped because no trigger condition checks were met.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-pstore.service - Platform Persistent Storage Archival was skipped because of an unmet condition check (ConditionDirectoryNotEmpty=/sys/fs/pstore).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Starting systemd-random-seed.service - Load/Save OS Random Seed...
+Nov 17 23:17:19 pn-m3-guest systemd[1]: systemd-tpm2-setup.service - TPM2 SRK Setup was skipped because of an unmet condition check (ConditionSecurity=measured-uki).
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Mounted sys-fs-fuse-connections.mount - FUSE Control File System.
+Nov 17 23:17:19 pn-m3-guest systemd[1]: Started systemd-journald.service - Journal Service.
+Nov 17 23:17:19 pn-m3-guest systemd-journald[206]: Received client request to flush runtime journal.
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.046:2): apparmor="STATUS" operation="profile_load" profile="unconfined" name=4D6F6E676F444220436F6D70617373 pid=286 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.047:3): apparmor="STATUS" operation="profile_load" profile="unconfined" name="1password" pid=284 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.048:4): apparmor="STATUS" operation="profile_load" profile="unconfined" name="QtWebEngineProcess" pid=287 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.058:5): apparmor="STATUS" operation="profile_load" profile="unconfined" name="Discord" pid=285 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.195:6): apparmor="STATUS" operation="profile_load" profile="unconfined" name="balena-etcher" pid=292 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.202:7): apparmor="STATUS" operation="profile_load" profile="unconfined" name="buildah" pid=296 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.205:8): apparmor="STATUS" operation="profile_load" profile="unconfined" name="brave" pid=294 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.209:9): apparmor="STATUS" operation="profile_load" profile="unconfined" name="cam" pid=298 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.258:10): apparmor="STATUS" operation="profile_load" profile="unconfined" name="ch-run" pid=303 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: audit: type=1400 audit(1794957441.276:11): apparmor="STATUS" operation="profile_load" profile="unconfined" name="vscode" pid=306 comm="apparmor_parser"
+Nov 17 23:17:21 pn-m3-guest kernel: kvm_amd: Nested Virtualization enabled
+Nov 17 23:17:21 pn-m3-guest kernel: kvm_amd: Nested Paging enabled
+Nov 17 23:17:21 pn-m3-guest kernel: kvm_amd: Virtual GIF supported
+Nov 17 23:17:21 pn-m3-guest kernel: kvm_amd: PMU virtualization is disabled
+Nov 17 23:17:23 pn-m3-guest kernel: hrtimer: interrupt took 5634720 ns
+Nov 17 23:17:23 pn-m3-guest kernel: parport_pc 00:03: reported by Plug and Play ACPI
+Nov 17 23:17:23 pn-m3-guest kernel: parport0: PC-style at 0x378, irq 7 [PCSPP,TRISTATE]
+Nov 17 23:17:23 pn-m3-guest kernel: piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+Nov 17 23:17:23 pn-m3-guest kernel: cryptd: max_cpu_qlen set to 1000
+Nov 17 23:17:24 pn-m3-guest kernel: bochs-drm 0000:00:02.0: vgaarb: deactivate vga console
+Nov 17 23:17:24 pn-m3-guest kernel: Console: switching to colour dummy device 80x25
+Nov 17 23:17:24 pn-m3-guest kernel: [drm] Found bochs VGA, ID 0xb0c5.
+Nov 17 23:17:24 pn-m3-guest kernel: [drm] Framebuffer size 16384 kB @ 0xfd000000, mmio @ 0xfeb90000.
+Nov 17 23:17:24 pn-m3-guest kernel: [drm] Found EDID data blob.
+Nov 17 23:17:24 pn-m3-guest kernel: [drm] Initialized bochs-drm 1.0.0 20130925 for 0000:00:02.0 on minor 0
+Nov 17 23:17:24 pn-m3-guest kernel: AVX2 version of gcm_enc/dec engaged.
+Nov 17 23:17:24 pn-m3-guest kernel: AES CTR mode by8 optimization enabled
+Nov 17 23:17:24 pn-m3-guest kernel: 9pnet: Installing 9P2000 support
+Nov 17 23:17:24 pn-m3-guest kernel: fbcon: bochs-drmdrmfb (fb0) is primary device
+Nov 17 23:17:24 pn-m3-guest kernel: Console: switching to colour frame buffer device 160x50
+Nov 17 23:17:24 pn-m3-guest kernel: bochs-drm 0000:00:02.0: [drm] fb0: bochs-drmdrmfb frame buffer device
+Nov 17 23:17:24 pn-m3-guest kernel: ppdev: user-space parallel port driver
+Nov 17 23:17:25 pn-m3-guest kernel: cfg80211: Loading compiled-in X.509 certificates for regulatory database
+Nov 17 23:17:25 pn-m3-guest kernel: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+Nov 17 23:17:25 pn-m3-guest kernel: Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+Nov 17 23:17:26 pn-m3-guest kernel: kauditd_printk_skb: 87 callbacks suppressed
+Nov 17 23:17:26 pn-m3-guest kernel: audit: type=1400 audit(1794957446.388:99): apparmor="STATUS" operation="profile_load" profile="unconfined" name="transmission-cli" pid=402 comm="apparmor_parser"
+Nov 17 23:17:26 pn-m3-guest kernel: audit: type=1400 audit(1794957446.399:100): apparmor="STATUS" operation="profile_load" profile="unconfined" name="transmission-daemon" pid=402 comm="apparmor_parser"
+Nov 17 23:17:26 pn-m3-guest kernel: audit: type=1400 audit(1794957446.417:101): apparmor="STATUS" operation="profile_load" profile="unconfined" name="transmission-gtk" pid=402 comm="apparmor_parser"
+Nov 17 23:17:26 pn-m3-guest kernel: audit: type=1400 audit(1794957446.435:102): apparmor="STATUS" operation="profile_load" profile="unconfined" name="transmission-qt" pid=402 comm="apparmor_parser"
+Nov 17 23:17:28 pn-m3-guest kernel: netfs: FS-Cache loaded
+Nov 17 23:17:28 pn-m3-guest kernel: 9p: Installing v9fs 9p2000 file system support
+Nov 17 23:19:18 pn-m3-guest kernel: audit: type=1400 audit(1794957558.479:103): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=709 comm="(true)" requested="userns_create" target="unprivileged_userns"
+Nov 17 23:19:18 pn-m3-guest kernel: audit: type=1400 audit(1794957558.493:104): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=709 comm="(true)" capability=21  capname="sys_admin"
+Nov 17 23:20:02 pn-m3-guest kernel: audit: type=1400 audit(1794957602.841:105): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=767 comm="(readlink)" requested="userns_create" target="unprivileged_userns"
+Nov 17 23:20:02 pn-m3-guest kernel: audit: type=1400 audit(1794957602.862:106): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=767 comm="(readlink)" capability=21  capname="sys_admin"
+Nov 17 23:20:03 pn-m3-guest kernel: audit: type=1400 audit(1794957603.534:107): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=778 comm="unshare" requested="userns_create" target="unprivileged_userns"
+Nov 17 23:20:03 pn-m3-guest kernel: audit: type=1400 audit(1794957603.560:108): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=778 comm="unshare" capability=21  capname="sys_admin"
+Nov 17 23:21:59 pn-m3-guest kernel: audit: type=1400 audit(1794957719.599:109): apparmor="STATUS" operation="profile_load" profile="unconfined" name="pn-m3-systemd-executor" pid=1839 comm="apparmor_parser"
+Nov 17 23:22:16 pn-m3-guest kernel: audit: type=1400 audit(1794957736.297:110): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=2191 comm="unshare" requested="userns_create" target="unprivileged_userns"
+Nov 17 23:22:16 pn-m3-guest kernel: audit: type=1400 audit(1794957736.312:111): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=2191 comm="unshare" capability=21  capname="sys_admin"
+Nov 17 23:44:14 pn-m3-guest kernel: audit: type=1400 audit(1794959054.833:112): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=4027 comm="bwrap" requested="userns_create" target="unprivileged_userns"
+Nov 17 23:44:14 pn-m3-guest kernel: audit: type=1400 audit(1794959054.844:113): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=4028 comm="bwrap" capability=8  capname="setpcap"
+Nov 17 23:44:14 pn-m3-guest kernel: audit: type=1400 audit(1794959054.846:114): apparmor="DENIED" operation="open" class="file" info="Failed name lookup - disconnected path" error=-13 profile="unprivileged_userns" name="proc/4028/uid_map" pid=4028 comm="bwrap" requested_mask="wr" denied_mask="wr" fsuid=1000 ouid=1000
+Nov 17 23:44:14 pn-m3-guest kernel: traps: python3[4011] trap int3 ip:71bca9af815f sp:7ffc32cb63f0 error:0 in libglib-2.0.so.0.8000.0[71bca9ab4000+a0000]
+Nov 18 00:09:24 pn-m3-guest kernel: audit: type=1400 audit(1794960564.693:115): apparmor="STATUS" operation="profile_remove" profile="unconfined" name="pn-m3-systemd-executor" pid=4571 comm="apparmor_parser"
+Nov 18 00:09:26 pn-m3-guest kernel: audit: type=1400 audit(1794960566.573:116): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=4582 comm="(env)" requested="userns_create" target="unprivileged_userns"
+Nov 18 00:09:28 pn-m3-guest kernel: audit: type=1400 audit(1794960568.371:117): apparmor="STATUS" operation="profile_load" profile="unconfined" name="pn-m3-systemd-executor" pid=4611 comm="apparmor_parser"
+Nov 18 00:09:52 pn-m3-guest kernel: audit: type=1400 audit(1794960592.342:118): apparmor="STATUS" operation="profile_load" profile="unconfined" name="programmable-notes" pid=4666 comm="apparmor_parser"
+Nov 18 00:13:38 pn-m3-guest kernel: audit: type=1400 audit(1794960818.736:119): apparmor="STATUS" operation="profile_replace" info="same as current profile, skipping" profile="unconfined" name="programmable-notes" pid=5058 comm="apparmor_parser"
+Nov 18 00:32:00 pn-m3-guest kernel: workqueue: psi_avgs_work hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Nov 18 00:35:29 pn-m3-guest kernel: workqueue: drm_fb_helper_damage_work hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Nov 18 00:35:33 pn-m3-guest kernel: workqueue: wait_rcu_exp_gp hogged CPU for >10000us 4 times, consider switching to WQ_UNBOUND
+Nov 18 00:50:00 pn-m3-guest kernel: audit: type=1400 audit(1794963000.653:120): apparmor="STATUS" operation="profile_replace" info="same as current profile, skipping" profile="unconfined" name="programmable-notes" pid=8646 comm="apparmor_parser"
+Nov 18 00:56:53 pn-m3-guest kernel: WebKitWebProces invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=200
+Nov 18 00:56:53 pn-m3-guest kernel: CPU: 0 PID: 9730 Comm: WebKitWebProces Not tainted 6.8.0-149-generic #149-Ubuntu
+Nov 18 00:56:53 pn-m3-guest kernel: Hardware name: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Nov 18 00:56:53 pn-m3-guest kernel: Call Trace:
+Nov 18 00:56:53 pn-m3-guest kernel:  <TASK>
+Nov 18 00:56:53 pn-m3-guest kernel:  dump_stack_lvl+0x76/0xa0
+Nov 18 00:56:53 pn-m3-guest kernel:  dump_stack+0x10/0x20
+Nov 18 00:56:53 pn-m3-guest kernel:  dump_header+0x49/0x210
+Nov 18 00:56:53 pn-m3-guest kernel:  oom_kill_process+0x118/0x280
+Nov 18 00:56:53 pn-m3-guest kernel:  out_of_memory+0x103/0x350
+Nov 18 00:56:53 pn-m3-guest kernel:  mem_cgroup_out_of_memory+0x145/0x170
+Nov 18 00:56:53 pn-m3-guest kernel:  try_charge_memcg+0x6d6/0x7d0
+Nov 18 00:56:53 pn-m3-guest kernel:  ? vma_alloc_folio+0x7a/0xd0
+Nov 18 00:56:53 pn-m3-guest kernel:  __mem_cgroup_charge+0x45/0xc0
+Nov 18 00:56:53 pn-m3-guest kernel:  do_anonymous_page+0xb2/0x430
+Nov 18 00:56:53 pn-m3-guest kernel:  handle_pte_fault+0x1cb/0x1d0
+Nov 18 00:56:53 pn-m3-guest kernel:  __handle_mm_fault+0x58a/0x790
+Nov 18 00:56:53 pn-m3-guest kernel:  handle_mm_fault+0x18a/0x380
+Nov 18 00:56:53 pn-m3-guest kernel:  do_user_addr_fault+0x169/0x670
+Nov 18 00:56:53 pn-m3-guest kernel:  exc_page_fault+0x83/0x1b0
+Nov 18 00:56:53 pn-m3-guest kernel:  asm_exc_page_fault+0x27/0x30
+Nov 18 00:56:53 pn-m3-guest kernel: RIP: 0033:0x78803b78984a
+Nov 18 00:56:53 pn-m3-guest kernel: Code: c5 fe 7f 07 c5 fe 7f 47 20 c5 fe 7f 47 40 c5 fe 7f 47 60 c5 f8 77 c3 66 0f 1f 84 00 00 00 00 00 40 0f b6 c6 48 89 d1 48 89 fa <f3> aa 48 89 d0 c5 f8 77 c3 66 66 2e 0f 1f 84 00 00 00 00 00 66 90
+Nov 18 00:56:53 pn-m3-guest kernel: RSP: 002b:00007fffbbc47128 EFLAGS: 00000206
+Nov 18 00:56:53 pn-m3-guest kernel: RAX: 0000000000000001 RBX: 0000000000000000 RCX: 0000000000ead000
+Nov 18 00:56:53 pn-m3-guest kernel: RDX: 0000787047000000 RSI: 0000000000000001 RDI: 0000787047153000
+Nov 18 00:56:53 pn-m3-guest kernel: RBP: 00007fffbbc471a0 R08: 0000000000000038 R09: 000078803200e988
+Nov 18 00:56:53 pn-m3-guest kernel: R10: 0000786fc000c000 R11: 000078803043f020 R12: 00007fffbbc471b0
+Nov 18 00:56:53 pn-m3-guest kernel: R13: 0000000001000000 R14: 00007880305fc4f0 R15: 000078803043f000
+Nov 18 00:56:53 pn-m3-guest kernel:  </TASK>
+Nov 18 00:56:53 pn-m3-guest kernel: memory: usage 524288kB, limit 524288kB, failcnt 114
+Nov 18 00:56:53 pn-m3-guest kernel: swap: usage 0kB, limit 0kB, failcnt 0
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup stats for /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963361266974850.service:
+Nov 18 00:56:53 pn-m3-guest kernel: anon 526536704
+Nov 18 00:56:53 pn-m3-guest kernel: file 3866624
+Nov 18 00:56:53 pn-m3-guest kernel: kernel 6340608
+Nov 18 00:56:53 pn-m3-guest kernel: kernel_stack 753664
+Nov 18 00:56:53 pn-m3-guest kernel: pagetables 3272704
+Nov 18 00:56:53 pn-m3-guest kernel: sec_pagetables 0
+Nov 18 00:56:53 pn-m3-guest kernel: percpu 5280
+Nov 18 00:56:53 pn-m3-guest kernel: sock 0
+Nov 18 00:56:53 pn-m3-guest kernel: vmalloc 16384
+Nov 18 00:56:53 pn-m3-guest kernel: shmem 3866624
+Nov 18 00:56:53 pn-m3-guest kernel: zswap 0
+Nov 18 00:56:53 pn-m3-guest kernel: zswapped 0
+Nov 18 00:56:53 pn-m3-guest kernel: file_mapped 3842048
+Nov 18 00:56:53 pn-m3-guest kernel: file_dirty 0
+Nov 18 00:56:53 pn-m3-guest kernel: file_writeback 0
+Nov 18 00:56:53 pn-m3-guest kernel: swapcached 0
+Nov 18 00:56:53 pn-m3-guest kernel: anon_thp 0
+Nov 18 00:56:53 pn-m3-guest kernel: file_thp 0
+Nov 18 00:56:53 pn-m3-guest kernel: shmem_thp 0
+Nov 18 00:56:53 pn-m3-guest kernel: inactive_anon 529932288
+Nov 18 00:56:53 pn-m3-guest kernel: active_anon 417792
+Nov 18 00:56:53 pn-m3-guest kernel: inactive_file 0
+Nov 18 00:56:53 pn-m3-guest kernel: active_file 0
+Nov 18 00:56:53 pn-m3-guest kernel: unevictable 32768
+Nov 18 00:56:53 pn-m3-guest kernel: slab_reclaimable 117208
+Nov 18 00:56:53 pn-m3-guest kernel: slab_unreclaimable 2073528
+Nov 18 00:56:53 pn-m3-guest kernel: slab 2190736
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_refault_anon 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_refault_file 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_activate_anon 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_activate_file 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_restore_anon 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_restore_file 0
+Nov 18 00:56:53 pn-m3-guest kernel: workingset_nodereclaim 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgscan 32
+Nov 18 00:56:53 pn-m3-guest kernel: pgsteal 32
+Nov 18 00:56:53 pn-m3-guest kernel: pgscan_kswapd 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgscan_direct 32
+Nov 18 00:56:53 pn-m3-guest kernel: pgscan_khugepaged 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgsteal_kswapd 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgsteal_direct 32
+Nov 18 00:56:53 pn-m3-guest kernel: pgsteal_khugepaged 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgfault 139112
+Nov 18 00:56:53 pn-m3-guest kernel: pgmajfault 1
+Nov 18 00:56:53 pn-m3-guest kernel: pgrefill 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgactivate 0
+Nov 18 00:56:53 pn-m3-guest kernel: pgdeactivate 0
+Nov 18 00:56:53 pn-m3-guest kernel: pglazyfree 0
+Nov 18 00:56:53 pn-m3-guest kernel: pglazyfreed 0
+Nov 18 00:56:53 pn-m3-guest kernel: zswpin 0
+Nov 18 00:56:53 pn-m3-guest kernel: zswpout 0
+Nov 18 00:56:53 pn-m3-guest kernel: zswpwb 0
+Nov 18 00:56:53 pn-m3-guest kernel: thp_fault_alloc 0
+Nov 18 00:56:53 pn-m3-guest kernel: thp_collapse_alloc 0
+Nov 18 00:56:53 pn-m3-guest kernel: thp_swpout 0
+Nov 18 00:56:53 pn-m3-guest kernel: thp_swpout_fallback 0
+Nov 18 00:56:53 pn-m3-guest kernel: Tasks state (memory values in pages):
+Nov 18 00:56:53 pn-m3-guest kernel: [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+Nov 18 00:56:53 pn-m3-guest kernel: [   9691]  1000  9691 18458564    32903     5612    26400       891   794624        0           200 programmable-no
+Nov 18 00:56:53 pn-m3-guest kernel: [   9712]  1000  9712 18387203    11840     1792    10048         0   442368        0           200 WebKitNetworkPr
+Nov 18 00:56:53 pn-m3-guest kernel: [   9718]  1000  9718      896      480       32      448         0    49152        0           200 bwrap
+Nov 18 00:56:53 pn-m3-guest kernel: [   9719]  1000  9719      896      353       33      320         0    49152        0           200 bwrap
+Nov 18 00:56:53 pn-m3-guest kernel: [   9721]  1000  9721    57599     1408       96     1312         0    86016        0           200 xdg-dbus-proxy
+Nov 18 00:56:53 pn-m3-guest kernel: [   9728]  1000  9728      896      480       32      448         0    53248        0           200 bwrap
+Nov 18 00:56:53 pn-m3-guest kernel: [   9729]  1000  9729      896      352       32      320         0    53248        0           200 bwrap
+Nov 18 00:56:53 pn-m3-guest kernel: [   9730]  1000  9730 18416369   151759   120783    30976         0  1744896        0           200 WebKitWebProces
+Nov 18 00:56:53 pn-m3-guest kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=user@1000.service,mems_allowed=0,oom_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963361266974850.service,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963361266974850.service,task=WebKitWebProces,pid=9730,uid=1000
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9730 (WebKitWebProces) total-vm:73665476kB, anon-rss:483132kB, file-rss:123904kB, shmem-rss:0kB, UID:1000 pgtables:1704kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Tasks in /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-9367-1794963361266974850.service are going to be killed due to memory.oom.group set
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9691 (programmable-no) total-vm:73834256kB, anon-rss:22448kB, file-rss:105600kB, shmem-rss:3564kB, UID:1000 pgtables:776kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9718 (bwrap) total-vm:3584kB, anon-rss:128kB, file-rss:1792kB, shmem-rss:0kB, UID:1000 pgtables:48kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9721 (xdg-dbus-proxy) total-vm:230396kB, anon-rss:384kB, file-rss:5248kB, shmem-rss:0kB, UID:1000 pgtables:84kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: OOM victim 9729 (bwrap) is already exiting. Skip killing the task
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9730 (WebKitWebProces) total-vm:73665476kB, anon-rss:483132kB, file-rss:123904kB, shmem-rss:0kB, UID:1000 pgtables:1704kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9739 (Storage) total-vm:73548812kB, anon-rss:7168kB, file-rss:40192kB, shmem-rss:0kB, UID:1000 pgtables:432kB oom_score_adj:200
+Nov 18 00:56:53 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 9737 (ReceiveQueue) total-vm:73834256kB, anon-rss:22448kB, file-rss:105600kB, shmem-rss:3564kB, UID:1000 pgtables:776kB oom_score_adj:200
+Nov 18 01:05:52 pn-m3-guest kernel: resource-gates- invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=200
+Nov 18 01:05:52 pn-m3-guest kernel: CPU: 2 PID: 10698 Comm: resource-gates- Not tainted 6.8.0-149-generic #149-Ubuntu
+Nov 18 01:05:52 pn-m3-guest kernel: Hardware name: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Nov 18 01:05:52 pn-m3-guest kernel: Call Trace:
+Nov 18 01:05:52 pn-m3-guest kernel:  <TASK>
+Nov 18 01:05:52 pn-m3-guest kernel:  dump_stack_lvl+0x76/0xa0
+Nov 18 01:05:52 pn-m3-guest kernel:  dump_stack+0x10/0x20
+Nov 18 01:05:52 pn-m3-guest kernel:  dump_header+0x49/0x210
+Nov 18 01:05:52 pn-m3-guest kernel:  oom_kill_process+0x118/0x280
+Nov 18 01:05:52 pn-m3-guest kernel:  out_of_memory+0x103/0x350
+Nov 18 01:05:52 pn-m3-guest kernel:  mem_cgroup_out_of_memory+0x145/0x170
+Nov 18 01:05:52 pn-m3-guest kernel:  try_charge_memcg+0x6d6/0x7d0
+Nov 18 01:05:52 pn-m3-guest kernel:  ? vma_alloc_folio+0x7a/0xd0
+Nov 18 01:05:52 pn-m3-guest kernel:  __mem_cgroup_charge+0x45/0xc0
+Nov 18 01:05:52 pn-m3-guest kernel:  do_anonymous_page+0xb2/0x430
+Nov 18 01:05:52 pn-m3-guest kernel:  handle_pte_fault+0x1cb/0x1d0
+Nov 18 01:05:52 pn-m3-guest kernel:  __handle_mm_fault+0x58a/0x790
+Nov 18 01:05:52 pn-m3-guest kernel:  handle_mm_fault+0x18a/0x380
+Nov 18 01:05:52 pn-m3-guest kernel:  do_user_addr_fault+0x169/0x670
+Nov 18 01:05:52 pn-m3-guest kernel:  exc_page_fault+0x83/0x1b0
+Nov 18 01:05:52 pn-m3-guest kernel:  asm_exc_page_fault+0x27/0x30
+Nov 18 01:05:52 pn-m3-guest kernel: RIP: 0033:0x711370d8984a
+Nov 18 01:05:52 pn-m3-guest kernel: Code: c5 fe 7f 07 c5 fe 7f 47 20 c5 fe 7f 47 40 c5 fe 7f 47 60 c5 f8 77 c3 66 0f 1f 84 00 00 00 00 00 40 0f b6 c6 48 89 d1 48 89 fa <f3> aa 48 89 d0 c5 f8 77 c3 66 66 2e 0f 1f 84 00 00 00 00 00 66 90
+Nov 18 01:05:52 pn-m3-guest kernel: RSP: 002b:00007ffc172a60a8 EFLAGS: 00000206
+Nov 18 01:05:52 pn-m3-guest kernel: RAX: 000000000000002a RBX: 000000000000001f RCX: 000000000017a010
+Nov 18 01:05:52 pn-m3-guest kernel: RDX: 0000711350be0010 RSI: 000000000000002a RDI: 0000711351a66000
+Nov 18 01:05:52 pn-m3-guest kernel: RBP: 0000000001000000 R08: 00000000ffffffff R09: 0000000000000000
+Nov 18 01:05:52 pn-m3-guest kernel: R10: 0000000000000022 R11: 0000000000000246 R12: 0000711351be1010
+Nov 18 01:05:52 pn-m3-guest kernel: R13: 000057fc9caa2f78 R14: 000057fc9caa2f95 R15: 0000000001000000
+Nov 18 01:05:52 pn-m3-guest kernel:  </TASK>
+Nov 18 01:05:52 pn-m3-guest kernel: memory: usage 524288kB, limit 524288kB, failcnt 81
+Nov 18 01:05:52 pn-m3-guest kernel: swap: usage 0kB, limit 0kB, failcnt 0
+Nov 18 01:05:52 pn-m3-guest kernel: Memory cgroup stats for /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-10670-1794963929879580110.service:
+Nov 18 01:05:52 pn-m3-guest kernel: anon 535588864
+Nov 18 01:05:52 pn-m3-guest kernel: file 4096
+Nov 18 01:05:52 pn-m3-guest kernel: kernel 1261568
+Nov 18 01:05:52 pn-m3-guest kernel: kernel_stack 0
+Nov 18 01:05:52 pn-m3-guest kernel: pagetables 1101824
+Nov 18 01:05:52 pn-m3-guest kernel: sec_pagetables 0
+Nov 18 01:05:52 pn-m3-guest kernel: percpu 1920
+Nov 18 01:05:52 pn-m3-guest kernel: sock 0
+Nov 18 01:05:52 pn-m3-guest kernel: vmalloc 0
+Nov 18 01:05:52 pn-m3-guest kernel: shmem 4096
+Nov 18 01:05:52 pn-m3-guest kernel: zswap 0
+Nov 18 01:05:52 pn-m3-guest kernel: zswapped 0
+Nov 18 01:05:52 pn-m3-guest kernel: file_mapped 0
+Nov 18 01:05:52 pn-m3-guest kernel: file_dirty 0
+Nov 18 01:05:52 pn-m3-guest kernel: file_writeback 0
+Nov 18 01:05:52 pn-m3-guest kernel: swapcached 0
+Nov 18 01:05:52 pn-m3-guest kernel: anon_thp 0
+Nov 18 01:05:52 pn-m3-guest kernel: file_thp 0
+Nov 18 01:05:52 pn-m3-guest kernel: shmem_thp 0
+Nov 18 01:05:52 pn-m3-guest kernel: inactive_anon 0
+Nov 18 01:05:52 pn-m3-guest kernel: active_anon 535592960
+Nov 18 01:05:52 pn-m3-guest kernel: inactive_file 0
+Nov 18 01:05:52 pn-m3-guest kernel: active_file 0
+Nov 18 01:05:52 pn-m3-guest kernel: unevictable 0
+Nov 18 01:05:52 pn-m3-guest kernel: slab_reclaimable 28792
+Nov 18 01:05:52 pn-m3-guest kernel: slab_unreclaimable 114648
+Nov 18 01:05:52 pn-m3-guest kernel: slab 143440
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_refault_anon 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_refault_file 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_activate_anon 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_activate_file 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_restore_anon 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_restore_file 0
+Nov 18 01:05:52 pn-m3-guest kernel: workingset_nodereclaim 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgscan 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgsteal 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgscan_kswapd 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgscan_direct 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgscan_khugepaged 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgsteal_kswapd 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgsteal_direct 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgsteal_khugepaged 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgfault 131419
+Nov 18 01:05:52 pn-m3-guest kernel: pgmajfault 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgrefill 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgactivate 0
+Nov 18 01:05:52 pn-m3-guest kernel: pgdeactivate 0
+Nov 18 01:05:52 pn-m3-guest kernel: pglazyfree 0
+Nov 18 01:05:52 pn-m3-guest kernel: pglazyfreed 0
+Nov 18 01:05:52 pn-m3-guest kernel: zswpin 0
+Nov 18 01:05:52 pn-m3-guest kernel: zswpout 0
+Nov 18 01:05:52 pn-m3-guest kernel: zswpwb 0
+Nov 18 01:05:52 pn-m3-guest kernel: thp_fault_alloc 0
+Nov 18 01:05:52 pn-m3-guest kernel: thp_collapse_alloc 0
+Nov 18 01:05:52 pn-m3-guest kernel: thp_swpout 0
+Nov 18 01:05:52 pn-m3-guest kernel: thp_swpout_fallback 0
+Nov 18 01:05:52 pn-m3-guest kernel: Tasks state (memory values in pages):
+Nov 18 01:05:52 pn-m3-guest kernel: [  pid  ]   uid  tgid total_vm      rss rss_anon rss_file rss_shmem pgtables_bytes swapents oom_score_adj name
+Nov 18 01:05:52 pn-m3-guest kernel: [  10698]  1000 10698   131933   131168   130688      480         0  1101824        0           200 resource-gates-
+Nov 18 01:05:52 pn-m3-guest kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=user@1000.service,mems_allowed=0,oom_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-10670-1794963929879580110.service,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-10670-1794963929879580110.service,task=resource-gates-,pid=10698,uid=1000
+Nov 18 01:05:52 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 10698 (resource-gates-) total-vm:527732kB, anon-rss:522752kB, file-rss:1920kB, shmem-rss:0kB, UID:1000 pgtables:1076kB oom_score_adj:200
+Nov 18 01:05:52 pn-m3-guest kernel: Tasks in /user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-10670-1794963929879580110.service are going to be killed due to memory.oom.group set
+Nov 18 01:05:52 pn-m3-guest kernel: Memory cgroup out of memory: Killed process 10698 (resource-gates-) total-vm:527732kB, anon-rss:522752kB, file-rss:1920kB, shmem-rss:0kB, UID:1000 pgtables:1076kB oom_score_adj:200
+Nov 18 02:08:03 pn-m3-guest kernel: llvmpipe-2[16106]: segfault at 75892e9ad040 ip 00007588a53ff0aa sp 00007588b97f9380 error 4
+Nov 18 02:08:03 pn-m3-guest kernel: llvmpipe-0[16104]: segfault at 75892e9ad040 ip 00007588a53ff0aa sp 00007588ba7fb380 error 4
+Nov 18 02:08:03 pn-m3-guest kernel:  likely on CPU 2 (core 2, socket 0)
+Nov 18 02:08:03 pn-m3-guest kernel:  likely on CPU 0 (core 0, socket 0)
+Nov 18 02:08:03 pn-m3-guest kernel: 
+Nov 18 02:08:03 pn-m3-guest kernel: Code: c4 e2 75 40 ca c5 cd db e4 c5 dd db d2 c5 ed fe d1 c5 fd fe e1 c5 ed fe c0 c5 e5 fe c9 c5 ed fe d3 c5 e5 76 db c4 41 39 ef c0 <c4> 62 65 90 04 20 c5 e5 76 db c4 41 31 ef c9 c4 62 65 90 0c 08 c5
+Nov 18 02:08:03 pn-m3-guest kernel: Code: c4 e2 75 40 ca c5 cd db e4 c5 dd db d2 c5 ed fe d1 c5 fd fe e1 c5 ed fe c0 c5 e5 fe c9 c5 ed fe d3 c5 e5 76 db c4 41 39 ef c0 <c4> 62 65 90 04 20 c5 e5 76 db c4 41 31 ef c9 c4 62 65 90 0c 08 c5

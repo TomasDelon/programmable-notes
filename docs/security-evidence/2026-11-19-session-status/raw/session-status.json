@@ -1,0 +1,49 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "2ab790d24d0f2e849f6de66c812d4720c0887c6a599c3186eb1aabcc8fa52ce4",
+  "editorPid": 28987,
+  "executableSha256": "d74850a5418b014a4107315ff5c76ca12668affadcd4a3545cee002f1422eb2f",
+  "unit": "programmable-notes-preview-28987-1795087713455384250.service",
+  "previewPid": 29141,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-28987-1795087713455384250.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "observedInactive": true,
+  "journal": "2026-11-19T11:28:33+00:00 pn-m3-guest systemd[446]: Starting programmable-notes-preview-28987-1795087713455384250.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...\n2026-11-19T11:28:34+00:00 pn-m3-guest systemd[446]: Started programmable-notes-preview-28987-1795087713455384250.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.\n2026-11-19T11:29:34+00:00 pn-m3-guest systemd[446]: programmable-notes-preview-28987-1795087713455384250.service: Service reached runtime time limit. Stopping.\n",
+  "after": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session ended or disconnected. Rebuild preview to run it again.",
+    "build": "Compiled MDX"
+  },
+  "rebuiltUnit": "programmable-notes-preview-28987-1795087781338345920.service",
+  "rebuiltPid": 29389,
+  "afterRebuild": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "stopRequestedMsAfterRebuild": 52887.410749999995,
+  "stopAgeUsec": 46728146,
+  "uiStopRemovedCgroup": true,
+  "afterStop": {
+    "alerts": [],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  },
+  "manualRebuildInteractionAndStop": true,
+  "sourceUnchanged": true,
+  "outcome": "pass"
+}

@@ -1,0 +1,35 @@
+﻿---
+title: Protected 😀 metadata
+---
+
+import React from 'react'
+
+export function Probe() {
+  const [n,setN]=React.useState(0)
+  return <button onClick={()=>setN(n+1)}>Native probe {n}</button>
+}
+
+<Probe />
+
+##   Updated title  ##
+
+Updated: 75% + tax.
+Retain physical LF.
+Retain physical CRLF.
+
+- First item
+- Second item
+
+<div><span>Nested JSX</span></div>
+
+{/* retain comment */}
+
+```tsx
+const literal = <NeverEvaluate />
+```
+
+  >	Changed quote: £50 + tax.
+
+> *Opaque formatting.*
+
+> <span>Opaque quote JSX</span>

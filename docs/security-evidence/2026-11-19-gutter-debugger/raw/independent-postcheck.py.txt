@@ -1,0 +1,11 @@
+import hashlib,json,stat
+from pathlib import Path
+base=Path('/tmp/pn-native-Pikgqc');v=json.loads(Path('/work/gutter-expected.json').read_text())
+for item in v['files']:
+    p=base/item['path'];data=p.read_bytes()
+    assert hashlib.sha256(data).hexdigest()==item['sha256']
+    assert len(data)==item['bytes']
+    assert stat.S_IMODE(p.stat().st_mode)==item['mode']==0o640
+for pid in [44116,44744,44147,44463]:assert not Path('/proc',str(pid)).exists()
+entries=sorted(p.name for p in Path('/home/ubuntu/.local/share/dev.programmablenotes.app/recovery').iterdir());assert entries==['.lock']
+print(json.dumps({'scope':'independent post-instrumentation fixture hashes/modes, known identities gone and recovery cleanup','files':v['files'],'identitiesGone':[44116,44744,44147,44463],'recoveryEntries':entries}))
