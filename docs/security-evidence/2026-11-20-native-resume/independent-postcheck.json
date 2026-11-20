@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "path": "fidelity-acceptance.MdX",
+      "bytes": 638,
+      "sha256": "5a7339b13fce56a0af4d76a00a7bc08909a7a89dec6088d25b987bdb55abb5b9",
+      "mode": 416
+    },
+    {
+      "path": "dense-visual.mdx",
+      "bytes": 100026,
+      "sha256": "195bb9e2fcc03da93c8162636ed5497d8eb5d512e76ef06cc742affac4a1a548",
+      "mode": 416
+    },
+    {
+      "path": "first/repeat.mdx",
+      "bytes": 44,
+      "sha256": "d70398b72f833f96c0f60d2143f73213a4f090fd33677b6c0cadcef88aede7e9",
+      "mode": 416
+    },
+    {
+      "path": "second/repeat.mdx",
+      "bytes": 39,
+      "sha256": "304ccbaa96330616671f52a6df57af03d62536eecc443e0b84f82422094473ae",
+      "mode": 416
+    }
+  ],
+  "rootIdentitiesGone": [1290, 1864],
+  "recoveryEntries": [".lock"],
+  "independentFixtureConstructorComparison": true
+}

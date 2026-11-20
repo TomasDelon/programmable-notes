@@ -33,3 +33,26 @@ pn_env=$(NATIVE_INSTALLED_BINARY=/usr/bin/programmable-notes node scripts/native
 . "$pn_env"
 NATIVE_DISPOSABLE_PROFILE=1 timeout -k 5s 300s node scripts/native-long-paragraph.mjs --visual-cycles 20
 ```
+
+## Fresh-profile seven-option acceptance
+
+A separate actual command used a new private XDG data/cache/config profile and
+an external driver with those same directories. The ordinary, non-debugger
+`native-fidelity.mjs --mixed-eol --quotes --multiline-quotes --source-navigation
+--visual-budget --same-names --extension-case` run exited0. Its explicit identity
+records bind the same production ELF and no JIT environment overrides.
+
+All requested gates passed: same-name distinct files/history/reopen, dense
+read-only fallback, mixed-case MDX and interactive React, three modes, literal
+and multiline quotes, heading/paragraph/list edits, exact mixed-LF/CRLF saves,
+opaque Source navigation/caret/history, dirty-close cancellation, actual process
+restart, explicit unsaved legacy recovery, invalid UTF8 draft refusal and explicit
+delete. Originals were unchanged during recovery.
+
+Independent postcheck recomputed four exact fixture hashes/lengths/mode0640
+from the trusted fixture constructor (not application patch functions), verified
+both known Roots gone and recovery contents limited to `.lock`. The current-boot
+kernel query found no matching WebKit fault/OOM entry. These successful commands
+do not prove absence of intermittent engine failures, fix their root cause, or
+replace the distinct malicious resource-containment matrix. No profile or source
+from the preceding acceptance was overwritten.

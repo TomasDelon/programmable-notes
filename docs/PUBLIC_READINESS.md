@@ -85,7 +85,10 @@ former private-account pre-run billing refusal did not block this public run.
 The revised pinned/scanning workflow also executed and passed both jobs in
 [44697972078](https://github.com/TomasDelon/programmable-notes/actions/runs/44697972078)
 on `7226bcc`, including the synthetic-key controls and production package build.
-New Save EIO/ENOSPC gates are later changes and need their own hosted result. Compilation/package inspection is not native GUI acceptance.
+The new Save gates then actually executed and passed in both-job-success run
+[44699786688](https://github.com/TomasDelon/programmable-notes/actions/runs/44699786688)
+on `367626f`: real ENOSPC, four writer SIGKILL stages and both original Save EIO
+cases. A later documentation head must be observed separately. Compilation/package inspection is not native GUI acceptance.
 
 Only standard `ubuntu-24.04` runners are used. Tokens have `contents: read`;
 there is no `pull_request_target`, self-hosted runner, paid service or secret-based
@@ -110,7 +113,7 @@ guarantee that future account-level restrictions cannot occur.
   notices. Tooling controls verify license/version/path refusal and synthetic
   key rejection; see the dated progress checkpoint for final command results.
 - Both baseline and revised public CI executed and passed as linked above.
-  Subsequent new Save acceptance steps must be observed separately.
+  The new Save acceptance steps also executed successfully on `367626f`.
 - Fresh demo capture, manifest/CRC verification, ten malformed-artifact refusal
   controls and clean-extracted real Chromium interaction/playback checks passed.
   Missing notices are one of the refused cases. An anonymous public clone checked out exact commit `7226bcc`, installed from
@@ -121,7 +124,9 @@ guarantee that future account-level restrictions cannot occur.
 - Existing native evidence remains valid only for its recorded builds. The
   disposable Ubuntu VM has since been restored and a standalone real original
   Save ENOSPC gate passed there. This is separate from native GUI acceptance;
-  no new full WebKitGTK/cgroup matrix is claimed by this remediation.
+  a separate fresh-profile full native fidelity/restart/recovery command also
+  passed. The recorded existing ELF scope is retained. No new full malicious
+  WebKitGTK/cgroup matrix is claimed by this remediation.
 - Native JavaScriptCore/WebKitGTK renderer crashes, startup reliability and the
   earlier instantaneous PID observation remain technical risks. The later bounded
   six-case observer run passed but did not establish the cause of the old failure.

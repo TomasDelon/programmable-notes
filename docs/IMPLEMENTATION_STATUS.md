@@ -320,7 +320,9 @@ Use [Linux testing](LINUX_DESKTOP_TESTING.md) and [security contract](NATIVE_SEC
 for disposable native validation. Browser demo: build, start preview on loopback
 port 4188, then `node scripts/demo-editor.mjs`; CI's `playable-editor-demo` contains
 the runnable build, screenshots, WebM and exact saved MDX. An existing artifact is
-linked in PR #1; new hosted uploads are blocked until account billing is resolved.
+linked in PR #1. Public hosted CI now executes successfully. New browser artifacts
+are opt-in workflow dispatches with `review_artifacts`; native installer uploads
+are paused pending complete native redistribution notices.
 
 The current [downloadable review](demo/README.md) binds engine 54c41a7 and includes
 Source navigation, dense read-only fallback, multiline quote edits, exact exports,
@@ -393,8 +395,8 @@ and [exact observations](security-evidence/2026-11-19-preview-renderer-loss/READ
 Keep the unresolved engine/resource failures explicit. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
 Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
-matrix without changing deadlines or isolation. Hosted runners still need owner
-billing action; physical GPU/Wayland compatibility can proceed independently.
+matrix without changing deadlines or isolation. Public standard hosted CI has
+since passed; physical GPU/Wayland compatibility can proceed independently.
 No production security readiness is claimed.
 
 ## Public repository remediation (2026-11-20)
@@ -428,3 +430,15 @@ sibling preservation, temporary cleanup, reuse of the existing grant/revision
 after freeing space, and fresh exact reopen. Explicit mountinfo guards refuse
 shared subtree bind mounts; that refusal also passed in the actual VM. CI now
 runs this alongside recovery ENOSPC. No production behavior changed. [Evidence](security-evidence/2026-11-20-document-save-enospc/README.md).
+
+## Resumed production-desktop acceptance (2026-11-20)
+
+The restored Ubuntu/WebKitGTK VM passed twenty Visual transitions and a separate
+fresh-profile full seven-option fidelity command, including actual process
+restart, explicit recovery, invalid draft refusal and original preservation.
+Independent postcheck verified all four exact file hashes/modes, both Roots gone
+and recovery cleanup. This used the recorded a6d00cbb production ELF, not a new
+notice-bearing installer. [Scope, first harness prerequisite failure and results](security-evidence/2026-11-20-native-resume/README.md).
+Both hosted jobs actually passed on367626f/run44699786688 including new original
+Save EIO and real ENOSPC gates. Later documentation-only heads need their own
+workflow result; consult PR #1. Historical intermittent crashes remain unresolved.

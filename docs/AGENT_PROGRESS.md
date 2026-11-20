@@ -2238,3 +2238,25 @@ Native-resumeactualresult: firstmodule-prerequisitefailure retained, nextindepen
 long20cyclescommandPASS20Visual/19Source,geometry360px/exactfull1000lines, actual
 endtyping/diskSave/UndoRedo/reopen/mode0640/cleanexit. ELFa6d00cbb…unchanged,
 observer787d0a5e…. No priorJSC/startupcausefixedclaim. Retainedin2026-11-20-native-resume.
+
+## 2026-11-20 — final hosted Save gates and fresh-profile native acceptance
+
+367626f pushed; run44699786688 BOTH jobs actually SUCCESS, including mandatory
+originalSave realENOSPC/EIO/fourSIGKILLstages plusrecoverygates, pinnedsecretguard
+andproductionpackaging/releaseTauritests. PRbodyupdatedviaREST/drafttrueverified.
+
+Freshprofile full7flag native-fidelity commandPASS on samea6d00cbb productionELF,
+ordinarynoGDB/noJITenvoverrides. ActualReact/modes/inlineedits/disk/history/dirty
+cancel/restart/explicitrecovery/invaliddraftrefusal/deletepassed. Independent4file
+hashes/mode0640, bothRoots1290/1864gone/recoveryonly.lock passed. Currentbootkernel
+query0matchingWebKitfault/OOMentries. Priorintermittentcrashesstillunresolved.
+Allnewdata/profile/fixturesprivate/disposable; precedingtestdataunchanged.
+
+Finaldocpatchremoves2stalebillingclaims, retainsactualhostedsteps+freshnative
+evidence. Runfullcheckbeforecommit/push, thenobserveexactfinalheadCI andupdate
+PRbodywithactualrunresult (avoid extraevidence-onlycommitloop). KeepPRdraft.
+Nextsafe milestone: nativeoriginal-Save ENOSPC GUI error/buffer-preservation/retry
+acceptance usingfreshdedicatedguardedtmpfs; preservecurrentstandalonegates. Then
+continueboundedJSC/startupreproduction/symbolicdiagnosticswithoutJIT/sandbox/quota
+changes. Ownerhistory/license/IPdecisionsremain, not a reason topauseengineering.
+No visibility/historyrewrite/evidencedeletion/merge/release/paidsettings.

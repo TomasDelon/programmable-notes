@@ -1,0 +1,38 @@
+{
+  "run": 44699786688,
+  "head": "367626f495025ee36715edc550e22932a81a6033",
+  "jobs": [
+    {
+      "name": "check",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-20T08:05:31Z",
+      "completed_at": "2026-11-20T08:07:39Z",
+      "saveSteps": []
+    },
+    {
+      "name": "native-check",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-20T08:05:31Z",
+      "completed_at": "2026-11-20T08:10:04Z",
+      "saveSteps": [
+        {
+          "name": "Verify recovery and original Save under real ENOSPC on a disposable tmpfs",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify original document Save across real writer crashes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify original Save sync error reporting (external syscall injection)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}
