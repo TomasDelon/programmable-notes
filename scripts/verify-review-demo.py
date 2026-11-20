@@ -42,10 +42,11 @@ with tempfile.TemporaryDirectory(prefix='review-positive-', dir='.cache') as tem
         assert current['capture'] == manifest['capture']
         assert current['sha256'] == manifest['sha256']
 
-cases = ['notice-missing', 'capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
+cases = ['notice-missing', 'notice-go-truncated', 'capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
          'backslash-path', 'windows-dot-space-path', 'symlink', 'failed-capture']
 reasons = {
     'notice-missing': 'Missing dependency redistribution notices',
+    'notice-go-truncated': 'Incomplete embedded runtime notices',
     'capture-change': 'Capture checksum mismatch',
     'capture-script-change': 'Capture script changed since recording',
     'asset-change': 'Build files changed since verified capture',
@@ -69,6 +70,9 @@ for case in cases:
             shutil.copyfile(Path('.cache/editor-demo') / name, target)
         if case == 'notice-missing':
             (build / 'THIRD_PARTY_NOTICES.txt').unlink()
+        elif case == 'notice-go-truncated':
+            notice = build / 'THIRD_PARTY_NOTICES.txt'
+            notice.write_bytes(notice.read_bytes().replace(Path('licenses/ESBUILD_WASM_GO_NOTICES.txt').read_bytes(), b''))
         elif case == 'capture-change':
             with (capture / 'lesson.mdx').open('ab') as file:
                 file.write(b'\nchanged')

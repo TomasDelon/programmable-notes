@@ -9,6 +9,7 @@ import {
 import { resolve, relative, dirname, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import process from 'node:process';
+import { createHash } from 'node:crypto';
 
 export async function packageNotice(directory, expectedVersion) {
   const root = await realpath(directory);
@@ -42,6 +43,39 @@ export async function packageNotice(directory, expectedVersion) {
     license: manifest.license,
     texts,
   };
+}
+
+/** The npm package license does not include the compiler's embedded Go runtime. */
+export async function embeddedRuntimeNotice(root) {
+  const manifest = JSON.parse(
+    await readFile(resolve(root, 'licenses/esbuild-wasm-go.json'), 'utf8'),
+  );
+  const installed = JSON.parse(
+    await readFile(
+      resolve(root, 'node_modules/esbuild-wasm/package.json'),
+      'utf8',
+    ),
+  );
+  if (
+    manifest.package !== 'esbuild-wasm' ||
+    installed.version !== manifest.packageVersion
+  )
+    throw Error('Embedded compiler version changed; review upstream notices');
+  const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+  const asset = await readFile(
+    resolve(root, 'node_modules/esbuild-wasm/esbuild.wasm'),
+  );
+  if (
+    hash(asset) !== manifest.wasmSha256 ||
+    !asset.includes(Buffer.from(manifest.goVersion))
+  )
+    throw Error('Embedded compiler asset changed; review Go runtime notices');
+  const bytes = await readFile(
+    resolve(root, 'licenses/ESBUILD_WASM_GO_NOTICES.txt'),
+  );
+  if (hash(bytes) !== manifest.noticesSha256)
+    throw Error('Embedded runtime notice changed; reverify upstream texts');
+  return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 }
 
 export async function generateNotices(root = process.cwd()) {
@@ -96,7 +130,8 @@ export async function generateNotices(root = process.cwd()) {
       lines.push('', `--- ${file.name} ---`, file.text.trimEnd());
     lines.push('');
   }
-  return { text: lines.join('\n') + '\n', packages: packages.length };
+  lines.push(await embeddedRuntimeNotice(root));
+  return { text: lines.join('\n'), packages: packages.length };
 }
 
 if (

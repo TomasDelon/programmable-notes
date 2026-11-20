@@ -2299,3 +2299,34 @@ anonymous-checkout install/full check against that exact commit, scan committed
 history, then push. Wait for the actual final hosted jobs and update draft PR #1
 with their result. The VM remains disposable; preserve evidence and stop it
 gracefully when finished. No important test data or shared history is to be deleted.
+
+### Embedded compiler attribution follow-up
+
+Before pushing the locally verified 988aa47 GUI gate, identified one further
+public-attribution gap: esbuild-wasm npm MIT omits its embedded Go runtime text.
+Actual binary reports go1.26.5 and no external dependency modules. Historical
+review WASM exactly matches current SHA256. Fetched eleven official Go root and
+standard-library vendor/Boring LICENSE/PATENTS files, verified Git blob hashes,
+and retained actual combined texts plus asset/version/notice pins in `licenses/`.
+The inventory clearly states it is a source-license superset, not a linked-code
+or app-license claim. Root project license and native Rust completeness remain
+unresolved. Read-only review found no substantive issue; trailing blank normalized.
+
+Generator now appends the embedded text and refuses version/asset/text mismatch.
+Synthetic positive and three negative controls passed; packager now refuses full
+Go-notice omission (new eleventh malformed-artifact case). Need fresh full check,
+fresh capture/package/eleven negatives/extracted browser verification, committed
+history scan and final push/actual hosted CI. 988aa47 exact fresh anonymous-clone
+install/check already passed 114 unit/37 Chromium/six tooling with absent runtime
+and build; next Go-notice revision has one additional tooling test. No app/runtime
+behavior or sandbox changed. No public release/visibility/history/ready change.
+
+Embedded-notice verification passed: 114 unit, 37 Chromium and seven tooling
+controls (no skips), fresh notice-bearing demo capture, clean-extracted real
+browser verification, manifest/CRC and eleven malformed-artifact refusals. The
+Go-only notice omission was rejected specifically by the embedded-text guard.
+Eleven source files and actual legacy WASM match are retained without changing
+old archives. Git attributes pin license/raw evidence bytes across CRLF checkout
+conversion; verify this in the final clone. Commit this additive attribution
+change, scan committed history, push it with local988aa47, then observe actual
+final CI and update draft PR #1. No new production/native security claim.

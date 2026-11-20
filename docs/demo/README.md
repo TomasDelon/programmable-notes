@@ -79,3 +79,9 @@ and checksum remain unchanged as evidence. New builds generate the notices into
 the build, and the packager refuses to assemble a demo without them. These
 notices do not assign a license to Programmable Notes or establish rights in the
 supplied design/research. See [public remediation](../PUBLIC_READINESS.md).
+
+The sidecar now also supplies the embedded Go runtime/standard-library notices
+missing from esbuild-wasm's npm MIT file. The historical demo's actual WASM SHA256
+was verified identical to the pinned current asset. New builds reject compiler
+version/asset/notice mismatches until attribution is reviewed. See the
+[embedded attribution inventory](../../licenses/README.md).

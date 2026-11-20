@@ -49,6 +49,9 @@ if not notice_path.is_file():
 notices = read_inside(args.dist, 'THIRD_PARTY_NOTICES.txt')
 if b'THIRD-PARTY NOTICES' not in notices or b'Permission is hereby granted' not in notices:
     raise ValueError('Incomplete dependency redistribution notices')
+embedded_notices = Path('licenses/ESBUILD_WASM_GO_NOTICES.txt').read_bytes()
+if embedded_notices not in notices:
+    raise ValueError('Incomplete embedded runtime notices')
 entries = {'walkthrough/capture.json': receipt_bytes,
            'THIRD_PARTY_NOTICES.txt': notices}
 allowed = {'01-preview.png', '02-inline-edit.png', '03-updated.png', '04-new-note.png',

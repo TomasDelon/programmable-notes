@@ -1,0 +1,18 @@
+✖ embedded compiler notices require exact asset, version and notice fingerprints (7.562682ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.493455
+
+✖ failing tests:
+
+test at tests/tooling/embedded-notices.test.mjs:9:1
+✖ embedded compiler notices require exact asset, version and notice fingerprints (7.562682ms)
+  TypeError [Error]: notices.embeddedRuntimeNotice is not a function
+      at TestContext.<anonymous> (file:///workspace/programmable-notes/tests/tooling/embedded-notices.test.mjs:23:32)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

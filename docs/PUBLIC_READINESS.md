@@ -155,3 +155,21 @@ The first input-observer failure is retained with its exact source fingerprint.
 [Actual screenshot, exports, results and reproduction](security-evidence/2026-11-20-native-save-enospc/README.md).
 Two added refusal controls make the latest local tooling count six; prior
 clean-checkout and hosted counts above keep their earlier scope.
+
+## Embedded compiler attribution follow-up
+
+The npm esbuild-wasm MIT file does not include Go's embedded runtime notices.
+Actual WASM build information identified go1.26.5; the historical browser review
+contains the identical compiler bytes. Official Go root LICENSE/PATENTS and its
+standard-library vendor/Boring license files were retrieved and their Git blob
+hashes verified. Eleven actual texts now accompany both generated notices and
+the historical review sidecar, explicitly labeled as a source-license superset.
+This does not assert every listed component is linked or assign an app license.
+
+Build generation rejects a changed compiler version, WASM fingerprint or notice
+fingerprint. Demo packaging rejects omission of the complete embedded text.
+A synthetic positive plus asset/version/truncated-text refusal test passed.
+[Inventory and update procedure](../licenses/README.md). Native Rust binary
+attribution remains incomplete and automatic installer upload remains paused.
+The historical email/source exposure and owner publication-rights decisions are
+unchanged; the unqualified remediation/redistribution recommendation remains NO-GO.

@@ -1,0 +1,10 @@
+{
+  "archive": "docs/demo/programmable-notes-review-2026-11-19.zip",
+  "compilerAssets": [
+    {
+      "path": "browser-build/assets/esbuild-BaXVPFT2.wasm",
+      "sha256": "b1831a5c0f6cf688034fb94d0419812f165ea316a3380d3fc00a151e562d2eaf"
+    }
+  ],
+  "matchesPinnedGoNoticeAsset": true
+}
