@@ -3,6 +3,22 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  server: {
+    fs: {
+      // Custom arrays replace Vite defaults: preserve them, then protect private
+      // audit output even when a developer explicitly enables network serving.
+      deny: [
+        '.env',
+        '.env.*',
+        '*.{crt,pem,key,p12,pfx,cer,der}',
+        '.npmrc',
+        '.yarnrc.yml',
+        '**/.git/**',
+        '**/public-audit/**',
+        '**/.cache/security-scan-*/**',
+      ],
+    },
+  },
   resolve: {
     conditions: ['worker', 'module', 'browser', 'development|production'],
   },

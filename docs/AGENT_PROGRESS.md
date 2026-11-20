@@ -2330,3 +2330,27 @@ old archives. Git attributes pin license/raw evidence bytes across CRLF checkout
 conversion; verify this in the final clone. Commit this additive attribution
 change, scan committed history, push it with local988aa47, then observe actual
 final CI and update draft PR #1. No new production/native security claim.
+
+## 2026-11-20 — confirmed development-server private-cache exposure
+
+The Go-attribution and GUI-gate batch e9a3694 was pushed. Actual run44706837109
+executed both jobs SUCCESS. Continued config review then found ignored private
+audit/scanner files were still allowed by Vite, with scripts binding0.0.0.0. A
+real loopback-only probe exposed only our unused synthetic cache fixture, never
+actual private file bodies. Gitignore and mode0700 do not block a same-user server.
+
+Uncommitted fix: dev/preview defaults127.0.0.1; server.fs.deny adds public-audit
+and .cache/security-scan-* while preserving exact installed Vite8.3.8 defaults.
+Initial proposed defaults were incomplete; review caught missing key/p12/pfx/cer/
+der/npmrc/yarnrc protections before commit. Expanded actual synthetic-file tests
+failed first, then passed with the complete defaults restored. Future-default
+set inclusion is checked through public resolveConfig(configFile:false,envFile:false).
+Bare/direct/raw/encoded-dot/@fs probes require403/no marker. Runtime?raw remains200.
+No actual config/credential bodies are fetched; exclusive fixture cleanup leaves
+private audit parent intact. pretest:tooling now explicitly generates runtime.
+
+Dev real-browser React count interaction and unsaved MDX compilation passed.
+Need final full check with expanded eight tooling controls, retain red/green+
+browser evidence, read-only re-review, commit/push and observe exact final CI.
+Root project license/history/IP decisions remain; no visibility/history/merge/
+release/readiness change. Production permissions/resource limits unchanged.

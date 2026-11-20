@@ -134,3 +134,9 @@ older materials. Native binary redistribution notices remain incomplete.
 See [public remediation and owner decisions](docs/PUBLIC_READINESS.md) and
 [security reporting](SECURITY.md). Standard public Ubuntu Actions compute is free;
 artifact/storage allowances are separate. No paid infrastructure is required.
+
+Development and preview commands bind to `127.0.0.1` by default. Approved cloud
+forwarding can opt in with `--host 0.0.0.0`; the source server is a development
+tool, not an authenticated deployment. Vite explicitly denies private audit and
+scanner directories while retaining every installed upstream secret-file deny
+pattern. Gitignore alone does not protect files from source serving.

@@ -173,3 +173,27 @@ A synthetic positive plus asset/version/truncated-text refusal test passed.
 attribution remains incomplete and automatic installer upload remains paused.
 The historical email/source exposure and owner publication-rights decisions are
 unchanged; the unqualified remediation/redistribution recommendation remains NO-GO.
+
+## Development source-server privacy correction
+
+Review identified that ignored audit/scanner directories remained inside Vite's
+allowed project root, and npm dev/preview scripts bound all interfaces. A real
+localhost-only Vite probe exposed an **unused synthetic** private-cache payload.
+No actual private file body was fetched, and no external exploitation is claimed.
+Directory permissions alone do not constrain the same-user development server.
+
+Default bindings are now loopback. Explicit deny rules cover `public-audit` and
+`.cache/security-scan-*`, preserving the exact installed Vite8.3.8 defaults for
+env files, git, keys/certificates and npm/yarn configuration. Review caught an
+incomplete proposed default list before commit; expanded synthetic-key/config
+controls failed first and then passed after restoring the full defaults.
+The regression compares configured rules to installed Vite defaults, so future
+upgrades cannot silently omit newly added protections.
+
+Actual HTTP checks require403 with no fixture contents for bare/direct/raw,
+encoded-dot and `/@fs/` requests, using only exclusively created unused fixtures.
+Required `.cache/runtime.js?raw` remains200, and real browser React interaction
+and unsaved MDX compilation passed against the dev server. Packaged Tauri assets
+and authority were unchanged. This is development-server protection, not a claim
+that every ignored file is inaccessible or that an unauthenticated server is
+suitable for public hosting. Tooling tests explicitly generate runtime first.
