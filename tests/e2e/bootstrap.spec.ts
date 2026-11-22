@@ -16,7 +16,7 @@ async function open(
 test('unsaved MDX hooks, editor updates, errors, TSX imports, pinned package, and source fidelity', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const frame = page.frameLocator('iframe');
   await expect(frame.getByRole('button', { name: 'Count: 0' })).toBeVisible({
     timeout: 20000,
@@ -62,7 +62,7 @@ test('unsaved MDX hooks, editor updates, errors, TSX imports, pinned package, an
 test('sandbox denies DOM, storage, network, resources, popup, top navigation and forged messages', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await page.evaluate(() => {
     localStorage.setItem('secret', 'host-only');
   });
@@ -77,7 +77,8 @@ test('sandbox denies DOM, storage, network, resources, popup, top navigation and
   });
   const probeSource = `export function Probe(){
  const [result,setResult]=React.useState('waiting');
- return <button onClick={async()=>{const r={};
+ return <button onClick={async()=>{const r={};const csp=[];const publish=()=>setResult(JSON.stringify({...r,csp}));
+ document.addEventListener('securitypolicyviolation',event=>{if(event.blockedURI.startsWith('https://probe.invalid')){csp.push({directive:event.effectiveDirective,blockedURI:event.blockedURI,disposition:event.disposition});publish();}});
  for(const [k,f] of Object.entries({dom:()=>parent.document.title,storage:()=>parent.localStorage.secret,ownStorage:()=>localStorage.secret,native:()=>window.__TAURI_INTERNALS__.invoke('plugin:fs|read_file',{path:'/etc/passwd'}),popup:()=>{if(!window.open('https://probe.invalid')) throw Error();},top:()=>{top.location.href='https://probe.invalid';}})){try{f();r[k]='allowed';}catch{r[k]='denied';}}
  for(const url of ['https://probe.invalid','http://127.0.0.1:9']){try{await fetch(url);r[url]='allowed';}catch{r[url]='denied';}}
  const image=new Image();image.src='https://probe.invalid/pixel';document.body.append(image);
@@ -85,7 +86,7 @@ test('sandbox denies DOM, storage, network, resources, popup, top navigation and
  parent.postMessage({type:'save',path:'/etc/passwd',content:'bad'},'*');
  parent.postMessage({type:'apply-markdown-edit',from:0,to:6,text:'Changed'},'*');
  parent.postMessage({type:'compiler-diagnostics',locations:[{file:'note.mdx',line:1}]},'*');
- setResult(JSON.stringify(r));}}>Probe {result}</button>;
+ publish();}}>Probe {result}</button>;
 }
 
 import * as React from 'react'
@@ -106,13 +107,31 @@ import * as React from 'react'
     'http://127.0.0.1:9',
   ])
     await expect(button).toContainText(`"${key}":"denied"`);
+  // Firefox can reject resources before emitting Playwright request events.
+  // Require real enforced CSP violations, independently of transport reporting.
+  await expect
+    .poll(async () => {
+      const result = JSON.parse(
+        (await button.textContent())!.replace(/^Probe /, ''),
+      ) as {
+        csp: { directive: string; blockedURI: string; disposition: string }[];
+      };
+      return result.csp
+        .filter(
+          (event) =>
+            event.disposition === 'enforce' &&
+            event.blockedURI.startsWith('https://probe.invalid'),
+        )
+        .map((event) => event.directive);
+    })
+    .toEqual(
+      expect.arrayContaining([
+        'img-src',
+        expect.stringMatching(/^script-src(?:-elem)?$/),
+      ]),
+    );
+  // Any requests that the engine does report must still be CSP-blocked.
   await expect.poll(() => blocked.sort()).toEqual(requests.sort());
-  expect(requests).toEqual(
-    expect.arrayContaining([
-      'https://probe.invalid/pixel',
-      'https://probe.invalid/evil.js',
-    ]),
-  );
   expect(page.url()).toContain('127.0.0.1:4173');
   await page.evaluate(() =>
     window.postMessage({ type: 'preview-error', message: 'forged' }, '*'),
@@ -128,7 +147,7 @@ import * as React from 'react'
   );
 });
 test('original handoff malicious fixture is confined', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const reports: unknown[] = [];
   page.on('console', async (msg) => {
     for (const arg of msg.args()) {
@@ -148,7 +167,7 @@ test('original handoff malicious fixture is confined', async ({ page }) => {
 test('runtime crash is contained and source remains editable; forbidden imports fail closed', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await open(
     page,
     "export function Crash(){throw Error('fixture crash')}\n\n<Crash />",
@@ -169,7 +188,7 @@ test('runtime crash is contained and source remains editable; forbidden imports 
 test('new workspace TSX imports work offline; CRLF no-op save and Stop cancellation', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await page.getByLabel('Open files').setInputFiles([
     {
       name: 'fresh.mdx',
@@ -225,7 +244,7 @@ test('new workspace TSX imports work offline; CRLF no-op save and Stop cancellat
 test('browser import preserves a UTF-8 BOM and refuses malformed UTF-8', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original = '\uFEFF# Encoded\r\n\r\nCafé\r\n';
   await open(page, original, 'encoded.mdx');
   await expect(page.getByLabel('Source file')).toHaveValue(/encoded\.mdx$/);
@@ -246,7 +265,7 @@ test('browser import preserves a UTF-8 BOM and refuses malformed UTF-8', async (
 test('paragraph edits preserve mixed MDX bytes and support exact undo and redo', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     "import React from 'react'\r\n\r\nEditable paragraph.\r\n\r\n<div><span>Nested JSX</span></div>\r\n\r\n{/* keep comment */}\r\n";
   await open(page, original, 'visual.mdx');
@@ -290,7 +309,7 @@ test('paragraph edits preserve mixed MDX bytes and support exact undo and redo',
 test('an edited heading can be downloaded and reopened without rewriting its markers', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original = '##   Original title  ##\r\n\r\nUnchanged paragraph.\r\n';
   await open(page, original, 'heading.mdx');
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
@@ -323,7 +342,7 @@ test('an edited heading can be downloaded and reopened without rewriting its mar
 test('the rendered list editor patches only a simple item', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original = '- First item\r\n- Second item\r\n\r\n<div>Opaque</div>\r\n';
   await open(page, original, 'list.mdx');
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
@@ -348,7 +367,7 @@ test('the rendered list editor patches only a simple item', async ({
 test('compiler diagnostics identify the syntax error in the imported file', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await page.getByLabel('Open files').setInputFiles([
     {
       name: 'diagnostics.mdx',
@@ -397,7 +416,7 @@ test('rebuild retries after a transient compiler download failure', async ({
   page,
 }) => {
   await page.route('**/*.wasm', (route) => route.abort());
-  await page.goto('/');
+  await page.goto('/engine');
   await expect(page.getByRole('status')).toHaveText('Build failed');
   await page.unroute('**/*.wasm');
   await page.getByRole('button', { name: 'Rebuild preview' }).click();
@@ -409,7 +428,7 @@ test('rebuild retries after a transient compiler download failure', async ({
 test('explicit browser draft survives reload and restores into a separate buffer', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const draft = '# Draft\r\n\r\nKeep this text.\r\n';
   await open(page, draft, 'draft.mdx');
   const selection = page.getByLabel('Source file');
@@ -437,7 +456,7 @@ test('explicit browser draft survives reload and restores into a separate buffer
 test('automatic drafts require opt-in and track only the selected source', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await open(page, '# Draft\r\n', 'autosave.mdx');
   const selection = page.getByLabel('Source file');
   await expect(selection).toHaveValue(/autosave\.mdx$/);
@@ -465,7 +484,7 @@ test('automatic drafts require opt-in and track only the selected source', async
 test('Setext inline editing cancels with Escape and preserves the underline on save', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original = 'Original title\r\n======\r\n\r\n<em>Opaque JSX</em>\r\n';
   await open(page, original, 'setext.mdx');
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
@@ -504,7 +523,7 @@ for (const viewport of [
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await page.goto('/');
+    await page.goto('/engine');
     const counter = page
       .frameLocator('iframe')
       .getByRole('button', { name: /^Count:/ });
@@ -574,7 +593,7 @@ for (const viewport of [
 test('pending visual input survives mode changes and rejects a changed source revision', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await open(page, 'Original paragraph.\n\n<Widget />\n', 'revision.mdx');
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
   await page
@@ -607,7 +626,7 @@ test('pending visual input survives mode changes and rejects a changed source re
 test('opaque metadata, fences and Unicode survive visual edits, stale revisions and exact reopen', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     '\uFEFF---\r\ntitle: "A 😀 note"\r\n---\r\n\r\nimport {useState} from "react"\r\n\r\nexport function Widget(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Clicks: {n}</button>}\r\n\r\nCafe\u0301 😀 paragraph.\r\n\r\n```tsx\r\nconst nested = <Widget value={{literal: true}} />\r\n```\r\n\r\n{/* keep comment exactly */}\r\n\r\n<Widget />\r\n';
   await open(page, original, 'metadata.mdx');
@@ -649,7 +668,11 @@ test('opaque metadata, fences and Unicode survive visual edits, stale revisions 
     .click();
   await page.getByRole('button', { name: 'Source', exact: true }).click();
   const changed = updated.replace('A 😀 note', 'B 😀 note');
-  await page.getByRole('textbox', { name: 'MDX source' }).fill(changed);
+  // fill() targets CodeMirror's LF display projection. WebKit's automation
+  // inserts CR and LF as separate breaks; physical CRLF stays in raw storage.
+  await page
+    .getByRole('textbox', { name: 'MDX source' })
+    .fill(changed.replace(/\r\n|\r/g, '\n'));
   await page.getByRole('button', { name: 'Visual', exact: true }).click();
   await field.press('Enter');
   await expect(panel.getByRole('alert')).toContainText('Paragraph changed');
@@ -666,7 +689,7 @@ test('opaque metadata, fences and Unicode survive visual edits, stale revisions 
 test('preserves mixed physical line endings through checked patches, source edits and undo', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     'import React from "react"\r\n\r\nFirst paragraph.\n\nSecond paragraph.\r\n\r\n<div data-value={{literal: true}}>Opaque JSX</div>\n\nLast paragraph.';
   await open(page, original, 'mixed-endings.mdx');
@@ -708,7 +731,7 @@ test('preserves mixed physical line endings through checked patches, source edit
 test('MDX compiler navigation uses original physical lines without changing source', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original = '# Café 😀\r\n\r\n<Broken';
   await open(page, original, 'syntax.mdx');
   await page
@@ -738,7 +761,7 @@ test('MDX compiler navigation uses original physical lines without changing sour
 test('JavaScript Unicode line terminators navigate to the original module offset', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     'export default function Widget(){\u2028 const value=;\u2029 return <p>Recovered</p>; }';
   await page.getByLabel('Open files').setInputFiles([
@@ -768,7 +791,7 @@ test('new notes preserve siblings and independent history through save and reope
   page,
   context,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await page.getByRole('button', { name: 'Source', exact: true }).click();
   const diskSource = '# Existing\r\n\r\nKeep <span>JSX</span> bytes.\r\n';
   await open(page, diskSource, 'existing.mdx');
@@ -819,7 +842,7 @@ test('new notes preserve siblings and independent history through save and reope
     Buffer.from('A separate dirty note.'),
   );
   const reopened = await context.newPage();
-  await reopened.goto('/');
+  await reopened.goto('/engine');
   await reopened.getByLabel('Open files').setInputFiles({
     name: saved.name,
     mimeType: 'text/plain',
@@ -831,7 +854,7 @@ test('new notes preserve siblings and independent history through save and reope
 test('unapplied visual text blocks document replacement and stays protected until apply or cancel', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     '\uFEFF---\r\ntitle: Pending edits\r\n---\r\n\r\nOriginal paragraph.\r\n\r\nSecond paragraph.\r\n\r\n<div>Opaque JSX</div>\r\n';
   await open(page, original, 'pending.mdx');
@@ -915,7 +938,7 @@ test('unapplied visual text blocks document replacement and stays protected unti
 test('leading BOM keeps original MDX mappings, opaque React imports and exact save history', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     '\uFEFF' +
     fixture('counter.mdx').replace(/\n/g, '\r\n') +
@@ -969,7 +992,7 @@ test('leading BOM keeps original MDX mappings, opaque React imports and exact sa
 test('trusted save keys export exact source while synthetic, repeated and unapplied edits cannot save', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const original =
     '\uFEFF# Keyboard source\r\n\r\nA paragraph.\r\n\r\n<div>Opaque JSX</div>\r\n';
   await open(page, original, 'keyboard.mdx');
@@ -1076,7 +1099,7 @@ test('trusted save keys export exact source while synthetic, repeated and unappl
 test('selected source status stays accurate while sibling edits and save notices remain isolated', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   await page.getByRole('button', { name: 'Source', exact: true }).click();
   const alpha = '# Alpha\n';
   const beta = '# Beta unchanged\r\n';
@@ -1085,6 +1108,7 @@ test('selected source status stays accurate while sibling edits and save notices
     { name: 'beta.mdx', mimeType: 'text/plain', buffer: Buffer.from(beta) },
   ]);
   const selection = page.getByLabel('Source file');
+  await expect(selection).toHaveValue(/\/alpha\.mdx$/);
   const alphaKey = await selection.inputValue();
   const betaKey = await selection
     .locator('option')
@@ -1094,6 +1118,9 @@ test('selected source status stays accurate while sibling edits and save notices
         .find((key) => key.endsWith('/beta.mdx'))!,
     );
   const editor = page.getByRole('textbox', { name: 'MDX source' });
+  // File import is asynchronous. Wait for the source to be applied before
+  // making a new edit, otherwise a late import can replace the typed value.
+  await expect(editor).toHaveText(alpha);
   await editor.fill('# Alpha unsaved\n');
   await expect(page.getByLabel('Document status')).toHaveText(
     'Unsaved changes',
@@ -1140,7 +1167,7 @@ test('selected source status stays accurate while sibling edits and save notices
 test('real inline typing preserves mixed internal breaks through exact exports and undo redo', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const source =
     '\uFEFFimport {useState} from "react"\r\n\r\nexport function Probe(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Mixed counter {n}</button>}\r\n\r\n# Heading\r\n\r\nFirst line 😀\nSecond line café\r\nThird line stays\n\n{/* Opaque comment */}\r\n\r\n<Probe />\r\n';
   await open(page, source, 'mixed-internal.mdx');
@@ -1204,7 +1231,7 @@ test('long visual paragraphs keep a bounded scrollable input and exact source hi
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('/');
+  await page.goto('/engine');
   await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
   const paragraph = Array.from(
     { length: 1000 },
@@ -1253,7 +1280,7 @@ test('literal quote editing preserves original markers, opaque MDX and undo thro
 }) => {
   const source =
     '\uFEFFimport React from "react"\r\n\r\nexport function Counter() { const [n,setN]=React.useState(0); return <button onClick={()=>setN(n+1)}>Quote count {n}</button> }\r\n\r\n<Counter />\r\n\r\n  >\tQuoted café 😀.\r\n\r\n> *Formatted stays opaque.*\r\n\r\n> <span>JSX quote opaque</span>\r\n\r\n{/* Keep comment exactly. */}\r\n\r\n<div><em>Nested opaque JSX.</em></div>\r\n';
-  await page.goto('/');
+  await page.goto('/engine');
   await open(page, source, 'quoted.mdx');
   const frame = page.frameLocator('iframe');
   await frame
@@ -1319,7 +1346,7 @@ test('multiline quote text keeps every prefix and physical ending through no-op,
   const original =
     '\uFEFFimport React from "react"\r\n\r\nexport function QuoteCounter(){const[n,setN]=React.useState(0);return <button onClick={()=>setN(n+1)}>Quote counter {n}</button>}\r\n\r\n<QuoteCounter />\r\n\r\n## Original heading\r\n\r\n  >  First café 😀.\r\n >\tSecond line.\n> Third line.\r\n\r\n{/* keep comment */}\r\n\r\n<div><span>Opaque JSX</span></div>\r\n\r\n> *Opaque formatting.*\r\n';
   const logical = 'First café 😀.\nSecond line.\nThird line.';
-  await page.goto('/');
+  await page.goto('/engine');
   await open(page, original, 'multiline-quote.mdx');
   const counter = page
     .frameLocator('iframe')
@@ -1390,7 +1417,7 @@ test('opaque source navigation is explicit, revision-checked and byte preserving
 }) => {
   const source =
     '\uFEFFimport React from "react"\r\n\r\nexport function JumpCounter(){const[n,setN]=React.useState(0);return <button onClick={()=>setN(n+1)}>Jump counter {n}</button>}\r\n\r\n<JumpCounter />\r\n\r\nBefore café 😀 \u2028 literal.\nMixed physical LF.\r\n\r\n<section data-target="source-jump"><span>Opaque JSX target</span></section>\r\n';
-  await page.goto('/');
+  await page.goto('/engine');
   await open(page, source, 'source-navigation.mdx');
   const counter = page
     .frameLocator('iframe')
@@ -1479,7 +1506,7 @@ test('opaque source navigation is explicit, revision-checked and byte preserving
 test('browser file budgets reject selections before reads, retain dirty history and recover with an exact valid import', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const editor = page.getByRole('textbox', { name: 'MDX source' });
   const original = await editor.innerText();
   const dirty = '# Keep my dirty source. 😀';
@@ -1552,7 +1579,7 @@ test('browser file budgets reject selections before reads, retain dirty history 
 test('dense visual syntax falls back to exact read-only Source without preview edit authority', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const source =
     '\uFEFF# Keep original\r\n\r\n' +
     '['.repeat(50_000) +
@@ -1603,12 +1630,13 @@ test('dense visual syntax falls back to exact read-only Source without preview e
 test('same-named sources have distinct visible choices and retain separate exact bytes and undo histories', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const first =
     '\uFEFF# First note\r\n\r\nFirst paragraph café.\r\n\r\n<div><span>First opaque JSX</span></div>\r\n';
   const second =
     '\uFEFF# Second note\n\nSecond paragraph 😀.\r\n\r\n<div>Second opaque JSX</div>\n';
   const choices = page.getByLabel('Source file');
+  await expect(choices).toBeVisible();
   const initialCount = await choices.locator('option').count();
   await open(page, first, 'repeat.mdx');
   await expect(choices).toHaveValue(/\/repeat\.mdx$/);
@@ -1694,7 +1722,7 @@ test('same-named sources have distinct visible choices and retain separate exact
 test('mixed-case MDX and explicit TSX imports select the correct entry without folding file identities', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const source =
     '\uFEFFimport { Widget } from "./Widget.TSX"\r\n\r\n# Mixed-case note\r\n\r\nA literal paragraph.\r\n\r\n<Widget />\r\n';
   const module =
@@ -1780,7 +1808,7 @@ test('mixed-case MDX and explicit TSX imports select the correct entry without f
 test('case-distinct TSX modules compile independently in the same browser selection', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/engine');
   const source =
     'import {Widget as Upper} from "./Widget.TSX"\nimport {Widget as Lower} from "./Widget.tsx"\n\n<Upper />\n\n<Lower />\n';
   await page.getByLabel('Open files').setInputFiles([
