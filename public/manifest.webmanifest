@@ -1,0 +1,19 @@
+{
+  "name": "Programmable Notes",
+  "short_name": "Notes",
+  "description": "A quiet workspace for Markdown, mathematics and interactive notes.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#191a1b",
+  "theme_color": "#191a1b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
