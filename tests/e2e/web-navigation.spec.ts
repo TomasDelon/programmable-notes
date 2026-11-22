@@ -5,8 +5,8 @@ test.describe.configure({ timeout: 60_000 });
 async function launch(page: Page) {
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Welcome', exact: true }),
-  ).toBeVisible();
+    page.getByRole('textbox', { name: 'Document title', exact: true }),
+  ).toHaveValue('Welcome');
 }
 
 async function navigation(page: Page) {
@@ -305,9 +305,9 @@ test('mobile navigation closes after creation, mode controls work, and the page 
     .getByRole('textbox', { name: 'MDX source' })
     .fill('A note for a narrow screen.\n\n' + 'longword'.repeat(40));
   await chooseMode(page, 'Preview');
-  const frame = page.frameLocator('iframe[title="Document preview"]');
+  const rendered = page.locator('.rendered-editor .ProseMirror');
   await expect(
-    frame.getByText('A note for a narrow screen.', { exact: true }),
+    rendered.getByText('A note for a narrow screen.', { exact: true }),
   ).toBeVisible({ timeout: 25_000 });
   expect(
     await page.evaluate(
@@ -328,8 +328,8 @@ test('mobile navigation closes after creation, mode controls work, and the page 
     'true',
   );
   await expect(
-    page.getByRole('heading', { name: 'Welcome', exact: true }),
-  ).toBeVisible();
+    page.getByRole('textbox', { name: 'Document title', exact: true }),
+  ).toHaveValue('Welcome');
   await chooseMode(page, 'Source');
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeVisible();
 });
@@ -409,9 +409,9 @@ test('panels never shift the canvas and Source/Preview metrics match across view
   await page
     .getByRole('button', { name: 'Close right panel', exact: true })
     .click();
-  const frame = page.frameLocator('iframe[title="Document preview"]');
+  const rendered = page.locator('.rendered-editor .ProseMirror');
   await expect(
-    frame.getByText('Your notes, with room to think.', { exact: true }),
+    rendered.getByText('Your notes, with room to think.', { exact: true }),
   ).toBeVisible({ timeout: 25_000 });
   await page.keyboard.press('Control+e');
   const editor = page.getByRole('textbox', { name: 'MDX source' });
@@ -433,14 +433,13 @@ test('panels never shift the canvas and Source/Preview metrics match across view
       width <= 720 ? '15.5px' : '16px',
     );
     const sourceMetrics = await editor.evaluate(metrics);
-    // Compare the rendered modes. Firefox returns empty computed styles for
-    // a document inside a display:none iframe.
+    // Compare both visible surfaces at the same responsive breakpoint.
     await page.keyboard.press('Control+e');
     await expect(
-      frame.getByText('Your notes, with room to think.', { exact: true }),
+      rendered.getByText('Your notes, with room to think.', { exact: true }),
     ).toBeVisible();
     await expect
-      .poll(async () => frame.locator('body').evaluate(metrics))
+      .poll(async () => rendered.evaluate(metrics))
       .toEqual(sourceMetrics);
     await page.keyboard.press('Control+e');
   }

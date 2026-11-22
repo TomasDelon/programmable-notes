@@ -88,3 +88,37 @@ it.each(['source', 'attachment'] as const)(
     expect(result.current.error).toContain('No files were imported');
   },
 );
+
+it.each(['before reading', 'during reading'])(
+  'retains the selected note when an editor draft starts %s a source import',
+  async (when) => {
+    const initial = createWebState(1);
+    await writeWorkspace(initial, 0);
+    const { result } = renderHook(useWebWorkspace);
+    await waitFor(() => expect(result.current.saveStatus).toBe('saved'));
+    const read = deferred<ArrayBuffer>();
+    const file = new NodeFile(['late'], 'late.mdx') as unknown as File;
+    const arrayBuffer = vi
+      .spyOn(file, 'arrayBuffer')
+      .mockReturnValue(read.promise);
+    let importing!: Promise<void>;
+    act(() => {
+      if (when === 'before reading') result.current.setPendingEditorDraft(true);
+      importing = result.current.importFiles([file]);
+    });
+    if (when === 'during reading')
+      act(() => result.current.setPendingEditorDraft(true));
+    await act(async () => {
+      read.resolve(new Uint8Array([108, 97, 116, 101]).buffer);
+      await importing;
+    });
+
+    expect(arrayBuffer).toHaveBeenCalledTimes(
+      when === 'before reading' ? 0 : 1,
+    );
+    expect(result.current.state).toEqual(initial);
+    expect((await readWorkspace())!.state).toEqual(initial);
+    expect(result.current.error).toContain('editor draft');
+    expect(result.current.error).toContain('No files were imported');
+  },
+);

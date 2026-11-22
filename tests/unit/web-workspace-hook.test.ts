@@ -186,6 +186,53 @@ describe('web workspace save lifecycle', () => {
     ).toBe('Typed during a slow reload');
   });
 
+  it('cancels reload when an editor draft opens while the previous save drains', async () => {
+    const { result } = renderHook(useWebWorkspace);
+    await waitFor(() => expect(result.current.state).not.toBeNull());
+    await act(async () => {
+      await result.current.saveNow();
+    });
+    const key = result.current.state!.workspace.selected;
+    const actualWrite = persistence.writeWorkspace;
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let saving = false;
+    vi.spyOn(persistence, 'writeWorkspace').mockImplementationOnce(
+      async (...args) => {
+        saving = true;
+        await blocked;
+        return actualWrite(...args);
+      },
+    );
+    const read = vi.spyOn(persistence, 'readWorkspace');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    act(() => result.current.updateSource(key, 'Keep this active document'));
+    await waitFor(() => expect(saving).toBe(true));
+    let reloading!: Promise<void>;
+    act(() => {
+      reloading = result.current.reloadFromStorage();
+      result.current.setPendingEditorDraft(true);
+    });
+    await act(async () => {
+      release();
+      await reloading;
+    });
+
+    expect(read).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.state!.workspace.selected).toBe(key);
+    expect(result.current.state!.workspace.files[key]).toBe(
+      'Keep this active document',
+    );
+    expect(result.current.error).toContain('editor draft');
+    expect(result.current.error).toContain('workspace was not replaced');
+    expect(
+      (await persistence.readWorkspace())!.state.workspace.files[key],
+    ).toBe('Keep this active document');
+  });
+
   it('completes real saves while optional storage permission stays pending and deduplicates the request', async () => {
     const { result } = renderHook(() => useWebWorkspace());
     await waitFor(() => expect(result.current.state).not.toBeNull());

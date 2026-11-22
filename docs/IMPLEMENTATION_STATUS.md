@@ -1,6 +1,22 @@
 # Programmable Notes implementation status
 
-Development branch: `feat/mdx-react-engine`; PR #1 remains draft. No public release
+## Current web application
+
+The integrated browser beta is on `main`. Source and Live retain the existing
+CodeMirror document. Preview now provides direct rendered editing of Markdown,
+including formatting, lists/tasks, tables, links, attachments and mathematics.
+See [ADR 013](decisions/ADR-013-rendered-document-editing.md) for the source
+preservation contract, isolated React islands, full-document runtime and the
+cross-tab persistence fix. This does not add cross-device synchronization or
+change the native security model.
+
+## Historical native implementation record
+
+The following record describes the earlier `feat/mdx-react-engine` work. PR #1
+was subsequently included in the integrated browser beta. Historical evidence
+and limitations below remain scoped to their original builds.
+
+Original status: development branch `feat/mdx-react-engine`; PR #1 draft. No public release
 or production security-readiness claim. The specifications/research in
 `docs/handoff` are supporting material; executable evidence below defines verified
 behavior. The provisional design ZIP is reference only and has not replaced the

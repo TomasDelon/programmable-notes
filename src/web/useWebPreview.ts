@@ -18,14 +18,20 @@ interface CompilerInitialization {
   promise: Promise<WebAssembly.Module>;
   controller: AbortController;
   ready: boolean;
+  consumers: number;
+}
+interface CompilerLease {
+  promise: Promise<WebAssembly.Module>;
+  release: () => void;
 }
 let wasm: CompilerInitialization | undefined;
-function compilerModule() {
+function sharedCompilerModule() {
   if (wasm) return wasm;
   const controller = new AbortController();
   const initialization: CompilerInitialization = {
     controller,
     ready: false,
+    consumers: 0,
     promise: Promise.resolve()
       .then(async () => {
         const response = await fetch(wasmURL, {
@@ -58,12 +64,28 @@ function compilerModule() {
   return initialization;
 }
 
+/** Each preview owns one lease; retiring one island cannot abort its siblings. */
+function compilerModule(): CompilerLease {
+  const initialization = sharedCompilerModule();
+  initialization.consumers++;
+  let released = false;
+  return {
+    promise: initialization.promise,
+    release: () => {
+      if (released) return;
+      released = true;
+      initialization.consumers--;
+      if (initialization.ready || initialization.consumers > 0) return;
+      if (wasm === initialization) wasm = undefined;
+      initialization.controller.abort();
+    },
+  };
+}
+
 function cancelInitialization(
-  initialization: CompilerInitialization | null | undefined,
+  initialization: CompilerLease | null | undefined,
 ) {
-  if (!initialization || initialization.ready) return;
-  if (wasm === initialization) wasm = undefined;
-  initialization.controller.abort();
+  initialization?.release();
 }
 
 export type WebPreviewStatus =
@@ -88,11 +110,13 @@ export function useWebPreview({
   entry,
   theme,
   images = noImages,
+  enabled = true,
 }: {
   files: Record<string, string>;
   entry: string;
   theme: 'light' | 'dark';
   images?: readonly StoredAsset[];
+  enabled?: boolean;
 }) {
   const [html, setHtml] = useState('');
   const [error, setError] = useState('');
@@ -103,7 +127,7 @@ export function useWebPreview({
   const generation = useRef(0);
   const readyGeneration = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
-  const initializationRef = useRef<CompilerInitialization | null>(null);
+  const initializationRef = useRef<CompilerLease | null>(null);
   const currentTheme = useRef(theme);
   useLayoutEffect(() => {
     currentTheme.current = theme;
@@ -139,13 +163,13 @@ export function useWebPreview({
   }, []);
 
   useEffect(() => {
-    if (stopped) return;
+    if (stopped || !enabled) return;
     const ticket = ++generation.current;
     readyGeneration.current = null;
     let active = true;
     let acceptedReply = false;
     let worker: Worker | undefined;
-    let initialization: CompilerInitialization | undefined;
+    let initialization: CompilerLease | undefined;
     const current = () => active && generation.current === ticket;
     const terminateWorker = () => {
       worker?.terminate();
@@ -196,6 +220,9 @@ export function useWebPreview({
         initialization = compilerModule();
         initializationRef.current = initialization;
         const wasmModule = await initialization.promise;
+        cancelInitialization(initialization);
+        if (initializationRef.current === initialization)
+          initializationRef.current = null;
         if (!current()) return;
         worker = new CompilerWorker();
         workerRef.current = worker;
@@ -277,12 +304,12 @@ export function useWebPreview({
       clearTimeout(timer);
       clearTimeout(deadline);
       terminateWorker();
-      // Retire a stalled download when the view unmounts or source changes.
+      // Retire this consumer; only the last lease aborts a stalled download.
       cancelInitialization(initialization);
       if (initializationRef.current === initialization)
         initializationRef.current = null;
     };
-  }, [files, entry, images, revision, stopped]);
+  }, [files, entry, images, revision, stopped, enabled]);
 
   return {
     html,

@@ -12,6 +12,7 @@ import {
   WidgetType,
   type DecorationSet,
 } from '@codemirror/view';
+import { isolateHistory } from '@codemirror/commands';
 import katex from 'katex';
 import type { LinkResolution } from '../../links';
 import {
@@ -34,22 +35,30 @@ interface Token {
   math?: MathSpan;
   line?: boolean;
   block?: { from: number; to: number };
+  marker?: { text: string; depth: number };
+  task?: { offset: number; checked: boolean; label: string; depth: number };
+  code?: string;
+  rule?: boolean;
 }
+
+type MarkdownNode = SyntaxNode & {
+  ordered?: boolean;
+  start?: number;
+  checked?: boolean | null;
+};
 
 /** AST positions alone grant presentation; opaque MDX is never host markup. */
 export function liveTokens(source: string, path = 'note.mdx'): Token[] {
   const tree = parseLiveSource(source, path);
   const result: Token[] = [];
   function visit(
-    node: SyntaxNode,
+    node: MarkdownNode,
     containing?: { from: number; to: number },
+    depth = 0,
+    ordinal?: number,
+    inQuote = false,
   ): void {
-    if (
-      node.type.startsWith('mdx') ||
-      node.type === 'code' ||
-      node.type === 'html'
-    )
-      return;
+    if (node.type.startsWith('mdx') || node.type === 'html') return;
     const from = node.position?.start.offset;
     const to = node.position?.end.offset;
     const block =
@@ -63,6 +72,69 @@ export function liveTokens(source: string, path = 'note.mdx'): Token[] {
       const math = safeMathSpan(source, node);
       if (math) {
         result.push({ from, to, math });
+        return;
+      }
+      if (node.type === 'listItem') {
+        // The parser proves this is a list item. The source prefix alone
+        // determines the exact byte range owned by its visual marker.
+        const prefix = /^(?:[-+*]|\d+[.)])[ \t]+(?:\[([ xX])\][ \t]+)?/.exec(
+          raw,
+        );
+        if (prefix) {
+          const end = from + prefix[0].length;
+          const firstLineEnd = raw.search(/[\r\n]/);
+          const itemLineEnd =
+            from + (firstLineEnd < 0 ? raw.length : firstLineEnd);
+          const label = source.slice(end, itemLineEnd).trim();
+          const task =
+            typeof node.checked === 'boolean' && prefix[1] !== undefined
+              ? {
+                  offset: from + prefix[0].indexOf('[') + 1,
+                  checked: node.checked,
+                  label,
+                  depth,
+                }
+              : undefined;
+          result.push({
+            from,
+            to: end,
+            line: true,
+            className: 'cm-live-list-item',
+            block: { from, to: itemLineEnd },
+            ...(task
+              ? { task }
+              : {
+                  marker: {
+                    text: ordinal === undefined ? '•' : `${ordinal}.`,
+                    depth,
+                  },
+                }),
+          });
+        }
+      }
+      if (node.type === 'blockquote' && !inQuote) {
+        // Nested quote prefixes share one decoration, never overlapping edits.
+        const prefixes = /^(?:[ \t]*>[ \t]?)+/gm;
+        for (const match of raw.matchAll(prefixes)) {
+          const start = from + match.index;
+          result.push({
+            from: start,
+            to: start + match[0].length,
+            line: true,
+            className: 'cm-live-blockquote',
+            block: { from, to },
+            hide: [{ from: start, to: start + match[0].length }],
+          });
+        }
+      }
+      if (node.type === 'thematicBreak') {
+        result.push({ from, to, rule: true });
+        return;
+      }
+      if (node.type === 'code') {
+        // Code remains literal text. Never run it or use it as host HTML.
+        if (!depth && !inQuote && node.value !== undefined)
+          result.push({ from, to, code: node.value });
         return;
       }
       if (node.type === 'heading' && /^#{1,6}[ \t]+/.test(raw)) {
@@ -123,10 +195,142 @@ export function liveTokens(source: string, path = 'note.mdx'): Token[] {
       if (node.type === 'link')
         result.push({ from, to, className: 'cm-live-markdown-link' });
     }
-    node.children?.forEach((child) => visit(child, block));
+    node.children?.forEach((child, index) =>
+      visit(
+        child,
+        block,
+        depth + (node.type === 'list' ? 1 : 0),
+        node.type === 'list' && node.ordered
+          ? (node.start ?? 1) + index
+          : undefined,
+        inQuote || node.type === 'blockquote',
+      ),
+    );
   }
   if (tree) visit(tree);
   return result;
+}
+
+class ListMarkerWidget extends WidgetType {
+  constructor(readonly text: string) {
+    super();
+  }
+  eq(other: ListMarkerWidget) {
+    return this.text === other.text;
+  }
+  toDOM(): HTMLElement {
+    const marker = document.createElement('span');
+    marker.className = 'cm-live-list-marker';
+    marker.textContent = this.text;
+    marker.setAttribute('aria-hidden', 'true');
+    return marker;
+  }
+  ignoreEvent() {
+    return false;
+  }
+}
+
+class TaskWidget extends WidgetType {
+  constructor(
+    readonly source: string,
+    readonly task: NonNullable<Token['task']>,
+  ) {
+    super();
+  }
+  eq(other: TaskWidget) {
+    return (
+      this.source === other.source && this.task.offset === other.task.offset
+    );
+  }
+  toDOM(view: EditorView): HTMLElement {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'cm-live-task-marker';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = this.task.checked;
+    checkbox.setAttribute(
+      'aria-label',
+      `Task: ${this.task.label || 'Untitled task'}`,
+    );
+    checkbox.addEventListener('mousedown', (event) => event.preventDefault());
+    checkbox.addEventListener('change', () => {
+      // A detached/stale widget or open protected draft cannot overwrite source.
+      if (view.state.readOnly || rawSource(view.state) !== this.source) {
+        checkbox.checked = this.task.checked;
+        return;
+      }
+      const map = new RawSourceMap(this.source);
+      const from = map.toDisplay(this.task.offset);
+      if (from === null || !/[ xX]/.test(this.source[this.task.offset] ?? '')) {
+        checkbox.checked = this.task.checked;
+        return;
+      }
+      view.dispatch({
+        changes: { from, to: from + 1, insert: this.task.checked ? ' ' : 'x' },
+        annotations: isolateHistory.of('full'),
+        userEvent: 'input.task',
+      });
+      checkbox.checked = /[xX]/.test(
+        rawSource(view.state)[this.task.offset] ?? '',
+      );
+    });
+    wrapper.append(checkbox);
+    return wrapper;
+  }
+  ignoreEvent() {
+    return true;
+  }
+}
+
+class LiteralBlockWidget extends WidgetType {
+  constructor(
+    readonly kind: 'code' | 'rule',
+    readonly text: string,
+    readonly from: number,
+    readonly source: string,
+  ) {
+    super();
+  }
+  eq(other: LiteralBlockWidget) {
+    return (
+      this.kind === other.kind &&
+      this.text === other.text &&
+      this.from === other.from &&
+      this.source === other.source
+    );
+  }
+  toDOM(view: EditorView): HTMLElement {
+    const element: HTMLElement = document.createElement(
+      this.kind === 'code' ? 'pre' : 'div',
+    );
+    element.className = `cm-live-${this.kind}-block`;
+    element.tabIndex = 0;
+    element.setAttribute(
+      'aria-label',
+      this.kind === 'code' ? 'Edit code block' : 'Edit horizontal rule',
+    );
+    if (this.kind === 'code') {
+      const code = document.createElement('code');
+      code.textContent = this.text;
+      element.append(code);
+    } else element.setAttribute('role', 'separator');
+    const reveal = () => {
+      if (rawSource(view.state) !== this.source) return;
+      view.dispatch({ selection: { anchor: this.from }, scrollIntoView: true });
+      view.focus();
+    };
+    element.addEventListener('click', reveal);
+    element.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        reveal();
+      }
+    });
+    return element;
+  }
+  ignoreEvent() {
+    return true;
+  }
 }
 
 class MathWidget extends WidgetType {
@@ -254,10 +458,26 @@ export function livePreview(options: {
     for (const token of cachedTokens) {
       const range = convert(token.from, token.to);
       if (!range) continue;
+      if (token.code !== undefined || token.rule) {
+        if (!active(range.from, range.to))
+          ranges.push(
+            Decoration.replace({
+              block: true,
+              widget: new LiteralBlockWidget(
+                token.rule ? 'rule' : 'code',
+                token.code ?? '',
+                range.from,
+                source,
+              ),
+            }).range(range.from, range.to),
+          );
+        continue;
+      }
       if (token.math) {
         if (!active(range.from, range.to))
           ranges.push(
             Decoration.replace({
+              block: token.math.kind === 'display',
               widget: new MathWidget(source, token.math, options.openMath),
             }).range(range.from, range.to),
           );
@@ -279,6 +499,15 @@ export function livePreview(options: {
         ? convert(token.block.from, token.block.to)
         : range;
       if (!block || active(block.from, block.to)) continue;
+      if (token.task || token.marker) {
+        ranges.push(
+          Decoration.replace({
+            widget: token.task
+              ? new TaskWidget(source, token.task)
+              : new ListMarkerWidget(token.marker!.text),
+          }).range(range.from, range.to),
+        );
+      }
       for (const hidden of token.hide ?? []) {
         const marker = convert(hidden.from, hidden.to);
         if (marker)

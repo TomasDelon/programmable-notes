@@ -391,6 +391,7 @@ function WorkspaceApp({
   } | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
+  const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
   const [islandOpen, setIslandOpen] = useState(false);
   const [peekSide, setPeekSide] = useState<'left' | 'right' | null>(null);
   const [sidebarView, setSidebarView] = useState<'documents' | 'connections'>(
@@ -555,7 +556,7 @@ function WorkspaceApp({
     }
     if (!pendingEdit) return true;
     setToast(
-      'Apply or cancel the math edit before changing notes or replacing this workspace.',
+      'Finish the current edit or save its recovery text before changing notes or replacing this workspace.',
     );
     return false;
   };
@@ -582,7 +583,7 @@ function WorkspaceApp({
   };
   const switchMode = (next: 'source' | 'live' | 'preview') => {
     if (next !== 'source' && !selectedIsNote) return;
-    if (next === 'preview' && !canLeaveDraft()) return;
+    if (!canLeaveDraft()) return;
     const initiator = document.activeElement;
     model.setMode(next);
     if (next === 'source') {
@@ -1372,6 +1373,7 @@ function WorkspaceApp({
         (!rightOpen ? 'inspector-hidden' : '')
       }
       data-save-status={model.saveStatus}
+      data-editor-mode={mode}
     >
       <div className={'mode-island ' + (islandOpen ? 'is-open' : '')}>
         <div className="mode-island-surface">
@@ -1880,16 +1882,12 @@ function WorkspaceApp({
           <div className="document-wrap">
             <div className="document-heading">
               <div className="doc-title-row">
-                {mode === 'preview' ? (
-                  <h1 className="doc-title-preview">{metadata.title}</h1>
-                ) : (
-                  <DocumentTitle
-                    key={selected}
-                    title={metadata.title}
-                    disabled={pendingEdit}
-                    onRename={(title) => model.rename(selected, title)}
-                  />
-                )}
+                <DocumentTitle
+                  key={selected}
+                  title={metadata.title}
+                  disabled={pendingEdit}
+                  onRename={(title) => model.rename(selected, title)}
+                />
               </div>
             </div>
             <div
@@ -1919,16 +1917,33 @@ function WorkspaceApp({
               <div
                 ref={sourcePanel}
                 className="web-source-panel"
-                hidden={mode === 'preview'}
+                hidden={mode === 'preview' && runtimeDocument === selected}
               >
                 <SourceEditor
                   key={selected}
                   source={source}
                   live={mode === 'live'}
+                  rendered={
+                    selectedIsNote
+                      ? {
+                          active:
+                            mode === 'preview' && runtimeDocument !== selected,
+                          files,
+                          entry: workspace.entry,
+                          theme: state.theme,
+                          images: previewImages,
+                          stopped:
+                            preview.stopped || runtimeDocument === selected,
+                        }
+                      : undefined
+                  }
                   wikilinks={linkIndex.outgoing[selected] ?? []}
                   onOpenNote={openDocument}
                   busy={operationPending}
-                  onPendingChange={setPendingEdit}
+                  onPendingChange={(value) => {
+                    model.setPendingEditorDraft(value);
+                    setPendingEdit(value);
+                  }}
                   documentKey={selected}
                   histories={histories}
                   commandsRef={commands}
@@ -1936,6 +1951,13 @@ function WorkspaceApp({
                     model.canUpdateSource(selected, value)
                   }
                   onChange={(value) => model.updateSource(selected, value)}
+                  onShowSource={(offset, snapshot) => {
+                    if (!canLeaveDraft()) return;
+                    model.setMode('source');
+                    requestAnimationFrame(() =>
+                      commands.current?.revealSource(offset, snapshot),
+                    );
+                  }}
                 />
               </div>
               <div className="web-preview-panel" hidden={mode !== 'preview'}>
@@ -1982,35 +2004,37 @@ function WorkspaceApp({
                     </button>
                   </section>
                 )}
-                {preview.html && (
+                {preview.html && runtimeDocument === selected && (
                   <WebPreview
                     html={preview.html}
                     theme={state.theme}
                     onError={preview.reportRuntimeError}
                   />
                 )}
-                {!preview.html && !preview.error && (
-                  <div className="web-preview-placeholder" role="status">
-                    {preview.stopped ? (
-                      <>
-                        <Pause size={20} />
-                        <p>Preview is paused.</p>
-                        <button
-                          type="button"
-                          className="web-button"
-                          onClick={preview.rebuild}
-                        >
-                          <Play size={14} /> Resume preview
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <LoaderCircle className="web-spin" size={20} />
-                        <span>Preparing preview…</span>
-                      </>
-                    )}
-                  </div>
-                )}
+                {!preview.html &&
+                  !preview.error &&
+                  runtimeDocument === selected && (
+                    <div className="web-preview-placeholder" role="status">
+                      {preview.stopped ? (
+                        <>
+                          <Pause size={20} />
+                          <p>Preview is paused.</p>
+                          <button
+                            type="button"
+                            className="web-button"
+                            onClick={preview.rebuild}
+                          >
+                            <Play size={14} /> Resume preview
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <LoaderCircle className="web-spin" size={20} />
+                          <span>Preparing preview…</span>
+                        </>
+                      )}
+                    </div>
+                  )}
               </div>
             </div>
             {model.backupNotice && (
@@ -2116,6 +2140,21 @@ function WorkspaceApp({
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild
+                </button>
+                <button
+                  type="button"
+                  className="web-button"
+                  disabled={pendingEdit}
+                  onClick={() => {
+                    setRuntimeDocument(
+                      runtimeDocument === selected ? null : selected,
+                    );
+                    model.setMode('preview');
+                  }}
+                >
+                  {runtimeDocument === selected
+                    ? 'Edit rendered document'
+                    : 'Run full document'}
                 </button>
               </div>
             </section>

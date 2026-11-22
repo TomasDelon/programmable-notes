@@ -147,7 +147,9 @@ for (const mode of ['Edit source', 'Live editing']) {
     expect(await exportSource(page)).toEqual(Buffer.from(replacement));
     await command(page, 'Preview document');
     await expect(
-      page.frameLocator('iframe').getByRole('heading', { name: 'Composed' }),
+      page
+        .locator('.rendered-editor')
+        .getByRole('heading', { name: 'Composed' }),
     ).toBeVisible();
   });
 }

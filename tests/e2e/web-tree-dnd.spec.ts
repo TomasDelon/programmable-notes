@@ -5,8 +5,8 @@ test.describe.configure({ timeout: 90_000 });
 async function start(page: Page) {
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Welcome', exact: true }),
-  ).toBeVisible();
+    page.getByRole('textbox', { name: 'Document title', exact: true }),
+  ).toHaveValue('Welcome');
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(
     page.getByRole('group', { name: 'Documents section' }),
