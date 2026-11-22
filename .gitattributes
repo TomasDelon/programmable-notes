@@ -7,4 +7,5 @@ src-tauri/vendor/** -text whitespace=-trailing-space,-blank-at-eof
 
 # Integrity-pinned notices and raw acceptance evidence require canonical bytes.
 /licenses/ESBUILD_WASM_GO_NOTICES.txt -text
+/licenses/REMARK_MATH_LICENSE.txt -text
 /docs/security-evidence/**/raw/** -text
