@@ -1,5 +1,5 @@
 import { isMdxSource, javascriptLoader } from '../sourceTypes';
-import { compile } from '@mdx-js/mdx';
+import { compileDocumentSource } from './compileDocumentSource';
 import * as esbuild from 'esbuild-wasm';
 import { resolveFile } from './resolve';
 import { sourceLineOffset } from './sourceLocation';
@@ -24,6 +24,7 @@ self.onmessage = async ({
   id: number;
   files: Record<string, string>;
   entry: string;
+  webMode?: boolean;
 }>) => {
   const { id, files, entry } = data;
   const sourceLocations: { file: string; line: number; offset: number }[] = [];
@@ -68,9 +69,10 @@ self.onmessage = async ({
                 const source = files[args.path]!;
                 if (isMdxSource(args.path)) {
                   try {
-                    const compiled = await compile(
-                      { value: source, path: args.path },
-                      { development: false },
+                    const compiled = await compileDocumentSource(
+                      source,
+                      args.path,
+                      data.webMode === true,
                     );
                     return { contents: String(compiled), loader: 'js' };
                   } catch (error) {
