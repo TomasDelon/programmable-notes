@@ -2,7 +2,24 @@
 
 Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed for writing and rendering real interactive React components directly in documents.
 
-## Status
+## Web workspace
+
+The browser app at `/` combines the approved UI Lab interface with the existing
+MDX/React engine. It provides Source, Live and Preview modes, notes and folders,
+full-text search, stable Recent shortcuts, editable LaTeX equations, wikilinks,
+backlinks, and interactive React documents. Validated images and PDFs retain
+their original bytes. Notes autosave to IndexedDB in the current browser, with
+checksummed backups that include attachments and recovery checkpoints, Trash,
+and explicit handling of conflicting tabs.
+
+Production builds can reopen offline after their application assets finish
+caching. Notes stay in the current browser profile; there is no account or
+cross-device synchronization. Export workspace backups to keep an independent
+copy. Read the [web app guide](docs/WEB_APP.md) for daily use, imports, storage,
+supported code, and current limits. The [integration record](docs/DAILY_USE_INTEGRATION.md)
+documents the agent audit and corrected source provenance.
+
+## Original engine and native status
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile
 in a browser worker, use JSX/imports/hooks/events in an isolated preview and
@@ -52,6 +69,9 @@ npm run dev
 
 The Vite development server listens on port 5173. On a fresh Linux machine, Playwright may also need system libraries: use `npx playwright install --with-deps chromium` with the appropriate system permissions. CI installs those libraries explicitly.
 
+The web workspace opens at `/`. The original engine remains at `/engine` for
+regression testing and is selected automatically by the native application.
+
 The repository's `.npmrc` keeps npm's cache in ignored `.cache/npm`, which works in restricted cloud workspaces. Codex Cloud already provides Chromium. Use it explicitly for browser checks:
 
 ```sh
@@ -79,6 +99,9 @@ CI uses Playwright's matching downloaded browser; cloud validation uses the syst
 
 `test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. Browser integration tests exercise actual compilation, React hooks, error recovery, source fidelity, offline rebuilds and negative security probes. Intentional sandbox violations and runtime-error fixtures produce expected console errors. Chromium is the baseline browser; Firefox and WebKit coverage are deferred.
 
+Set `PLAYWRIGHT_WORKERS=1` when running the full checks on a constrained shared
+runner. This changes concurrency without skipping tests or adding retries.
+
 ## Structure
 
 ```text
@@ -88,6 +111,7 @@ src/
   documents/          Workspace snapshots and native grant-backed persistence
   editor/             CodeMirror history and trusted Markdown source patches
   preview/            Hash-CSP document and sandbox frame
+  web/                Browser workspace, durable local storage, and UI Lab shell
   bootstrap.mdx       Trusted, build-time MDX placeholder
   main.tsx            React entry point
   styles.css          Responsive workspace styles
