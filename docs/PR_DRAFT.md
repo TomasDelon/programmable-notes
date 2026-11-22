@@ -1,0 +1,9 @@
+Adds an MDX/React editing engine with an experimental Tauri 2 native security path. Unsaved CodeMirror buffers compile in a browser worker; hooks, local TSX modules and pinned imports render in an isolated preview.
+
+Native preview runs in a separate, capability-denied process. Only the editor may invoke fixed preview-management commands, and handlers also reject child callers independently of the ACL. Linux launch uses a private-network systemd user service with verified cgroup CPU, memory, swap and task limits, an independent 60-second lifetime, and whole-group Stop. Author artifacts are withheld until effective controller files are verified. Unsupported environments fail closed. No filesystem/shell/HTTP plugins are installed.
+
+Validation in cloud: formatting, lint, TypeScript, production build, 6 JS unit/configuration/adapter tests, 5 Chromium integration/security tests, 4 Rust policy tests, and Rust formatting pass. The native resource harness refuses launch without delegated systemd/cgroups. Native WebKitGTK/IPC tests report NOT RUN; the Linux cargo check is blocked by absent GLib/GTK/WebKitGTK development packages. No native security or readiness pass is claimed.
+
+Automated WebDriver permission/Counter assertions, a supervisor stress harness, Linux reproduction instructions, an additional Linux native compile CI gate, ADRs, and retained evidence are included. Read docs/NATIVE_SECURITY.md and docs/decisions/ADR-003-native-runtime.md for exact policy, native gaps and release gates. High-memory/GPU behavior, real WebKitGTK IPC denial, native stop/expiry/restart and effective service containment must be measured on Linux before hostile-document use.
+
+No visual editing, custom syntax, AI integration, marketplace or Git sync. Keep this PR draft and do not merge automatically.

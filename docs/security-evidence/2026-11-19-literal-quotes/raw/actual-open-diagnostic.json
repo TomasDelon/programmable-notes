@@ -1,0 +1,15 @@
+{
+  "scope": "actual existing chooser driver instrumentation only",
+  "path": "/tmp/pn-native-LzBxkV/dialog-control.mdx",
+  "pid": 23147,
+  "firstAction": "{\"diagnosticClickResult\": true, \"dialogStillVisible\": true}\n{\"pid\": 23147, \"title\": \"Open documents and modules\", \"action\": \"choose\", \"argument\": \"/tmp/pn-native-LzBxkV/dialog-control.mdx\"}\n",
+  "immediateUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "laterUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "loadedAfterActions": true
+}

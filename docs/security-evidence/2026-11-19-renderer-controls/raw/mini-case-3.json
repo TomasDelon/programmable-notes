@@ -1,0 +1,27 @@
+{
+  "scope": "MiniBrowser production frontend, no Tauri IPC",
+  "visualCycles": 7,
+  "capabilities": {
+    "browserName": "MiniBrowser",
+    "browserVersion": "2.52.6",
+    "platformName": "linux",
+    "acceptInsecureCerts": false,
+    "strictFileInteractability": false,
+    "setWindowRect": true,
+    "unhandledPromptBehavior": "dismiss and notify",
+    "pageLoadStrategy": "normal",
+    "proxy": {},
+    "timeouts": {
+      "script": 30000,
+      "pageLoad": 300000,
+      "implicit": 0
+    }
+  },
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "phase": "Visual 7",
+  "paragraphExact": true,
+  "error": "TypeError: fetch failed",
+  "outcome": "fail",
+  "closeError": "TypeError: fetch failed",
+  "observerSha256": "188a3e018e17fa9d99113795f847ed5996dd8e922cd48f7bd37468b56010df55"
+}

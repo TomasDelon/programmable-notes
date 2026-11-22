@@ -1,0 +1,25 @@
+"""Intentional failure verifies a contention runner never cleans an unowned fixture."""
+import hashlib,json,os,pathlib,subprocess,sys,tempfile
+binary=pathlib.Path(sys.argv[1]).resolve(strict=True)
+p=subprocess.Popen(['bash','-c','printf "%s\\n" "$$"; read -r go; exec "$1" --exact actual_process_writers_preserve_one_head_and_recover_from_busy_and_stale_revisions --nocapture','pn-fixture-guard',str(binary)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+root=None
+try:
+    pid=int(p.stdout.readline().strip())
+    assert pid==p.pid
+    root=pathlib.Path(tempfile.gettempdir())/f'pn-snapshot-process-writers-{pid}-0'
+    root.mkdir()
+    sentinel=root/'controller-owned-sentinel.txt'
+    content=b'Synthetic pre-existing fixture; never delete.\n'
+    with sentinel.open('xb') as f: f.write(content)
+    output,_=p.communicate('G\n',timeout=15)
+    assert p.returncode==101,(p.returncode,output)
+    assert 'AlreadyExists' in output,output
+    assert sentinel.read_bytes()==content
+    assert list(root.iterdir())==[sentinel]
+    print(json.dumps({'negativePassed':True,'expectedTestExit':p.returncode,'sentinelUnchanged':True,'sha256':hashlib.sha256(content).hexdigest(),'actualTestOutput':output},indent=2))
+    sentinel.unlink()
+    root.rmdir()
+    root=None
+finally:
+    if p.poll() is None: p.kill(); p.wait()
+    # Leave unexpected files intact for diagnosis; never recursively delete.

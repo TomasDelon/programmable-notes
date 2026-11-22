@@ -1,0 +1,56 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Programmable Notes",
+  "version": "0.1.0",
+  "identifier": "dev.programmablenotes.app",
+  "build": {
+    "beforeDevCommand": "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [],
+    "withGlobalTauri": false,
+    "security": {
+      "capabilities": ["editor"],
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "worker-src": "blob:",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost",
+        "frame-src": "'none'",
+        "object-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb"],
+    "category": "Utility",
+    "shortDescription": "Local MDX and React notes with isolated previews",
+    "longDescription": "Programmable Notes edits explicitly opened local Markdown and MDX source. Linux previews run in separate resource-limited services with no document filesystem authority. Experimental desktop testing build.",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/256x256.png"],
+    "linux": {
+      "deb": {
+        "depends": [
+          "systemd (>= 252)",
+          "dbus-user-session",
+          "coreutils",
+          "apparmor (>= 4.0)",
+          "bubblewrap",
+          "xdg-dbus-proxy"
+        ],
+        "files": {
+          "/etc/apparmor.d/programmable-notes": "linux/programmable-notes.apparmor"
+        },
+        "postInstallScript": "linux/post-install.sh",
+        "preRemoveScript": "linux/pre-remove.sh"
+      }
+    }
+  }
+}

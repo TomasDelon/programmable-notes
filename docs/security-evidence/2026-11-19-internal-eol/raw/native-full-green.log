@@ -1,0 +1,14 @@
+7d315faad3928befbc19c16ee8838011d8be0fc1dd121642a9dd9d2c2d4a44ff  /usr/bin/programmable-notes
+NATIVE_DIALOG {"pid": 18852, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-5YSzEG/fidelity-acceptance.mdx"}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640
+NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS
+NATIVE_DIALOG {"pid": 18852, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 18852, "title": "Unsaved source", "action": "button", "argument": "OK"}
+NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS
+NATIVE_DIALOG {"pid": 19145, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-5YSzEG/fidelity-acceptance.mdx"}
+NATIVE_EXPLICIT_RECOVERY_PASS original unchanged
+NATIVE_DIALOG {"pid": 19145, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 19145, "title": "Unsaved source", "action": "button", "argument": "OK"}
+NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS

@@ -1,0 +1,7 @@
+Nov 18 02:08:03 pn-m3-guest kernel: llvmpipe-2[16106]: segfault at 75892e9ad040 ip 00007588a53ff0aa sp 00007588b97f9380 error 4
+Nov 18 02:08:03 pn-m3-guest kernel: llvmpipe-0[16104]: segfault at 75892e9ad040 ip 00007588a53ff0aa sp 00007588ba7fb380 error 4
+Nov 18 02:08:03 pn-m3-guest kernel:  likely on CPU 2 (core 2, socket 0)
+Nov 18 02:08:03 pn-m3-guest kernel:  likely on CPU 0 (core 0, socket 0)
+Nov 18 02:08:03 pn-m3-guest kernel: 
+Nov 18 02:08:03 pn-m3-guest kernel: Code: c4 e2 75 40 ca c5 cd db e4 c5 dd db d2 c5 ed fe d1 c5 fd fe e1 c5 ed fe c0 c5 e5 fe c9 c5 ed fe d3 c5 e5 76 db c4 41 39 ef c0 <c4> 62 65 90 04 20 c5 e5 76 db c4 41 31 ef c9 c4 62 65 90 0c 08 c5
+Nov 18 02:08:03 pn-m3-guest kernel: Code: c4 e2 75 40 ca c5 cd db e4 c5 dd db d2 c5 ed fe d1 c5 fd fe e1 c5 ed fe c0 c5 e5 fe c9 c5 ed fe d3 c5 e5 76 db c4 41 39 ef c0 <c4> 62 65 90 04 20 c5 e5 76 db c4 41 31 ef c9 c4 62 65 90 0c 08 c5

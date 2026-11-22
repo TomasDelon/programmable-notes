@@ -1,0 +1,18 @@
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-8620-1795054850952889970.service","pid":"8728","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-8620-1795054850952889970.service","pid":8690,"invokeMs":3079,"sandboxObservedMs":13614}
+NATIVE_UI {"pid": 8690, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-8620-1795054850952889970.service","pid":8690,"name":"Arm CPU loop","action":"click","observerMs":33150,"sinceRequestMs":46772}
+NATIVE_UI {"pid": 8690, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-8620-1795054850952889970.service","pid":8690,"name":"CPU loop armed","action":"find","observerMs":1528,"sinceRequestMs":48302}
+WEBKIT_CPU {"unit":"programmable-notes-preview-8620-1795054850952889970.service","usage_usec":749816,"elapsed_ms":3072,"throttled_periods":30,"editor_response_ms":540}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-8620-1795054907855104030.service","pid":"8820","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-8620-1795054907855104030.service","pid":8781,"invokeMs":2999,"sandboxObservedMs":14923}
+NATIVE_UI {"pid": 8781, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-8620-1795054907855104030.service","pid":8781,"name":"Count: 0","action":"click","observerMs":32089,"sinceRequestMs":47013}
+NATIVE_UI {"pid": 8781, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-8620-1795054907855104030.service","pid":8781,"name":"Count: 1","action":"click","observerMs":1614,"sinceRequestMs":48627}
+NATIVE_UI {"pid": 8781, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-8620-1795054907855104030.service","pid":8781,"name":"Count: 2","action":"find","observerMs":1708,"sinceRequestMs":50337}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+WEBKIT_STRESS_PASS cpu-stop

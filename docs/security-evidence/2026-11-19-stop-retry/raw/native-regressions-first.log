@@ -1,0 +1,93 @@
+NATIVE_CASE session /tmp/pn-native-jx6GtA
+NATIVE_DIALOG {"pid": 31445, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-jx6GtA/session-status.mdx", "dialogDismissed": true}
+NATIVE_SESSION_STATUS /tmp/pn-native-jx6GtA/evidence/session-status.json
+NATIVE_CASE ipc /tmp/pn-native-nFZ6NC
+IPC_EDITOR {"ok":true,"value":"editor-host-only"}
+NATIVE_OS_POLICY {"editorNetwork":"net:[4026531840]","previewNetwork":"net:[4026532265]","noNewPrivileges":true}
+PRODUCTION_AUTOMATION {"pid":"31945","automation":"false","sandboxDisableVariableAbsent":true}
+EFFECTIVE_LIMITS {"unit":"programmable-notes-preview-31865-1795089156102618570.service","group":"/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-31865-1795089156102618570.service","memoryMax":"536870912","swapMax":"0","cpuMax":"25000 100000","pidsMax":"128"}
+PASS: editor positive IPC control, resource-unit limits and full-group Stop
+PRIVATE_STORAGE editor canary absent from incognito preview
+IPC_DENIED {"error":"Command host_probe not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command start_preview not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command stop_preview not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command preview_connection_active not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command open_documents not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command save_document not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command save_document_as not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command reopen_document not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command close_document not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command confirm_discard not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command set_documents_dirty not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+IPC_DENIED {"error":"Command recovery_draft not allowed by ACL","ok":false}
+WEBKIT_COUNTER Count: 2
+WEBKIT_AUTHOR_FETCH_DENIED {"violations":[{"directive":"connect-src","blocked":"http://127.0.0.1:9/native-security-probe"},{"directive":"connect-src","blocked":"http://127.0.0.1:9/native-security-probe"},{"directive":"connect-src","blocked":"file"},{"directive":"connect-src","blocked":"file"}],"results":[{"url":"http://127.0.0.1:9/native-security-probe","denied":true},{"url":"file:///etc/passwd","denied":true}]}
+PASS: preview native ACL denial, absent privileged plugins, real WebKitGTK React counter and iframe DOM/storage denial
+Native IPC/WebKitGTK suite passed. Resource stress/lifetime gates remain separate; follow docs/NATIVE_SECURITY.md.
+NATIVE_CASE fidelity /tmp/pn-native-38enpJ
+NATIVE_FIDELITY_IDENTITY {"pid":32069,"executableSha256":"5318edc9565757b503f061b45596f1bb0b8dbaa217a9b603f105e08ab3fe8773","observerSha256":"4c6a02ab407ff791c0ac95bfa9083054de9accad9f1adda56de0373ffeec994b","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 32069, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-38enpJ/fidelity-acceptance.mdx", "dialogDismissed": true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Native probe 0 for PID 32213
+NATIVE_FIDELITY_FAILURE_UI {
+  status: 'Source unchanged',
+  selected: 'opened-1/fidelity-acceptance.mdx',
+  alerts: []
+}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-atspi.py 32213 Native probe 0 click
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Native probe 0 for PID 32213
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at file:///opt/pn/acceptance/scripts/native-fidelity.mjs:266:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    Buffer(0) [Uint8Array] [],
+    Buffer(278) [Uint8Array] [
+       84, 114,  97,  99, 101,  98,  97,  99, 107,  32,  40, 109,
+      111, 115, 116,  32, 114, 101,  99, 101, 110, 116,  32,  99,
+       97, 108, 108,  32, 108,  97, 115, 116,  41,  58,  10,  32,
+       32,  70, 105, 108, 101,  32,  34,  47, 111, 112, 116,  47,
+      112, 110,  47,  97,  99,  99, 101, 112, 116,  97, 110,  99,
+      101,  47, 115,  99, 114, 105, 112, 116, 115,  47, 110,  97,
+      116, 105, 118, 101,  45,  97, 116, 115, 112, 105,  46, 112,
+      121,  34,  44,  32, 108, 105, 110, 101,  32,  52,  51,  44,
+       32, 105, 110,  32,
+      ... 178 more items
+    ]
+  ],
+  pid: 32226,
+  stdout: Buffer(0) [Uint8Array] [],
+  stderr: Buffer(278) [Uint8Array] [
+     84, 114,  97,  99, 101,  98,  97,  99, 107,  32,  40, 109,
+    111, 115, 116,  32, 114, 101,  99, 101, 110, 116,  32,  99,
+     97, 108, 108,  32, 108,  97, 115, 116,  41,  58,  10,  32,
+     32,  70, 105, 108, 101,  32,  34,  47, 111, 112, 116,  47,
+    112, 110,  47,  97,  99,  99, 101, 112, 116,  97, 110,  99,
+    101,  47, 115,  99, 114, 105, 112, 116, 115,  47, 110,  97,
+    116, 105, 118, 101,  45,  97, 116, 115, 112, 105,  46, 112,
+    121,  34,  44,  32, 108, 105, 110, 101,  32,  52,  51,  44,
+     32, 105, 110,  32,
+    ... 178 more items
+  ]
+}
+
+Node.js v24.22.1

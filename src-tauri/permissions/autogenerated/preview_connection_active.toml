@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-preview-connection-active"
+description = "Enables the preview_connection_active command without any pre-configured scope."
+commands.allow = ["preview_connection_active"]
+
+[[permission]]
+identifier = "deny-preview-connection-active"
+description = "Denies the preview_connection_active command without any pre-configured scope."
+commands.deny = ["preview_connection_active"]

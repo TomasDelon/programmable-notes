@@ -1,0 +1,18 @@
+{
+  "observerSha256": "8880796593c6b5ae4b1af2092f288f17efada48b47b26b86a6bcd0c36068bdc6",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "d37cf787536f68f3fa808c2695d3a539765987d134c3b23b33ba296cef38fbe6",
+  "pid": 22001,
+  "startTick": "3528821",
+  "error": "Error: UI condition failed: !Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source')?.disabled",
+  "failureUi": {
+    "status": "File operation in progress",
+    "textarea": false,
+    "mode": "Split",
+    "alerts": [],
+    "paragraphs": 0
+  },
+  "cleanupError": "Error: ENOENT: no such file or directory, open '/proc/22001/exe'",
+  "outcome": "fail"
+}

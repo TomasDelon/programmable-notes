@@ -1,0 +1,26 @@
+/tmp/pn-mini-browser-control.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: SocketError: other side closed
+      at Socket.onHttpSocketEnd (node:internal/deps/undici/undici:7878:26)
+      at Socket.emit (node:events:526:24)
+      at endReadableNT (node:internal/streams/readable:1783:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'UND_ERR_SOCKET',
+    socket: {
+      localAddress: '127.0.0.1',
+      localPort: 44690,
+      remoteAddress: '127.0.0.1',
+      remotePort: 9555,
+      remoteFamily: 'IPv4',
+      timeout: undefined,
+      bytesWritten: 41261,
+      bytesRead: 3560
+    }
+  }
+}
+
+Node.js v24.22.1

@@ -1,0 +1,19 @@
+root=/dev/vda rw console=ttyS0 net.ifnames=0
+[Service]
+Delegate=cpu cpuset io memory pids
+31476
+Y
+programmable-notes-preview-5051-1794952522242864160.service PID=5289
+XDG_RUNTIME_DIR=/run/user/1000
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+WEBKIT_DISABLE_COMPOSITING_MODE=1
+WEBKIT_DISABLE_DMABUF_RENDERER=1
+TAURI_WEBVIEW_AUTOMATION=false
+DISPLAY=:99
+XAUTHORITY=/home/ubuntu/.Xauthority
+Uid:	1000	1000	1000	1000
+Gid:	1000	1000	1000	1000
+NoNewPrivs:	1
+Seccomp:	0
+Seccomp_filters:	0
+0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-5051-1794952522242864160.service

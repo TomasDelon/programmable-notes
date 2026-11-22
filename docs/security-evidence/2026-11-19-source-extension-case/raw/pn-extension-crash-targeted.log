@@ -1,0 +1,16 @@
+{"__MONOTONIC_TIMESTAMP":"60723708697","__SEQNUM_ID":"c30d7539e30e401aa393af23e70cb31a","_TRANSPORT":"stdout","_CAP_EFFECTIVE":"0","__REALTIME_TIMESTAMP":"1795104699678158","_STREAM_ID":"a671144286dc4f67bef9dcef95b1daec","_AUDIT_SESSION":"1","_AUDIT_LOGINUID":"1000","_UID":"1000","PRIORITY":"6","SYSLOG_IDENTIFIER":"tauri-driver","_GID":"1000","__CURSOR":"s=c30d7539e30e401aa393af23e70cb31a;i=4d6a;b=c3cef4a769294bb08a8a268dced15162;m=e236a4319;t=660a361f57dce;x=6d7bce41015a993","_SYSTEMD_USER_UNIT":"pn-m3-native-driver.service","_SYSTEMD_OWNER_UID":"1000","_SYSTEMD_CGROUP":"/user.slice/user-1000.slice/user@1000.service/app.slice/pn-m3-native-driver.service","_SYSTEMD_INVOCATION_ID":"6460cee392f644edb199c7e4f488ef4d","__SEQNUM":"19818","_BOOT_ID":"c3cef4a769294bb08a8a268dced15162","_PID":"41070","_EXE":"/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess","_SYSTEMD_SLICE":"user-1000.slice","SYSLOG_FACILITY":"3","_RUNTIME_SCOPE":"system","_COMM":"WebKitWebProces","MESSAGE":"Unexpected code block in DFG->FTL tier-up: rc#ClTeuX:[0x746d1303e160->0x746d14527800, BaselineFunctionCall, 87 (StrictMode)]","_SELINUX_CONTEXT":"programmable-notes (unconfined)\n","_HOSTNAME":"pn-m3-guest","_SYSTEMD_UNIT":"user@1000.service","_MACHINE_ID":"5797f479ed804e4c8a9e2be1c30f1fe4","_SYSTEMD_USER_SLICE":"app.slice"}
+    PID    PPID STAT     ELAPSED COMMAND
+  41039     625 Sl         03:25 programmable-no
+total 144
+-rw-r----- 1 ubuntu ubuntu 100026 Nov 19 16:10 dense-visual.mdx
+-rwx------ 1 ubuntu ubuntu    106 Nov 19 16:09 editor-driver
+-rw-rw-r-- 1 ubuntu ubuntu      6 Nov 19 16:09 editor.pid
+-rw------- 1 ubuntu ubuntu    296 Nov 19 16:09 env.sh
+drwxr-xr-x 2 ubuntu ubuntu   4096 Nov 19 16:09 evidence
+-rw-r----- 1 ubuntu ubuntu    620 Nov 19 16:11 fidelity-acceptance.MdX
+drwx------ 2 ubuntu ubuntu   4096 Nov 19 16:09 first
+-rw-r--r-- 1 ubuntu ubuntu    340 Nov 19 16:09 manifest.json
+-rw------- 1 ubuntu ubuntu    276 Nov 19 16:09 original.mdx
+-rwx------ 1 ubuntu ubuntu     98 Nov 19 16:09 preview-driver
+-rw-r--r-- 1 ubuntu ubuntu     46 Nov 19 16:09 probe.html
+drwx------ 2 ubuntu ubuntu   4096 Nov 19 16:09 second

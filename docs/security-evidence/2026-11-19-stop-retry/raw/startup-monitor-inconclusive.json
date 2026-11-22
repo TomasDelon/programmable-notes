@@ -1,0 +1,20 @@
+{
+  "editorPid": 32440,
+  "editorStartTicks": "4546024",
+  "records": [
+    {
+      "unit": "programmable-notes-preview-32440-1795089464512649530.service",
+      "ageUsec": 45489692372,
+      "properties": {
+        "MainPID": "32607",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-32440-1795089464512649530.service",
+        "MemoryCurrent": "1769472",
+        "MemoryPeak": "1986560",
+        "CPUUsageNSec": "248539000",
+        "ActiveState": "activating",
+        "ActiveEnterTimestampMonotonic": "0"
+      },
+      "diagnosticError": ""
+    }
+  ]
+}

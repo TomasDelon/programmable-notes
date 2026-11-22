@@ -1,0 +1,22 @@
+NATIVE_FIDELITY_IDENTITY {"pid":41563,"executableSha256":"ff7d4babb1f63bf2973d1bc6f6ae18652164bace5c5d7ae440260b76be220fbf","observerSha256":"7faebddcc934769fc46fb9d8ac9188e199f958f9607ba08643fbf695f32c5184","jitEnvironment":[]}
+NATIVE_DIALOG {"pid": 41563, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-t3vzp2/first/repeat.mdx", "dialogDismissed": true}
+NATIVE_DIALOG {"pid": 41563, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-t3vzp2/second/repeat.mdx", "dialogDismissed": true}
+NATIVE_SAME_NAME_DISTINCT_CHOICES_INDEPENDENT_DIRTY_KEYS_BYTES_HISTORY_SAVE_REOPEN_PASS
+NATIVE_DIALOG {"pid": 41563, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-t3vzp2/dense-visual.mdx", "dialogDismissed": true}
+NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS
+NATIVE_DIALOG {"pid": 41563, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-t3vzp2/fidelity-acceptance.MdX", "dialogDismissed": true}
+NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS
+NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS
+NATIVE_FIDELITY_DIAGNOSTIC_UNAVAILABLE Error: {"value":{"error":"invalid session id","message":"session deleted because of page crash or hang.","stacktrace":""}}
+file:///opt/pn/acceptance/scripts/native-webdriver-lib.mjs:36
+  if (!response.ok) throw Error(JSON.stringify(json));
+                          ^
+
+Error: {"value":{"error":"unknown error","message":"Could not parse script result","stacktrace":""}}
+    at wd (file:///opt/pn/acceptance/scripts/native-webdriver-lib.mjs:36:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async button (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:14:5)
+    at async history (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:279:3)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:504:3
+
+Node.js v24.22.1

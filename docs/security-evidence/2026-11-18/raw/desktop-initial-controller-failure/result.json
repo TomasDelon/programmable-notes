@@ -1,0 +1,73 @@
+{
+  "mode": "baseline",
+  "started": "2026-11-18 02:06:41 UTC",
+  "expectedBinarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "passed": false,
+  "binarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "editor": {
+    "pid": 15743,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "startTicks": "1017503",
+    "environment": {
+      "WEBKIT_INSPECTOR_SERVER": null,
+      "TAURI_WEBVIEW_AUTOMATION": null,
+      "TAURI_AUTOMATION": null,
+      "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
+      "WEBKIT_DISABLE_DMABUF_RENDERER": "1"
+    },
+    "namespaces": {
+      "net": "net:[4026531840]",
+      "mnt": "mnt:[4026531841]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]"
+    },
+    "cgroup": "0::/user.slice/user-0.slice/session-274.scope"
+  },
+  "editorWebProcessPids": [
+    15778
+  ],
+  "editorSandboxPass": true,
+  "unit": "programmable-notes-preview-15743-1794967618037939230.service",
+  "child": {
+    "pid": 15875,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes --preview-child",
+    "uid": 1000,
+    "startTicks": "1019032",
+    "environment": {
+      "WEBKIT_INSPECTOR_SERVER": null,
+      "TAURI_WEBVIEW_AUTOMATION": "false",
+      "TAURI_AUTOMATION": "false",
+      "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
+      "WEBKIT_DISABLE_DMABUF_RENDERER": "1"
+    },
+    "namespaces": {
+      "net": "net:[4026532321]",
+      "mnt": "mnt:[4026532376]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026532320]"
+    },
+    "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-15743-1794967618037939230.service"
+  },
+  "previewWebProcessPids": [
+    15922
+  ],
+  "previewSandboxPass": true,
+  "limits": {
+    "cpu.max": "25000 100000",
+    "memory.max": "536870912",
+    "memory.swap.max": "0",
+    "pids.max": "128",
+    "pids.current": "26",
+    "pids.events": "max 0"
+  },
+  "error": "Bounded command timed out: runuser",
+  "previewActiveBeforeRootClose": true,
+  "rootClosed": true,
+  "previewGroupEmptyAfterRootClose": true,
+  "knownWebProcessesExited": true,
+  "normalCloseStoppedActivePreview": true,
+  "elapsedMs": 67947
+}

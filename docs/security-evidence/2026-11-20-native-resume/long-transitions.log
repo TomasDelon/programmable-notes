@@ -1,0 +1,4 @@
+FIXTURE_ENV=/tmp/pn-native-YZVTgD/env.sh
+NATIVE_DIALOG {"pid": 967, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-YZVTgD/long-paragraph.mdx", "dialogDismissed": true}
+NATIVE_LONG_PARAGRAPH_EVIDENCE /tmp/pn-native-YZVTgD/evidence/long-paragraph.json
+PASS native long-paragraph bounded geometry, scrolling, actual keys and exact disk history

@@ -1,0 +1,51 @@
+/tmp/pn-native-RmMGH7
+NATIVE_FIDELITY_IDENTITY {"pid":23805,"executableSha256":"4a14f61b695f8fd502844c7792a232e5d8440373b3cd0559ea3613bb933d8824","observerSha256":"fda3ef672ee44062c4c9110d7842d2dc3ff7c23330efe9a30c789702d3875b04","jitEnvironment":[]}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 99, in <module>
+    assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'
+           ^^^^^^^^^^^^^^^^
+AssertionError: Native dialog did not acknowledge choose: Open documents and modules
+NATIVE_FIDELITY_FAILURE_UI {
+  status: 'File operation in progress',
+  selected: 'note.mdx',
+  alerts: []
+}
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-dialog.py 23805 choose Open documents and modules /tmp/pn-native-RmMGH7/fidelity-acceptance.mdx
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-dialog.py", line 99, in <module>
+    assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'
+           ^^^^^^^^^^^^^^^^
+AssertionError: Native dialog did not acknowledge choose: Open documents and modules
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at dialog (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:35:18)
+    at open (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:106:3)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:175:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 99, in <module>\n' +
+      "    assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'\n" +
+      '           ^^^^^^^^^^^^^^^^\n' +
+      'AssertionError: Native dialog did not acknowledge choose: Open documents and modules\n'
+  ],
+  pid: 23874,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-dialog.py", line 99, in <module>\n' +
+    "    assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'\n" +
+    '           ^^^^^^^^^^^^^^^^\n' +
+    'AssertionError: Native dialog did not acknowledge choose: Open documents and modules\n'
+}
+
+Node.js v24.22.1

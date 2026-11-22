@@ -1,0 +1,31 @@
+{
+  "scope": "controlled pure mapping calls, no DOM render or policy changes",
+  "samples": [
+    {
+      "kind": "editable",
+      "outcome": "observed",
+      "result": {
+        "ranges": 2
+      }
+    },
+    {
+      "kind": "blocks",
+      "outcome": "observed",
+      "result": {
+        "blocks": 3
+      }
+    },
+    {
+      "kind": "patch",
+      "outcome": "observed",
+      "result": {
+        "patched": true
+      }
+    }
+  ],
+  "pid": 20795,
+  "startTick": "3453069",
+  "executableSha256": "d37cf787536f68f3fa808c2695d3a539765987d134c3b23b33ba296cef38fbe6",
+  "ownedRootTerminated": true,
+  "outcome": "observed"
+}

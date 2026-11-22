@@ -1,0 +1,11 @@
+native-editor exit=1
+native-webdriver exit=1
+window-close exit=0
+resource-gates exit=0
+native-editor-retry exit=1
+native-editor-final exit=1
+native-editor-actions exit=1
+native-editor-explicit-keys exit=0
+native-webdriver-verified exit=0
+native-editor-pressure exit=0
+native-webdriver-complete exit=0

@@ -1,0 +1,45 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_DIALOG {"pid": 13045, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zZyvzb/attack-edit.mdx"}
+NATIVE_ATTACK_STARTED {"unit":"programmable-notes-preview-13045-1794965248966206280.service","pid":13168,"root":"/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-13045-1794965248966206280.service","mode":"heap","time":1794965251704}
+Traceback (most recent call last):
+  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Heap pressure active for PID 13168
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-atspi.py 13168 Heap pressure active find
+Traceback (most recent call last):
+  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Heap pressure active for PID 13168
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/project/scripts/native-editor.mjs:34:5)
+    at file:///opt/pn/project/scripts/native-editor.mjs:108:5
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Heap pressure active for PID 13168\n'
+  ],
+  pid: 13179,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/project/scripts/native-atspi.py", line 40, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Heap pressure active for PID 13168\n'
+}
+
+Node.js v24.22.1

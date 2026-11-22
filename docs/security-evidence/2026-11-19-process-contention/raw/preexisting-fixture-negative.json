@@ -1,0 +1,7 @@
+{
+  "negativePassed": true,
+  "expectedTestExit": 101,
+  "sentinelUnchanged": true,
+  "sha256": "7b1108721ddce7f227a2f1934a3682afdf6398b48889793cb0fbc13ba4e9f737",
+  "actualTestOutput": "\nrunning 1 test\n\nthread 'actual_process_writers_preserve_one_head_and_recover_from_busy_and_stale_revisions' (295995) panicked at tests/process_contention.rs:123:31:\ncalled `Result::unwrap()` on an `Err` value: Os { code: 17, kind: AlreadyExists, message: \"File exists\" }\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest actual_process_writers_preserve_one_head_and_recover_from_busy_and_stale_revisions ... FAILED\n\nfailures:\n\nfailures:\n    actual_process_writers_preserve_one_head_and_recover_from_busy_and_stale_revisions\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s\n\n"
+}

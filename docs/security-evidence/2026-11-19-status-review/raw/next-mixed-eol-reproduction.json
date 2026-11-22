@@ -1,0 +1,8 @@
+{
+  "scope": "Current implementation reproduction, not a passing fidelity assertion",
+  "source": "# Heading\r\n\r\nFirst line\nSecond line\r\nThird line\n\n<div>Opaque</div>\r\n",
+  "input": "Edited line\nSecond line\nThird line",
+  "actual": "# Heading\r\n\r\nEdited line\r\nSecond line\r\nThird line\n\n<div>Opaque</div>\r\n",
+  "expected": "# Heading\r\n\r\nEdited line\nSecond line\r\nThird line\n\n<div>Opaque</div>\r\n",
+  "preservesUnchangedInternalBreaks": false
+}

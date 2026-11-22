@@ -1,0 +1,91 @@
+{
+  "hardenedSetting": "kernel.apparmor_restrict_unprivileged_unconfined=1",
+  "mode": "baseline",
+  "started": "2026-11-18 02:34:52 UTC",
+  "expectedBinarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "passed": true,
+  "binarySha256": "b3b1e05f4b76be83ff5c5c144f5aff98ccdfb0c9a059ffd29b3b334c97f19b83",
+  "editor": {
+    "pid": 16960,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes",
+    "uid": 1000,
+    "startTicks": "1186510",
+    "environment": {
+      "WEBKIT_INSPECTOR_SERVER": null,
+      "TAURI_WEBVIEW_AUTOMATION": null,
+      "TAURI_AUTOMATION": null,
+      "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
+      "WEBKIT_DISABLE_DMABUF_RENDERER": "1"
+    },
+    "namespaces": {
+      "net": "net:[4026531840]",
+      "mnt": "mnt:[4026531841]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026531837]"
+    },
+    "cgroup": "0::/user.slice/user-0.slice/session-296.scope"
+  },
+  "editorWebProcessPids": [
+    16993
+  ],
+  "editorSandboxPass": true,
+  "unit": "programmable-notes-preview-16960-1794969312417284980.service",
+  "child": {
+    "pid": 17099,
+    "exe": "/usr/bin/programmable-notes",
+    "cmdline": "/usr/bin/programmable-notes --preview-child",
+    "uid": 1000,
+    "startTicks": "1188476",
+    "environment": {
+      "WEBKIT_INSPECTOR_SERVER": null,
+      "TAURI_WEBVIEW_AUTOMATION": "false",
+      "TAURI_AUTOMATION": "false",
+      "WEBKIT_DISABLE_COMPOSITING_MODE": "1",
+      "WEBKIT_DISABLE_DMABUF_RENDERER": "1"
+    },
+    "namespaces": {
+      "net": "net:[4026532321]",
+      "mnt": "mnt:[4026532376]",
+      "pid": "pid:[4026531836]",
+      "user": "user:[4026532320]"
+    },
+    "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-16960-1794969312417284980.service"
+  },
+  "previewWebProcessPids": [
+    17147
+  ],
+  "previewSandboxPass": true,
+  "limits": {
+    "cpu.max": "25000 100000",
+    "memory.max": "536870912",
+    "memory.swap.max": "0",
+    "pids.max": "128",
+    "pids.current": "26",
+    "pids.events": "max 0"
+  },
+  "counterActions": [
+    {
+      "button": "Count: 0",
+      "durationMs": 37374,
+      "elapsedMs": 73860
+    },
+    {
+      "button": "Count: 1",
+      "durationMs": 2098,
+      "elapsedMs": 75958
+    },
+    {
+      "button": "Count: 2",
+      "durationMs": 1440,
+      "elapsedMs": 77399
+    }
+  ],
+  "counterPass": true,
+  "previewActiveBeforeRootClose": true,
+  "rootClosed": true,
+  "previewGroupEmptyAfterRootClose": true,
+  "knownWebProcessesExited": true,
+  "normalCloseStoppedActivePreview": true,
+  "elapsedMs": 80381
+}

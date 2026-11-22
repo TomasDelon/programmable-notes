@@ -1,0 +1,43 @@
+{
+  "scope": "Native WebKit/Tauri callback harness, not production MDX escape evidence",
+  "executableSha256": "a472c345b4132f032b6b2a7fb2e25dcc2f11d913f95550b20084019aac1c8c98",
+  "observerSha256": "fe2020bdf8c2d0f5258e812af02125a54cc048f0e00413eb01092b7aeb8b3010",
+  "cases": [
+    {
+      "mode": "default",
+      "helperMode": "default",
+      "name": "pn-download-26360c6a-0385-4611-864d-d742052a3b24.txt",
+      "outcome": "pass",
+      "code": 0,
+      "signal": null,
+      "stdout": "DOWNLOAD_RESULT {\"destination\":\"/opt/pn/acceptance/pn-download-26360c6a-0385-4611-864d-d742052a3b24.txt\"}\n",
+      "stderr": "libEGL warning: DRI3 error: Could not get DRI3 device\nlibEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\n\n(process:2): GLib-GObject-CRITICAL **: 06:28:43.002: g_object_ref: assertion 'G_IS_OBJECT (object)' failed\n",
+      "requests": 1,
+      "nativeResult": {
+        "destination": "/opt/pn/acceptance/pn-download-26360c6a-0385-4611-864d-d742052a3b24.txt"
+      },
+      "writtenSha256": "6a345eb4ee5ce59c559d7799b35a6bb6598719f99f05015834e8c5deee124d75",
+      "writtenBytes": 79,
+      "canaryRemoved": true
+    },
+    {
+      "mode": "deny",
+      "helperMode": "default",
+      "name": "pn-download-60c55424-547b-436b-87f5-e34920d5620f.txt",
+      "outcome": "fail",
+      "code": 0,
+      "signal": null,
+      "stdout": "DOWNLOAD_RESULT {\"destination\":\"/opt/pn/acceptance/pn-download-60c55424-547b-436b-87f5-e34920d5620f.txt\"}\n",
+      "stderr": "libEGL warning: DRI3 error: Could not get DRI3 device\nlibEGL warning: Ensure your X server supports DRI3 to get accelerated rendering\n\n(process:2): GLib-GObject-CRITICAL **: 06:28:49.126: g_object_ref: assertion 'G_IS_OBJECT (object)' failed\n",
+      "requests": 1,
+      "nativeResult": {
+        "destination": "/opt/pn/acceptance/pn-download-60c55424-547b-436b-87f5-e34920d5620f.txt"
+      },
+      "writtenSha256": "1853aa3fe3a48e9a35b37cfc01b1f06d3deeb26fd4b665962203491553519f21",
+      "writtenBytes": 79,
+      "canaryRemoved": true,
+      "error": "AssertionError [ERR_ASSERTION]: The production callback did not receive/reject this request"
+    }
+  ],
+  "outcome": "fail"
+}

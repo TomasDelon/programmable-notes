@@ -1,0 +1,172 @@
+[
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963255393477550.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 51067,
+    "peakBytes": 66973696,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963309547271050.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 47526,
+    "peakBytes": 67362816,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963361266974850.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 50511,
+    "peakBytes": 536870912,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 20,
+      "oom": 1,
+      "oom_kill": 7,
+      "oom_group_kill": 1
+    },
+    "observerTransientSamples": 0,
+    "cause": "oom-kill"
+  },
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963415323627500.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 46268,
+    "peakBytes": 67235840,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963465533398630.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 59000,
+    "peakBytes": 67231744,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "runtime-limit"
+  },
+  {
+    "record": "production-stress-first.json",
+    "unit": "programmable-notes-preview-9367-1794963528321146230.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 46019,
+    "peakBytes": 67342336,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "production-crash-retry.json",
+    "unit": "programmable-notes-preview-10334-1794963819459249480.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 58866,
+    "peakBytes": 67194880,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "runtime-limit"
+  },
+  {
+    "record": "production-crash-retry.json",
+    "unit": "programmable-notes-preview-10515-1794963890444470270.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 52240,
+    "peakBytes": 67076096,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "window-close/webkit-stress.json",
+    "unit": "programmable-notes-preview-11041-1794963988027917370.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 44004,
+    "peakBytes": 67219456,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  },
+  {
+    "record": "window-close/webkit-stress.json",
+    "unit": "programmable-notes-preview-11041-1794964036103477400.service",
+    "noLiveDescendants": true,
+    "elapsedMs": 45149,
+    "peakBytes": 67010560,
+    "memoryEvents": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0,
+      "oom_group_kill": 0
+    },
+    "observerTransientSamples": 0,
+    "cause": "explicit-stop/close"
+  }
+]

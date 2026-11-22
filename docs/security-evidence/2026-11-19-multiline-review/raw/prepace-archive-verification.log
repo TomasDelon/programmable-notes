@@ -1,0 +1,15 @@
+127.0.0.1 - - [19/Nov/2026 13:02:47] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [19/Nov/2026 13:02:47] "GET /assets/index-BAx5yId_.js HTTP/1.1" 200 -
+127.0.0.1 - - [19/Nov/2026 13:02:47] "GET /assets/index-CpE1tWiR.css HTTP/1.1" 200 -
+127.0.0.1 - - [19/Nov/2026 13:02:47] "GET /assets/esbuild-BaXVPFT2.wasm HTTP/1.1" 200 -
+REVIEW_BROWSER_PASS extracted_build_react_new_note_trusted_key_save_pending_guard_bom_exact_offline_recompile_selected_status_dirty_sibling_internal_breaks_ambiguous_refusal_bounded_long_input_literal_and_multiline_quotes
+REVIEW_ARTIFACT_REJECTED capture-change
+REVIEW_ARTIFACT_REJECTED capture-script-change
+REVIEW_ARTIFACT_REJECTED asset-change
+REVIEW_ARTIFACT_REJECTED asset-missing
+REVIEW_ARTIFACT_REJECTED asset-extra
+REVIEW_ARTIFACT_REJECTED backslash-path
+REVIEW_ARTIFACT_REJECTED windows-dot-space-path
+REVIEW_ARTIFACT_REJECTED symlink
+REVIEW_ARTIFACT_REJECTED failed-capture
+REVIEW_ARTIFACT_INTEGRITY_PASS manifest_crc_and_9_negative_cases

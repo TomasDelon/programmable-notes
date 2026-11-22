@@ -1,0 +1,7 @@
+{
+  "scope": "real Chromium editor on current production build; no native test or document execution",
+  "kind": "brackets",
+  "size": 50000,
+  "outcome": "failed",
+  "error": "TimeoutError: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('textbox', { name: 'MDX source' }).filter({ hasText: 'x' }) to be visible\u001b[22m\n"
+}

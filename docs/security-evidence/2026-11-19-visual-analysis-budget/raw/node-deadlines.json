@@ -1,0 +1,29 @@
+{
+  "scope": "isolated Node parser,256MiB heap,3s external timeout,no application behavior changed",
+  "rows": [
+    {
+      "kind": "quotes",
+      "size": 100000,
+      "outcome": "timeout",
+      "timeoutSeconds": 3
+    },
+    {
+      "kind": "quotes",
+      "size": 490000,
+      "outcome": "timeout",
+      "timeoutSeconds": 3
+    },
+    {
+      "kind": "brackets",
+      "size": 100000,
+      "outcome": "timeout",
+      "timeoutSeconds": 3
+    },
+    {
+      "kind": "brackets",
+      "size": 245000,
+      "outcome": "timeout",
+      "timeoutSeconds": 3
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "path": "src/editor/markdownEdits.ts",
+    "host": "f4680fdb7710ce4477e672cae0a8e81bdf0ed17c90f338f0d4ca36b70c468cc8",
+    "builder": "f4680fdb7710ce4477e672cae0a8e81bdf0ed17c90f338f0d4ca36b70c468cc8",
+    "equal": true
+  },
+  {
+    "path": "src/App.tsx",
+    "host": "57d72c27f8dc031aea4c374ea853ba22c07b6290a1eb8000cf229a1965980cd0",
+    "builder": "57d72c27f8dc031aea4c374ea853ba22c07b6290a1eb8000cf229a1965980cd0",
+    "equal": true
+  },
+  {
+    "path": "src/preview/NativePreview.tsx",
+    "host": "1c97f95f1a2c8fc391c185ea18552550a3ecc2f3d8094d20a8d35640cde84fc1",
+    "builder": "1c97f95f1a2c8fc391c185ea18552550a3ecc2f3d8094d20a8d35640cde84fc1",
+    "equal": true
+  },
+  {
+    "path": "src/preview/native-operations.ts",
+    "host": "4958c006a9d38f686d56adde8e31c09460c1635bbd61b4431931c37556345fa3",
+    "builder": "4958c006a9d38f686d56adde8e31c09460c1635bbd61b4431931c37556345fa3",
+    "equal": true
+  },
+  {
+    "path": "native-policy/src/lib.rs",
+    "host": "cbfaf63fb4879b063a5ed557149a10134c3a841ba73350b808420e1d9417e061",
+    "builder": "cbfaf63fb4879b063a5ed557149a10134c3a841ba73350b808420e1d9417e061",
+    "equal": true
+  },
+  {
+    "path": "src-tauri/src/main.rs",
+    "host": "34a4aaa25dbc4ca0b6316800fa2035cb439990480926802a81ec389ec11a17fb",
+    "builder": "34a4aaa25dbc4ca0b6316800fa2035cb439990480926802a81ec389ec11a17fb",
+    "equal": true
+  },
+  {
+    "path": "src-tauri/capabilities/editor.json",
+    "host": "eea0b22a3dda9c0233abc8659a17a83ab9a6858045e06240e722acb826744719",
+    "builder": "eea0b22a3dda9c0233abc8659a17a83ab9a6858045e06240e722acb826744719",
+    "equal": true
+  }
+]

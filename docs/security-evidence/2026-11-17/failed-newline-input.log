@@ -1,0 +1,59 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+NATIVE_UI {"pid": 7914, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 7914, "button": "CPU loop armed", "action": "find", "passed": true}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+... Skipped lines
+
+  "import { useState } from 'react'\n" +
+    '\n' +
+    'export function Counter() {\n' +
+    '  const [count, setCount] = useState(0)\n' +
+    '  return <button onClick={() => setCount((value) => value + 1)}>Count: {count}</button>\n' +
+...
+    '<Counter />\n' +
+-   '\n' +
+    'NATIVE_SOURCE_SURVIVES'
+
+    at file:///opt/pn/validation/scripts/native-editor.mjs:110:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: "import { useState } from 'react'\n" +
+    '\n' +
+    'export function Counter() {\n' +
+    '  const [count, setCount] = useState(0)\n' +
+    '  return <button onClick={() => setCount((value) => value + 1)}>Count: {count}</button>\n' +
+    '}\n' +
+    '\n' +
+    '# Interactive MDX document\n' +
+    '\n' +
+    'This paragraph should render as Markdown.\n' +
+    '\n' +
+    '<Counter />\n' +
+    'NATIVE_SOURCE_SURVIVES',
+  expected: "import { useState } from 'react'\n" +
+    '\n' +
+    'export function Counter() {\n' +
+    '  const [count, setCount] = useState(0)\n' +
+    '  return <button onClick={() => setCount((value) => value + 1)}>Count: {count}</button>\n' +
+    '}\n' +
+    '\n' +
+    '# Interactive MDX document\n' +
+    '\n' +
+    'This paragraph should render as Markdown.\n' +
+    '\n' +
+    '<Counter />\n' +
+    '\n' +
+    'NATIVE_SOURCE_SURVIVES',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

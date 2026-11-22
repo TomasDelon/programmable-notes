@@ -1,0 +1,4 @@
+534882c247d59679beadc7a6927d87f8ca7e79654cbdd67e47ae578752044b09  native-documents/src/snapshots.rs
+8824d06a0675f8cd8c485a64c668df0b73bab1b1a1fdde1e6d9ea7d0a1489773  native-documents/tests/snapshots.rs
+9fd32e7568c99ef28f882318abd67fa19df309834a1b83e4b240d9adcaadc198  native-documents/Cargo.lock
+69a0afa4d9b4fb52f3411a29f2f07bff76049313621832bdd980c9d923fd3db7  native-documents/target/debug/build/native-documents/d38d84c4954751ee/out/snapshots-d38d84c4954751ee

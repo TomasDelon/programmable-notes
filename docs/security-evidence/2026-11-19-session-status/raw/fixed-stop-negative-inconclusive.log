@@ -1,0 +1,57 @@
+/tmp/pn-native-1XYV5w
+NATIVE_DIALOG {"pid": 28676, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-1XYV5w/session-status.mdx", "dialogDismissed": true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Session count 0 for PID 28798
+NATIVE_SESSION_STATUS /tmp/pn-native-1XYV5w/evidence/fixed-stop-exec-oracle.json
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: python3 scripts/native-atspi.py 28798 Session count 0 click
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Session count 0 for PID 28798
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at file:///opt/pn/acceptance/scripts/native-stop-exec-fixed-observer.mjs:95:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    Buffer(0) [Uint8Array] [],
+    Buffer(279) [Uint8Array] [
+       84, 114,  97,  99, 101,  98,  97,  99, 107,  32,  40, 109,
+      111, 115, 116,  32, 114, 101,  99, 101, 110, 116,  32,  99,
+       97, 108, 108,  32, 108,  97, 115, 116,  41,  58,  10,  32,
+       32,  70, 105, 108, 101,  32,  34,  47, 111, 112, 116,  47,
+      112, 110,  47,  97,  99,  99, 101, 112, 116,  97, 110,  99,
+      101,  47, 115,  99, 114, 105, 112, 116, 115,  47, 110,  97,
+      116, 105, 118, 101,  45,  97, 116, 115, 112, 105,  46, 112,
+      121,  34,  44,  32, 108, 105, 110, 101,  32,  52,  51,  44,
+       32, 105, 110,  32,
+      ... 179 more items
+    ]
+  ],
+  pid: 28802,
+  stdout: Buffer(0) [Uint8Array] [],
+  stderr: Buffer(279) [Uint8Array] [
+     84, 114,  97,  99, 101,  98,  97,  99, 107,  32,  40, 109,
+    111, 115, 116,  32, 114, 101,  99, 101, 110, 116,  32,  99,
+     97, 108, 108,  32, 108,  97, 115, 116,  41,  58,  10,  32,
+     32,  70, 105, 108, 101,  32,  34,  47, 111, 112, 116,  47,
+    112, 110,  47,  97,  99,  99, 101, 112, 116,  97, 110,  99,
+    101,  47, 115,  99, 114, 105, 112, 116, 115,  47, 110,  97,
+    116, 105, 118, 101,  45,  97, 116, 115, 112, 105,  46, 112,
+    121,  34,  44,  32, 108, 105, 110, 101,  32,  52,  51,  44,
+     32, 105, 110,  32,
+    ... 179 more items
+  ]
+}
+
+Node.js v24.22.1

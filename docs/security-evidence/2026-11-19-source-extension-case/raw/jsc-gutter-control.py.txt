@@ -1,0 +1,26 @@
+# Pure default-JSC control; not application, DOM, native or sandbox acceptance.
+import ctypes,hashlib,json,os
+from pathlib import Path
+jsc=ctypes.CDLL('libjavascriptcoregtk-4.1.so.0')
+jsc.jsc_context_new.restype=ctypes.c_void_p
+jsc.jsc_context_evaluate.argtypes=[ctypes.c_void_p,ctypes.c_char_p,ctypes.c_ssize_t]
+jsc.jsc_context_evaluate.restype=ctypes.c_void_p
+jsc.jsc_context_get_exception.argtypes=[ctypes.c_void_p]
+jsc.jsc_context_get_exception.restype=ctypes.c_void_p
+jsc.jsc_value_to_string.argtypes=[ctypes.c_void_p]
+jsc.jsc_value_to_string.restype=ctypes.c_void_p
+source=b'''"use strict";
+function rc(e,t,n){for(;e.value&&e.from<=n;)e.from==n&&t.push(e.value),e.next()}
+const marker=Object.freeze({id:1});
+class Cursor {constructor(){this.from=0;this.value=marker}reset(){this.from=0;this.value=marker}next(){this.from++;if(this.from===64)this.value=null}}
+const cursor=new Cursor();let observed=0;
+for(let i=0;i<200000;i++){cursor.reset();const collected=[];rc(cursor,collected,i%64);if(collected.length!==1||collected[0]!==marker)throw Error("cursor mismatch");observed+=collected.length}
+JSON.stringify({calls:200000,observed,finalFrom:cursor.from,finalValueNull:cursor.value===null});'''
+print(json.dumps({'phase':'evaluate','sourceSha256':hashlib.sha256(source).hexdigest(),'jscEnvironment':{k:v for k,v in os.environ.items() if k.startswith('JSC_')}}),flush=True)
+context=jsc.jsc_context_new();assert context
+value=jsc.jsc_context_evaluate(context,source,len(source));assert value
+assert not jsc.jsc_context_get_exception(context),'JSC exception in cursor control'
+pointer=jsc.jsc_value_to_string(value);assert pointer
+result=json.loads(ctypes.string_at(pointer).decode())
+assert result=={'calls':200000,'observed':200000,'finalFrom':64,'finalValueNull':True},result
+print(json.dumps({'scope':'pure JSC control, no DOM/Tauri or isolation acceptance','result':result}),flush=True)

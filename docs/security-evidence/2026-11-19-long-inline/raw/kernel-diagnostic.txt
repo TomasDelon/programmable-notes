@@ -1,0 +1,23 @@
+               total        used        free      shared  buff/cache   available
+Mem:            7940         476        7158           7         539        7463
+Swap:              0           0           0
+    PID    PPID   RSS COMMAND
+  19887     625 148940 programmable-no
+  20297     625 147040 programmable-no
+    465     456 80384 Xvfb
+  19901   19887 49440 WebKitNetworkPr
+  20311   20297 49228 WebKitNetworkPr
+    205       1 22036 systemd-journal
+    474     456 20852 openbox
+    625     623 18564 WebKitWebDriver
+    740     446 18384 xdg-desktop-por
+    719     446 16400 xdg-desktop-por
+      1       0 12520 systemd
+    446       1 11684 systemd
+  20437       1 11040 systemd
+  20433     436  9944 sshd
+    296       1  9428 systemd-network
+    422       1  8664 systemd-logind
+    746     446  8276 at-spi2-registr
+Nov 19 08:19:00 pn-m3-guest kernel: WebKitWebProces[19918]: segfault at 10cc678 ip 00007dc0d842c021 sp 00007fff9fc50460 error 4 likely on CPU 3 (core 3, socket 0)
+Nov 19 08:31:28 pn-m3-guest kernel: WebKitWebProces[20328]: segfault at 10cc678 ip 0000763646400261 sp 00007ffdcbad1a10 error 4 likely on CPU 3 (core 3, socket 0)

@@ -1,0 +1,52 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run --run tests/unit/workspace.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/workspace.test.ts (7 tests | 2 failed) 41ms
+   ❯ authorized document workspace (7)
+     × creates separate unsaved empty notes without inheriting grants or replacing earlier bytes 4ms
+     × refuses a thirty-third note without truncating existing source 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/workspace.test.ts > authorized document workspace > creates separate unsaved empty notes without inheriting grants or replacing earlier bytes
+TypeError: createNote is not a function
+ ❯ tests/unit/workspace.test.ts:18:19
+     16|       bindings: { 'note.mdx': { id: 'grant', revision: '1', name: 'not…
+     17|     };
+     18|     const first = createNote(original);
+       |                   ^
+     19|     const second = createNote(first);
+     20|     expect(second.selected).not.toBe(first.selected);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/workspace.test.ts > authorized document workspace > refuses a thirty-third note without truncating existing source
+TypeError: createNote is not a function
+ ❯ tests/unit/workspace.test.ts:34:12
+     32|     const files = Object.fromEntries(Array.from({length:32},(_,i)=>[`$…
+     33|     const state = initialWorkspace(files, '0.mdx');
+     34|     expect(createNote(state)).toBe(state);
+       |            ^
+     35|   });
+     36|   it('isolates separately opened note groups while preserving explicit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  02:26:56
+   Duration  1.21s (environment 80%, setup 11%, tests 4%, transform 4%, worker 1%)
+

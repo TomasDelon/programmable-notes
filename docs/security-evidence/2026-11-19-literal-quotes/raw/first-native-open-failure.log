@@ -1,0 +1,13 @@
+/tmp/pn-native-dXQKGG
+NATIVE_DIALOG {"pid": 22922, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-dXQKGG/fidelity-acceptance.mdx"}
+file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32
+  throw Error(`UI condition failed: ${source}`);
+        ^
+
+Error: UI condition failed: !Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source')?.disabled
+    at waitUi (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32:9)
+    at async fileIdle (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:78:3)
+    at async open (file:///opt/pn/acceptance/scripts/native-fidelity.mjs:90:3)
+    at async file:///opt/pn/acceptance/scripts/native-fidelity.mjs:158:3
+
+Node.js v24.22.1

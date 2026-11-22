@@ -1,0 +1,36 @@
+{
+  "verified": true,
+  "schema": 1,
+  "buildFiles": {
+    "assets/esbuild-BaXVPFT2.wasm": "b1831a5c0f6cf688034fb94d0419812f165ea316a3380d3fc00a151e562d2eaf",
+    "assets/index-D2zxdJ82.js": "f329fe27182e7fcd135cf8525288c9761a259120989ab5a44c8f12b3ea803ea5",
+    "assets/index-RbpGptNf.css": "1139f3b1d5d387ff5439bb0bcb3152931a4078ae2d8dc891a667850aea8c4889",
+    "index.html": "bbbe0a001aeffb5f72b7fe773fb6c2179497ce5469796bfb881aef20fce25a17",
+    "native-preview.html": "aea43a238c57f4740188f0ca9f20a4af7618a55457555672c64524bb13ac9379"
+  },
+  "capturedAt": "2026-11-19T04:43:09.988Z",
+  "buildIndexSha256": "bbbe0a001aeffb5f72b7fe773fb6c2179497ce5469796bfb881aef20fce25a17",
+  "captureScriptSha256": "71c6f152364e6f1ed8b3346b8cb39e5ff01b7e5e24aa3c7f11bcea6ecb2b9ca6",
+  "files": {
+    "01-preview.png": "6889bf5064eab69d0e412ce89483edaeec4c630aa5007018fc3b5060d0468b3f",
+    "02-inline-edit.png": "1a152e5706f22c69ad820d5082bbf65e02925748caa0c20738876c2c2a9e0dc6",
+    "03-updated.png": "6314a8429cc2db6f647e963740d3441d3efd158e20d90a9d49426890055f455c",
+    "04-new-note.png": "80d208314d692032c34c28d5dd8cd5df3d9aac6ba3b568b590c6e8da3eb74c3d",
+    "walkthrough.webm": "15d8ecbf1c6819b34506cc32ef2c6024e61aed4131a82fb2b7344caba1e93965",
+    "walkthrough.html": "390e14d74652fa5bd2a19626d5fe0b6d9b1cf6bb9815040da874aa41071adb48",
+    "lesson.mdx": "91b01cf823280e2998d3d97e6da38adead71c2b9303c2721753e45177ec04c99",
+    "new-note.mdx": "0b44d98f846569a33555d31f03dcb6a04c79b2facfbe0db890ca4a1279a12466",
+    "before/desktop.png": "af0c58f51fd11f1e2608557616a19afd255cc8ecb25614d1823c5fdcfa10f1aa",
+    "desktop-source.png": "a4eae3594cf462c77028c7826a86fa8a9dbf7a41f0c22fa6706756e30e5e80b7",
+    "desktop-split.png": "bc0b3a512803be235375f4f8948eb216613fc9e89d7dced0a4e06e9368d881a3",
+    "desktop-visual.png": "0aa4a08c05d71cd8ab56ec1c00aaba53666633fa564344d321e8b6e6f06f5341",
+    "before/tablet.png": "332cbfbd53290807375d5ff314b56c6c48e9ebd5923a616e79aa720c05c3c084",
+    "tablet-source.png": "02011b0886dc9b98ecdc556a8bf2dd63e63bb6084c50d7023cd020545e1fd299",
+    "tablet-split.png": "eab92a3bfe59a1b11ed44b5b80f328f2ee4582f15365f68ee053a2f19de049ce",
+    "tablet-visual.png": "7ddfe0e040e8cda9fa8fb8dfb999450465432e0eaa7fc9999940f18056714713",
+    "before/mobile.png": "7ac347910265ea4a4d395c7a275617992503d8f559b3eeff1df65c6c1b76c59b",
+    "mobile-source.png": "5229c729f106e329f51e75069223c2bdfc400607bc303a87db213cb82a9c6106",
+    "mobile-split.png": "78c0f4cfed97c840315ea62e5b8e62ce50e39d40ac6faf0bac09112ed5db16ff",
+    "mobile-visual.png": "447f6991db4bcae19cbae73c3cf9b24cde3f09525d9363e0ed6723c54960c8f6"
+  }
+}

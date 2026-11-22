@@ -1,0 +1,75 @@
+NATIVE_DIALOG {"pid": 5386, "title": "Open documents and modules", "action": "cancel", "argument": ""}
+PICKER_CANCEL_PASS
+NATIVE_DIALOG {"pid": 5386, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-tjKqmX/note.mdx"}
+EDITOR_FORGED_GRANT_DENIED {"error":"Unknown document authorization","ok":false}
+NATIVE_ATOMIC_SAVE_PASS {"path":"/tmp/pn-native-tjKqmX/note.mdx","utf8CrlfExact":true,"mode":"0640","replacedInode":true}
+READ_ONLY_RECOVERY_PASS
+NATIVE_DIALOG {"pid": 5386, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DIALOG {"pid": 5386, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-tjKqmX/saved-as.mdx"}
+FAILURE_UI {
+  selection: 'opened-1/note.mdx',
+  body: 'Programmable Notes\n' +
+    '\n' +
+    'Experimental Linux desktop preview. Native isolation is validated on the documented Linux stack; production security review remains limited. Use trusted documents while desktop testing continues.\n' +
+    '\n' +
+    'Open files\n' +
+    'Save source\n' +
+    'Save As\n' +
+    'Reopen source\n' +
+    'Close source\n' +
+    'Stop preview\n' +
+    'Rebuild preview\n' +
+    'Source file \n' +
+    'Preview stopped\n' +
+    '\n' +
+    'File: /tmp/pn-native-tjKqmX/note.mdx\n' +
+    '\n' +
+    'File operation in progress\n' +
+    '\n' +
+    '1\n' +
+    '2\n' +
+    '3\n' +
+    '4\n' +
+    '5\n' +
+    '6\n' +
+    '7\n' +
+    '8\n' +
+    '9\n' +
+    '10\n' +
+    '11\n' +
+    '12\n' +
+    '13\n' +
+    '14\n' +
+    '15\n' +
+    '16\n' +
+    '17\n' +
+    '18\n' +
+    "import { useState } from 'react'\n" +
+    '\n' +
+    'export function Counter() {\n' +
+    '  const [count, setCount] = useState(0)\n' +
+    '  return <button onClick={() => setCount((value) => value + 1)}>Count: {count}</button>\n' +
+    '}\n' +
+    '\n' +
+    '# Interactive MDX document\n' +
+    '\n' +
+    'This paragraph should render as Markdown.\n' +
+    '\n' +
+    '<Counter />\n' +
+    '\n' +
+    'Unicode café λ\n' +
+    '\n' +
+    '<button>X</button>\n' +
+    'local edit\n' +
+    'keep this'
+}
+file:///opt/pn/project/scripts/native-ui-lib.mjs:32
+  throw Error(`UI condition failed: ${source}`);
+        ^
+
+Error: UI condition failed: !Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save source')?.disabled
+    at waitUi (file:///opt/pn/project/scripts/native-ui-lib.mjs:32:9)
+    at async fileIdle (file:///opt/pn/project/scripts/native-ui-lib.mjs:78:3)
+    at async file:///opt/pn/project/scripts/native-persistence.mjs:117:3
+
+Node.js v24.22.1

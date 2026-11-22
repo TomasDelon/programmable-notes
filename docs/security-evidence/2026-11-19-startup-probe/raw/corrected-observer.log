@@ -1,0 +1,3 @@
+NATIVE_STARTUP_EVIDENCE /tmp/pn-native-9Qt51k/evidence/startup.json
+NATIVE_STARTUP_OBSERVATION {"kind":"static","invokeMs":1583.3944599999995,"sandboxObservedMs":14439.79073,"accessibleReadyMs":40540.80533,"cleanupMs":41592.85227,"errors":[]}
+NATIVE_STARTUP_OBSERVATION {"kind":"counter","invokeMs":3295.2015600000013,"sandboxObservedMs":15330.421420000006,"accessibleReadyMs":43881.370189999994,"cleanupMs":48509.96,"errors":[]}

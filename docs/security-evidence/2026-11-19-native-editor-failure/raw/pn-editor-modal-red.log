@@ -1,0 +1,37 @@
+EDITOR_FAILURE_PROBE_IDENTITY {"pid":45416,"startTick":"6882990","executableSha256":"6e26da6401766014112975274f76cfc9513640d01890f927db811a300977c231"}
+NATIVE_DIALOG {"pid": 45416, "title": "Unsaved source", "action": "button", "argument": "Cancel", "dialogDismissed": true}
+NATIVE_DIALOG_POSITIVE_CONTROL_PASS
+NATIVE_DIALOG {"pid": 45416, "title": "File operation in progress", "action": "button", "argument": "OK", "dialogDismissed": true}
+HEALTHY_EDITOR_BUSY_CLOSE_GUARD_PASS
+OPEN_PICKER_POSITIVE_CONTROL_PASS
+EDITOR_RENDERER_KILL_RECEIPT {"root":{"pid":45416,"startTick":"6882990","parent":625,"exe":"/usr/bin/programmable-notes","uid":1000,"namespacePids":[45416],"tracer":0},"renderer":{"pid":45448,"startTick":"6883235","parent":45447,"exe":"/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWebProcess","uid":1000,"namespacePids":[45448,2],"tracer":0},"signal":"SIGKILL","rootSurvived":true}
+OWNED_PROBE_ROOT_CLEANUP {"pid":45416,"startTick":"6882990","executableSha256":"6e26da6401766014112975274f76cfc9513640d01890f927db811a300977c231"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'X Error of failed request:  BadWindow (invalid Window parameter)\n' +
++   '  Major opcode of failed request:  3 (X_GetWindowAttributes)\n' +
++   '  Resource id in failed request:  0x4004b8\n' +
++   '  Serial number of failed request:  68\n' +
++   '  Current serial number in output stream:  69'
+- ''
+
+    at visible (file:///opt/pn/acceptance/scripts/native-editor-failure-probe.mjs:13:288)
+    at file:///opt/pn/acceptance/scripts/native-editor-failure-probe.mjs:27:34 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'X Error of failed request:  BadWindow (invalid Window parameter)\n' +
+    '  Major opcode of failed request:  3 (X_GetWindowAttributes)\n' +
+    '  Resource id in failed request:  0x4004b8\n' +
+    '  Serial number of failed request:  68\n' +
+    '  Current serial number in output stream:  69',
+  expected: '',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

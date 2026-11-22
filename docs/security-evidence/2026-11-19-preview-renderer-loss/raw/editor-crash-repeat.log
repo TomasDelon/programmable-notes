@@ -1,0 +1,20 @@
+NATIVE_STRESS_IDENTITY {"pid":51356,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"e7013cc22f1dc7df045097d7c06a531e6d964bd1e9eaaa749ee99a3368a8e451","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51356-1795117842493413130.service","pid":"51466","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51356-1795117842493413130.service","pid":51426,"invokeMs":4590,"sandboxObservedMs":15825}
+NATIVE_UI {"pid": 51426, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51356-1795117842493413130.service","pid":51426,"name":"Arm CPU loop","action":"click","observerMs":31699,"sinceRequestMs":47527}
+NATIVE_UI {"pid": 51426, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51356-1795117842493413130.service","pid":51426,"name":"CPU loop armed","action":"find","observerMs":1366,"sinceRequestMs":48893}
+EDITOR_KILLED {"editorPid":51356,"unit":"programmable-notes-preview-51356-1795117842493413130.service"}
+NATIVE_STRESS_IDENTITY {"pid":51517,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"e7013cc22f1dc7df045097d7c06a531e6d964bd1e9eaaa749ee99a3368a8e451","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-51517-1795117917375746010.service","pid":"51628","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-51517-1795117917375746010.service","pid":51588,"invokeMs":3743,"sandboxObservedMs":15616}
+NATIVE_UI {"pid": 51588, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51517-1795117917375746010.service","pid":51588,"name":"Count: 0","action":"click","observerMs":34617,"sinceRequestMs":50235}
+NATIVE_UI {"pid": 51588, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51517-1795117917375746010.service","pid":51588,"name":"Count: 1","action":"click","observerMs":1684,"sinceRequestMs":51920}
+NATIVE_UI {"pid": 51588, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-51517-1795117917375746010.service","pid":51588,"name":"Count: 2","action":"find","observerMs":1772,"sinceRequestMs":53693}
+RECOVERY_PASS Independent preview expiry after editor SIGKILL
+CASE_PASS editor-crash
+WEBKIT_STRESS_PASS editor-crash

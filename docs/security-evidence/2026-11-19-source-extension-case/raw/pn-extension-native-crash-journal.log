@@ -1,0 +1,18 @@
+    PID STAT     ELAPSED COMMAND
+  41039 Sl         02:55 /usr/bin/programmable-notes
+Nov 19 16:09:20.899870 pn-m3-guest tauri-driver[41039]: libEGL warning: DRI3 error: Could not get DRI3 device
+Nov 19 16:09:20.899870 pn-m3-guest tauri-driver[41039]: libEGL warning: Ensure your X server supports DRI3 to get accelerated rendering
+Nov 19 16:09:31.327057 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:09:31.332037 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:09:41.642930 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:09:41.643501 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:09:56.861915 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:09:56.862836 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:10:17.575655 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:10:17.576115 pn-m3-guest programmable-no[41039]: gtk_widget_event: assertion 'WIDGET_REALIZED_FOR_EVENT (widget, event)' failed
+Nov 19 16:10:35.796166 pn-m3-guest systemd[446]: Starting programmable-notes-preview-41039-1795104635473086510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...
+Nov 19 16:10:36.658314 pn-m3-guest systemd[446]: Started programmable-notes-preview-41039-1795104635473086510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.
+Nov 19 16:11:32.273206 pn-m3-guest systemd[446]: Stopping programmable-notes-preview-41039-1795104635473086510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...
+Nov 19 16:11:32.772375 pn-m3-guest systemd[446]: Stopped programmable-notes-preview-41039-1795104635473086510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.
+Nov 19 16:11:32.783845 pn-m3-guest systemd[446]: programmable-notes-preview-41039-1795104635473086510.service: Consumed 13.832s CPU time, 66.2M memory peak, 0B memory swap peak.
+Nov 19 16:11:39.678158 pn-m3-guest tauri-driver[41070]: Unexpected code block in DFG->FTL tier-up: rc#ClTeuX:[0x746d1303e160->0x746d14527800, BaselineFunctionCall, 87 (StrictMode)]

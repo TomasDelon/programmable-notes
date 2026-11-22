@@ -1,0 +1,4 @@
+PASS: resource-verified CPU loop stopped
+Memory-pressure group terminated: programmable-notes-preview-10670-1794963929879580110.service; inspect journal for OOM cause
+Failed to stop programmable-notes-preview-10670-1794963953975305860.service: Unit programmable-notes-preview-10670-1794963953975305860.service not loaded.
+PASS: independent lifetime and restart after expired/collected unit

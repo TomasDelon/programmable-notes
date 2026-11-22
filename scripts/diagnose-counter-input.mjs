@@ -1,0 +1,231 @@
+// Diagnostic only: trusted external observation, no change to app/source/policy.
+/* global window, document, MutationObserver, location, addEventListener */
+import { chromium, expect, devices } from '@playwright/test';
+import process from 'node:process';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
+const base = process.env.DEMO_URL || 'http://127.0.0.1:4189';
+const output = process.env.COUNTER_EVIDENCE || '.cache/counter-input';
+const rounds = Number(process.env.COUNTER_ROUNDS || 30);
+if (!Number.isSafeInteger(rounds) || rounds < 1 || rounds > 100)
+  throw Error('COUNTER_ROUNDS must be1..100');
+const address = new URL(base);
+if (
+  address.protocol !== 'http:' ||
+  !['127.0.0.1', 'localhost'].includes(address.hostname) ||
+  address.username ||
+  address.password
+)
+  throw Error('Use the owned local app preview');
+const instrumented = !process.argv.includes('--without-probes');
+const negativeControl = process.argv.includes('--self-test-failure');
+if (negativeControl && rounds !== 1)
+  throw Error('Use one round for the deliberate failing control');
+await mkdir(dirname(output), { recursive: true });
+// Fresh evidence only: never mix old failures or overwrite another run.
+await mkdir(output);
+const browser = await chromium.launch({
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+});
+const report = {
+  browser: browser.version(),
+  sourceHead: execFileSync('git', ['rev-parse', 'HEAD'], {
+    encoding: 'utf8',
+  }).trim(),
+  observerSha256: createHash('sha256')
+    .update(await readFile(new URL(import.meta.url)))
+    .digest('hex'),
+  indexSha256: createHash('sha256')
+    .update(await readFile('dist/index.html'))
+    .digest('hex'),
+  instrumented,
+  negativeControl,
+  base,
+  rounds,
+  scope: negativeControl
+    ? 'Deliberately omitted first input; not an application failure'
+    : `${instrumented ? 'Instrumented' : 'Untouched'} first click; a diagnostic second click never converts failure to success`,
+  results: [],
+};
+await writeFile(
+  join(output, 'manifest.json'),
+  JSON.stringify(report, null, 2) + '\n',
+  { flag: 'wx' },
+);
+try {
+  for (let i = 0; i < rounds; i++) {
+    const context = await browser.newContext({
+      ...devices['Desktop Chrome'],
+      viewport: { width: 820, height: 1180 },
+    });
+    await context.tracing.start({
+      screenshots: true,
+      snapshots: true,
+      sources: true,
+    });
+    if (instrumented)
+      await context.addInitScript(() => {
+        const evidence = {
+          origin: location.href,
+          timeOrigin: performance.timeOrigin,
+          events: [],
+          changes: [],
+          errors: [],
+        };
+        Object.defineProperty(window, '__pnCounterProbe', { value: evidence });
+        for (const type of [
+          'pointerdown',
+          'pointerup',
+          'mousedown',
+          'mouseup',
+          'click',
+          'focus',
+          'blur',
+        ]) {
+          addEventListener(
+            type,
+            (event) => {
+              if (evidence.events.length < 64)
+                evidence.events.push({
+                  type,
+                  time: performance.now(),
+                  trusted: event.isTrusted,
+                  target: event.target?.nodeName,
+                  text: event.target?.textContent?.slice(0, 100),
+                  x: event.clientX,
+                  y: event.clientY,
+                  defaultPrevented: event.defaultPrevented,
+                });
+            },
+            true,
+          );
+        }
+        addEventListener('error', (event) => {
+          if (evidence.errors.length < 10)
+            evidence.errors.push(String(event.message));
+        });
+        let previous;
+        new MutationObserver(() => {
+          const text = Array.from(document.querySelectorAll('button')).find(
+            (e) => e.textContent?.startsWith('Count:'),
+          )?.textContent;
+          if (text !== previous && evidence.changes.length < 64) {
+            evidence.changes.push({
+              time: performance.now(),
+              text: text ?? null,
+            });
+            previous = text;
+          }
+        }).observe(document, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+      });
+    const page = await context.newPage();
+    const navigations = [];
+    page.on('framenavigated', (frame) =>
+      navigations.push({
+        url: frame.url(),
+        main: frame === page.mainFrame(),
+        time: Date.now(),
+      }),
+    );
+    const result = { round: i, navigations };
+    try {
+      await page.goto(base);
+      const counter = page
+        .frameLocator('iframe')
+        .getByRole('button', { name: /^Count:/ });
+      // This control deliberately loses the first input. A later real click must
+      // be recorded as a diagnostic response, never turn the first failure green.
+      if (!negativeControl) await counter.click();
+      await expect(counter).toHaveText('Count: 1', { timeout: 5000 });
+      result.outcome = 'pass';
+    } catch (error) {
+      result.outcome = 'fail';
+      result.error = String(error);
+      if (instrumented)
+        result.frames = await Promise.all(
+          page
+            .frames()
+            .map((frame) =>
+              frame
+                .evaluate(() => window.__pnCounterProbe)
+                .catch((error) => ({ error: String(error) })),
+            ),
+        );
+      if (report.results.filter((r) => r.outcome === 'fail').length < 3)
+        await page
+          .screenshot({
+            path: join(output, `failure-${i}.png`),
+            fullPage: true,
+          })
+          .catch(() => undefined);
+      {
+        const counter = page
+          .frameLocator('iframe')
+          .getByRole('button', { name: /^Count:/ });
+        try {
+          await counter.click();
+          await expect(counter).toHaveText('Count: 1', { timeout: 5000 });
+          result.secondClick = 'responded';
+        } catch (second) {
+          result.secondClick = String(second);
+        }
+        if (instrumented)
+          result.secondFrames = await Promise.all(
+            page
+              .frames()
+              .map((frame) =>
+                frame
+                  .evaluate(() => window.__pnCounterProbe)
+                  .catch((error) => ({ error: String(error) })),
+              ),
+          );
+      }
+    }
+    if (instrumented && !result.frames)
+      result.frames = await Promise.all(
+        page
+          .frames()
+          .map((frame) =>
+            frame
+              .evaluate(() => window.__pnCounterProbe)
+              .catch((error) => ({ error: String(error) })),
+          ),
+      );
+    if (
+      result.outcome === 'fail' &&
+      report.results.filter((r) => r.outcome === 'fail').length < 3
+    )
+      await context.tracing.stop({
+        path: join(output, `failure-${i}.trace.zip`),
+      });
+    else await context.tracing.stop();
+    report.results.push(result);
+    await writeFile(
+      join(output, `case-${i}.json`),
+      JSON.stringify(result, null, 2) + '\n',
+      { flag: 'wx' },
+    );
+    await writeFile(
+      join(output, 'report.json'),
+      JSON.stringify(report, null, 2) + '\n',
+    );
+    await context.close();
+  }
+} finally {
+  await browser.close();
+}
+console.log(
+  JSON.stringify({
+    browser: report.browser,
+    passed: report.results.filter((r) => r.outcome === 'pass').length,
+    failed: report.results.filter((r) => r.outcome === 'fail').length,
+    output,
+  }),
+);
+if (report.results.some((r) => r.outcome === 'fail')) process.exitCode = 1;

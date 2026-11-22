@@ -1,0 +1,10 @@
+NATIVE_DIALOG {"pid": 7111, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-jC6AJK/syntax-location.mdx"}
+file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32
+  throw Error(`UI condition failed: ${source}`);
+        ^
+
+Error: UI condition failed: Array.from(document.querySelectorAll('button')).some(b=>b.textContent==='Open syntax-location.mdx at line 3')
+    at waitUi (file:///opt/pn/acceptance/scripts/native-ui-lib.mjs:32:9)
+    at async file:///opt/pn/acceptance/scripts/native-diagnostics.mjs:33:3
+
+Node.js v24.22.1

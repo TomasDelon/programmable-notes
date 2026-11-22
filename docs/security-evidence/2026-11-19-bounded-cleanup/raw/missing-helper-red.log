@@ -1,0 +1,32 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-cleanup.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-cleanup.test.ts [ tests/unit/native-cleanup.test.ts ]
+Error: Failed to resolve import "../../scripts/native-cleanup" from "tests/unit/native-cleanup.test.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /workspace/programmable-notes/tests/unit/native-cleanup.test.ts:2:73
+  1  |  import { expect, it } from "vitest";
+  2  |  import { waitForCleanup } from "../../scripts/native-cleanup";
+     |                                  ^
+  3  |  function fixture() {
+  4  |  	let clock = 0;
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/node.js:8865:39
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/node.js:8862:14
+ ❯ resolveId node_modules/vite/dist/node/chunks/node.js:26552:18
+ ❯ node_modules/vite/dist/node/chunks/node.js:26651:23
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/node.js:26624:4
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/node.js:8636:14
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/node.js:20112:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  19:55:33
+   Duration  1.32s (environment 86%, setup 12%, transform 2%)
+

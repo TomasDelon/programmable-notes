@@ -1,0 +1,5 @@
+3729c1ec82ab5384de6553afab455a236ce90096dac9c0e6cb65c133c10e18b3  /etc/apparmor.d/unprivileged_userns
+kernel.unprivileged_userns_clone = 1
+kernel.apparmor_restrict_unprivileged_userns = 1
+3729c1ec82ab5384de6553afab455a236ce90096dac9c0e6cb65c133c10e18b3  /etc/apparmor.d/unprivileged_userns
+2504441b7f3847619c4e9f66b614497d73c827856c59c8fb55338e39b90036e4  /etc/apparmor.d/pn-m3-systemd-executor

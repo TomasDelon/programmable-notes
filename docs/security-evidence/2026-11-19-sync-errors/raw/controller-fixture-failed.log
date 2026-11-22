@@ -1,0 +1,126 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/recovery-history.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/recovery-history.test.tsx (8 tests | 2 failed) 2460ms
+   × keeps a published version restorable but pauses automatic writes on Published but durability uncertain: I/O… 1014ms
+   × keeps a published version restorable but pauses automatic writes on Snapshot saved; retention cleanup faile… 1017ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/recovery-history.test.tsx > keeps a published version restorable but pauses automatic writes on Published but durability uncertain: I/O…
+ FAIL  tests/unit/recovery-history.test.tsx > keeps a published version restorable but pauses automatic writes on Snapshot saved; retention cleanup faile…
+TestingLibraryElementError: Unable to find an accessible element with the role "alert"
+
+Here are the accessible roles:
+
+  region:
+
+  Name "Versioned recovery":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Versioned recovery"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Pause automatic recovery":
+  [36m<button[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Keep versioned snapshot":
+  [36m<button[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Refresh recovery versions":
+  [36m<button[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  Name "Import legacy recovery copy":
+  [36m<button[39m
+    [33mdisabled[39m=[32m""[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Versioned recovery"[39m
+    [36m>[39m
+      [36m<p>[39m
+        [0mAutomatic recovery[0m
+        [0m [0m
+        [0mis enabled after two seconds of inactivity[0m
+        [0m. It writes only recovery records; original files require Save or Save As.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+      [36m>[39m
+        [0mPause automatic recovery[0m
+      [36m</button>[39m
+      [36m<p>[39m
+        [0mRecovery versions never save the original file. Restoring creates a separate unsaved source. Keep up to five versions per buffer; total storage is bounded.[0m
+      [36m</p>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+      [36m>[39m
+        [0mKeep versioned snapshot[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+      [36m>[39m
+        [0mRefresh recovery versions[0m
+      [36m</button>[39m
+      [36m<button[39m
+        [33mdisabled[39m=[32m""[39m
+      [36m>[39m
+        [0mImport legacy recovery copy[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/recovery-history.test.tsx:361:23
+    359|     await act(async () => {
+    360|       await vi.waitFor(() =>
+    361|         expect(screen.getByRole('alert')).toHaveTextContent(warning),
+       |                       ^
+    362|       );
+    363|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  04:09:02
+   Duration  3.51s (tests 73%, environment 23%, setup 3%, transform 2%)
+

@@ -1,0 +1,30 @@
+{
+  "scope": "intentional missing-input diagnostic control; not an application failure",
+  "exitCode": 1,
+  "secondRealClickResponded": true,
+  "traceCRC": "all entries pass",
+  "traceBytes": 4039373,
+  "traceSha256": "98dcb8ff5dce6e6d5c0ed90941d59f3cef53d0367be6905867d53ca8099ace86",
+  "normalControls": {
+    "system-instrumented": {
+      "observerSha256": "7f497fb70f410af2226d88d2ed2dd1b3eb90d0d415371197a3d07bce2145277e",
+      "count": 30,
+      "browser": "156.0.8078.79"
+    },
+    "pinned-instrumented": {
+      "observerSha256": "7f497fb70f410af2226d88d2ed2dd1b3eb90d0d415371197a3d07bce2145277e",
+      "count": 30,
+      "browser": "159.0.8154.6"
+    },
+    "system-untouched": {
+      "observerSha256": "6308626941da22685d40d6eafd239b665fac8245ca02e99c8b1cea0216b7b07a",
+      "count": 20,
+      "browser": "156.0.8078.79"
+    },
+    "pinned-untouched": {
+      "observerSha256": "6308626941da22685d40d6eafd239b665fac8245ca02e99c8b1cea0216b7b07a",
+      "count": 20,
+      "browser": "159.0.8154.6"
+    }
+  }
+}

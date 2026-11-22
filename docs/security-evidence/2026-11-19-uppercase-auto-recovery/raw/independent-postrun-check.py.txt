@@ -1,0 +1,15 @@
+from pathlib import Path
+import hashlib,json,stat
+base=Path('/tmp/pn-native-V3LkZR')
+source='\uFEFF# Automatic recovery\r\n\r\nCafé — original stays unchanged.\r\n'.encode()
+original=base/'automatic-original.MdX';restored=base/'automatic-restored.MdX'
+assert original.read_bytes()==source
+assert restored.read_bytes()==source+b'\r\nAUTOMATIC_A'
+assert stat.S_IMODE(original.stat().st_mode)==0o640
+assert stat.S_IMODE(restored.stat().st_mode)==0o600
+roots=[43681,43817]
+assert all(not Path('/proc',str(pid)).exists() for pid in roots)
+recovery=Path('/home/ubuntu/.local/share/dev.programmablenotes.app/recovery')
+entries=sorted(p.name for p in recovery.iterdir())
+assert not any(name.endswith('.pnrec') for name in entries)
+print(json.dumps({'scope':'independent post-run original/copy bytes, modes, snapshot cleanup and Root absence','originalSha256':hashlib.sha256(source).hexdigest(),'restoredSha256':hashlib.sha256(restored.read_bytes()).hexdigest(),'originalBytes':len(source),'restoredBytes':len(restored.read_bytes()),'originalMode':'0640','restoredMode':'0600','rootsGone':roots,'recoveryEntries':entries}))

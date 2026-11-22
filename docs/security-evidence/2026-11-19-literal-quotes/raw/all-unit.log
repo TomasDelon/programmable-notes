@@ -1,0 +1,25 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+
+ Test Files  11 passed (11)
+      Tests  65 passed (65)
+   Start at  09:24:55
+   Duration  6.00s (environment 69%, tests 12%, setup 10%, import 5%, transform 5%)
+
+Environment  jsdom was created 11 times · 10.28s total, 69% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

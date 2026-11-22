@@ -1,0 +1,43 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-stop.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-stop.test.tsx (3 tests | 1 failed) 182ms
+   × a newer explicit Stop owns feedback while its older request completes 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-stop.test.tsx > a newer explicit Stop owns feedback while its older request completes
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Stopping preview
+Received:
+  Preview stopped
+ ❯ tests/unit/native-stop.test.tsx:141:38
+    139|   });
+    140|   expect(pending).toHaveLength(2);
+    141|   expect(screen.getByRole('status')).toHaveTextContent('Stopping previ…
+       |                                      ^
+    142|   await act(async () => {
+    143|     pending[1]!();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  11:40:03
+   Duration  1.70s (environment 51%, transform 29%, tests 11%, setup 7%, import 1%)
+

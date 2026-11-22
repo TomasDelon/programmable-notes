@@ -1,0 +1,1 @@
+Actual process exit0 captured from tools.write_stdin(session_id79799), completion chunk0ee0ca explicitly returned exit_code0. This was not inferred from result.json.

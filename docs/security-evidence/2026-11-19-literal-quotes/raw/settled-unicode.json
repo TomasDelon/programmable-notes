@@ -1,0 +1,37 @@
+{
+  "scope": "actual existing chooser driver instrumentation only",
+  "path": "/tmp/pn-native-xXdAWW/dialog-control.mdx",
+  "pid": 25443,
+  "firstAction": "{\"pid\": 25443, \"title\": \"Open documents and modules\", \"action\": \"choose\", \"argument\": \"/tmp/pn-native-xXdAWW/dialog-control.mdx\", \"dialogDismissed\": true}\n",
+  "immediateUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "laterUi": {
+    "status": "Source unchanged",
+    "source": "opened-1/dialog-control.mdx"
+  },
+  "loadedAfterActions": true,
+  "initialValue": "Quoted café 😀.",
+  "afterClear": "",
+  "afterRetype": "Quoted café .",
+  "retypeExact": false,
+  "codePoints": [
+    81,
+    117,
+    111,
+    116,
+    101,
+    100,
+    32,
+    99,
+    97,
+    102,
+    233,
+    32,
+    46
+  ],
+  "afterNativeKeyboard": "Quoted café .",
+  "nativeKeyboardExact": false,
+  "outcome": "observed"
+}

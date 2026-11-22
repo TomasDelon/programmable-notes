@@ -1,0 +1,118 @@
+NATIVE_STRESS_IDENTITY {"pid":49808,"executableSha256":"a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195","observerSha256":"e7013cc22f1dc7df045097d7c06a531e6d964bd1e9eaaa749ee99a3368a8e451","journalOracleSha256":"637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09","jitEnvironment":[]}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117004505426440.service","pid":"49918","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117004505426440.service","pid":49879,"invokeMs":3135,"sandboxObservedMs":14451}
+NATIVE_UI {"pid": 49879, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117004505426440.service","pid":49879,"name":"Arm CPU loop","action":"click","observerMs":32519,"sinceRequestMs":46974}
+NATIVE_UI {"pid": 49879, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117004505426440.service","pid":49879,"name":"CPU loop armed","action":"find","observerMs":1375,"sinceRequestMs":48350}
+WEBKIT_CPU {"unit":"programmable-notes-preview-49808-1795117004505426440.service","usage_usec":775457,"elapsed_ms":3035,"throttled_periods":31,"editor_response_ms":115}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117060772231940.service","pid":"50006","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117060772231940.service","pid":49967,"invokeMs":3739,"sandboxObservedMs":16035}
+NATIVE_UI {"pid": 49967, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117060772231940.service","pid":49967,"name":"Count: 0","action":"click","observerMs":29020,"sinceRequestMs":45059}
+NATIVE_UI {"pid": 49967, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117060772231940.service","pid":49967,"name":"Count: 1","action":"click","observerMs":1580,"sinceRequestMs":46644}
+NATIVE_UI {"pid": 49967, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117060772231940.service","pid":49967,"name":"Count: 2","action":"find","observerMs":1500,"sinceRequestMs":48144}
+RECOVERY_PASS Stop while WebKit JS loop was busy
+CASE_PASS cpu-stop
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117110087859720.service","pid":"50100","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117110087859720.service","pid":50061,"invokeMs":3262,"sandboxObservedMs":14637}
+PRESSURE_UNIT programmable-notes-preview-49808-1795117110087859720.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117172475158750.service","pid":"50197","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117172475158750.service","pid":50155,"invokeMs":3967,"sandboxObservedMs":15688}
+NATIVE_UI {"pid": 50155, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117172475158750.service","pid":50155,"name":"Count: 0","action":"click","observerMs":34636,"sinceRequestMs":50331}
+NATIVE_UI {"pid": 50155, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117172475158750.service","pid":50155,"name":"Count: 1","action":"click","observerMs":1670,"sinceRequestMs":52002}
+NATIVE_UI {"pid": 50155, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117172475158750.service","pid":50155,"name":"Count: 2","action":"find","observerMs":1405,"sinceRequestMs":53408}
+RECOVERY_PASS Memory-pressure termination
+CASE_PASS memory
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117226848224740.service","pid":"50306","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117226848224740.service","pid":50268,"invokeMs":3734,"sandboxObservedMs":18056}
+PAGE_PRESSURE_UNIT programmable-notes-preview-49808-1795117226848224740.service
+CASE_FAIL memory-pages AssertionError [ERR_ASSERTION]: Live preview descendant survived: 50295
+    at stopped (file:///opt/pn/acceptance/scripts/native-stress.mjs:206:18)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:436:5
+    at async runCase (file:///opt/pn/acceptance/scripts/native-stress.mjs:365:5)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:433:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117289118254350.service","pid":"50395","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117289118254350.service","pid":50354,"invokeMs":3751,"sandboxObservedMs":15170}
+NATIVE_UI {"pid": 50354, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117289118254350.service","pid":50354,"name":"Arm CPU loop","action":"click","observerMs":31340,"sinceRequestMs":46514}
+NATIVE_UI {"pid": 50354, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117289118254350.service","pid":50354,"name":"CPU loop armed","action":"find","observerMs":1293,"sinceRequestMs":47812}
+EXPIRY_UNIT programmable-notes-preview-49808-1795117289118254350.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117351573713060.service","pid":"50499","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117351573713060.service","pid":50461,"invokeMs":4428,"sandboxObservedMs":16451}
+NATIVE_UI {"pid": 50461, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117351573713060.service","pid":50461,"name":"Count: 0","action":"click","observerMs":30150,"sinceRequestMs":46603}
+NATIVE_UI {"pid": 50461, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117351573713060.service","pid":50461,"name":"Count: 1","action":"click","observerMs":1485,"sinceRequestMs":48089}
+NATIVE_UI {"pid": 50461, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117351573713060.service","pid":50461,"name":"Count: 2","action":"find","observerMs":1418,"sinceRequestMs":49508}
+RECOVERY_PASS Native loop lifetime expiry
+CASE_PASS expiry
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117401856299020.service","pid":"50588","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117401856299020.service","pid":50550,"invokeMs":2763,"sandboxObservedMs":14266}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Arm CPU loop for PID 50550
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117401856299020.service","pid":50550,"name":"Arm CPU loop","action":"click","observerMs":56009,"sinceRequestMs":70275}
+CASE_FAIL editor-crash Error: Command failed: python3 scripts/native-atspi.py 50550 Arm CPU loop click
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Arm CPU loop for PID 50550
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/acceptance/scripts/native-stress.mjs:166:22)
+    at file:///opt/pn/acceptance/scripts/native-stress.mjs:454:5
+    at async runCase (file:///opt/pn/acceptance/scripts/native-stress.mjs:365:5)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:452:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Arm CPU loop for PID 50550\n'
+  ],
+  pid: 50589,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 43, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Arm CPU loop for PID 50550\n'
+}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117473021216110.service","pid":"50685","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117473021216110.service","pid":50645,"invokeMs":2867,"sandboxObservedMs":13985}
+NATIVE_UI {"pid": 50645, "button": "Count: 0", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117473021216110.service","pid":50645,"name":"Count: 0","action":"find","observerMs":31546,"sinceRequestMs":45531}
+NATIVE_WINDOW_CLOSE {"pid": 50645, "window": 12582915, "sent": "WM_DELETE_WINDOW"}
+WINDOW_CLOSED_BEFORE_EARLIEST_EXPIRY {"unit":"programmable-notes-preview-49808-1795117473021216110.service","closeElapsedMs":47139.181490000046}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-49808-1795117520389250920.service","pid":"50788","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-49808-1795117520389250920.service","pid":50750,"invokeMs":3447,"sandboxObservedMs":15238}
+NATIVE_UI {"pid": 50750, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117520389250920.service","pid":50750,"name":"Count: 0","action":"click","observerMs":34700,"sinceRequestMs":49939}
+NATIVE_UI {"pid": 50750, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117520389250920.service","pid":50750,"name":"Count: 1","action":"click","observerMs":1829,"sinceRequestMs":51771}
+NATIVE_UI {"pid": 50750, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-49808-1795117520389250920.service","pid":50750,"name":"Count: 2","action":"find","observerMs":1302,"sinceRequestMs":53074}
+RECOVERY_PASS Native preview window closed
+CASE_PASS window-close
+WEBKIT_STRESS_FAILED [ 'memory-pages', 'editor-crash' ]

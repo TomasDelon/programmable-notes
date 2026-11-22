@@ -1,0 +1,17 @@
+{
+  "observerSha256": "0368ee5601438861f7baca7681c427d7484599d6e036b31f92603b81b69c7313",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "7d315faad3928befbc19c16ee8838011d8be0fc1dd121642a9dd9d2c2d4a44ff",
+  "geometry": {
+    "rows": 1000,
+    "viewport": 600,
+    "focused": true,
+    "exact": true,
+    "height": 27189.5,
+    "client": 27188,
+    "scroll": 27188
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Inline input must fit its viewport",
+  "outcome": "fail"
+}

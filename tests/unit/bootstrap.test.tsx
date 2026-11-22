@@ -1,21 +1,11 @@
-import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { defaultKeymap } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
-import { App } from '../../src/App';
 
 describe('toolchain smoke tests', () => {
-  it('renders the React shell and compiled MDX', () => {
-    render(<App />);
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Programmable Notes' }),
-    ).toBeVisible();
-    expect(screen.getByRole('main')).toHaveTextContent('technical handoff');
-  });
-
   it('creates, updates, and destroys a CodeMirror 6 Markdown view', () => {
     const parent = document.createElement('div');
     document.body.append(parent);

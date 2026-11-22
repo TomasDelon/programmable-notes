@@ -1,0 +1,8 @@
+NATIVE_DIALOG {"pid": 16994, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-FSfUzW/pending-inline.mdx"}
+NATIVE_DIALOG {"pid": 16994, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_PENDING_GUARDS_UNCHANGED_ORIGINAL_AND_ACTUAL_DIRTY_CLOSE_CANCEL_PASS
+NATIVE_PENDING_ESCAPE_APPLY_EXACT_BOM_CRLF_SAVE_UNDO_REDO_REOPEN_0640_PASS
+NATIVE_DIALOG {"pid": 16994, "title": "Save source as", "action": "cancel", "argument": ""}
+NATIVE_DIALOG {"pid": 16994, "title": "Save source as", "action": "choose", "argument": "/tmp/pn-native-FSfUzW/keyboard-save-as.mdx"}
+NATIVE_TRUSTED_CTRL_SAVE_PENDING_GUARD_AND_SHIFT_SAVE_AS_CANCEL_EXACT_COPY_PASS
+NATIVE_PENDING_CLEAN_EXIT_PASS

@@ -1,0 +1,19 @@
+
+> programmable-notes@0.0.0 native:wry:verify
+> node scripts/verify-wry.mjs
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+[TypeError: fetch failed] {
+  [cause]: Error: getaddrinfo EAI_AGAIN static.crates.io
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:123:26) {
+    errno: -3001,
+    code: 'EAI_AGAIN',
+    syscall: 'getaddrinfo',
+    hostname: 'static.crates.io'
+  }
+}
+
+Node.js v24.22.1

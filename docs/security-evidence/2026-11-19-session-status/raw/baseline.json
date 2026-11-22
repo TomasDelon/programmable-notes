@@ -1,0 +1,29 @@
+{
+  "scope": "baseline actual UI across natural expiry; no new API",
+  "observerSha256": "3e46e816023d90ffc925a4330989be160a8647bffad16ed6986e366164362d02",
+  "editorPid": 26778,
+  "executableSha256": "4a14f61b695f8fd502844c7792a232e5d8440373b3cd0559ea3613bb933d8824",
+  "unit": "programmable-notes-preview-26778-1795084304871045510.service",
+  "previewPid": 26888,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-26778-1795084304871045510.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": null,
+    "build": "Compiled — requesting isolated native preview"
+  },
+  "observedInactive": true,
+  "journal": "2026-11-19T10:31:45+00:00 pn-m3-guest systemd[446]: Starting programmable-notes-preview-26778-1795084304871045510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child...\n2026-11-19T10:31:45+00:00 pn-m3-guest systemd[446]: Started programmable-notes-preview-26778-1795084304871045510.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/pn-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /usr/bin/programmable-notes --preview-child.\n2026-11-19T10:32:45+00:00 pn-m3-guest systemd[446]: programmable-notes-preview-26778-1795084304871045510.service: Service reached runtime time limit. Stopping.\n2026-11-19T10:32:46+00:00 pn-m3-guest systemd[446]: programmable-notes-preview-26778-1795084304871045510.service: Failed with result 'timeout'.\n2026-11-19T10:32:46+00:00 pn-m3-guest systemd[446]: programmable-notes-preview-26778-1795084304871045510.service: Consumed 12.357s CPU time, 65.6M memory peak, 0B memory swap peak.\n",
+  "after": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": null,
+    "build": "Compiled — requesting isolated native preview"
+  },
+  "sourceUnchanged": true,
+  "outcome": "observed"
+}

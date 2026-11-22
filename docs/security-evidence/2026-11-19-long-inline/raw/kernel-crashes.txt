@@ -1,0 +1,6 @@
+ls: cannot access '/var/crash': No such file or directory
+Nov 19 08:18:33 pn-m3-guest kernel: audit: type=1400 audit(1795076313.521:120): apparmor="STATUS" operation="profile_replace" info="same as current profile, skipping" profile="pn-m3-systemd-executor" name="programmable-notes" pid=19846 comm="apparmor_parser"
+Nov 19 08:19:00 pn-m3-guest kernel: WebKitWebProces[19918]: segfault at 10cc678 ip 00007dc0d842c021 sp 00007fff9fc50460 error 4 likely on CPU 3 (core 3, socket 0)
+Nov 19 08:19:00 pn-m3-guest kernel: Code: Unable to access opcode bytes at 0x7dc0d842bff7.
+Nov 19 08:31:28 pn-m3-guest kernel: WebKitWebProces[20328]: segfault at 10cc678 ip 0000763646400261 sp 00007ffdcbad1a10 error 4 likely on CPU 3 (core 3, socket 0)
+Nov 19 08:31:28 pn-m3-guest kernel: Code: cc cc cc cc cc cc cc cc cc 48 b8 c4 f4 36 97 36 76 00 00 ff e0 cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc 55 <ff> 52 38 49 bb 08 70 40 89 36 76 00 00 4d 8b 1b 4d 85 db 0f 85 86

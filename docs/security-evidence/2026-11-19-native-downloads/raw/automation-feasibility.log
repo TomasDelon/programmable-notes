@@ -1,0 +1,12 @@
+LOCATION editor tauri://localhost
+LOCATION editor tauri://localhost
+LOCATION editor tauri://localhost
+FOUND editor /home/ubuntu []
+FOUND editor /home/ubuntu/Downloads []
+FOUND editor /opt/pn/acceptance []
+LOCATION preview tauri://localhost/native-preview.html
+LOCATION preview tauri://localhost/native-preview.html
+LOCATION preview tauri://localhost/native-preview.html
+FOUND preview /home/ubuntu []
+FOUND preview /home/ubuntu/Downloads []
+FOUND preview /opt/pn/acceptance []

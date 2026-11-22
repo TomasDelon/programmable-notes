@@ -1,0 +1,11 @@
+NOT RUN: resource backend unavailable or rejected: Cannot verify cpu.max: No such file or directory (os error 2)
+exit=2
+PASS no author payload sentinel; absent cpu controller rejected
+DisableControllers=cpu
+cpuset cpu io memory pids
+user-1001.slice/cgroup.subtree_control:
+cpuset io memory pids
+user@1001.service/cgroup.controllers:
+cpuset io memory pids
+user@1001.service/app.slice/cpu.max (must be absent):
+absent

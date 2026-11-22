@@ -1,0 +1,103 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-preview.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-preview.test.tsx (5 tests | 4 failed) 201ms
+   × reports a disconnected session without restarting or continuing to poll 13ms
+   × treats malformed lifecycle checks as unknown rather than stopped 3ms
+   × treats rejected lifecycle checks as unknown rather than stopped 3ms
+   × keeps one pending check and ignores its late reply after a newer build 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-preview.test.tsx > reports a disconnected session without restarting or continuing to poll
+TestingLibraryElementError: Unable to find a label with the text of: Native preview status
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mrole[39m=[32m"note"[39m
+    [36m>[39m
+      [0mNative preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/native-preview.test.tsx:49:19
+     47|       await vi.advanceTimersByTimeAsync(1000);
+     48|     });
+     49|     expect(screen.getByLabelText('Native preview status')).toHaveTextC…
+       |                   ^
+     50|       'connected',
+     51|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/unit/native-preview.test.tsx > treats malformed lifecycle checks as unknown rather than stopped
+ FAIL  tests/unit/native-preview.test.tsx > treats rejected lifecycle checks as unknown rather than stopped
+TestingLibraryElementError: Unable to find a label with the text of: Native preview status
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<p[39m
+      [33mrole[39m=[32m"note"[39m
+    [36m>[39m
+      [0mNative preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds.[0m
+    [36m</p>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getAllByLabelText node_modules/@testing-library/dom/dist/queries/label-text.js:111:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ tests/unit/native-preview.test.tsx:98:21
+     96|         await vi.advanceTimersByTimeAsync(1000);
+     97|       });
+     98|       expect(screen.getByLabelText('Native preview status')).toHaveTex…
+       |                     ^
+     99|         'unavailable',
+    100|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/unit/native-preview.test.tsx > keeps one pending check and ignores its late reply after a newer build
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/unit/native-preview.test.tsx:148:7
+    146|         ([command]) => command === 'preview_connection_active',
+    147|       ),
+    148|     ).toHaveLength(1);
+       |       ^
+    149|     view.rerender(<NativePreview html="new-session" onError={error} />…
+    150|     await flushNativeQueue();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  10:40:01
+   Duration  1.40s (environment 69%, tests 16%, setup 10%, transform 5%, import 1%)
+

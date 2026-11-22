@@ -1,0 +1,45 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-documents.test.ts
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-documents.test.ts (13 tests | 1 failed) 43ms
+   × protects unapplied trusted visual text without authorizing saves or replacing documents 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-documents.test.ts > protects unapplied trusted visual text without authorizing saves or replacing documents
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/native-documents.test.ts:261:34
+    259|   const before = h.result.current.workspace;
+    260|   h.rerender({pending:true});
+    261|   expect(h.result.current.dirty).toBe(true);
+       |                                  ^
+    262|   expect(api.dirty).toHaveBeenLastCalledWith(true,false);
+    263|   const closing = new Event('beforeunload',{cancelable:true});
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  04:16:21
+   Duration  1.03s (environment 78%, setup 9%, transform 6%, tests 5%, import 1%)
+

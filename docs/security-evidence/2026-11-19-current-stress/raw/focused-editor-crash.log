@@ -1,0 +1,19 @@
+/tmp/pn-native-FUHpyx/evidence
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-13064-1795065682436193670.service","pid":"13172","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-13064-1795065682436193670.service","pid":13133,"invokeMs":3298,"sandboxObservedMs":14889}
+NATIVE_UI {"pid": 13133, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-13064-1795065682436193670.service","pid":13133,"name":"Arm CPU loop","action":"click","observerMs":33950,"sinceRequestMs":48847}
+NATIVE_UI {"pid": 13133, "button": "CPU loop armed", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-13064-1795065682436193670.service","pid":13133,"name":"CPU loop armed","action":"find","observerMs":1705,"sinceRequestMs":50556}
+EDITOR_KILLED {"editorPid":13064,"unit":"programmable-notes-preview-13064-1795065682436193670.service"}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-13226-1795065754523373610.service","pid":"13331","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PREVIEW_START_TIMING {"unit":"programmable-notes-preview-13226-1795065754523373610.service","pid":13293,"invokeMs":3156,"sandboxObservedMs":14586}
+NATIVE_UI {"pid": 13293, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-13226-1795065754523373610.service","pid":13293,"name":"Count: 0","action":"click","observerMs":31257,"sinceRequestMs":45847}
+NATIVE_UI {"pid": 13293, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-13226-1795065754523373610.service","pid":13293,"name":"Count: 1","action":"click","observerMs":1512,"sinceRequestMs":47362}
+NATIVE_UI {"pid": 13293, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_UI_TIMING {"unit":"programmable-notes-preview-13226-1795065754523373610.service","pid":13293,"name":"Count: 2","action":"find","observerMs":1416,"sinceRequestMs":48780}
+RECOVERY_PASS Independent preview expiry after editor SIGKILL
+CASE_PASS editor-crash
+WEBKIT_STRESS_PASS editor-crash

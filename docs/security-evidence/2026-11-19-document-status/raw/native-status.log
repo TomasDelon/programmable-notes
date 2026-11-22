@@ -1,0 +1,5 @@
+NATIVE_DIALOG {"pid": 17421, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zXhhRz/alpha.mdx"}
+NATIVE_DIALOG {"pid": 17421, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-zXhhRz/beta.mdx"}
+NATIVE_DIALOG {"pid": 17421, "title": "Unsaved source", "action": "button", "argument": "Cancel"}
+NATIVE_DOCUMENT_STATUS_EVIDENCE /tmp/pn-native-zXhhRz/evidence/document-status.json
+PASS selected native status, dirty sibling cancellation, exact saves/reopen, modes and clean exit

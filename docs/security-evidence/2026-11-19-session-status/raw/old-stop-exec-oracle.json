@@ -1,0 +1,49 @@
+{
+  "scope": "actual production session feedback, expiry, explicit rebuild and Stop",
+  "observerSha256": "92abedd2c473b49fcdaee5d977e5861d8b763d6cab6ffe14dc397c3aedc36b80",
+  "editorPid": 28360,
+  "executableSha256": "d74850a5418b014a4107315ff5c76ca12668affadcd4a3545cee002f1422eb2f",
+  "unit": "programmable-notes-preview-28360-1795087388349201730.service",
+  "previewPid": 28465,
+  "policy": "RuntimeMaxUSec=1min\nControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-28360-1795087388349201730.service\nCPUQuotaPerSecUSec=250ms\nMemoryMax=536870912\nMemorySwapMax=0\nTasksMax=128\nPrivateNetwork=yes",
+  "before": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "rebuiltUnit": "programmable-notes-preview-28360-1795087388349201730.service",
+  "rebuiltPid": 28465,
+  "afterRebuild": {
+    "alerts": [],
+    "nativeNote": [
+      "Native preview runs in a separate resource-limited process. Stop preview terminates its service and WebKit descendants. The session expires after 60 seconds."
+    ],
+    "session": "Preview session is connected.",
+    "build": "Compiled MDX"
+  },
+  "stopRequestedMsAfterRebuild": 54987,
+  "stopAgeUsec": 48011142,
+  "uiStopFailedBeforeObserverCleanup": {
+    "alerts": [
+      "Native stop failed: Input/output error (os error 5)"
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  },
+  "uiStopExecFaultObserved": true,
+  "afterStop": {
+    "alerts": [
+      "Native stop failed: Input/output error (os error 5)"
+    ],
+    "nativeNote": [],
+    "session": null,
+    "build": "Preview stopped"
+  },
+  "oldStopOracleAcceptedSuppressedUiAction": true,
+  "sourceUnchanged": true,
+  "outcome": "pass"
+}

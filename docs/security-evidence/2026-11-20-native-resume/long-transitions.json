@@ -1,0 +1,23 @@
+{
+  "observerSha256": "787d0a5e315dcc83d362cbf35f223c4b871be5800973bdfedf8af7dd94b618c2",
+  "requestedVisualCycles": 20,
+  "completedVisualCycles": 20,
+  "phase": "clean-exit-verified",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "a6d00cbb00a6acbbaaf6da9566a1f992b38f384df7d9b1c6878d9463334b1195",
+  "pid": 967,
+  "startTick": "51209",
+  "geometry": {
+    "rows": 1000,
+    "viewport": 600,
+    "focused": true,
+    "exact": true,
+    "height": 360,
+    "client": 358,
+    "scroll": 27000
+  },
+  "actualEndTypingSaveUndoRedoReopenExact": true,
+  "actualCleanExit": true,
+  "outcome": "pass"
+}

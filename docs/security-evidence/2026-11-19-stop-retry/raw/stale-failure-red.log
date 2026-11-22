@@ -1,0 +1,73 @@
+
+> programmable-notes@0.0.0 pretest
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 test
+> vitest run tests/unit/native-stop.test.tsx
+
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/native-stop.test.tsx (5 tests | 2 failed) 283ms
+   × ignores superseded Stop failure after a manually rebuilt preview 41ms
+   × a newer explicit Stop owns feedback after older failure 44ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/native-stop.test.tsx > ignores superseded Stop failure after a manually rebuilt preview
+AssertionError: expected <pre role="alert"></pre> to be null
+
+- Expected:
+null
+
++ Received:
+<pre
+  role="alert"
+>
+  Native stop failed: Error: superseded failure
+</pre>
+
+ ❯ tests/unit/native-stop.test.tsx:124:41
+    122|       else resolve();
+    123|     });
+    124|     expect(screen.queryByRole('alert')).toBeNull();
+       |                                         ^
+    125|     expect(screen.getByRole('status')).toHaveTextContent('Compiling');
+    126|   },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/native-stop.test.tsx > a newer explicit Stop owns feedback after older failure
+AssertionError: expected <pre role="alert"></pre> to be null
+
+- Expected:
+null
+
++ Received:
+<pre
+  role="alert"
+>
+  Native stop failed: Error: superseded failure
+</pre>
+
+ ❯ tests/unit/native-stop.test.tsx:152:41
+    150|       else pending[0]!.resolve();
+    151|     });
+    152|     expect(screen.queryByRole('alert')).toBeNull();
+       |                                         ^
+    153|     expect(pending).toHaveLength(2);
+    154|     expect(screen.getByRole('status')).toHaveTextContent('Stopping pre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  11:42:11
+   Duration  1.63s (environment 51%, transform 20%, tests 19%, setup 7%, import 3%)
+

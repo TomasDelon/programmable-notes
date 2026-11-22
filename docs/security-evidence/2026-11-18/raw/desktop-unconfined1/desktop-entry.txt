@@ -1,0 +1,9 @@
+[Desktop Entry]
+Categories=Utility;
+Comment=Local MDX and React notes with isolated previews
+Exec=programmable-notes
+StartupWMClass=programmable-notes
+Icon=programmable-notes
+Name=Programmable Notes
+Terminal=false
+Type=Application

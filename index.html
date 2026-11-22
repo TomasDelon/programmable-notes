@@ -3,8 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="data:," />
+    <meta
+      name="description"
+      content="A quiet workspace for Markdown, mathematics and interactive notes. Saved on your device, ready offline."
+    />
+    <meta name="theme-color" content="#191a1b" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta http-equiv="Content-Security-Policy" content="frame-src 'none'" />
     <title>Programmable Notes</title>
+    <style>
+      .boot-message {
+        margin: 15vh auto;
+        text-align: center;
+        font:
+          16px system-ui,
+          sans-serif;
+        color: #929498;
+      }
+      /* Tighter spacing when the Recent shelf is collapsed. */
+      .web-shell
+        .recent-section:has(
+          > .pn-section-rule .pn-section-title-button[aria-expanded='false']
+        ) {
+        padding-bottom: 0;
+      }
+      .web-shell
+        .recent-section:has(
+          > .pn-section-rule .pn-section-title-button[aria-expanded='false']
+        )
+        + .pn-documents-rule {
+        margin-top: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

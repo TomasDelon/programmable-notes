@@ -1,0 +1,27 @@
+{
+  "scope": "Installed production supervised MDX; no child automation",
+  "prefix": "pn-mdx-download-af600bfc-52c4-48b1-9716-862c917648a7",
+  "observerSha256": "3d57bd2bca87d9305ea3bf9a2c6153d6740e3b0159432218e2a3e05f046c4e22",
+  "fixtureSha256": "78a20876cc7cd9838971f0c989d98caa709372c410abd461b0526921312bf57d",
+  "executableSha256": "30d5f193f0d3b60b039bd202931aacc76758caa5491c6b975b72becfba6e2571",
+  "unit": "programmable-notes-preview-16147-1795069576885934150.service",
+  "group": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-16147-1795069576885934150.service",
+  "pid": 16225,
+  "privateNetwork": "net:[4026532265]",
+  "policy": {
+    "cpu.max": "25000 100000",
+    "memory.max": "536870912",
+    "memory.swap.max": "0",
+    "pids.max": "128"
+  },
+  "childCwd": "/home/ubuntu",
+  "automaticAttemptsObserved": true,
+  "userAttemptsObserved": true,
+  "scannedDirectories": [
+    "/home/ubuntu",
+    "/home/ubuntu/Downloads",
+    "/opt/pn/acceptance"
+  ],
+  "error": "ReferenceError: requested is not defined",
+  "outcome": "fail"
+}

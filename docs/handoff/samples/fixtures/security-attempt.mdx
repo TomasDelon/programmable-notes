@@ -1,0 +1,16 @@
+export function Probe() {
+  async function probe() {
+    // Negative-test example. This file must ONLY be executed within a test sandbox.
+    const result = { parentAccess: 'unchecked', networkAttempt: 'unchecked' }
+    try { result.parentAccess = String(window.parent.document.title) }
+    catch { result.parentAccess = 'denied' }
+    try { await fetch('https://example.invalid/probe'); result.networkAttempt = 'allowed' }
+    catch { result.networkAttempt = 'denied' }
+    console.log(result)
+  }
+  return <button onClick={probe}>Run sandbox negative test</button>
+}
+
+# Security probe
+
+<Probe />

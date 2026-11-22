@@ -1,0 +1,40 @@
+{
+  "scope": "Static candidate identification from observed JSC function name and 32-bit source hash; not crash root-cause proof",
+  "bundle": "dist/assets/index-Da6B281p.js",
+  "bundleSha256": "c41526e55f1a476fde3b66ee32c1e8b1ab94b757176c107073bc66e9cf8965e9",
+  "printedHash": "ClTeuX",
+  "decodedHash": 2383636523,
+  "algorithm": "WebKit webkitgtk-2.52.6 CodeBlockHash.cpp: SHA1 UTF8 first4 bytes little-endian, CodeForCall=0, SixCharacterHash base62",
+  "upstream": [
+    {
+      "url": "https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/JavaScriptCore/bytecode/CodeBlockHash.cpp",
+      "sha256": "cead2360dc05c4d09490db759bddfb54ab0bb09482d96d8d36ed1a35c5c72415"
+    },
+    {
+      "url": "https://github.com/WebKit/WebKit/blob/webkitgtk-2.52.6/Source/WTF/wtf/SixCharacterHash.cpp",
+      "sha256": "b1fb57096c24f06e5f500eda0bc955585f4accbc093ae2decdd6ee2da6b27022"
+    }
+  ],
+  "candidates": [
+    {
+      "functionStart": 83796,
+      "functionEnd": 84228,
+      "matches": []
+    },
+    {
+      "functionStart": 998963,
+      "functionEnd": 999043,
+      "matches": [
+        {
+          "from": 998974,
+          "to": 999043,
+          "source": "(e,t,n){for(;e.value&&e.from<=n;)e.from==n&&t.push(e.value),e.next()}",
+          "sha1": "2b68138e543ec39e076ef52ac04a292f5bb2e8df"
+        }
+      ]
+    }
+  ],
+  "matchingOriginal": "@codemirror/view 6.43.15 dist/index.js advanceCursor, line11648",
+  "limitation": "32-bit hashes can collide; the match identifies a compiling-function candidate, not an application defect or exclusive cause",
+  "builderBundleSha256Matches": true
+}

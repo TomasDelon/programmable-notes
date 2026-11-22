@@ -1,0 +1,48 @@
+{
+  "binarySha256": "886285a41426b8d1d66a3c432139e057f7bf6a31cc823fd5831a30112cfccb5e",
+  "cases": {
+    "cpu-stop": {
+      "outcome": "passed",
+      "units": [
+        "programmable-notes-preview-13448-1795066065135098150.service",
+        "programmable-notes-preview-13448-1795066123097695070.service"
+      ],
+      "allKnownDescendantsGone": true
+    },
+    "memory": {
+      "outcome": "failed",
+      "units": [
+        "programmable-notes-preview-13448-1795066174125139470.service",
+        "programmable-notes-preview-13448-1795066236769306460.service"
+      ],
+      "allKnownDescendantsGone": true,
+      "observedMemoryPeakBytes": 515461120,
+      "actualTermination": "runtime expiry; required OOM journal cause absent"
+    },
+    "expiry": {
+      "outcome": "passed",
+      "units": [
+        "programmable-notes-preview-13448-1795066288753083170.service",
+        "programmable-notes-preview-13448-1795066351647916500.service"
+      ],
+      "allKnownDescendantsGone": true
+    },
+    "editor-crash": {
+      "outcome": "passed",
+      "units": [
+        "programmable-notes-preview-13448-1795066399780713790.service",
+        "programmable-notes-preview-14170-1795066471450458730.service"
+      ],
+      "allKnownDescendantsGone": true
+    },
+    "window-close": {
+      "outcome": "passed",
+      "units": [
+        "programmable-notes-preview-14170-1795066521573837130.service",
+        "programmable-notes-preview-14170-1795066568698735190.service"
+      ],
+      "allKnownDescendantsGone": true
+    }
+  },
+  "wholeMatrixPassed": false
+}

@@ -1,0 +1,8 @@
+file:///opt/pn/acceptance/scripts/native-editor-failure-probe.mjs:22
+ await launch();const pid=await rootPid();owned=await identity(pid);console.log('EDITOR_FAILURE_PROBE_IDENTITY',JSON.stringify(owned));
+                                          ^
+
+ReferenceError: identity is not defined
+    at file:///opt/pn/acceptance/scripts/native-editor-failure-probe.mjs:22:43
+
+Node.js v24.22.1

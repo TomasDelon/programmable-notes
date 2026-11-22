@@ -1,0 +1,4 @@
+
+thread 'main' (53437) panicked at examples/document-save-crash-writer.rs:11:5:
+Never run this writer on personal documents
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

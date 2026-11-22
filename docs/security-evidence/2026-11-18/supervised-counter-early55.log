@@ -1,0 +1,18 @@
+ARTIFACT early55 BYTES 705408
+EDITOR_PID 8406 
+START {"ok":true,"value":"programmable-notes-preview-8406-1794962896762660880.service"} ELAPSED 3845
+CHILD 8479 UNIT programmable-notes-preview-8406-1794962896762660880.service
+UI_CALL_BEGIN Count: 0 AFTER_REPLY_MS 215
+{"pid": 8479, "button": "Count: 0", "action": "click", "passed": true}
+
+UI_CALL_PASS Count: 0 DURATION_MS 50407 AFTER_REPLY_MS 50622
+UI_CALL_BEGIN Count: 1 AFTER_REPLY_MS 50624
+{"pid": 8479, "button": "Count: 1", "action": "click", "passed": true}
+
+UI_CALL_PASS Count: 1 DURATION_MS 1763 AFTER_REPLY_MS 52387
+UI_CALL_BEGIN Count: 2 AFTER_REPLY_MS 52390
+{"pid": 8479, "button": "Count: 2", "action": "find", "passed": true}
+
+UI_CALL_PASS Count: 2 DURATION_MS 1609 AFTER_REPLY_MS 53999
+SUPERVISED_COUNTER_RENDERED
+STOP {"ok":true,"value":null}

@@ -1,0 +1,4 @@
+ed24cbbc8d7a5db4d9e4bfcdc20cc894e770757ec52a28dc548c26f724c86161  src/editor/markdownEdits.ts
+e4d97127f372b77bbfc0240bf53d26c224343273702420532f63854e1d01a254  src/editor/MarkdownEditor.tsx
+26f9892d84a074f15af61a12d0b0c1a1535c9ff7cb6e0649108839a909c8cf22  src/styles.css
+73cb0802ca90b8cd738526caeeffe18ee7f7d223fe8d2df6eed9a246d878da5e  src-tauri/src/main.rs

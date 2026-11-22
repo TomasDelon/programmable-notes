@@ -1,0 +1,10 @@
+NATIVE_EDITOR_LAUNCH
+NATIVE_EDITOR_CONNECTED
+NATIVE_EDITOR_INITIAL {"status":"Compiled — requesting isolated native preview","editor":true,"alert":null}
+EDITOR_EDIT_SAVE_BLOB {"unit":"programmable-notes-preview-8602-1794954200076930260.service","mode":"retained heap pressure","memoryBefore":135036928,"memoryAfter":221159424,"responseMs":4216,"before":"usage_usec 10785216\nuser_usec 8120252\nsystem_usec 2664964\ncore_sched.force_idle_usec 0\nnr_periods 434\nnr_throttled 430\nthrottled_usec 70226017\nnr_bursts 0\nburst_usec 0\n","after":"usage_usec 11854359\nuser_usec 8340719\nsystem_usec 3513639\ncore_sched.force_idle_usec 0\nnr_periods 476\nnr_throttled 472\nthrottled_usec 73460427\nnr_bursts 0\nburst_usec 0\n","exactSource":true,"nativeDiskWriteTested":false}
+EDITOR_SOURCE_RETAINED_AFTER_STOP
+NATIVE_EDITOR_REBUILD {"status":"Compiled — requesting isolated native preview","alert":null}
+NATIVE_UI {"pid": 8807, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 8807, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 8807, "button": "Count: 2", "action": "find", "passed": true}
+NATIVE_EDITOR_PASS heap pressure compiler, unsaved rebuild, governed counter, source edit/Save Blob under attack

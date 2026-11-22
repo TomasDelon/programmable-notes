@@ -1,0 +1,30 @@
+
+ RUN  v5.1.0 /workspace/programmable-notes
+
+ ❯ tests/unit/workspace.test.ts (8 tests | 1 failed) 70ms
+   × selects the first MDX entry regardless of extension spelling while preserving case-distinct file keys 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/workspace.test.ts > selects the first MDX entry regardless of extension spelling while preserving case-distinct file keys
+AssertionError: expected 'opened-1/Note.mdx' to be 'opened-1/Note.MdX' // Object.is equality
+
+Expected: "opened-1/Note.MdX"
+Received: "opened-1/Note.mdx"
+
+ ❯ tests/unit/workspace.test.ts:135:23
+    133|     { logicalPath: 'Note.mdx', source: '# Lower-case extension' },
+    134|   ]);
+    135|   expect(state.entry).toBe('opened-1/Note.MdX');
+       |                       ^
+    136|   expect(state.selected).toBe('opened-1/Note.MdX');
+    137|   expect(compilerFiles(state)).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  15:54:03
+   Duration  1.13s (environment 78%, setup 11%, tests 7%, transform 4%)
+

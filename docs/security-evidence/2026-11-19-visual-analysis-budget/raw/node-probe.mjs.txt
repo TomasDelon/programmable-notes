@@ -1,0 +1,11 @@
+import { createProcessor } from '@mdx-js/mdx';
+const [kind, count] = process.argv.slice(2);
+const size = Number(count);
+const source = kind === 'quotes' ? '>'.repeat(size) + ' Text.\n' : '['.repeat(size) + 'x' + ']'.repeat(size);
+const start = performance.now();
+try {
+  const tree = createProcessor().parse(source);
+  console.log(JSON.stringify({kind, size, bytes:Buffer.byteLength(source), milliseconds:performance.now()-start, roots:tree.children.length, outcome:'parsed'}));
+} catch(error) {
+  console.log(JSON.stringify({kind, size, bytes:Buffer.byteLength(source), milliseconds:performance.now()-start, outcome:'rejected', error:String(error).slice(0,300)}));
+}

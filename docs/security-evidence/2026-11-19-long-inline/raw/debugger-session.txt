@@ -1,0 +1,58 @@
+[New LWP 21302]
+[New LWP 21301]
+[New LWP 21300]
+[New LWP 21299]
+[New LWP 21298]
+[New LWP 21255]
+[New LWP 21249]
+[New LWP 21248]
+[New LWP 21226]
+[New LWP 21222]
+[New LWP 21221]
+[New LWP 21220]
+[New LWP 21210]
+[New LWP 21209]
+[New LWP 21208]
+[New LWP 21207]
+[New LWP 21206]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007840edc76408 in ?? () from target:/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0
+[Thread 0x78405f5ff6c0 (LWP 21301) exited]
+[Thread 0x78406ce276c0 (LWP 21300) exited]
+[Thread 0x78406d6286c0 (LWP 21299) exited]
+[Thread 0x78406de296c0 (LWP 21298) exited]
+[New Thread 0x78406d6286c0 (LWP 21313)]
+[New Thread 0x78406ce276c0 (LWP 21314)]
+[New Thread 0x78406de296c0 (LWP 21315)]
+[New Thread 0x78405f5ff6c0 (LWP 21317)]
+
+Thread 1 "WebKitWebProces" received signal SIGTERM, Terminated.
+0x00007840e409ebec in pthread_kill () from target:/lib/x86_64-linux-gnu/libc.so.6
+#0  0x00007840e409ebec in pthread_kill () from target:/lib/x86_64-linux-gnu/libc.so.6
+#1  0x00007840e404527e in raise () from target:/lib/x86_64-linux-gnu/libc.so.6
+#2  0x00007840e9b4731b in ?? () from target:/lib/x86_64-linux-gnu/libgio-2.0.so.0
+#3  0x00007840e8fa36bd in ?? () from target:/lib/x86_64-linux-gnu/libgobject-2.0.so.0
+#4  0x00007840e8fa37c1 in g_signal_emit_valist () from target:/lib/x86_64-linux-gnu/libgobject-2.0.so.0
+#5  0x00007840e8fa3883 in g_signal_emit () from target:/lib/x86_64-linux-gnu/libgobject-2.0.so.0
+#6  0x00007840e9bc75cb in ?? () from target:/lib/x86_64-linux-gnu/libgio-2.0.so.0
+#7  0x00007840e8e8250e in ?? () from target:/lib/x86_64-linux-gnu/libglib-2.0.so.0
+#8  0x00007840e8e82780 in g_main_context_dispatch () from target:/lib/x86_64-linux-gnu/libglib-2.0.so.0
+#9  0x00007840e875ac87 in ?? () from target:/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so.0
+#10 0x00007840e875b075 in WTF::RunLoop::run() () from target:/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so.0
+#11 0x00007840eb378574 in ?? () from target:/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0
+#12 0x00007840e402a1ca in ?? () from target:/lib/x86_64-linux-gnu/libc.so.6
+#13 0x00007840e402a28b in __libc_start_main () from target:/lib/x86_64-linux-gnu/libc.so.6
+#14 0x000057a3bbb73085 in ?? ()
+=> 0x7840e409ebec <pthread_kill+284>:	mov    %eax,%r14d
+   0x7840e409ebef <pthread_kill+287>:	neg    %r14d
+   0x7840e409ebf2 <pthread_kill+290>:	cmp    $0xfffff000,%eax
+   0x7840e409ebf7 <pthread_kill+295>:	mov    $0x0,%eax
+   0x7840e409ebfc <pthread_kill+300>:	cmovbe %eax,%r14d
+   0x7840e409ec00 <pthread_kill+304>:	jmp    0x7840e409eb80 <pthread_kill+176>
+   0x7840e409ec05 <pthread_kill+309>:	nopl   (%rax)
+   0x7840e409ec08 <pthread_kill+312>:	mov    %r13,%rdi
+pthread_kill + 284 in section .text of target:/lib/x86_64-linux-gnu/libc.so.6
+[Inferior 1 (process 21205) detached]

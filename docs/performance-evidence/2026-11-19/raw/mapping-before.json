@@ -1,0 +1,42 @@
+{
+  "node": "v24.22.1",
+  "warmMedianMs": 786.64,
+  "samples": [
+    {
+      "run": 0,
+      "sourceBytes": 198888,
+      "sourceSha256": "d1d8c221b061992aeca0c9a576fab804cd5f3e55dbea6d0f531fe24b0c23958c",
+      "milliseconds": 1762.48
+    },
+    {
+      "run": 1,
+      "sourceBytes": 198888,
+      "sourceSha256": "52a29b98299cf27176073eeda5759e0aaaf19e6e0a44e34ea3ce2868d235315a",
+      "milliseconds": 822.39
+    },
+    {
+      "run": 2,
+      "sourceBytes": 198888,
+      "sourceSha256": "f2edd2b176447127ea8014a5f910b3760bef3be304b60ab154be1296ac5769c1",
+      "milliseconds": 820.31
+    },
+    {
+      "run": 3,
+      "sourceBytes": 198888,
+      "sourceSha256": "37b8c756a295bba542cc984fbd4f25af72ca376a4f558bd1a84b9fc8300f8f4c",
+      "milliseconds": 786.64
+    },
+    {
+      "run": 4,
+      "sourceBytes": 198888,
+      "sourceSha256": "5c488359aaa5d3a5ddc612188ccd665ff8f0ed35d6816293bd7f5949eb4367ac",
+      "milliseconds": 738.07
+    },
+    {
+      "run": 5,
+      "sourceBytes": 198888,
+      "sourceSha256": "2a01eea80681b537770427dee5b492229839058faa899555ff64f864014e8622",
+      "milliseconds": 730.3
+    }
+  ]
+}

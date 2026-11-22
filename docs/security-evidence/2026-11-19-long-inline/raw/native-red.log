@@ -1,0 +1,18 @@
+NATIVE_DIALOG {"pid": 19692, "title": "Open documents and modules", "action": "choose", "argument": "/tmp/pn-native-9Dt11R/long-paragraph.mdx"}
+NATIVE_LONG_PARAGRAPH_EVIDENCE /tmp/pn-native-9Dt11R/evidence/long-paragraph.json
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Inline input must fit its viewport
+    at file:///opt/pn/acceptance/scripts/native-long-paragraph.mjs:85:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

@@ -1,0 +1,132 @@
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795052868272865330.service","pid":"5451","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 5413, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5413, "button": "CPU loop armed", "action": "find", "passed": true}
+WEBKIT_CPU {"unit":"programmable-notes-preview-5343-1795052868272865330.service","usage_usec":775782,"elapsed_ms":3129,"throttled_periods":31,"editor_response_ms":113}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795052931215906520.service","pid":"5547","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Count: 0 for PID 5508
+CASE_FAIL cpu-stop Error: Command failed: python3 scripts/native-atspi.py 5508 Count: 0 click
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Count: 0 for PID 5508
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/acceptance/scripts/native-stress.mjs:110:20)
+    at recover (file:///opt/pn/acceptance/scripts/native-stress.mjs:188:3)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:291:5
+    at async runCase (file:///opt/pn/acceptance/scripts/native-stress.mjs:244:5)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:258:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Count: 0 for PID 5508\n'
+  ],
+  pid: 5548,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Count: 0 for PID 5508\n'
+}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053006836993930.service","pid":"5662","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+PRESSURE_UNIT programmable-notes-preview-5343-1795053006836993930.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053065522261000.service","pid":"5795","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 5741, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5741, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5741, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Memory-pressure termination
+CASE_PASS memory
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053122640882780.service","pid":"5927","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 5888, "button": "Arm CPU loop", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5888, "button": "CPU loop armed", "action": "find", "passed": true}
+EXPIRY_UNIT programmable-notes-preview-5343-1795053122640882780.service
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053185410174090.service","pid":"6020","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+NATIVE_UI {"pid": 5982, "button": "Count: 0", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5982, "button": "Count: 1", "action": "click", "passed": true}
+NATIVE_UI {"pid": 5982, "button": "Count: 2", "action": "find", "passed": true}
+RECOVERY_PASS Native loop lifetime expiry
+CASE_PASS expiry
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053239774405730.service","pid":"6111","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Arm CPU loop for PID 6074
+CASE_FAIL editor-crash Error: Command failed: python3 scripts/native-atspi.py 6074 Arm CPU loop click
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Arm CPU loop for PID 6074
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/acceptance/scripts/native-stress.mjs:110:20)
+    at file:///opt/pn/acceptance/scripts/native-stress.mjs:313:5
+    at async runCase (file:///opt/pn/acceptance/scripts/native-stress.mjs:244:5)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:311:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Arm CPU loop for PID 6074\n'
+  ],
+  pid: 6112,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Arm CPU loop for PID 6074\n'
+}
+WEBKIT_SANDBOX {"unit":"programmable-notes-preview-5343-1795053312881729560.service","pid":"6207","comm":"WebKitWebProces","seccomp":2,"noNewPrivileges":true}
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Count: 0 for PID 6164
+CASE_FAIL window-close Error: Command failed: python3 scripts/native-atspi.py 6164 Count: 0 find
+Traceback (most recent call last):
+  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>
+    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))
+RuntimeError: Native accessible button not found: Count: 0 for PID 6164
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at checkExecSyncError (node:child_process:943:11)
+    at execFileSync (node:child_process:979:15)
+    at ui (file:///opt/pn/acceptance/scripts/native-stress.mjs:110:20)
+    at file:///opt/pn/acceptance/scripts/native-stress.mjs:335:5
+    at async runCase (file:///opt/pn/acceptance/scripts/native-stress.mjs:244:5)
+    at async file:///opt/pn/acceptance/scripts/native-stress.mjs:333:3 {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'Traceback (most recent call last):\n' +
+      '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+      "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+      'RuntimeError: Native accessible button not found: Count: 0 for PID 6164\n'
+  ],
+  pid: 6208,
+  stdout: '',
+  stderr: 'Traceback (most recent call last):\n' +
+    '  File "/opt/pn/acceptance/scripts/native-atspi.py", line 40, in <module>\n' +
+    "    raise RuntimeError('Native accessible button not found: %s for PID %d' % (name, pid))\n" +
+    'RuntimeError: Native accessible button not found: Count: 0 for PID 6164\n'
+}
+WEBKIT_STRESS_FAILED [ 'cpu-stop', 'editor-crash', 'window-close' ]

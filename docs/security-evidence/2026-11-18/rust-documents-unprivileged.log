@@ -1,0 +1,23 @@
+
+running 18 tests
+test confirmed_save_as_conflicts_if_target_changes_while_dialog_is_open ... ok
+test disk_replacement_symlink_cannot_redirect_a_save ... ok
+test atomic_save_preserves_extended_attributes ... ok
+test explicit_selected_module_paths_share_a_logical_root_without_loading_neighbors ... ok
+test forged_tokens_stale_revisions_and_external_changes_do_not_overwrite ... ok
+test explicit_reopen_refreshes_conflicted_source_and_revision ... ok
+test invalid_logical_name_does_not_leak_partial_batch_grants ... ok
+test open_batch_is_transactional_and_limits_grants ... ok
+test opened_document_saves_atomically_and_reopens_exact_utf8_crlf ... ok
+test parent_rename_keeps_saves_in_the_authorized_directory ... ok
+test read_only_failure_retains_original_and_does_not_leave_temp_files ... ok
+test refuses_symlinks_fifo_invalid_utf8_oversize_and_unlisted_extensions ... ok
+test save_as_rejects_non_utf8_filename_before_any_commit ... ok
+test save_as_new_file_grants_only_its_selected_target ... ok
+test save_as_selection_does_not_clobber_a_later_created_file ... ok
+test saving_selected_hardlink_does_not_modify_an_unselected_alias ... ok
+test concurrent_readers_observe_only_complete_old_or_new_source ... ok
+test aggregate_source_bytes_and_multibyte_save_size_are_bounded ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.57s
+

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/work/editor-renderer-kill.py", line 21, in <module>
+    assert time.monotonic()<end,'Observer did not request owned renderer termination'
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: Observer did not request owned renderer termination

@@ -1,0 +1,20 @@
+LIVE_NATIVE_AUTO_PREREQUISITES_CONFIRMED
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected at most one of --new-notes or --extension-case
+    at file:///opt/pn/acceptance/scripts/native-auto-recovery.mjs:25:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
+LIVE_NATIVE_AUTO_INVALID_MODES_REFUSED exit=1 no-launcher-pid no-automatic-fixture

@@ -1,0 +1,18 @@
+{
+  "observerSha256": "9a2a6e4394e05e0e69e7e621671ca82858802ae3b11fc100aff44319ec721366",
+  "sourceBytes": 31935,
+  "sourceSha256": "25994d1d7e0df77f8ed3a12eeaf24a123843b0d9e67604858f5fca5c6db7464d",
+  "executableSha256": "d37cf787536f68f3fa808c2695d3a539765987d134c3b23b33ba296cef38fbe6",
+  "geometry": {
+    "rows": 1000,
+    "viewport": 600,
+    "focused": true,
+    "exact": true,
+    "height": 360,
+    "client": 358,
+    "scroll": 27000
+  },
+  "actualEndTypingSaveUndoRedoReopenExact": true,
+  "actualCleanExit": true,
+  "outcome": "pass"
+}

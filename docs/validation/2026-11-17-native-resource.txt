@@ -1,0 +1,7 @@
+
+> programmable-notes@0.0.0 native:resource:test
+> cargo run --manifest-path native-policy/Cargo.toml --locked --example resource_gates
+
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.00s
+     Running `native-policy/target/debug/examples/resource_gates`
+NOT RUN: resource backend unavailable or rejected: A running user systemd manager and delegated cgroup v2 are required

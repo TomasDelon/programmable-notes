@@ -1,0 +1,30 @@
+
+> programmable-notes@0.0.0 test:e2e
+> npm run build && playwright test --grep same-named sources
+
+
+> programmable-notes@0.0.0 prebuild
+> npm run prepare:runtime
+
+
+> programmable-notes@0.0.0 prepare:runtime
+> node scripts/runtime.mjs
+
+
+> programmable-notes@0.0.0 build
+> npm run typecheck && vite build
+
+
+> programmable-notes@0.0.0 typecheck
+> tsc --noEmit
+
+tests/e2e/bootstrap.spec.ts(1620,36): error TS2339: Property 'value' does not exist on type 'HTMLElement | SVGElement'.
+  Property 'value' does not exist on type 'HTMLElement'.
+tests/e2e/bootstrap.spec.ts(1621,43): error TS2339: Property 'value' does not exist on type 'HTMLElement | SVGElement'.
+  Property 'value' does not exist on type 'HTMLElement'.
+tests/e2e/bootstrap.spec.ts(1621,64): error TS2339: Property 'label' does not exist on type 'HTMLElement | SVGElement'.
+  Property 'label' does not exist on type 'HTMLElement'.
+tests/e2e/bootstrap.spec.ts(1629,59): error TS2339: Property 'value' does not exist on type 'HTMLElement | SVGElement'.
+  Property 'value' does not exist on type 'HTMLElement'.
+tests/e2e/bootstrap.spec.ts(1629,75): error TS2339: Property 'label' does not exist on type 'HTMLElement | SVGElement'.
+  Property 'label' does not exist on type 'HTMLElement'.

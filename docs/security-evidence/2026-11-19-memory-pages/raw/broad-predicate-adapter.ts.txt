@@ -1,0 +1,4 @@
+/** Test adapter for the preceding broad journal-text predicate, not production authority. */
+export function oomKillRecord(records: readonly Record<string, unknown>[], _unit: string, _uid: number) {
+  return records.find(record => /[Oo][Oo][Mm]|oom-kill/.test(String(record?.MESSAGE)));
+}
