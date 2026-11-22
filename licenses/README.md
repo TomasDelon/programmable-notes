@@ -31,3 +31,18 @@ npm run build
 Demo packaging also requires the complete pinned embedded notice text. Retain the
 browser notice asset when redistributing the historical demo; keep prototype font
 notices and native binary attribution separate. See `docs/PUBLIC_READINESS.md`.
+
+## Web mathematics packages
+
+The published `remark-math@6.0.0` and `rehype-katex@7.0.1` tarballs omit their
+monorepo's root license. `REMARK_MATH_LICENSE.txt` preserves the complete, identical
+upstream MIT text at the packages' npm registry `gitHead` revisions:
+
+- [remark-math 6.0.0, d5d0660](https://github.com/remarkjs/remark-math/blob/d5d0660b150810a535bbb07eac6cc96a4510aa24/license).
+- [rehype-katex 7.0.1, 88a9497](https://github.com/remarkjs/remark-math/blob/88a9497e1ede93b958237c85edbf5651faeca7af/license).
+
+Both files have Git blob `ea3803784aa58da6fa7cd6e196948608def87bf9` and SHA256
+`cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9`.
+The notice generator accepts this sidecar only for those exact package/version
+pairs, checks its bytes, and still rejects unrecognized missing license texts.
+The generated notices also include the installed KaTeX, DM Sans and Lucide texts.
