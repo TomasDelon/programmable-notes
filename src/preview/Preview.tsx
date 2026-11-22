@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 export function Preview({
   html,
   onError,
@@ -7,7 +7,8 @@ export function Preview({
   onError: (message: string) => void;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  useEffect(() => {
+  // srcdoc can report during its first load, before passive effects run.
+  useLayoutEffect(() => {
     const receive = (event: MessageEvent) => {
       if (
         event.source !== frame.current?.contentWindow ||
