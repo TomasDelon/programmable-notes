@@ -11,7 +11,12 @@ import { pathToFileURL } from 'node:url';
 import process from 'node:process';
 import { createHash } from 'node:crypto';
 
-export async function packageNotice(directory, expectedVersion) {
+const missingPackageLicenses = new Map([
+  ['remark-math@6.0.0', 'd5d0660b150810a535bbb07eac6cc96a4510aa24'],
+  ['rehype-katex@7.0.1', '88a9497e1ede93b958237c85edbf5651faeca7af'],
+]);
+
+export async function packageNotice(directory, expectedVersion, projectRoot) {
   const root = await realpath(directory);
   const manifest = JSON.parse(
     await readFile(resolve(root, 'package.json'), 'utf8'),
@@ -21,9 +26,35 @@ export async function packageNotice(directory, expectedVersion) {
   const names = (await readdir(root))
     .filter((name) => /^(?:licen[sc]e|copying|notice)(?:[.-].*)?$/i.test(name))
     .sort();
-  if (!names.length)
-    throw Error('Missing upstream license text: ' + manifest.name);
   const texts = [];
+  if (!names.length) {
+    // These exact upstream tarballs omit the monorepo's root license. Preserve
+    // the text from each release's registry gitHead, never infer a license.
+    const revision = missingPackageLicenses.get(
+      `${manifest.name}@${manifest.version}`,
+    );
+    if (!projectRoot || !revision)
+      throw Error('Missing upstream license text: ' + manifest.name);
+    const project = await realpath(projectRoot);
+    const sidecar = await realpath(
+      resolve(project, 'licenses/REMARK_MATH_LICENSE.txt'),
+    );
+    const inside = relative(project, sidecar);
+    if (inside.startsWith('..') || isAbsolute(inside))
+      throw Error('Upstream license sidecar escapes project');
+    const bytes = await readFile(sidecar);
+    if (
+      createHash('sha256').update(bytes).digest('hex') !==
+      'cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9'
+    )
+      throw Error(
+        'Upstream math license sidecar changed; verify release provenance',
+      );
+    texts.push({
+      name: `Upstream LICENSE: https://github.com/remarkjs/remark-math/blob/${revision}/license`,
+      text: new TextDecoder('utf-8', { fatal: true }).decode(bytes),
+    });
+  }
   for (const name of names) {
     const path = await realpath(resolve(root, name));
     const inside = relative(root, path);
@@ -109,7 +140,7 @@ export async function generateNotices(root = process.cwd()) {
     const inside = relative(modules, path);
     if (inside.startsWith('..') || isAbsolute(inside))
       throw Error('Package escapes dependency directory');
-    packages.push(await packageNotice(path, entry.version));
+    packages.push(await packageNotice(path, entry.version, root));
   }
   const lines = [
     'THIRD-PARTY NOTICES — PROGRAMMABLE NOTES',
