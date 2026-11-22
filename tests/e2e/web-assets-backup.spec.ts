@@ -75,6 +75,7 @@ test('decoded original assets survive reload, Trash and complete checksummed bac
     { name: 'chart.png', mimeType: 'image/png', buffer: png },
     { name: 'paper.pdf', mimeType: 'application/pdf', buffer: pdf },
   ]);
+  await page.getByRole('button', { name: 'Open right panel' }).click();
   const gallery = page.getByRole('region', { name: 'Note attachments' });
   await gallery.scrollIntoViewIfNeeded();
   await expect(gallery.getByAltText('chart.png')).toBeVisible();
@@ -98,6 +99,7 @@ test('decoded original assets survive reload, Trash and complete checksummed bac
   await page.reload();
   await saved(page);
   expect(await snapshot(page)).toEqual(withAssets);
+  await page.getByRole('button', { name: 'Open right panel' }).click();
   await page
     .getByRole('button', { name: 'Document actions', exact: true })
     .click();

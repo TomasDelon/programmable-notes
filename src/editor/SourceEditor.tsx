@@ -467,11 +467,6 @@ export function SourceEditor({
       </div>
       <div hidden={visual}>
         <div className="pane-title">{live ? 'Live Preview' : 'Source'}</div>
-        {live && (
-          <p className="live-editor-hint">
-            Move the cursor to reveal source. Click an equation to edit LaTeX.
-          </p>
-        )}
         <div className="source-editor" ref={element} />
       </div>
       {draft &&

@@ -68,6 +68,8 @@ async function saved(page: Page) {
 }
 
 async function documentActions(page: Page) {
+  const openPanel = page.getByRole('button', { name: 'Open right panel' });
+  if (await openPanel.isVisible()) await openPanel.click();
   await page
     .getByRole('button', { name: 'Document actions', exact: true })
     .click();

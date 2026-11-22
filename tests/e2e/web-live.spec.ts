@@ -23,11 +23,17 @@ async function importNote(page: Page, source: string) {
 }
 
 async function exportSource(page: Page): Promise<Buffer> {
-  await page
-    .getByRole('button', { name: 'Document actions', exact: true })
-    .click();
+  const actions = page
+    .locator('#notes-details')
+    .getByRole('button', { name: 'Document actions', exact: true });
+  if (!(await actions.isVisible())) {
+    await page.getByRole('button', { name: 'Open right panel' }).click();
+  }
+  await expect(actions).toBeVisible();
+  await actions.click();
   const download = page.waitForEvent('download');
   await page
+    .getByRole('dialog', { name: 'Document actions', exact: true })
     .getByRole('button', { name: 'Export source', exact: true })
     .click();
   const path = await (await download).path();
