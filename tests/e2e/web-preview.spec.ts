@@ -187,10 +187,14 @@ test('MDX imports local TSX and mode switches preserve interactive React state',
   await setMode(page, 'preview');
   await expect(frame.getByRole('button', { name: 'Count: 5' })).toBeVisible();
   expect(originalFrame.isDetached()).toBe(false);
+  await page.getByRole('button', { name: 'Open right panel' }).click();
   await page
     .getByRole('button', { name: 'Document actions', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Document actions', exact: true })
+    .getByRole('button', { name: 'Pause', exact: true })
+    .click();
   await page.getByRole('button', { name: /^Close Document actions$/ }).click();
   await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button', { name: 'Resume preview' }).click();
@@ -287,6 +291,7 @@ export function Probe(){
     .evaluate((element) => element.getBoundingClientRect().height);
   expect(height).toBeLessThan(9999);
   await setMode(page, 'source');
+  await page.getByRole('button', { name: 'Open right panel' }).click();
   await page
     .getByRole('button', { name: 'Document actions', exact: true })
     .click();

@@ -122,6 +122,7 @@ test('validated original image bytes render inline without widening the sandbox 
   await page
     .getByLabel('Import attachments')
     .setInputFiles({ name: 'pixel.png', mimeType: 'image/png', buffer: bytes });
+  await page.getByRole('button', { name: 'Open right panel' }).click();
   const gallery = page.getByRole('region', { name: 'Note attachments' });
   await expect(gallery.getByRole('img', { name: 'pixel.png' })).toBeVisible();
   await command(page, 'Preview document');

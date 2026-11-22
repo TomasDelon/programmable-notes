@@ -1892,15 +1892,6 @@ function WorkspaceApp({
                 )}
               </div>
             </div>
-            <button
-              type="button"
-              className="web-document-menu"
-              aria-label="Document actions"
-              title="Rename, move, export, and preview controls"
-              onClick={() => setModal('document')}
-            >
-              <Settings2 size={17} />
-            </button>
             <div
               className="editor-section"
               onPasteCapture={(event) => {
@@ -2022,15 +2013,6 @@ function WorkspaceApp({
                 )}
               </div>
             </div>
-            {selectedIsNote && (
-              <AttachmentGallery
-                ids={attachmentIds}
-                assets={state.assets}
-                onAdd={() => attachmentInput.current?.click()}
-                onDownload={model.downloadAttachment}
-                disabled={operationPending || pendingEdit}
-              />
-            )}
             {model.backupNotice && (
               <p className="web-backup-notice" role="status">
                 {model.backupNotice}
@@ -2042,28 +2024,114 @@ function WorkspaceApp({
       <aside
         id="notes-details"
         className="inspector blank-inspector"
-        aria-label="Secondary panel"
+        aria-label="Note details"
         aria-hidden={!rightOpen}
         inert={!rightOpen}
       >
         <div className="web-detail-panel">
           <header>
-            <h2>Note connections</h2>
+            <h2>Note details</h2>
             <button
               type="button"
               className="icon-button"
-              aria-label="Close note connections"
+              aria-label="Close note details"
               onClick={() => setRightOpen(false)}
             >
               <X size={17} />
             </button>
           </header>
-          <NoteConnections
-            selected={selected}
-            index={linkIndex}
-            documents={state.documents}
-            onOpen={openDocument}
-          />
+          <section
+            className="web-inspector-detail-section"
+            aria-label="Document details"
+          >
+            <h3>Document</h3>
+            <p className="web-detail-path">{metadata.folder || 'Workspace'}</p>
+            <dl className="web-details">
+              <div>
+                <dt>Words</dt>
+                <dd>{words.toLocaleString()}</dd>
+              </div>
+              <div>
+                <dt>Updated</dt>
+                <dd>{dateLabel(metadata.updated)}</dd>
+              </div>
+              <div>
+                <dt>Storage</dt>
+                <dd>{saveLabel}</dd>
+              </div>
+            </dl>
+            <div className="web-action-list">
+              <button
+                type="button"
+                onClick={() => openDocumentAction('rename')}
+              >
+                <Pencil size={16} /> Rename
+              </button>
+              <button type="button" onClick={() => openDocumentAction('move')}>
+                <FolderInput size={16} /> Move to folder
+              </button>
+              <button type="button" onClick={exportSource}>
+                <Download size={16} /> Export source
+              </button>
+              <button type="button" onClick={() => openDocumentAction('trash')}>
+                <Trash2 size={16} /> Move to Trash
+              </button>
+              <button
+                type="button"
+                aria-label="Document actions"
+                onClick={() => setModal('document')}
+              >
+                <Settings2 size={16} /> More document controls
+              </button>
+            </div>
+          </section>
+          {selectedIsNote && (
+            <AttachmentGallery
+              ids={attachmentIds}
+              assets={state.assets}
+              onAdd={() => attachmentInput.current?.click()}
+              onDownload={model.downloadAttachment}
+              disabled={operationPending || pendingEdit}
+            />
+          )}
+          {selectedIsNote && (
+            <section
+              className="web-inspector-detail-section"
+              aria-label="Preview controls"
+            >
+              <h3>Preview</h3>
+              <p className="web-inspector-subtitle">{preview.status}</p>
+              <div className="web-inline-actions">
+                <button
+                  type="button"
+                  className="web-button"
+                  onClick={preview.stopped ? preview.rebuild : preview.stop}
+                >
+                  {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
+                  {preview.stopped ? 'Resume' : 'Pause'}
+                </button>
+                <button
+                  type="button"
+                  className="web-button"
+                  onClick={preview.rebuild}
+                >
+                  <RotateCcw size={14} /> Rebuild
+                </button>
+              </div>
+            </section>
+          )}
+          <section
+            className="web-inspector-detail-section"
+            aria-label="Connections"
+          >
+            <h3>Connections</h3>
+            <NoteConnections
+              selected={selected}
+              index={linkIndex}
+              documents={state.documents}
+              onOpen={openDocument}
+            />
+          </section>
         </div>
       </aside>
       {(model.error || model.conflict) && (
