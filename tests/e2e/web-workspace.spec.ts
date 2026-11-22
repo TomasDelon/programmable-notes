@@ -163,13 +163,22 @@ test('a stale tab retains its draft and cannot overwrite the other tab', async (
   await edit(page, 'Shared baseline');
   await expect.poll(() => selectedSavedSource(page)).toBe('Shared baseline');
   const other = await context.newPage();
+  await other.clock.install({ time: new Date('2026-11-22T12:00:00Z') });
   await other.goto('/');
   await ready(other);
+  // Keep a genuine unsaved draft in tab two before tab one publishes. Clean
+  // tabs now refresh safely on focus instead of manufacturing a conflict.
+  await other.clock.pauseAt(new Date('2026-11-22T13:00:00Z'));
+  await edit(other, 'Retained draft from second tab');
   await edit(page, 'Saved from first tab');
+  // The browser clock is shared by pages in this context. Publish the first
+  // tab explicitly while the second tab's debounce remains paused.
+  await page.keyboard.press('Control+s');
   await expect
     .poll(() => selectedSavedSource(page))
     .toBe('Saved from first tab');
-  await edit(other, 'Retained draft from second tab');
+  await other.clock.runFor(500);
+  await other.clock.resume();
   await expect(other.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -200,6 +209,30 @@ test('a stale tab retains its draft and cannot overwrite the other tab', async (
   );
 });
 
+test('an idle tab can switch editing modes without overwriting a newer saved note', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await ready(page);
+  await edit(page, 'Shared baseline');
+  await saved(page);
+  const other = await context.newPage();
+  await other.goto('/');
+  await ready(other);
+  await edit(page, 'New text published by the first tab');
+  await saved(page);
+  await command(other, 'Live editing');
+  await saved(other);
+  await expect(other.locator('.web-storage-banner')).toHaveCount(0);
+  await expect(other.getByRole('textbox', { name: 'MDX source' })).toHaveText(
+    'New text published by the first tab',
+  );
+  expect(await selectedSavedSource(page)).toBe(
+    'New text published by the first tab',
+  );
+});
+
 test('opens, compiles mathematics and saves edits while offline', async ({
   page,
   context,
@@ -212,7 +245,7 @@ test('opens, compiles mathematics and saves edits while offline', async ({
     { timeout: 20000 },
   );
   await page
-    .frameLocator('iframe')
+    .locator('.rendered-editor')
     .locator('.katex')
     .first()
     .waitFor({ timeout: 20000 });
@@ -220,9 +253,9 @@ test('opens, compiles mathematics and saves edits while offline', async ({
   try {
     await page.reload();
     await ready(page);
-    await expect(
-      page.frameLocator('iframe').locator('.katex').first(),
-    ).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.rendered-editor .katex').first()).toBeVisible({
+      timeout: 20000,
+    });
     await edit(page, '# Offline note\n\nStill writing without a network.');
     await expect
       .poll(() => selectedSavedSource(page))

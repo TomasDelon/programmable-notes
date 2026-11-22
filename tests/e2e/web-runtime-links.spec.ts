@@ -58,7 +58,9 @@ test('real wikilinks navigate, derive backlinks, and survive an atomic note rena
   await outgoing
     .getByRole('button', { name: 'Open beta', exact: true })
     .click();
-  await expect(page.locator('.doc-title-row')).toContainText('Beta');
+  await expect(
+    page.getByRole('textbox', { name: 'Document title', exact: true }),
+  ).toHaveValue('Beta');
   const backlinks = panel.getByRole('region', { name: 'Backlinks' });
   await expect(backlinks.getByRole('button', { name: /^Alpha/ })).toBeVisible();
   await command(page, 'Edit source');
@@ -96,7 +98,7 @@ test('real wikilinks navigate, derive backlinks, and survive an atomic note rena
   ).toBeVisible();
 });
 
-test('validated original image bytes render inline without widening the sandbox and remain scoped to one note', async ({
+test('validated original image bytes render in editable Preview and remain scoped to one note', async ({
   page,
 }) => {
   await page.goto('/');
@@ -126,24 +128,27 @@ test('validated original image bytes render inline without widening the sandbox 
   const gallery = page.getByRole('region', { name: 'Note attachments' });
   await expect(gallery.getByRole('img', { name: 'pixel.png' })).toBeVisible();
   await command(page, 'Preview document');
-  const iframe = page.locator('iframe[title="Document preview"]');
-  const frame = page.frameLocator('iframe[title="Document preview"]');
-  const canvas = frame.getByRole('img', { name: 'pixel.png' });
-  await expect(canvas).toBeVisible({ timeout: 20_000 });
+  const rendered = page.locator('.rendered-editor .ProseMirror');
+  const image = rendered.getByRole('img', { name: 'pixel.png' });
+  await expect(image).toBeVisible({ timeout: 20_000 });
   await expect
     .poll(() =>
-      canvas.evaluate((element) => {
-        const target = element as HTMLCanvasElement;
-        return [...target.getContext('2d')!.getImageData(0, 0, 1, 1).data];
+      image.evaluate((element) => {
+        const target = document.createElement('canvas');
+        target.width = 3;
+        target.height = 2;
+        const context = target.getContext('2d')!;
+        context.drawImage(element as HTMLImageElement, 0, 0);
+        return [...context.getImageData(0, 0, 1, 1).data];
       }),
     )
     .toEqual([40, 160, 80, 255]);
-  await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts');
-  const csp = await frame
-    .locator('meta[http-equiv="Content-Security-Policy"]')
-    .getAttribute('content');
-  expect(csp).toContain("img-src 'none'");
-  expect(csp).toContain("connect-src 'none'");
+  await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
+  const exported = page.waitForEvent('download');
+  await command(page, 'Export current source');
+  expect(readFileSync((await (await exported).path())!, 'utf8')).toContain(
+    `attachment:${id}`,
+  );
   const download = page.waitForEvent('download');
   await gallery
     .getByRole('button', { name: 'Download pixel.png', exact: true })
@@ -154,7 +159,7 @@ test('validated original image bytes render inline without widening the sandbox 
     'saved',
   );
   await page.reload();
-  await expect(frame.getByRole('img', { name: 'pixel.png' })).toBeVisible({
+  await expect(rendered.getByRole('img', { name: 'pixel.png' })).toBeVisible({
     timeout: 20_000,
   });
   await page.getByLabel('Import note files').setInputFiles({
@@ -163,8 +168,8 @@ test('validated original image bytes render inline without widening the sandbox 
     buffer: Buffer.from('# Unrelated\n\nNo attachments in this note.'),
   });
   await expect(
-    frame.getByRole('heading', { name: 'Unrelated', exact: true }),
+    rendered.getByRole('heading', { name: 'Unrelated', exact: true }),
   ).toBeVisible({ timeout: 20_000 });
-  expect(await iframe.getAttribute('srcdoc')).not.toContain(id);
-  await expect(frame.locator('canvas')).toHaveCount(0);
+  await expect(rendered.getByRole('img')).toHaveCount(0);
+  await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
 });

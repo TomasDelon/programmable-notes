@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Annotation,
@@ -37,6 +37,11 @@ import { compositionHistory } from './live/compositionHistory';
 import { MathEditor, type MathDraft } from './math/MathEditor';
 import { planMathReplacement } from './math/mathSource';
 import './live/live.css';
+import {
+  RenderedEditor,
+  type RenderedCommands,
+} from './rendered/RenderedEditor';
+import type { RenderedRuntimeContext } from './rendered/RenderedRuntime';
 
 const external = Annotation.define<boolean>();
 const EMPTY_WIKILINKS: readonly LinkResolution[] = Object.freeze([]);
@@ -68,6 +73,7 @@ export function SourceEditor({
   acceptChange,
   wikilinks = EMPTY_WIKILINKS,
   onOpenNote,
+  rendered,
 }: {
   commandsRef?: React.RefObject<EditorCommands>;
   source: string;
@@ -82,6 +88,7 @@ export function SourceEditor({
   acceptChange?: (source: string) => boolean;
   wikilinks?: readonly LinkResolution[];
   onOpenNote?: (id: string) => void;
+  rendered?: RenderedRuntimeContext & { active: boolean };
 }) {
   const element = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
@@ -95,8 +102,14 @@ export function SourceEditor({
   const pending = useRef(onPendingChange);
   const draftRef = useRef<MathDraft | null>(null);
   const legacyPending = useRef(false);
+  const renderedPending = useRef(false);
   const [draft, setDraft] = useState<MathDraft | null>(null);
   const path = documentKey ?? 'note.mdx';
+  const renderedCommands = useRef<RenderedCommands | null>(null);
+  const renderedActive = useRef(Boolean(rendered?.active));
+  useLayoutEffect(() => {
+    renderedActive.current = Boolean(rendered?.active);
+  }, [rendered]);
 
   useEffect(() => {
     change.current = onChange;
@@ -110,12 +123,18 @@ export function SourceEditor({
   function setMathDraft(next: MathDraft | null) {
     draftRef.current = next;
     setDraft(next);
-    pending.current?.(Boolean(next) || legacyPending.current);
+    pending.current?.(
+      Boolean(next) || legacyPending.current || renderedPending.current,
+    );
   }
 
   useEffect(() => {
     function beforeUnload(event: BeforeUnloadEvent) {
-      if (draftRef.current) {
+      if (
+        draftRef.current ||
+        legacyPending.current ||
+        renderedPending.current
+      ) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -132,6 +151,7 @@ export function SourceEditor({
     next: string,
     range?: { from: number; to: number; insert: string },
     sourceInput = false,
+    typing = false,
   ): boolean {
     if (
       rawSource(editor.state) !== expected ||
@@ -155,8 +175,11 @@ export function SourceEditor({
       };
     editor.dispatch({
       changes,
-      annotations: [explicitRawSource.of(next), isolateHistory.of('full')],
-      userEvent: 'input',
+      annotations: [
+        explicitRawSource.of(next),
+        ...(typing ? [] : [isolateHistory.of('full')]),
+      ],
+      userEvent: typing ? 'input.type' : 'input',
     });
     return rawSource(editor.state) === next;
   }
@@ -301,6 +324,8 @@ export function SourceEditor({
         },
         insertText: (text) => {
           if (draftRef.current) return false;
+          if (renderedActive.current && renderedCommands.current)
+            return renderedCommands.current.insertText(text);
           const raw = rawSource(editor.state),
             map = new RawSourceMap(raw),
             selection = editor.state.selection.main;
@@ -363,7 +388,8 @@ export function SourceEditor({
                   rawSource(editor.state) !== snapshot ||
                   isBusy.current ||
                   draftRef.current ||
-                  legacyPending.current
+                  legacyPending.current ||
+                  renderedPending.current
                 )
                   return;
                 setMathDraft({
@@ -379,6 +405,7 @@ export function SourceEditor({
                   isBusy.current ||
                   draftRef.current ||
                   legacyPending.current ||
+                  renderedPending.current ||
                   link.status !== 'resolved' ||
                   !link.targetId
                 )
@@ -439,12 +466,100 @@ export function SourceEditor({
 
   return (
     <div className="editor-pane">
+      {rendered && (
+        <RenderedEditor
+          source={source}
+          path={path}
+          active={rendered.active}
+          disabled={Boolean(busy || draft)}
+          commandsRef={renderedCommands}
+          runtime={rendered}
+          wikilinks={wikilinks}
+          onPendingChange={(value) => {
+            renderedPending.current = value;
+            pending.current?.(
+              value || legacyPending.current || Boolean(draftRef.current),
+            );
+          }}
+          openNote={onOpenNote}
+          undo={() => {
+            if (view.current && !draftRef.current) undo(view.current);
+          }}
+          redo={() => {
+            if (view.current && !draftRef.current) redo(view.current);
+          }}
+          openMath={(snapshot, span) => {
+            if (
+              !view.current ||
+              rawSource(view.current.state) !== snapshot ||
+              draftRef.current ||
+              renderedPending.current ||
+              legacyPending.current ||
+              isBusy.current
+            )
+              return;
+            setMathDraft({
+              source: snapshot,
+              span,
+              value: span.originalInner,
+              error: '',
+            });
+          }}
+          openSource={(offset, snapshot) => onShowSource?.(offset, snapshot)}
+          apply={(snapshot, next, typing) => {
+            const editor = view.current;
+            if (!editor) return false;
+            let from = 0;
+            while (
+              from < snapshot.length &&
+              from < next.length &&
+              snapshot[from] === next[from]
+            )
+              from++;
+            let end = snapshot.length,
+              nextEnd = next.length;
+            while (
+              end > from &&
+              nextEnd > from &&
+              snapshot[end - 1] === next[nextEnd - 1]
+            ) {
+              end--;
+              nextEnd--;
+            }
+            // A physical CRLF and a surrogate pair each have one legal boundary.
+            if (
+              from > 0 &&
+              ((snapshot[from - 1] === '\r' && snapshot[from] === '\n') ||
+                /[\uD800-\uDBFF]/.test(snapshot[from - 1]!))
+            )
+              from--;
+            if (
+              end < snapshot.length &&
+              ((snapshot[end - 1] === '\r' && snapshot[end] === '\n') ||
+                /[\uDC00-\uDFFF]/.test(snapshot[end]!))
+            ) {
+              end++;
+              nextEnd++;
+            }
+            return applyRaw(
+              editor,
+              snapshot,
+              next,
+              { from, to: end, insert: next.slice(from, nextEnd) },
+              false,
+              typing,
+            );
+          }}
+        />
+      )}
       <div hidden={!visual}>
         <MarkdownEditor
           busy={busy || Boolean(draft)}
           onPendingChange={(value) => {
             legacyPending.current = value;
-            pending.current?.(value || Boolean(draftRef.current));
+            pending.current?.(
+              value || renderedPending.current || Boolean(draftRef.current),
+            );
           }}
           onShowSource={onShowSource}
           active={visual === true}
@@ -465,7 +580,7 @@ export function SourceEditor({
           }}
         />
       </div>
-      <div hidden={visual}>
+      <div hidden={visual || Boolean(rendered?.active)}>
         <div className="pane-title">{live ? 'Live Preview' : 'Source'}</div>
         <div className="source-editor" ref={element} />
       </div>
@@ -476,7 +591,8 @@ export function SourceEditor({
             onChange={(value) => setMathDraft({ ...draft, value, error: '' })}
             onCancel={() => {
               setMathDraft(null);
-              view.current?.focus();
+              if (renderedActive.current) renderedCommands.current?.focus();
+              else view.current?.focus();
             }}
             onApply={() => {
               const editor = view.current;
@@ -507,7 +623,8 @@ export function SourceEditor({
                 return;
               }
               setMathDraft(null);
-              editor.focus();
+              if (renderedActive.current) renderedCommands.current?.focus();
+              else editor.focus();
             }}
           />,
           document.body,

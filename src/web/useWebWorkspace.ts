@@ -48,6 +48,38 @@ import {
 
 export type SaveStatus = 'loading' | 'saving' | 'saved' | 'error' | 'conflict';
 
+/** Appearance and navigation do not constitute a competing document edit. */
+function documentContent(state: WebState): string {
+  return JSON.stringify({
+    ...state,
+    theme: null,
+    mode: null,
+    recentIds: null,
+    workspace: { ...state.workspace, selected: null, entry: null },
+  });
+}
+
+/** Keep this tab's reading position while adopting verified remote content. */
+function retainView(content: WebState, view: WebState): WebState {
+  const available = (key: string) =>
+    Object.hasOwn(content.documents, key) && !content.documents[key]!.trashedAt;
+  return {
+    ...content,
+    theme: view.theme,
+    mode: view.mode,
+    recentIds: view.recentIds.filter(available),
+    workspace: {
+      ...content.workspace,
+      selected: available(view.workspace.selected)
+        ? view.workspace.selected
+        : content.workspace.selected,
+      entry: available(view.workspace.entry)
+        ? view.workspace.entry
+        : content.workspace.entry,
+    },
+  };
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof DOMException && error.name === 'QuotaExceededError') {
     return 'This browser has no storage space available. Your previous saved workspace is intact and your edits remain here. Export a backup before closing this tab.';
@@ -96,17 +128,25 @@ export function useWebWorkspace() {
     null,
   );
   const current = useRef<WebState | null>(null);
+  const savedState = useRef<WebState | null>(null);
   const mounted = useRef(false);
   const generation = useRef(0);
   const savedGeneration = useRef(0);
   const revision = useRef(0);
   const conflicting = useRef(false);
+  // Equation/link/recovery drafts can be dirty before they change source.
+  // Keep this synchronous so a focus read cannot race the editor's render.
+  const pendingEditorDraft = useRef(false);
   const operationBusy = useRef(false);
   const saving = useRef<Promise<void> | null>(null);
   const storagePermission = useRef<Promise<void> | null>(null);
   const loadSequence = useRef(0);
   // Async imports may coexist with edits, but never cross a workspace replacement.
   const workspaceEpoch = useRef(0);
+
+  const setPendingEditorDraft = useCallback((pending: boolean) => {
+    pendingEditorDraft.current = pending;
+  }, []);
 
   const report = useCallback((reason: unknown) => {
     if (!mounted.current) return;
@@ -125,6 +165,7 @@ export function useWebWorkspace() {
     if (savedGeneration.current >= generation.current) return Promise.resolve();
     const task = (async () => {
       try {
+        let rebases = 0;
         while (
           current.current &&
           savedGeneration.current < generation.current
@@ -132,8 +173,40 @@ export function useWebWorkspace() {
           const snapshot = current.current;
           const snapshotGeneration = generation.current;
           if (mounted.current) setSaveStatus('saving');
-          const result = await writeWorkspace(snapshot, revision.current);
+          let result;
+          try {
+            result = await writeWorkspace(snapshot, revision.current);
+          } catch (reason) {
+            if (
+              !(reason instanceof WorkspaceConflictError) ||
+              !savedState.current ||
+              rebases++ >= 3
+            )
+              throw reason;
+            const stored = await readWorkspace();
+            const latest = current.current;
+            if (!stored || !latest) throw reason;
+            const baseline = documentContent(savedState.current);
+            const localChanged = documentContent(latest) !== baseline;
+            const remoteChanged = documentContent(stored.state) !== baseline;
+            // A pending editor draft is also local work, even when the source
+            // is unchanged. Adopting remote content could invalidate its range
+            // or unmount its note. Remote view-only writes remain safe to rebase.
+            if (remoteChanged && (localChanged || pendingEditorDraft.current))
+              throw reason;
+            const rebased = retainView(
+              localChanged ? latest : stored.state,
+              latest,
+            );
+            current.current = rebased;
+            savedState.current = stored.state;
+            revision.current = stored.revision;
+            if (remoteChanged) workspaceEpoch.current++;
+            if (mounted.current) setState(rebased);
+            continue;
+          }
           revision.current = result.revision;
+          savedState.current = result.state;
           savedGeneration.current = snapshotGeneration;
         }
         if (mounted.current) {
@@ -166,6 +239,7 @@ export function useWebWorkspace() {
       const next = stored?.state ?? createWebState();
       workspaceEpoch.current++;
       current.current = next;
+      savedState.current = stored?.state ?? null;
       revision.current = stored?.revision ?? 0;
       generation.current++;
       savedGeneration.current = stored
@@ -202,6 +276,63 @@ export function useWebWorkspace() {
   }, [load]);
 
   useEffect(() => {
+    async function refreshCleanTab() {
+      if (
+        !current.current ||
+        !savedState.current ||
+        savedGeneration.current < generation.current ||
+        saving.current ||
+        conflicting.current ||
+        pendingEditorDraft.current ||
+        operationBusy.current
+      )
+        return;
+      const startingGeneration = generation.current;
+      const startingRevision = revision.current;
+      try {
+        const stored = await readWorkspace();
+        // Input or a save arriving during the read always wins. A subsequent
+        // CAS save still distinguishes view changes from competing edits.
+        if (
+          !mounted.current ||
+          !stored ||
+          !current.current ||
+          stored.revision <= startingRevision ||
+          generation.current !== startingGeneration ||
+          revision.current !== startingRevision ||
+          saving.current ||
+          operationBusy.current ||
+          pendingEditorDraft.current ||
+          conflicting.current
+        )
+          return;
+        const next = retainView(stored.state, current.current);
+        workspaceEpoch.current++;
+        current.current = next;
+        savedState.current = stored.state;
+        revision.current = stored.revision;
+        generation.current++;
+        savedGeneration.current = generation.current;
+        setState(next);
+        setSaveStatus('saved');
+        setError('');
+      } catch (reason) {
+        report(reason);
+      }
+    }
+    const onFocus = () => void refreshCleanTab();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refreshCleanTab();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [report]);
+
+  useEffect(() => {
     if (!state || loading || conflict || saveStatus === 'error') return;
     const timer = setTimeout(() => void persist(), 250);
     return () => clearTimeout(timer);
@@ -211,6 +342,7 @@ export function useWebWorkspace() {
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (
         savedGeneration.current < generation.current ||
+        pendingEditorDraft.current ||
         operationBusy.current
       ) {
         event.preventDefault();
@@ -298,6 +430,10 @@ export function useWebWorkspace() {
     if (!files.length || !current.current || operationBusy.current) return;
     const importEpoch = workspaceEpoch.current;
     try {
+      if (pendingEditorDraft.current)
+        throw new Error(
+          'Finish the current editor draft before importing notes. No files were imported.',
+        );
       if (files.length > MAX_FILES)
         throw new Error('Import up to 32 related source files at a time.');
       if (
@@ -334,6 +470,10 @@ export function useWebWorkspace() {
       if (workspaceEpoch.current !== importEpoch || operationBusy.current)
         throw new Error(
           'The workspace changed while the source files were being read. No files were imported. Select them again in the current workspace.',
+        );
+      if (pendingEditorDraft.current)
+        throw new Error(
+          'An editor draft opened while the source files were being read. No files were imported. Finish the draft, then select the files again.',
         );
       mutate((previous) => importSources(previous, sources));
     } catch (reason) {
@@ -372,6 +512,7 @@ export function useWebWorkspace() {
       if (!mounted.current) return;
       workspaceEpoch.current++;
       current.current = next;
+      savedState.current = stored.state;
       generation.current++;
       savedGeneration.current = generation.current;
       revision.current = stored.revision;
@@ -431,6 +572,16 @@ export function useWebWorkspace() {
 
   async function reloadFromStorage(): Promise<void> {
     if (operationBusy.current) return;
+    const preservePendingDraft = () => {
+      if (!pendingEditorDraft.current) return false;
+      report(
+        new Error(
+          'Finish the current editor draft before reloading. The workspace was not replaced.',
+        ),
+      );
+      return true;
+    };
+    if (preservePendingDraft()) return;
     if (
       savedGeneration.current < generation.current &&
       !window.confirm(
@@ -439,6 +590,9 @@ export function useWebWorkspace() {
     )
       return;
     if (saving.current) await saving.current;
+    // The editor stays mounted while a save drains. A draft may have opened
+    // during that await, before load() would replace it with the loading UI.
+    if (preservePendingDraft()) return;
     await load();
   }
 
@@ -499,6 +653,7 @@ export function useWebWorkspace() {
     error,
     backupNotice,
     conflict,
+    setPendingEditorDraft,
     persistentStorage,
     canUpdateSource: (key: string, source: string): boolean => {
       if (!current.current || operationBusy.current) return false;

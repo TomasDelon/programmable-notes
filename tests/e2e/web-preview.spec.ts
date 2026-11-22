@@ -4,13 +4,13 @@ import { readFileSync } from 'node:fs';
 const preview = (page: Page) =>
   page.frameLocator('iframe[title="Document preview"]');
 async function setMode(page: Page, mode: 'source' | 'preview') {
-  const panel = page.locator(`.web-${mode}-panel`);
-  if (!(await panel.isVisible())) {
+  const shell = page.locator('.web-shell');
+  if ((await shell.getAttribute('data-editor-mode')) !== mode) {
     // Keyboard focus inside an isolated document cannot invoke host shortcuts.
     await page.locator('.doc-title-row').click();
     await page.keyboard.press('Control+e');
   }
-  await expect(panel).toBeVisible();
+  await expect(shell).toHaveAttribute('data-editor-mode', mode);
 }
 async function importNote(page: Page, source: string, name = 'fixture.mdx') {
   await page.getByLabel('Import note files').setInputFiles({
@@ -27,26 +27,28 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-test('web default renders mathematics, GFM and bundled fonts inside the opaque preview', async ({
+test('editable Preview renders mathematics, GFM and bundled fonts with the same reading metrics', async ({
   page,
 }) => {
-  const frame = preview(page);
-  await expect(frame.locator('.katex-display')).toBeVisible({ timeout: 20000 });
+  const rendered = page.locator('.rendered-editor .ProseMirror');
+  await expect(rendered.locator('.katex-display')).toBeVisible({
+    timeout: 20000,
+  });
   await importNote(
     page,
     '## Scientific note\n\nInline $x^2 + y^2$.\n\n$$\n\\int_0^1 x^2\\,dx=\\frac{1}{3}\n$$\n\n| Property | Value |\n| --- | --- |\n| Result | Exact |\n\n- [x] Verified\n',
   );
   await expect(
-    frame.getByRole('heading', { name: 'Scientific note' }),
+    rendered.getByRole('heading', { name: 'Scientific note' }),
   ).toBeVisible({ timeout: 20000 });
-  await expect(frame.locator('.katex')).toHaveCount(2);
-  await expect(frame.getByRole('table')).toContainText('Result');
-  await expect(frame.getByRole('checkbox')).toBeChecked();
-  const typography = await frame.locator('body').evaluate(async (body) => {
+  await expect(rendered.locator('.katex')).toHaveCount(2);
+  await expect(rendered.getByRole('table')).toContainText('Result');
+  await expect(rendered.getByRole('checkbox')).toBeChecked();
+  await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
+  const typography = await rendered.evaluate(async (body) => {
     await document.fonts.ready;
     return {
       family: getComputedStyle(body).fontFamily,
-      size: getComputedStyle(body).fontSize,
       loaded: [...document.fonts]
         .filter((font) => font.status === 'loaded')
         .map((font) => font.family),
@@ -59,56 +61,31 @@ test('web default renders mathematics, GFM and bundled fonts inside the opaque p
   expect(typography.loaded.some((family) => family.includes('KaTeX'))).toBe(
     true,
   );
-  const lightBackground = await page
-    .locator('body')
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
-  await expect(frame.locator('html')).toHaveCSS(
-    'background-color',
-    lightBackground,
-  );
-  await expect
-    .poll(() =>
-      page
-        .locator('iframe')
-        .evaluate((element) => element.getBoundingClientRect().height),
-    )
-    .toBeGreaterThan(240);
-  const originalFrame = page
-    .frames()
-    .find((candidate) => candidate !== page.mainFrame())!;
+  const metrics = (element: Element) => {
+    const style = getComputedStyle(element);
+    return {
+      size: style.fontSize,
+      weight: style.fontWeight,
+      line: style.lineHeight,
+      tracking: style.letterSpacing,
+      color: style.color,
+    };
+  };
   for (const width of [760, 700]) {
     await page.setViewportSize({ width, height: 900 });
-    const expectedSize = width > 720 ? '16px' : '15.5px';
-    await expect(frame.locator('body')).toHaveCSS('font-size', expectedSize);
-    const reading = await frame.locator('body').evaluate((body) => {
-      const style = getComputedStyle(body);
-      return {
-        size: style.fontSize,
-        weight: style.fontWeight,
-        line: style.lineHeight,
-        tracking: style.letterSpacing,
-        color: style.color,
-      };
-    });
+    await expect(rendered).toHaveCSS(
+      'font-size',
+      width > 720 ? '16px' : '15.5px',
+    );
+    const reading = await rendered.evaluate(metrics);
     await setMode(page, 'source');
     const writing = await page
       .getByRole('textbox', { name: 'MDX source' })
-      .evaluate((body) => {
-        const style = getComputedStyle(body);
-        return {
-          size: style.fontSize,
-          weight: style.fontWeight,
-          line: style.lineHeight,
-          tracking: style.letterSpacing,
-          color: style.color,
-        };
-      });
+      .evaluate(metrics);
     expect(writing).toEqual(reading);
     await setMode(page, 'preview');
-    expect(originalFrame.isDetached()).toBe(false);
+    await expect(rendered.getByRole('table')).toContainText('Result');
   }
-  // An opaque iframe with color-scheme:dark needs an explicit matching canvas,
-  // otherwise Chromium may paint a darker rectangle than the host document.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.locator('.doc-title-row').click();
   await page.keyboard.press('Control+k');
@@ -123,15 +100,15 @@ test('web default renders mathematics, GFM and bundled fonts inside the opaque p
     .getByRole('button', { name: 'Close Settings', exact: true })
     .click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  const hostBackground = await page
-    .locator('body')
-    .evaluate((element) => getComputedStyle(element).backgroundColor);
-  await expect(frame.locator('html')).toHaveCSS(
+  await expect(page.locator('body')).toHaveCSS(
     'background-color',
-    hostBackground,
+    'rgb(25, 26, 27)',
   );
-  expect(hostBackground).toBe('rgb(25, 26, 27)');
-  expect(originalFrame.isDetached()).toBe(false);
+  const darkReading = await rendered.evaluate(metrics);
+  await setMode(page, 'source');
+  expect(
+    await page.getByRole('textbox', { name: 'MDX source' }).evaluate(metrics),
+  ).toEqual(darkReading);
 });
 
 test('ordinary Markdown keeps expressions and import statements as source text', async ({
@@ -142,13 +119,13 @@ test('ordinary Markdown keeps expressions and import statements as source text',
     '# Literal Markdown\n\nA set {x: x > 0}.\n\nimport Secret from "https://probe.invalid/module.js"\n\n<script>parent.postMessage({type:"overwrite"}, "*")</script>\n',
     'plain.md',
   );
-  const frame = preview(page);
+  const rendered = page.locator('.rendered-editor .ProseMirror');
   await expect(
-    frame.getByRole('heading', { name: 'Literal Markdown' }),
+    rendered.getByRole('heading', { name: 'Literal Markdown' }),
   ).toBeVisible({ timeout: 20000 });
-  await expect(frame.locator('body')).toContainText('A set {x: x > 0}.');
-  await expect(frame.locator('body')).toContainText('import Secret from');
-  await expect(frame.locator('script')).toHaveCount(1);
+  await expect(rendered).toContainText('A set {x: x > 0}.');
+  await expect(rendered).toContainText('import Secret from');
+  await expect(rendered.locator('script')).toHaveCount(0);
   await expect(page.locator('.web-preview-error')).toHaveCount(0);
 });
 
@@ -197,7 +174,10 @@ test('MDX imports local TSX and mode switches preserve interactive React state',
     .click();
   await page.getByRole('button', { name: /^Close Document actions$/ }).click();
   await expect(page.locator('iframe')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Resume preview' }).click();
+  await page
+    .getByRole('region', { name: 'Preview controls' })
+    .getByRole('button', { name: 'Resume', exact: true })
+    .click();
   await expect(frame.getByRole('button', { name: 'Count: 4' })).toBeVisible({
     timeout: 20000,
   });
@@ -220,15 +200,16 @@ test('compile errors and runtime failures retain editable source and recover aft
     "export function Broken(){throw new Error('Fixture runtime failure')}\n\n<Broken />",
   );
   await setMode(page, 'preview');
-  await expect(page.locator('.web-preview-error')).toContainText(
-    'Fixture runtime failure',
-    { timeout: 20000 },
-  );
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Fixture runtime failure' }),
+  ).toBeVisible({ timeout: 20000 });
   await setMode(page, 'source');
   await editor.fill('# Recovered\n\nMy source survived both failures.');
   await setMode(page, 'preview');
   await expect(
-    preview(page).getByRole('heading', { name: 'Recovered' }),
+    page
+      .locator('.rendered-editor')
+      .getByRole('heading', { name: 'Recovered' }),
   ).toBeVisible({ timeout: 20000 });
   await expect(page.locator('.web-preview-error')).toHaveCount(0);
 });
