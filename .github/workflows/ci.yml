@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      browser_qa:
+        description: Run all browser tests in Chromium, Firefox and WebKit without a duplicate native build
+        type: boolean
+        default: false
       review_artifacts:
         description: Capture browser walkthrough and upload testing artifacts
         type: boolean
@@ -22,6 +26,8 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      PN_ALL_BROWSERS: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && '1' || '0' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -37,7 +43,13 @@ jobs:
       - name: Verify the secret scanner refuses a synthetic key
         run: PN_GITLEAKS_BIN="$PWD/.cache/security-tools/gitleaks" node --test tests/tooling/secret-scan.test.mjs
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Install matching browser dependencies
+        run: |
+          if [ "$PN_ALL_BROWSERS" = 1 ]; then
+            npx playwright install --with-deps chromium firefox webkit
+          else
+            npx playwright install --with-deps chromium
+          fi
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
       - run: npm run check
@@ -60,7 +72,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: failure()
+        if: failure() || (github.event_name == 'workflow_dispatch' && inputs.browser_qa)
         with:
           name: playwright-results
           path: |
@@ -69,6 +81,7 @@ jobs:
           retention-days: 7
 
   native-check:
+    if: github.event_name != 'workflow_dispatch' || !inputs.browser_qa
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:

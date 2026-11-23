@@ -2383,3 +2383,27 @@ cross-browser claim. Preserve these failures. Next safe task: opt-in hosted Ubun
 cross-browser validation on a separate branch, avoiding duplicate native build.
 No fresh native GUI claim; intermittent JSC/startup, current-package acceptance,
 distribution attributions/root licensing remain. Do not merge/deploy/release.
+
+## 2026-11-23 — independent hosted browser QA continuation
+
+PR6 correction `909efe3` pushed; API verified BOTH check/native-check SUCCESS
+in run45287285963. PR6 body updated with exact result and remains Draft.
+Continued separately on test/hosted-browser-recovery-qa-20261123.
+
+Added opt-in browser_qa dispatch to existing CI: all3 browser projects, standard
+Ubuntu runner, actual dependency install, complete production check; retain HTML
+report on success/failure. Normal PR/push gates unchanged, including native-check.
+Only explicit browser-only dispatch avoids duplicate native build. No paid service
+or permission change. Added real in-place equation during held real IndexedDB
+open regression, preserves original results/checksums and actual CAS conflict.
+Read-only review found potential false pass on delayed-open watchdog; final test
+also verifies saved status after read closes, before applying local source.
+
+Local fullcheck273unit/86Chromium/10tooling(no skips) PASS. Focused regression
+passed again after final review assertion. New workflow must still execute hosted
+before claiming Firefox/WebKit results. BROWSER_QA.md records commands/artifacts.
+Independent native review found obsolete cleanup observer in native-startup.mjs:
+immediate known-live failure, no final membership confirmation, late-read success.
+Production startup/security diff unchanged since current main; no newly proven
+escape/crash cause. Next safe native task: reuse existing bounded native-cleanup
+helper without changing5second/60second attribution bounds, then real package run.
