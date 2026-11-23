@@ -459,8 +459,7 @@ function WorkspaceApp({
     ? recentKeys
     : recentKeys.slice(0, RECENT_VISIBLE);
   const selectedIsNote = isMdxSource(selected);
-  const mode =
-    selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
   useEffect(() => {
     if (state.mode === 'live') model.setMode('preview');
   }, [state.mode, model]); // Migrate legacy stored view preference.

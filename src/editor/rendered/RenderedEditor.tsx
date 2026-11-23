@@ -100,7 +100,8 @@ export function RenderedEditor(props: Props) {
   useLayoutEffect(() => {
     latest.current = props;
   });
-  const hasPendingDraft = linkDraft !== null || unappliedText !== null || mathEditing;
+  const hasPendingDraft =
+    linkDraft !== null || unappliedText !== null || mathEditing;
   useLayoutEffect(() => {
     latest.current.onPendingChange?.(hasPendingDraft);
   }, [hasPendingDraft]);
@@ -349,8 +350,7 @@ export function RenderedEditor(props: Props) {
                 String(node.attrs.value).trim() &&
               math.filter(
                 (item) =>
-                  item.originalInner.trim() ===
-                  candidate.originalInner.trim(),
+                  item.originalInner.trim() === candidate.originalInner.trim(),
               ).length === 1,
           );
         if (!match) return;

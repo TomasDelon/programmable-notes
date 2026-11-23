@@ -66,9 +66,9 @@ test('Preview reveals dollar delimiters at the caret and preserves exact LaTeX u
   await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
   const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
   await expect(inline).toHaveValue('$x^2$');
-  await expect(
-    page.getByRole('dialog', { name: 'Edit equation' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
+    0,
+  );
   await inline.fill('$x^3 + 1$');
   await inline.press('Enter');
   await expect(inline).toHaveCount(0);
@@ -101,9 +101,9 @@ test('invalid or cancelled inline display math retains the original and mobile h
     .click();
   const latex = page.getByRole('textbox', { name: 'Display LaTeX source' });
   await expect(latex).toHaveValue('$$\n\\frac{a}{b}\n$$');
-  await expect(
-    page.getByRole('dialog', { name: 'Edit equation' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
+    0,
+  );
   await latex.fill('$$\n\\unknowncommand\n$$');
   await latex.press('Control+Enter');
   await expect(

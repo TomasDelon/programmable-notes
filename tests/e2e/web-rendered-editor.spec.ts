@@ -160,9 +160,9 @@ test('table cells and equations can be edited in the rendered document', async (
     .click();
   const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
   await expect(latex).toHaveValue('$x^2$');
-  await expect(
-    page.getByRole('dialog', { name: 'Edit equation' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
+    0,
+  );
   await latex.fill('$x^3 + 1$');
   await latex.press('Enter');
   expect(await exportedSource(page)).toBe(
