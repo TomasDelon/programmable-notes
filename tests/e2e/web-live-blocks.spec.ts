@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-test('Live renders the screenshot list fixture, toggles real tasks and preserves exact source through undo', async ({
+test('Preview renders list markers and tasks and preserves exact source through undo', async ({
   page,
 }) => {
   const original =
@@ -40,14 +40,10 @@ test('Live renders the screenshot list fixture, toggles real tasks and preserves
     mimeType: 'text/plain',
     buffer: Buffer.from(original),
   });
-  await command(page, 'Live editing');
-  await expect(page.locator('.cm-live-list-marker')).toHaveText([
-    '•',
-    '•',
-    '•',
-    '1.',
-    '2.',
-  ]);
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await expect(view.locator('ul').first().locator('li')).toHaveCount(3);
+  await expect(view.locator('ol').first().locator('li')).toHaveCount(2);
   const pending = page.getByRole('checkbox', { name: 'Task: tomasd 🧠' });
   await expect(pending).toBeVisible();
   await expect(pending).not.toBeChecked();
@@ -58,9 +54,7 @@ test('Live renders the screenshot list fixture, toggles real tasks and preserves
     name: 'Edit display equation: \\forall x \\in \\mathbb{R}',
   });
   await expect(math).toBeVisible();
-  const contentBox = await page
-    .locator('.source-editor .cm-content')
-    .boundingBox();
+  const contentBox = await view.boundingBox();
   const mathBox = await math.boundingBox();
   const expressionBox = await math
     .locator('.katex-html .katex-base')
@@ -86,8 +80,10 @@ test('Live renders the screenshot list fixture, toggles real tasks and preserves
   await pending.check();
   const edited = original.replace('- [ ] tomasd', '- [x] tomasd');
   expect(await exportSource(page)).toEqual(Buffer.from(edited));
+  await command(page, 'Edit source');
   await page.getByRole('textbox', { name: 'MDX source' }).press('Control+z');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
+  await command(page, 'Preview document');
   await expect(pending).not.toBeChecked();
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
@@ -107,17 +103,13 @@ test('Live fenced code is literal rendered text and reveals editable source on k
     mimeType: 'text/plain',
     buffer: Buffer.from(source),
   });
-  await command(page, 'Live editing');
-  const code = page.getByLabel('Edit code block');
+  await command(page, 'Preview document');
+  const code = page.locator('.rendered-editor pre').first();
   await expect(code).toBeVisible();
-  await expect(code).toHaveText('<img src=x onerror=alert(1)>');
+  await expect(code).toContainText('<img src=x onerror=alert(1)>');
   await expect(code.locator('img')).toHaveCount(0);
-  await expect(
-    page.getByRole('separator', { name: 'Edit horizontal rule' }),
-  ).toBeVisible();
-  await code.focus();
-  await code.press('Enter');
-  await expect(code).toHaveCount(0);
+  await expect(page.locator('.rendered-editor hr')).toBeVisible();
+  await command(page, 'Edit source');
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toContainText(
     '```html',
   );

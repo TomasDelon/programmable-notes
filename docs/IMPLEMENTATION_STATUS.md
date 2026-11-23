@@ -2,13 +2,24 @@
 
 ## Current web application
 
-The integrated browser beta is on `main`. Source and Live retain the existing
-CodeMirror document. Preview now provides direct rendered editing of Markdown,
-including formatting, lists/tasks, tables, links, attachments and mathematics.
+The integrated browser beta remains on `main`. Draft PR #6 adds a two-mode
+web selector: **Source** retains canonical CodeMirror transactions, while
+**Preview** edits rendered Markdown directly, including formatting, lists,
+tasks, tables, attachments and in-place dollar-delimited LaTeX. The separate
+Live web mode is removed and old `live` preferences migrate to Preview.
+The native `/engine` editor is unchanged.
 See [ADR 013](decisions/ADR-013-rendered-document-editing.md) for the source
 preservation contract, isolated React islands, full-document runtime and the
 cross-tab persistence fix. This does not add cross-device synchronization or
 change the native security model.
+
+The resumed 23 November audit found and corrected unfinished equation loss through
+document-wide deletion and stale Preview after equation cancellation. Nearby
+document changes are now refused while a math field remains open; an existing
+link URL is retained when submission is blocked. The canonical source guard and
+React sandbox are unchanged. See the
+[resumed audit and verification](recovery/2026-11-23-resumed-engineering-audit.md)
+for actual results, infrastructure failures and the ordered continuation roadmap.
 
 ## Historical native implementation record
 

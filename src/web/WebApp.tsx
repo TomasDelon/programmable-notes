@@ -459,7 +459,10 @@ function WorkspaceApp({
     ? recentKeys
     : recentKeys.slice(0, RECENT_VISIBLE);
   const selectedIsNote = isMdxSource(selected);
-  const mode = selectedIsNote ? state.mode : 'source';
+  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  useEffect(() => {
+    if (state.mode === 'live') model.setMode('preview');
+  }, [state.mode, model]); // Migrate legacy stored view preference.
   const linkIndex = useMemo(
     () =>
       indexWorkspaceLinks(
@@ -581,7 +584,7 @@ function WorkspaceApp({
     setRightOpen(true);
     if (window.innerWidth <= 720) setLeftOpen(false);
   };
-  const switchMode = (next: 'source' | 'live' | 'preview') => {
+  const switchMode = (next: 'source' | 'preview') => {
     if (next !== 'source' && !selectedIsNote) return;
     if (!canLeaveDraft()) return;
     const initiator = document.activeElement;
@@ -1211,15 +1214,9 @@ function WorkspaceApp({
     ...(selectedIsNote
       ? [
           {
-            name: 'Live editing',
-            description:
-              'Write Markdown with live formatting and editable equations',
-            icon: Pencil,
-            actionId: 'live',
-          },
-          {
             name: 'Preview document',
-            description: 'Read and interact with this note',
+            description:
+              'Edit the rendered note with live Markdown and equations',
             icon: Eye,
             actionId: 'preview',
           },
@@ -1326,9 +1323,6 @@ function WorkspaceApp({
       case 'preview':
         switchMode('preview');
         break;
-      case 'live':
-        switchMode('live');
-        break;
       case 'save':
         if (canLeaveDraft()) void model.saveNow();
         break;
@@ -1384,7 +1378,7 @@ function WorkspaceApp({
             aria-label="Document mode"
           >
             <span className="mode-island-selection" aria-hidden="true" />
-            {(['source', 'live', 'preview'] as const).map((value) => (
+            {(['source', 'preview'] as const).map((value) => (
               <button
                 type="button"
                 key={value}
@@ -1401,11 +1395,7 @@ function WorkspaceApp({
                   event.currentTarget.blur();
                 }}
               >
-                {value === 'source'
-                  ? 'Source'
-                  : value === 'live'
-                    ? 'Live'
-                    : 'Preview'}
+                {value === 'source' ? 'Source' : 'Preview'}
               </button>
             ))}
           </div>
@@ -1922,7 +1912,6 @@ function WorkspaceApp({
                 <SourceEditor
                   key={selected}
                   source={source}
-                  live={mode === 'live'}
                   rendered={
                     selectedIsNote
                       ? {

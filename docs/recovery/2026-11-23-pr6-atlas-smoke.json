@@ -1,0 +1,17 @@
+{
+  "commit": "36f84cd910115dc8f2528d676e2a833f1fa77120",
+  "tested": "2026-11-23T22:26:49.330Z",
+  "test": "PR6-local-production-build-smoke",
+  "passed": true,
+  "browser": "159.0.8154.6",
+  "checks": [
+    "Production-built Vite preview served on loopback",
+    "Exactly Source and editable Preview, without Live",
+    "Real rendered Markdown editing surface",
+    "Inline equation edit preserves BOM, CRLF and unrelated source bytes",
+    "Exact cross-mode undo",
+    "Mobile invalid display math is retained and cancellable",
+    "Persistence and mobile viewport after reload"
+  ],
+  "unexpectedNetwork": []
+}

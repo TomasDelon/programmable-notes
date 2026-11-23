@@ -488,23 +488,6 @@ export function SourceEditor({
           redo={() => {
             if (view.current && !draftRef.current) redo(view.current);
           }}
-          openMath={(snapshot, span) => {
-            if (
-              !view.current ||
-              rawSource(view.current.state) !== snapshot ||
-              draftRef.current ||
-              renderedPending.current ||
-              legacyPending.current ||
-              isBusy.current
-            )
-              return;
-            setMathDraft({
-              source: snapshot,
-              span,
-              value: span.originalInner,
-              error: '',
-            });
-          }}
           openSource={(offset, snapshot) => onShowSource?.(offset, snapshot)}
           apply={(snapshot, next, typing) => {
             const editor = view.current;

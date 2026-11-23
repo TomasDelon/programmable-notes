@@ -18,7 +18,7 @@ continuation and a formatting toolbar operate on that projection.
 
 The existing CodeMirror instance remains the canonical source transaction and
 undo engine. Every projected change must serialize and reparse successfully
-before the source revision guard accepts it. Source, Live and Preview share the
+before the source revision guard accepts it. Source and editable Preview share the
 same saved document and history; no HTML-to-Markdown conversion of arbitrary
 rendered runtime output is permitted.
 
@@ -61,6 +61,13 @@ refresh prevents stale replacement. IndexedDB's atomic revision check remains
 the final write guard. Open equation and link drafts, plus rejected text retained
 for recovery, also prevent automatic replacement and navigation. A draft that
 opens while a storage read is pending is checked again before adoption.
+
+An unfinished in-place equation also blocks changes to the ProseMirror document
+itself: a failed blur must not let a nearby deletion destroy the field and its
+uncommitted LaTeX. Refused browser mutations reconcile to the accepted projection.
+An already-open link form retains its URL while the equation prevents submission.
+Closing the equation flushes any canonical source revision deferred while it was
+open; stale equation commits still fail before source application.
 
 ## Validation contracts
 
