@@ -1,7 +1,7 @@
 # Programmable Notes on the web
 
 The browser application opens at `/`. It combines the approved UI Lab interface
-with Source and Live editing, mathematics, interactive React previews,
+with Source editing and editable Preview, mathematics, isolated React execution,
 wikilinks, backlinks, local attachments, and portable workspace backups. Its
 current scope is a single-device beta: notes live in this browser profile, and
 there is no authenticated cross-device synchronization.
@@ -18,7 +18,7 @@ Open the left navigation panel to see Documents, folders, and Recent. The first
 workspace contains a Welcome note and a React playground. Use the new-document
 or new-folder controls to create your own material. New notes open in Source.
 
-The title above the document is editable in Source and Live. Document actions
+The title above the document is editable in Source and Preview. Document actions
 also offer rename, move, source export, and Move to Trash. Titles and workspace
 folders are display metadata; stable source keys and relative module imports
 do not change when a note is renamed or moved. Existing resolved wikilinks are
@@ -42,7 +42,7 @@ derived backlinks.
 | Shortcut               | Action                                            |
 | ---------------------- | ------------------------------------------------- |
 | `Ctrl/Cmd + K`         | Search notes and commands                         |
-| `Ctrl/Cmd + E`         | Source to Preview; Live or Preview to Source      |
+| `Ctrl/Cmd + E`         | Toggle Source and editable Preview                |
 | `Ctrl/Cmd + S`         | Save the latest workspace changes in this browser |
 | `Ctrl/Cmd + \`         | Toggle navigation                                 |
 | `Ctrl/Cmd + Z`         | Undo in the source editor                         |
@@ -57,21 +57,24 @@ initial view, and its order survives reopening the app.
 
 ## Write and preview
 
-The three modes share the same authoritative source:
+Source and Preview share the same authoritative Markdown/MDX source and undo history:
 
-| Mode        | Behavior                                                                                                        |
-| ----------- | --------------------------------------------------------------------------------------------------------------- |
-| **Source**  | Edit the original Markdown, LaTeX, MDX, or module text in CodeMirror.                                           |
-| **Live**    | Edit that same source with supported Markdown formatting, rendered equations, and clickable resolved wikilinks. |
-| **Preview** | Compile the selected note in a worker and interact with the resulting document in a separate sandboxed frame.   |
+| Mode        | Behavior                                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Source**  | Edit the original Markdown, LaTeX, MDX, or module text in CodeMirror.                                                          |
+| **Preview** | Edit rendered Markdown directly, including headings, formatting, lists, tasks, tables, wikilinks and mathematical expressions. |
 
-Live formatting is a view of parser-confirmed source ranges. Moving the caret
-or selection into an affected text block exposes its Markdown. IME composition
-keeps editable source visible. Code, JavaScript, and JSX remain source in the
-host editor. Unsupported, malformed, or analysis-heavy syntax falls back to raw
-text instead of being rewritten. The raw-source mapping preserves a BOM,
-Unicode, and existing mixed line endings outside intentional edits; undo and
-redo operate on those source transactions.
+Preview is an editable, trusted ProseMirror projection. Supported Markdown
+changes become guarded edits to the canonical CodeMirror source; arbitrary
+HTML, JSX, imports and executable code are not rewritten through this surface.
+Unsupported or ambiguous syntax remains opaque or falls back to Source.
+The source mapping preserves BOMs, Unicode and unchanged mixed line endings,
+while deliberate structural changes may reserialize the affected block.
+
+The right inspector's **Run full document** command executes the original
+MDX/React document in a separate sandboxed runtime, including shared module
+state. **Edit rendered document** returns to editable Preview. These execution
+modes are distinct from the two-way document mode selector.
 
 A source change triggers a preview rebuild after a short debounce. Compile
 errors retain the source and can provide locations to reveal in the editor.
@@ -97,18 +100,21 @@ $$
 $$
 ```
 
-In Live, click a rendered equation to edit its original LaTeX with a preview.
-**Apply equation** or `Ctrl/Cmd + Enter` validates the original source revision
-and replaces only that equation. `Escape` cancels. Invalid LaTeX cannot be
-applied through this dialog; a rejected stale edit retains its draft for copying
-or correction. Apply or cancel a pending math draft before navigating, exporting,
-restoring, or leaving for Preview. Unapplied drafts stay in memory and are not
-saved source or backup contents.
+In Preview, click an inline `$...$` or display `$$...$$` equation to reveal
+its original dollar-delimited LaTeX **in place**, including on mobile. No
+separate equation dialog is used. `Enter` applies inline edits;
+`Ctrl/Cmd + Enter` applies display edits; **Done** or leaving the field also
+attempts to apply. `Escape` or **Cancel** discards the draft. Invalid LaTeX,
+removed delimiters or stale source revisions keep the editable draft and show
+an error instead of overwriting the source. Resolve an unfinished draft before
+switching documents, exporting or restoring. Unapplied drafts are memory-only
+and are not included in saved notes or backups.
 
-The React playground provides a live counter that can be edited immediately.
-Switching editor modes or appearance preserves the mounted preview's component
-state. Executable source changes, Rebuild, or Stop restart or remove that
-runtime. Component state is temporary and is not part of a note backup.
+The React playground provides an interactive counter. Editing ordinary Markdown
+in Preview preserves unaffected isolated React islands. **Run full document**
+starts a separate shared-module execution context; returning to **Edit rendered
+document** or changing executable source may restart that context. Component
+state is temporary and is not part of a note backup.
 
 The compiler uses the pinned React runtime and its import allowlist. Related
 local `.md`, `.mdx`, `.js`, `.jsx`, `.ts`, and `.tsx` sources can be imported

@@ -5,10 +5,10 @@ Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed
 ## Web workspace
 
 The browser app at `/` combines the approved UI Lab interface with the existing
-MDX/React engine. It provides Source, Live and Preview modes, notes and folders,
-full-text search, stable Recent shortcuts, editable LaTeX equations, wikilinks,
-backlinks, and interactive React documents. Validated images and PDFs retain
-their original bytes. Notes autosave to IndexedDB in the current browser, with
+MDX/React engine. It provides Source and editable Preview modes, notes and
+folders, full-text search, stable Recent shortcuts, in-place LaTeX editing,
+wikilinks, backlinks, and interactive React documents. Validated images and
+PDFs retain their original bytes. Notes autosave to IndexedDB in the current browser, with
 checksummed backups that include attachments and recovery checkpoints, Trash,
 and explicit handling of conflicting tabs.
 

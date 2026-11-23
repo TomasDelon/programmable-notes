@@ -2,9 +2,12 @@
 
 ## Current web application
 
-The integrated browser beta is on `main`. Source and Live retain the existing
-CodeMirror document. Preview now provides direct rendered editing of Markdown,
-including formatting, lists/tasks, tables, links, attachments and mathematics.
+The integrated browser beta remains on `main`. Draft PR #6 adds a two-mode
+web selector: **Source** retains canonical CodeMirror transactions, while
+**Preview** edits rendered Markdown directly, including formatting, lists,
+tasks, tables, attachments and in-place dollar-delimited LaTeX. The separate
+Live web mode is removed and old `live` preferences migrate to Preview.
+The native `/engine` editor is unchanged.
 See [ADR 013](decisions/ADR-013-rendered-document-editing.md) for the source
 preservation contract, isolated React islands, full-document runtime and the
 cross-tab persistence fix. This does not add cross-device synchronization or
