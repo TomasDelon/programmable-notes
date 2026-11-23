@@ -1,6 +1,6 @@
 # Two-mode editor and inline math: recovery candidate
 
-**Status: RECOVERED TO ISOLATED BRANCH, NOT RELEASE-APPROVED**
+**Status: RECOVERED AND VERIFIED BY HOSTED CI, NOT RELEASE-APPROVED**
 
 ## What changed
 
@@ -17,22 +17,28 @@ This branch was reconstructed after Vercel Sandbox reached its Hobby quota. The 
 Original tested base: `8516af3f9853579e7b39e215a1bcd5309be5cb6e`.
 Original tested candidate tree: `310572e13826982ab9d4b6fefdfe1d49794c6d01`.
 
-The recovered source and tests follow that implementation, but **four blobs are not byte-identical** to the recorded snapshot, primarily because the isolated runner's Prettier output could not be directly extracted:
+The recovered source and tests follow that implementation. At the time of initial recovery, **four reconstructed blobs were not byte-identical** to the recorded snapshot:
 
 - `src/web/WebApp.tsx`
 - `src/editor/rendered/RenderedEditor.tsx`
 - `tests/e2e/web-live.spec.ts`
 - `tests/e2e/web-rendered-editor.spec.ts`
 
-**Seven of eleven changed paths match the recorded Git blob hashes exactly.** Do not claim that this recovered Git tree matches the original snapshot until all differences are resolved.
+**Seven of eleven code/test paths originally matched recorded Git blob hashes exactly.** Prettier was subsequently run and the five reported formatting failures were fixed. However, the recovered code tree, excluding this recovery report, has SHA `25f3ddce9bea36f71059ecae3db9b3757be03902`, which **does not match** the original tested tree. Do not claim byte-for-byte recovery.
 
 The original snapshot's observed results were: TypeScript, lint, formatting, build PASS; 270 unit tests PASS; 57/57 focused Chromium/Firefox/WebKit tests PASS. Those executions apply to the **original snapshot**, not a fresh full release check on this recovered branch. The full release suite was not completed before the Sandbox quota blocked execution.
 
-## Follow-up
+## Independent verification (2026-11-23)
 
-1. With Atlas or an independent runner, run `npm ci`, `npm run format` and `npm run check` with pinned Node 24.22.1/npm 11.9.0.
-2. Prefer direct snapshot recovery before expiration if an authorized Sandbox session becomes available. Compare each file against the recorded hashes in the ChatGPT recovery handoff.
-3. Execute all three browser engines and security/tooling checks, review the PR and check GitHub CI before merging.
-4. Only deploy to production after a verified release; keep the existing production deployment for rollback.
+- Full pinned GitHub [CI #96](https://github.com/TomasDelon/programmable-notes/actions/runs/45162114617) **passed** on commit `2469590b80f73692aa6a1927e72fd49189fa7c28`: Prettier, ESLint, TypeScript, build, tooling, secret-history scan, **270 unit tests** and **84 real Chromium browser tests**.
+- The same CI run's `native-check` **passed**, including Rust/Tauri packaging, package inspection, ENOSPC, crash and sync-error recovery tests. This does not count as execution of the native graphical application.
+- Focused [three-browser QA](https://github.com/TomasDelon/programmable-notes/actions/runs/45163015436) **passed 84/84 tests**, comprising 28 each on Chromium, Firefox and WebKit. It covered the changed editor regression specs, including mobile equation editing and exact source preservation.
+- The Vercel Sandbox remains stopped. A resume request returned HTTP 402 (Hobby quota exhausted until 2026-12-01, after the snapshot expires).
+
+## Outstanding release gates
+
+1. Review the four reconstructed implementation/test files and the persistent original-snapshot tree mismatch; recover exact snapshot bytes if an authorized session becomes available before expiration. Fresh behavioral tests are not proof of matching historical source bytes.
+2. Perform an independent PR review and production-like browser smoke without merging or deploying this Draft PR. Native graphical application acceptance remains a separate unverified scope.
+3. Keep the prior production release available for rollback. No merge or production deployment until release approval.
 
 **Production `main` is intentionally unchanged.**
