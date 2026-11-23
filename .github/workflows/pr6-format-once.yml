@@ -1,11 +1,12 @@
 name: PR6 recovered formatting (temporary read-only)
 on:
-  push:
-    branches: [recovery/two-mode-inline-latex-20261123]
+  pull_request:
+    branches: [main]
 permissions:
   contents: read
 jobs:
   format-source:
+    if: github.head_ref == 'recovery/two-mode-inline-latex-20261123'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
