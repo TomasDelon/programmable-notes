@@ -2407,3 +2407,25 @@ immediate known-live failure, no final membership confirmation, late-read succes
 Production startup/security diff unchanged since current main; no newly proven
 escape/crash cause. Next safe native task: reuse existing bounded native-cleanup
 helper without changing5second/60second attribution bounds, then real package run.
+
+## 2026-11-23 — startup diagnostic cleanup correction, no native runtime claim
+
+Continued validation branch after20a7b94. Extracted obsolete startup cleanup
+algorithm under controlled IO:4RED/3PASS, reproducing immediate-live failure,
+missing final membership confirmation and late-read success. Startup now calls
+shared waitForStartupCleanup/native-cleanup, retains5second and pre60second bounds,
+rejects unknown/ENODEV membership and uses strict process identity parser. Report
+also hashes shared cleanup module; no production policy, timeout or sandbox change.
+Independent read-only review no blocking finding; added remaining-lifetime case.
+
+Final fullcheck PASS281unit/86Chromium/10tooling; new actual owned-child/proc Linux
+integration PASS, then all11tooling PASS/no skips. Group emptiness remainsfixture
+in that integration; no actual Tauri/cgroup/installed GUI/security pass claimed.
+Startup CLI node--check and direct Node24 helper import passed; final ESLint passed.
+See recovery/2026-11-23-startup-observer-review.md. Actual current-package disposable
+desktop startup/security/recovery matrix still next; historical crashes unchanged.
+
+Hosted optional3browser run45288551129 at20a7b94 is executing; install-dependencies
+step remains active, native-check correctly skipped only for this dispatch.
+No cross-browser success claimed before it completes. PR6 staysDraft909efe3 with
+both hosted jobs green; this validation branch will be a separate stacked DraftPR.

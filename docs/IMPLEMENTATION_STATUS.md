@@ -21,6 +21,13 @@ React sandbox are unchanged. See the
 [resumed audit and verification](recovery/2026-11-23-resumed-engineering-audit.md)
 for actual results, infrastructure failures and the ordered continuation roadmap.
 
+The independent continuation adds [opt-in hosted three-browser QA](BROWSER_QA.md)
+and a real pending-field/focus-read race regression. A native startup diagnostic
+also now reuses the bounded cleanup observer, correcting premature refusal and
+late/repopulated-group acceptance in the test harness. See the
+[startup observer review](recovery/2026-11-23-startup-observer-review.md).
+This is not new native runtime acceptance or a renderer-crash fix.
+
 ## Historical native implementation record
 
 The following record describes the earlier `feat/mdx-react-engine` work. PR #1
