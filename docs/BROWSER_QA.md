@@ -16,6 +16,10 @@ synthetic scanner controls and executes `npm run check` with `PN_ALL_BROWSERS=1`
 It retains the `playwright-results` HTML report on success or failure for seven
 days. Check the exact run head SHA and individual test results before claiming
 coverage. A queued/started job or green compilation is not browser acceptance.
+The optional three-engine dispatch has a 30-minute ceiling: the first hosted
+attempt spent over ten minutes installing dependencies before any browser test.
+Normal Chromium PR/push checks retain their original 15-minute ceiling. Neither
+setting changes the native application's resource or service lifetime limits.
 
 Only this explicit browser-only dispatch skips `native-check`. Pull requests,
 pushes to main and ordinary dispatches retain both original jobs. No paid runner,

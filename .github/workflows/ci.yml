@@ -25,7 +25,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 30 || 15 }}
     env:
       PN_ALL_BROWSERS: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && '1' || '0' }}
     steps:

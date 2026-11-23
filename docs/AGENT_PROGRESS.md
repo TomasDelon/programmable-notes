@@ -2429,3 +2429,23 @@ Hosted optional3browser run45288551129 at20a7b94 is executing; install-dependenc
 step remains active, native-check correctly skipped only for this dispatch.
 No cross-browser success claimed before it completes. PR6 staysDraft909efe3 with
 both hosted jobs green; this validation branch will be a separate stacked DraftPR.
+
+## Hosted QA checkpoint — resumed session
+
+Validation continuation is now draft PR7, base recovery branch, commits20a7b94
+(optional3browser CI + real refresh race) andf601c8f (native observer correction).
+PR6 remainsDraft909efe3 and both jobs passed run45287285963.
+
+First optional run45288551129 at20a7b94 spent over10minutes in browser-dependency
+installation. Cancelled/superseded explicitly before testing under the unsuitable
+original15minute ceiling; this is NOT a browser pass. Run logs retained by GitHub;
+CLI log-download endpoint returnedForbidden, so no lower-level cause is claimed.
+Raised only explicit browser_qa dispatch ceiling to30minutes; normal PR checks15,
+native build45 and actual native resource/expiry limits unchanged. No paid runner.
+Dispatch the corrected workflow; observe exact run/head and artifact before any
+Firefox/WebKit claim. PR7 ordinary hosted run45289950404 atf601c8f was in progress.
+Final hosted outcomes belong in PR7 description/checks; do not infer them here.
+
+Native follow-up remains a fresh current-package disposable desktop run using
+corrected startup observer and full IPC/resource/file/recovery gates, then concrete
+WebKit/JSC crash diagnosis. No unexecuted GUI/cgroup test may be called passing.
