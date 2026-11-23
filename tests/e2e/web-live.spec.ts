@@ -26,7 +26,8 @@ async function exportSource(page: Page): Promise<Buffer> {
   const actions = page
     .locator('#notes-details')
     .getByRole('button', { name: 'Document actions', exact: true });
-  if (!(await actions.isVisible())) {
+  const openedPanel = !(await actions.isVisible());
+  if (openedPanel) {
     await page.getByRole('button', { name: 'Open right panel' }).click();
   }
   await expect(actions).toBeVisible();
@@ -41,6 +42,9 @@ async function exportSource(page: Page): Promise<Buffer> {
   await page
     .getByRole('button', { name: 'Close Document actions', exact: true })
     .click();
+  if (openedPanel) {
+    await page.getByRole('button', { name: 'Close note details' }).click();
+  }
   return bytes;
 }
 
@@ -51,29 +55,30 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
-test('Live editing renders math and commits original LaTeX with exact bytes, undo and reload', async ({
+test('Preview reveals dollar delimiters at the caret and preserves exact LaTeX undo/reload', async ({
   page,
 }) => {
   const original =
     '\uFEFF# Live note\r\n\r\nA **bold** result and $x^2$.\n\r\n$$\r\ny^2\r\n$$\r\nTail 🧠\n';
   await importNote(page, original);
-  await command(page, 'Live editing');
-  await expect(page.locator('.source-editor .cm-live-strong')).toContainText(
-    'bold',
-  );
+  await command(page, 'Preview document');
+  await expect(page.locator('.rendered-editor strong')).toContainText('bold');
   await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
-  const equation = page.getByRole('dialog', { name: 'Edit equation' });
-  await equation.getByRole('textbox', { name: 'LaTeX source' }).fill('x^3 + 1');
+  const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await expect(inline).toHaveValue('$x^2$');
   await expect(
-    equation.getByLabel('Equation preview').locator('.katex'),
+    page.getByRole('dialog', { name: 'Edit equation' }),
+  ).toHaveCount(0);
+  await inline.fill('$x^3 + 1$');
+  await inline.press('Enter');
+  await expect(inline).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Edit inline equation: x^3 + 1' }),
   ).toBeVisible();
-  await equation
-    .getByRole('textbox', { name: 'LaTeX source' })
-    .press('Control+Enter');
-  await expect(equation).toHaveCount(0);
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('x^2', 'x^3 + 1')),
   );
+  await command(page, 'Edit source');
   await page.getByRole('textbox', { name: 'MDX source' }).press('Control+z');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await expect(page.locator('.web-shell')).toHaveAttribute(
@@ -84,31 +89,34 @@ test('Live editing renders math and commits original LaTeX with exact bytes, und
   expect(await exportSource(page)).toEqual(Buffer.from(original));
 });
 
-test('invalid LaTeX and cancelled math edits preserve the source; display equations are editable', async ({
+test('invalid or cancelled inline display math retains the original and mobile has no popup', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   const original = '# Equations\n\n$$\r\n\\frac{a}{b}\r\n$$\n\nEnd';
   await importNote(page, original);
-  await command(page, 'Live editing');
+  await command(page, 'Preview document');
   await page
     .getByRole('button', { name: 'Edit display equation: \\frac{a}{b}' })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Edit equation' });
-  const latex = dialog.getByRole('textbox', { name: 'LaTeX source' });
-  await latex.fill('\\unknowncommand');
-  await expect(dialog.getByRole('alert')).toBeVisible();
+  const latex = page.getByRole('textbox', { name: 'Display LaTeX source' });
+  await expect(latex).toHaveValue('$$\n\\frac{a}{b}\n$$');
   await expect(
-    dialog.getByRole('button', { name: 'Apply equation' }),
-  ).toBeDisabled();
+    page.getByRole('dialog', { name: 'Edit equation' }),
+  ).toHaveCount(0);
+  await latex.fill('$$\n\\unknowncommand\n$$');
+  await latex.press('Control+Enter');
+  await expect(
+    page.locator('.rendered-math-error[role="alert"]'),
+  ).toBeVisible();
   await latex.press('Escape');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await page
     .getByRole('button', { name: 'Edit display equation: \\frac{a}{b}' })
     .click();
-  await dialog
-    .getByRole('textbox', { name: 'LaTeX source' })
-    .fill('\n\\frac{a+1}{b}\n');
-  await dialog.getByRole('button', { name: 'Apply equation' }).click();
+  const valid = page.getByRole('textbox', { name: 'Display LaTeX source' });
+  await valid.fill('$$\n\\frac{a+1}{b}\n$$');
+  await valid.press('Control+Enter');
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('\\frac{a}{b}', '\\frac{a+1}{b}')),
   );
@@ -131,7 +139,7 @@ test('source deletion and undo restore the original mixed line endings', async (
   expect(await exportSource(page)).toEqual(Buffer.from(original));
 });
 
-for (const mode of ['Edit source', 'Live editing']) {
+for (const mode of ['Edit source']) {
   test(`${mode} retains composed replacement through rendering and exact export`, async ({
     page,
   }) => {

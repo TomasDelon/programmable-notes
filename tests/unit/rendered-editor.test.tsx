@@ -37,7 +37,6 @@ function propsFor(source: string): Props {
     apply: vi.fn(() => true),
     undo: vi.fn(),
     redo: vi.fn(),
-    openMath: vi.fn(),
     openSource: vi.fn(),
     onPendingChange: vi.fn(),
   };
@@ -163,12 +162,17 @@ describe('rendered editor host transaction boundary', () => {
     });
     expect(equations).toHaveLength(2);
     fireEvent.click(equations[1]!);
-    expect(props.openMath).toHaveBeenCalledWith(
-      accepted,
-      expect.objectContaining({
-        from: accepted.lastIndexOf('$x$'),
-        originalOuter: '$x$',
-      }),
+    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
+    expect(field).toHaveValue('$x$');
+    const before = accepted;
+    fireEvent.change(field, { target: { value: '$x^2$' } });
+    fireEvent.keyDown(field, { key: 'Enter' });
+    expect(props.apply).toHaveBeenLastCalledWith(
+      before,
+      before.slice(0, before.lastIndexOf('$x$')) +
+        '$x^2$' +
+        before.slice(before.lastIndexOf('$x$') + 3),
+      false,
     );
   });
 

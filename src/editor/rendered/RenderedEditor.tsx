@@ -31,7 +31,11 @@ import { addRowAfter, goToNextCell, tableEditing } from 'prosemirror-tables';
 import katex from 'katex';
 import { assetBlob } from '../../assets/catalog';
 import type { LinkResolution } from '../../links';
-import { collectLiveMath, type MathSpan } from '../math/mathSource';
+import {
+  collectLiveMath,
+  planMathReplacement,
+  type MathSpan,
+} from '../math/mathSource';
 import { renderedSchema } from './schema';
 import {
   parseRenderedSource,
@@ -60,7 +64,6 @@ interface Props {
   apply: (expected: string, next: string, typing: boolean) => boolean;
   undo: () => void;
   redo: () => void;
-  openMath: (source: string, span: MathSpan) => void;
   openSource: (offset: number, source: string) => void;
   openNote?: (id: string) => void;
   onPendingChange?: (pending: boolean) => void;
@@ -88,6 +91,7 @@ export function RenderedEditor(props: Props) {
   const [unappliedText, setUnappliedText] = useState<string | null>(null);
   const [blockType, setCurrentBlockType] = useState('paragraph');
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
+  const [mathEditing, setMathEditing] = useState(false);
   const linkSelection = useRef<{
     from: number;
     to: number;
@@ -96,7 +100,7 @@ export function RenderedEditor(props: Props) {
   useLayoutEffect(() => {
     latest.current = props;
   });
-  const hasPendingDraft = linkDraft !== null || unappliedText !== null;
+  const hasPendingDraft = linkDraft !== null || unappliedText !== null || mathEditing;
   useLayoutEffect(() => {
     latest.current.onPendingChange?.(hasPendingDraft);
   }, [hasPendingDraft]);
@@ -206,40 +210,261 @@ export function RenderedEditor(props: Props) {
       const found = raw ? source.indexOf(raw) : -1;
       return found < 0 ? 0 : found;
     }
+    // One active inline field at a time. A focused equation reveals its
+    // original Markdown dollars in place; the existing source transaction
+    // remains the sole authority for persistence and undo.
+    let activeMath: { commit: () => boolean; cancel: () => void } | null = null;
     function mathView(node: ProseNode): NodeView {
+      const display = node.type === nodes.math_block;
+      const wrapper = document.createElement(display ? 'div' : 'span');
+      wrapper.className = display
+        ? 'rendered-math-host rendered-math-host-block'
+        : 'rendered-math-host';
+      wrapper.contentEditable = 'false';
       const button = document.createElement('button');
       button.type = 'button';
-      button.contentEditable = 'false';
-      const display = node.type === nodes.math_block;
       button.className = `rendered-math${display ? ' rendered-math-block' : ''}`;
-      button.setAttribute(
-        'aria-label',
-        `Edit ${display ? 'display' : 'inline'} equation: ${String(node.attrs.value).trim()}`,
-      );
-      katex.render(String(node.attrs.value), button, {
-        displayMode: display,
-        throwOnError: false,
-        trust: false,
-        maxExpand: 1000,
-        maxSize: 30,
-        strict: 'ignore',
-      });
-      button.addEventListener('click', () => {
-        if (latest.current.disabled) return;
-        const spans = collectLiveMath(
+      let field: HTMLInputElement | HTMLTextAreaElement | null = null;
+      let span: MathSpan | null = null;
+      let snapshot: string | null = null;
+      let feedback: HTMLElement | null = null;
+
+      function renderEquation() {
+        button.setAttribute(
+          'aria-label',
+          `Edit ${display ? 'display' : 'inline'} equation: ${String(node.attrs.value).trim()}`,
+        );
+        katex.render(String(node.attrs.value), button, {
+          displayMode: display,
+          throwOnError: false,
+          trust: false,
+          maxExpand: 1000,
+          maxSize: 30,
+          strict: 'ignore',
+        });
+        wrapper.replaceChildren(button);
+      }
+      function close() {
+        if (!field) return;
+        field = null;
+        span = null;
+        snapshot = null;
+        feedback = null;
+        if (activeMath === actions) activeMath = null;
+        renderEquation();
+        setMathEditing(false);
+      }
+      function showError(reason: string) {
+        if (!feedback) return;
+        feedback.textContent = reason;
+        feedback.hidden = false;
+        wrapper.classList.add('rendered-math-invalid');
+      }
+      function commit(): boolean {
+        if (!field || !span || snapshot === null) return true;
+        if (latest.current.disabled) {
+          showError('Editing is unavailable. Your LaTeX text is retained.');
+          return false;
+        }
+        const original = span.originalOuter.replace(/\r\n?|\n/g, '\n');
+        const entered = field.value.replace(/\r\n?|\n/g, '\n');
+        if (entered === original) {
+          close();
+          return true;
+        }
+        const delimiters = display ? '$$' : '$';
+        if (
+          !entered.startsWith(delimiters) ||
+          !entered.endsWith(delimiters) ||
+          entered.length <= delimiters.length * 2 ||
+          (!display && (entered.startsWith('$$') || entered.endsWith('$$')))
+        ) {
+          showError(
+            `Keep the original ${delimiters} delimiters around the LaTeX.`,
+          );
+          return false;
+        }
+        const inner = entered.slice(delimiters.length, -delimiters.length);
+        try {
+          katex.renderToString(inner, {
+            displayMode: display,
+            throwOnError: true,
+            trust: false,
+            strict: 'ignore',
+            maxExpand: 1000,
+            maxSize: 30,
+          });
+        } catch (reason) {
+          showError(
+            reason instanceof Error
+              ? reason.message
+              : 'Invalid LaTeX expression.',
+          );
+          return false;
+        }
+        const planned = planMathReplacement(
           latest.current.source,
+          snapshot,
+          span,
+          inner,
           latest.current.path,
         );
-        const offset = sourceOffset(node);
-        const span =
-          spans.find((item) => item.from === offset) ??
-          spans.find(
-            (item) =>
-              item.originalInner.trim() === String(node.attrs.value).trim(),
+        if (!planned.ok) {
+          showError(planned.reason);
+          return false;
+        }
+        if (
+          planned.source !== snapshot &&
+          !latest.current.apply(snapshot, planned.source, false)
+        ) {
+          showError(
+            'The note changed or the edit could not be saved. Your LaTeX is retained.',
           );
-        if (span) latest.current.openMath(latest.current.source, span);
-      });
-      return { dom: button, stopEvent: () => true, ignoreMutation: () => true };
+          return false;
+        }
+        // The canonical CodeMirror transaction will refresh this NodeView.
+        // In the meantime keep the equation visually current.
+        node = node.type.create({ ...node.attrs, value: inner });
+        close();
+        return true;
+      }
+      function cancel() {
+        close();
+      }
+      const actions = { commit, cancel };
+      function activate() {
+        if (field || latest.current.disabled || activeMath) return;
+        const source = latest.current.source;
+        const math = collectLiveMath(source, latest.current.path);
+        const offset = sourceOffset(node);
+        const match =
+          math.find(
+            (candidate) =>
+              candidate.from === offset &&
+              candidate.kind === (display ? 'display' : 'inline'),
+          ) ??
+          math.find(
+            (candidate) =>
+              candidate.originalInner.trim() ===
+                String(node.attrs.value).trim() &&
+              math.filter(
+                (item) =>
+                  item.originalInner.trim() ===
+                  candidate.originalInner.trim(),
+              ).length === 1,
+          );
+        if (!match) return;
+        span = match;
+        snapshot = source;
+        const input = document.createElement(display ? 'textarea' : 'input');
+        if (display) {
+          const textarea = input as HTMLTextAreaElement;
+          textarea.rows = Math.max(
+            3,
+            match.originalOuter.split(/\r\n?|\n/).length,
+          );
+          textarea.spellcheck = false;
+        } else (input as HTMLInputElement).type = 'text';
+        input.className = display
+          ? 'rendered-math-source rendered-math-source-block'
+          : 'rendered-math-source';
+        input.setAttribute(
+          'aria-label',
+          display ? 'Display LaTeX source' : 'Inline LaTeX source',
+        );
+        input.setAttribute(
+          'aria-description',
+          'Edit the dollar-delimited LaTeX in place. Leave the field to render, or press Escape to cancel.',
+        );
+        input.value = match.originalOuter;
+        field = input;
+        const row = document.createElement('span');
+        row.className = 'rendered-math-controls';
+        const applyButton = document.createElement('button');
+        applyButton.type = 'button';
+        applyButton.textContent = 'Done';
+        applyButton.setAttribute('aria-label', 'Apply inline equation');
+        applyButton.addEventListener('pointerdown', (event) =>
+          event.preventDefault(),
+        );
+        applyButton.addEventListener('click', () => {
+          if (commit()) button.focus();
+        });
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.textContent = 'Cancel';
+        cancelButton.setAttribute('aria-label', 'Cancel inline equation');
+        cancelButton.addEventListener('pointerdown', (event) =>
+          event.preventDefault(),
+        );
+        cancelButton.addEventListener('click', () => {
+          cancel();
+          button.focus();
+        });
+        row.append(applyButton, cancelButton);
+        const message = document.createElement('span');
+        message.className = 'rendered-math-error';
+        message.setAttribute('role', 'alert');
+        message.hidden = true;
+        feedback = message;
+        wrapper.classList.remove('rendered-math-invalid');
+        wrapper.replaceChildren(input, row, message);
+        activeMath = actions;
+        setMathEditing(true);
+        input.addEventListener('input', () => {
+          wrapper.classList.remove('rendered-math-invalid');
+          if (feedback) feedback.hidden = true;
+        });
+        input.addEventListener('keydown', (event) => {
+          const key = event as KeyboardEvent;
+          // IME edits must not be interrupted by Enter or Escape.
+          if (key.isComposing) return;
+          if (key.key === 'Escape') {
+            key.preventDefault();
+            cancel();
+            button.focus();
+          } else if (
+            key.key === 'Enter' &&
+            (!display || key.ctrlKey || key.metaKey)
+          ) {
+            key.preventDefault();
+            if (commit()) button.focus();
+          }
+          key.stopPropagation();
+        });
+        input.addEventListener('blur', (event) => {
+          if (!field) return;
+          const target = (event as FocusEvent).relatedTarget;
+          if (target instanceof Node && wrapper.contains(target)) return;
+          commit();
+        });
+        input.focus();
+        const innerEnd = input.value.length - (display ? 2 : 1);
+        input.setSelectionRange(innerEnd, innerEnd);
+      }
+      button.addEventListener('click', activate);
+      renderEquation();
+      return {
+        dom: wrapper,
+        stopEvent: () => true,
+        ignoreMutation: () => true,
+        selectNode: activate,
+        deselectNode: () => {
+          if (field && document.activeElement !== field) commit();
+        },
+        update: (next) => {
+          if (next.type !== node.type) return false;
+          node = next;
+          if (!field) renderEquation();
+          return true;
+        },
+        destroy: () => {
+          if (field && activeMath === actions) {
+            activeMath = null;
+            setMathEditing(false);
+          }
+        },
+      };
     }
     function listItemView(
       node: ProseNode,
@@ -602,7 +827,7 @@ export function RenderedEditor(props: Props) {
       acceptedSource = next;
     };
     const sourceChanged = () => {
-      if (!editor.composing) onSourceChange();
+      if (!editor.composing && !activeMath) onSourceChange();
     };
     let compositionFrame: number | null = null;
     const afterComposition = () => {

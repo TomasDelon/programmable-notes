@@ -158,9 +158,13 @@ test('table cells and equations can be edited in the rendered document', async (
   await editor(page)
     .getByRole('button', { name: 'Edit inline equation: x^2' })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Edit equation' });
-  await dialog.getByRole('textbox', { name: 'LaTeX source' }).fill('x^3 + 1');
-  await dialog.getByRole('button', { name: 'Apply equation' }).click();
+  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await expect(latex).toHaveValue('$x^2$');
+  await expect(
+    page.getByRole('dialog', { name: 'Edit equation' }),
+  ).toHaveCount(0);
+  await latex.fill('$x^3 + 1$');
+  await latex.press('Enter');
   expect(await exportedSource(page)).toBe(
     afterCell.replace('$x^2$', '$x^3 + 1$'),
   );
@@ -179,8 +183,8 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   await editor(page)
     .getByRole('button', { name: 'Edit inline equation: x^2' })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Edit equation' });
-  await dialog.getByRole('textbox', { name: 'LaTeX source' }).fill('x^7 + 1');
+  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await latex.fill('$x^7 + 1$');
 
   await other.getByRole('button', { name: 'Open right panel' }).click();
   await other
@@ -213,16 +217,14 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
     }
   });
   expect(refreshReads).toBe(0);
-  await expect(
-    dialog.getByRole('textbox', { name: 'LaTeX source' }),
-  ).toHaveValue('x^7 + 1');
+  await expect(latex).toHaveValue('$x^7 + 1$');
   await expect(
     page.getByRole('textbox', { name: 'Document title' }),
   ).toHaveValue('Editing');
 
   // Applying the local draft preserves it and reports the genuine concurrent
   // content conflict, instead of silently overwriting the remote Trash change.
-  await dialog.getByRole('button', { name: 'Apply equation' }).click();
+  await latex.press('Enter');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -446,4 +448,24 @@ test('Shift+Enter inserts a real Markdown hard break within the paragraph', asyn
   await page.reload();
   await expect(editor(page).locator('p > br')).toHaveCount(1);
   await expect(editor(page)).toContainText('Second line.');
+});
+
+test('clicking outside a focused inline equation commits its dollar-delimited source without a popup', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const source = '# Math in context\n\nTry $x^2$ here.\n';
+  await importNote(page, source);
+  await editor(page)
+    .getByRole('button', { name: 'Edit inline equation: x^2' })
+    .click();
+  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await expect(latex).toHaveValue('$x^2$');
+  await latex.fill('$x^3$');
+  await editor(page).getByRole('heading', { name: 'Math in context' }).click();
+  await expect(latex).toHaveCount(0);
+  await expect(
+    editor(page).getByRole('button', { name: 'Edit inline equation: x^3' }),
+  ).toBeVisible();
+  expect(await exportedSource(page)).toBe(source.replace('x^2', 'x^3'));
 });

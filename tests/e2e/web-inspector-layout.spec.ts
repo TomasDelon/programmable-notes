@@ -76,3 +76,14 @@ test('right inspector keeps attachments accessible on narrow viewports', async (
     )
     .toBe(true);
 });
+
+test('editor exposes exactly Source and Preview without an independent Live mode', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const controls = page.locator('#mode-island-actions');
+  await expect(controls.locator('button')).toHaveCount(2);
+  await expect(controls.locator('button').nth(0)).toHaveText('Source');
+  await expect(controls.locator('button').nth(1)).toHaveText('Preview');
+  await expect(controls.locator('button', { hasText: 'Live' })).toHaveCount(0);
+});

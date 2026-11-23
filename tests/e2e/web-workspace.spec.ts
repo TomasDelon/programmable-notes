@@ -222,12 +222,12 @@ test('an idle tab can switch editing modes without overwriting a newer saved not
   await ready(other);
   await edit(page, 'New text published by the first tab');
   await saved(page);
-  await command(other, 'Live editing');
+  await command(other, 'Preview document');
   await saved(other);
   await expect(other.locator('.web-storage-banner')).toHaveCount(0);
-  await expect(other.getByRole('textbox', { name: 'MDX source' })).toHaveText(
-    'New text published by the first tab',
-  );
+  await expect(
+    other.getByRole('textbox', { name: 'Editable document' }),
+  ).toContainText('New text published by the first tab');
   expect(await selectedSavedSource(page)).toBe(
     'New text published by the first tab',
   );
