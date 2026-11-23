@@ -107,7 +107,10 @@ separate equation dialog is used. `Enter` applies inline edits;
 attempts to apply. `Escape` or **Cancel** discards the draft. Invalid LaTeX,
 removed delimiters or stale source revisions keep the editable draft and show
 an error instead of overwriting the source. Resolve an unfinished draft before
-switching documents, exporting or restoring. Unapplied drafts are memory-only
+switching documents, exporting, restoring or changing the surrounding document.
+If validation fails, nearby deletion and formatting cannot discard the equation;
+finish it or cancel explicitly before continuing. Cancelling a stale field shows
+the latest canonical source again. Unapplied drafts are memory-only
 and are not included in saved notes or backups.
 
 The React playground provides an interactive counter. Editing ordinary Markdown

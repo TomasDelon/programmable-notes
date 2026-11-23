@@ -740,7 +740,13 @@ export function RenderedEditor(props: Props) {
         return true;
       },
       dispatchTransaction: (transaction) => {
-        if (transaction.docChanged && latest.current.disabled) return;
+        if (transaction.docChanged && (latest.current.disabled || activeMath)) {
+          // A failed blur leaves the original equation draft alive. A nearby
+          // edit (including Select All / Delete or a browser DOM mutation)
+          // must not destroy its NodeView and silently discard that text.
+          editor.updateState(editor.state);
+          return;
+        }
         const nextState = editor.state.apply(transaction);
         if (transaction.docChanged) {
           try {
@@ -842,7 +848,7 @@ export function RenderedEditor(props: Props) {
     props.commandsRef.current = {
       focus: () => editor.focus(),
       insertText: (text) => {
-        if (latest.current.disabled) return false;
+        if (latest.current.disabled || activeMath) return false;
         const before = acceptedSource;
         const parsed = parseRenderedSource(text, latest.current.path);
         editor.dispatch(
@@ -858,7 +864,7 @@ export function RenderedEditor(props: Props) {
     // Expose commands only within this component, never on window or iframe APIs.
     toolbar.current = {
       run: (name) => {
-        if (latest.current.disabled) return;
+        if (latest.current.disabled || activeMath) return;
         const state = editor.state;
         const dispatch = editor.dispatch.bind(editor);
         const commands: Record<string, Command> = {
@@ -919,6 +925,12 @@ export function RenderedEditor(props: Props) {
         editor.focus();
       },
       link: (href) => {
+        if (activeMath) {
+          setError(
+            'Finish or cancel the equation edit first. Your URL is retained.',
+          );
+          return;
+        }
         if (!/^(https?:\/\/|mailto:|attachment:)/i.test(href)) {
           setError('Use an https, http, mailto or attachment link.');
           return;
@@ -969,7 +981,9 @@ export function RenderedEditor(props: Props) {
   } | null>(null);
   useLayoutEffect(() => {
     view.current?.dom.dispatchEvent(new Event('pn-source-change'));
-  }, [props.source]);
+    // Source refreshes are deferred while a math field owns an uncommitted
+    // draft. Closing it must also flush a revision received in the meantime.
+  }, [props.source, mathEditing]);
   useEffect(() => {
     view.current?.setProps({ editable: () => !latest.current.disabled });
     for (const refresh of imageRefreshers.current) refresh();

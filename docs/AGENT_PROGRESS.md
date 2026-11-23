@@ -2354,3 +2354,32 @@ Need final full check with expanded eight tooling controls, retain red/green+
 browser evidence, read-only re-review, commit/push and observe exact final CI.
 Root project license/history/IP decisions remain; no visibility/history/merge/
 release/readiness change. Production permissions/resource limits unchanged.
+
+## 2026-11-23 — recovered actual PR #6 and corrected equation draft loss
+
+The clean old `fff0e7e` workspace/branch is preserved. Actual main is `8516af3`;
+current draft PR #6 recovery branch was `c3906da`. API verified both jobs in
+run45281294302 SUCCESS at that exact head. Full reinstall/baseline production
+check passed270unit/84Chromium. Existing web Source + editable Preview,
+in-place math, isolated React islands and absent Favorites retained.
+
+Independent persistence/sourceBridge review found no established new blocker.
+Actual RED browser reproduced invalid equation field lost by nearby SelectAll/
+Delete; unit reproduced programmatic insertion allowed during that draft. Minimal
+transaction/command guards now retain it and reconcile DOM. Another RED proved
+cancel did not flush source revisions deferred during the field; effect now
+reconciles on close. Read-only fix review found existing link URL could clear
+on blocked dispatch; RED regression reproduced, early guard retains URL.
+
+Full corrected npmcheck PASS273unit/85Chromium plus8tooling/2scanner-skips.
+Separately all10tooling PASS/no skips with pinned scanner; history/archive
+scanner zero additional findings. Git noreply author+committer verified without
+printing addresses. Full report/roadmap: recovery/2026-11-23-resumed-engineering-audit.md.
+
+Firefox download succeeded but focused17 tests all FAILED AT LAUNCH (profile
+folder unavailable); workspaceTMPDIR one-case retry same. WebKit native libraries
+missing; dependency-install approval cancelled. No sandbox bypass or passing
+cross-browser claim. Preserve these failures. Next safe task: opt-in hosted Ubuntu
+cross-browser validation on a separate branch, avoiding duplicate native build.
+No fresh native GUI claim; intermittent JSC/startup, current-package acceptance,
+distribution attributions/root licensing remain. Do not merge/deploy/release.

@@ -122,6 +122,39 @@ test('invalid or cancelled inline display math retains the original and mobile h
   );
 });
 
+test('unfinished invalid math survives document-wide deletion until explicitly cancelled', async ({
+  page,
+}) => {
+  const original =
+    '\uFEFF# Keep this\r\n\r\nBefore $x^2$ after.\r\n\r\nTail 🧠\n';
+  await importNote(page, original);
+  await command(page, 'Preview document');
+  await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
+  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await field.fill('$\\unknowncommand$');
+  await field.press('Enter');
+  await expect(
+    page.locator('.rendered-math-error[role="alert"]'),
+  ).toBeVisible();
+
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view.getByRole('heading', { name: 'Keep this' }).click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Backspace');
+  await expect(field).toHaveValue('$\\unknowncommand$');
+  await expect(view.getByRole('heading', { name: 'Keep this' })).toBeVisible();
+
+  await field.press('Escape');
+  expect(await exportSource(page)).toEqual(Buffer.from(original));
+  // Cancelling the field must release the guard, rather than freezing editing.
+  await view.getByRole('heading', { name: 'Keep this' }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' safe');
+  expect(await exportSource(page)).toEqual(
+    Buffer.from(original.replace('Keep this', 'Keep this safe')),
+  );
+});
+
 test('source deletion and undo restore the original mixed line endings', async ({
   page,
 }) => {

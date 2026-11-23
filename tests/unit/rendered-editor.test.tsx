@@ -142,6 +142,52 @@ describe('rendered editor host transaction boundary', () => {
     expect(props.apply).not.toHaveBeenCalled();
   });
 
+  it('refuses inserted content while an invalid equation draft is pending', () => {
+    const props = propsFor('Keep $x$ here.');
+    render(<RenderedEditor {...props} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit inline equation: x' }),
+    );
+    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
+    fireEvent.change(field, { target: { value: '$\\unknowncommand$' } });
+    fireEvent.keyDown(field, { key: 'Enter' });
+    act(() => {
+      expect(props.commandsRef.current!.insertText('Replacement.')).toBe(false);
+    });
+    expect(props.apply).not.toHaveBeenCalled();
+    expect(field).toHaveValue('$\\unknowncommand$');
+    expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
+    fireEvent.keyDown(field, { key: 'Escape' });
+    act(() => {
+      expect(props.commandsRef.current!.insertText('Allowed.')).toBe(true);
+    });
+    expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('reconciles a deferred source revision after cancelling an equation draft', () => {
+    const props = propsFor('Before $x$.');
+    const ui = render(<RenderedEditor {...props} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit inline equation: x' }),
+    );
+    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
+    fireEvent.change(field, { target: { value: '$x^2$' } });
+    ui.rerender(<RenderedEditor {...props} source="After $y$." />);
+    expect(field).toHaveValue('$x^2$');
+    fireEvent.keyDown(field, { key: 'Enter' });
+    expect(field).toHaveValue('$x^2$');
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(props.apply).not.toHaveBeenCalled();
+    fireEvent.keyDown(field, { key: 'Escape' });
+    expect(
+      screen.getByRole('button', { name: 'Edit inline equation: y' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('textbox', { name: 'Editable document' }),
+    ).toHaveTextContent('After');
+    expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
+  });
+
   it('opens the second identical equation at its current exact offset after preceding text is inserted', () => {
     const source = 'Original paragraph.\r\n\r\nFirst $x$ and second $x$.\n';
     const props = propsFor(source);
@@ -212,6 +258,34 @@ describe('rendered editor host transaction boundary', () => {
     expect(props.apply).not.toHaveBeenCalled();
     ui.unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-fixture');
+  });
+
+  it('retains an existing link URL when an invalid equation prevents its application', () => {
+    const props = propsFor('Link target and $x$.');
+    render(<RenderedEditor {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Insert link' }));
+    const url = screen.getByRole('textbox', { name: 'Link URL' });
+    fireEvent.change(url, {
+      target: { value: 'https://example.org/retained' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit inline equation: x' }),
+    );
+    const math = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
+    fireEvent.change(math, { target: { value: '$\\unknowncommand$' } });
+    fireEvent.keyDown(math, { key: 'Enter' });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
+    expect(screen.getByRole('textbox', { name: 'Link URL' })).toHaveValue(
+      'https://example.org/retained',
+    );
+    expect(math).toHaveValue('$\\unknowncommand$');
+    expect(props.apply).not.toHaveBeenCalled();
+    fireEvent.keyDown(math, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
+    expect(
+      screen.queryByRole('textbox', { name: 'Link URL' }),
+    ).not.toBeInTheDocument();
+    expect(props.apply).toHaveBeenCalledOnce();
   });
 
   it('retains a link draft and refuses stale selection coordinates after an external source update', () => {
