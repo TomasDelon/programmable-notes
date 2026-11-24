@@ -16,8 +16,10 @@ synthetic scanner controls and executes `npm run check` with `PN_ALL_BROWSERS=1`
 It retains the `playwright-results` HTML report on success or failure for seven
 days. Check the exact run head SHA and individual test results before claiming
 coverage. A queued/started job or green compilation is not browser acceptance.
-The optional three-engine dispatch has a 30-minute ceiling: the first hosted
-attempt spent over ten minutes installing dependencies before any browser test.
+The optional three-engine dispatch has a 45-minute ceiling. A 30-minute attempt
+spent 26m18s installing dependencies, then timed out during checks; the higher
+outer job ceiling gives the unchanged tests time to execute. This does not
+extend individual test timeouts or weaken assertions.
 Normal Chromium PR/push checks retain their original 15-minute ceiling. Neither
 setting changes the native application's resource or service lifetime limits.
 
@@ -59,3 +61,28 @@ jobs for recovery base `909efe3` passed in
 Hosted three-browser results are recorded after dispatch; Firefox's local launch
 failure and missing WebKit libraries are retained in the
 [recovery audit](recovery/2026-11-23-resumed-engineering-audit.md).
+
+## Latest executed checkpoints
+
+At `21b3a48`, [ordinary CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45290649176)
+and the [three-engine dispatch](https://github.com/TomasDelon/programmable-notes/actions/runs/45290660173)
+both passed. The [retained report](https://github.com/TomasDelon/programmable-notes/actions/runs/45290660173/artifacts/14874553610)
+is owner-accessible for seven days; this session's artifact/log download API
+returned Forbidden, so no downloaded per-engine count is claimed.
+
+At the nonce correction `3cf7f28`, [ordinary CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45299830820)
+passed both jobs. The separate [three-engine dispatch](https://github.com/TomasDelon/programmable-notes/actions/runs/45300006229)
+exceeded 30 minutes: browser dependency installation alone ran from 00:48:02 to
+01:14:20 UTC, then `npm run check` was cancelled at 01:17:45. GitHub's annotation
+explicitly reports the job ceiling. It is **incomplete**, not a new Firefox or
+WebKit pass. No application failure is inferred without its unavailable logs.
+The preceding successful three-engine run applies to its earlier commit; the
+nonce regression additionally passed locally in Chromium and real native WebKitGTK.
+
+The timed-out dispatch was retried once under its existing 30-minute definition.
+Attempt2 also exceeded that ceiling: dependency installation ran from 01:23:36
+until cancellation at 01:53:27 UTC; `npm run check` was not reached. Both attempts
+are incomplete and GitHub's annotations explicitly identify the 30-minute ceiling. The updated workflow gives only future
+explicit browser-only dispatches 45 minutes. Ordinary PR checks remain 15 minutes,
+native-check 45 minutes and actual application security limits unchanged. This
+avoids repeatedly downloading dependencies only to cancel the test phase.
