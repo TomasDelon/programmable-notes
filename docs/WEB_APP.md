@@ -406,3 +406,8 @@ moving the document or taking focus. Details opens an optional dialog. If an edi
 is refused, **Review draft** exposes its retained source; **Download retained
 source** preserves exact bytes. Copy or download before explicitly discarding;
 your accepted source remains unchanged. Keep regular workspace backups.
+
+For responsiveness, documents containing a single run of more than 8,192 spaces
+or tabs use the existing Source-only fallback. Their exact bytes remain editable
+and exportable in Source. An in-progress Preview edit crossing the work budget
+is retained behind Review draft; download it before discarding or changing modes.

@@ -18,3 +18,10 @@ complete; found prefix/whitespace regressions were reproduced and corrected.
 Next gate: push reviewed commits, create a stacked draft PR, verify hosted CI and
 cross-browser coverage, then promote and test the live Pages beta. Keep main and
 all draft readiness/release state unchanged.
+
+Pre-promotion review found and reproduced quadratic internal whitespace work.
+A follow-up removes the new matcher and extends the existing visual work budget
+for the independently slow upstream parser. Full local gates passed again:
+336 unit, 14 tooling, 97 Chromium and 4 Pages-policy cases. New browser coverage
+verifies exact recovery downloads and safe Source-only editing. Re-run hosted
+gates on the follow-up commit; do not promote the earlier candidate.

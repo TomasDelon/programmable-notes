@@ -43,7 +43,7 @@ trailing space preserves sibling `+` list markers and mixed physical endings.
 Only emitted space/tab references and verified punctuation escapes get decoded
 offset maps; unknown entity forms retain the existing conservative fallback.
 
-## Final local candidate
+## Initial local candidate (before host-work review)
 
 `npm run check` exited 0 with Node 24.22.1, npm 11.9.0, system Chromium and two
 Playwright workers. Formatting, lint and strict TypeScript passed. All **333 unit
@@ -69,3 +69,33 @@ Independent read-only review identified extra prefix and nested whitespace cases
 they were reproduced and corrected. Hosted CI, multi-browser acceptance and live
 edge deployment are separate gates; their candidate identities and results are
 recorded in the draft PR before promotion. No native runtime result is claimed.
+
+## Follow-up host work review
+
+Before production promotion, a direct benchmark measured the newly added
+lookahead-based whitespace matcher at 754ms for 20,000 internal spaces and
+3,010ms for 40,000. A complete 100,000-space edit took 27,076ms. Replacing the
+matcher with one callback per run removed its quadratic retry pattern, but the
+upstream parser independently still took about 8,624ms on that case.
+
+The existing synchronous visual-analysis budget therefore adds a measured
+Source-only fallback for individual horizontal whitespace runs above 8,192
+characters. It does not discard or normalize source. Strict rebase checks refuse
+a visual candidate crossing the limit with an explicit work-budget diagnostic,
+retain the exact raw draft and leave the accepted source untouched. Source-only
+opening/edit/export and actual recovery-download behavior have browser coverage.
+This is a targeted work guard, not a universal host/parser resource-containment
+claim. Final follow-up results are recorded after execution.
+
+The complete follow-up `npm run check` exited 0: **336 unit tests / 43 files,
+14 tooling tests, 97 Chromium cases and 4 local Pages-policy cases**. Formatting,
+lint, TypeScript and a fresh production build passed. Browser tests exercised
+Source-only opening/editing/export and a real visual budget refusal, exact
+BOM/CRLF/JSX recovery download, explicit discard, unchanged accepted source and
+continued editing. The first hosted CI at `122b3ae` passed both check/native-check
+([run](https://github.com/TomasDelon/programmable-notes/actions/runs/45470881613));
+the follow-up revision requires its own hosted gates before promotion.
+
+Refused visual candidates remain in memory while the app stays open. Download
+the retained source before closing; this work does not add crash persistence for
+unapplied rich-text transactions. Accepted document persistence is unchanged.

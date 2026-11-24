@@ -708,3 +708,51 @@ for (const width of [1440, 820, 390]) {
     }
   });
 }
+
+test('excessive whitespace opens as exact Source and remains editable without synchronous visual parsing', async ({
+  page,
+}) => {
+  const source = '\uFEFFa' + ' '.repeat(20_000) + 'b\r\n';
+  await importNote(page, source);
+  await expect(editor(page).locator('.rendered-source-block')).toHaveCount(1);
+  await editor(page).getByRole('button', { name: 'Edit source block' }).click();
+  const raw = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(raw).toBeVisible();
+  expect(await exportedSource(page)).toBe(source);
+  await raw.press('Control+End');
+  await page.keyboard.insertText('Tail.');
+  expect(await exportedSource(page)).toBe(source + 'Tail.');
+});
+
+test('a visual work-budget refusal retains an exact downloadable draft until explicit discard', async ({
+  page,
+}) => {
+  const source =
+    '\uFEFFParagraph.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
+  const inserted = ' '.repeat(8193) + 'next';
+  await importNote(page, source);
+  const view = editor(page);
+  await view.getByText('Paragraph.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(inserted);
+  await expect(view).toContainText('Paragraph.');
+  await expect(view.locator('[role="alert"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review draft' }).click();
+  const modal = page.getByRole('dialog', { name: 'Retained edit' });
+  await expect(modal).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await modal.getByRole('button', { name: 'Download retained source' }).click();
+  const download = await pending;
+  expect(readFileSync((await download.path())!, 'utf8')).toBe(
+    source.replace('Paragraph.', 'Paragraph.' + inserted),
+  );
+  await expect(modal).toBeVisible();
+  await modal.getByRole('button', { name: 'Discard retained draft' }).click();
+  expect(await exportedSource(page)).toBe(source);
+  await view.getByText('Paragraph.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' Safe.');
+  expect(await exportedSource(page)).toBe(
+    source.replace('Paragraph.', 'Paragraph. Safe.'),
+  );
+});

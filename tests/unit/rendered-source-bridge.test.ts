@@ -62,6 +62,29 @@ function replace(
 }
 
 describe('rendered Markdown source bridge', () => {
+  it('reports an explicit work budget refusal while preserving the accepted source', () => {
+    const projection = parseRenderedSource('a b');
+    const state = EditorState.create({ doc: projection.doc });
+    const transaction = state.tr.insertText('a' + ' '.repeat(8193) + 'b', 1, 4);
+    const candidate = serializeRenderedChange(projection, transaction.doc);
+    expect(() =>
+      rebaseRenderedProjection(projection, transaction.doc, candidate),
+    ).toThrow('visual editing work budget');
+    expect(projection.mapping.source).toBe('a b');
+  });
+
+  it('handles a long internal whitespace run without retrying it at every offset', () => {
+    const projection = parseRenderedSource('a b');
+    const value = 'a' + ' '.repeat(100_000) + 'b';
+    const state = EditorState.create({ doc: projection.doc });
+    const transaction = state.tr.insertText(value, 1, 4);
+    const started = performance.now();
+    expect(serializeRenderedChange(projection, transaction.doc)).toBe(value);
+    // A generous host-work regression bound: the quadratic matcher previously
+    // took tens of seconds. Parsing has its own measured Source-only work budget.
+    expect(performance.now() - started).toBeLessThan(5000);
+  }, 10_000);
+
   it('keeps sibling list markers and mixed physical breaks after a trailing space is followed by text', () => {
     let projection = parseRenderedSource('+ one\r\n+ untouched\n');
     projection = replace(projection, 'one', 'one ');

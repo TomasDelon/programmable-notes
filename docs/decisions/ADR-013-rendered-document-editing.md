@@ -114,3 +114,16 @@ editor-owned recovery dialog; downloading its retained source preserves BOM and
 physical line endings. Copying the textarea may normalize line endings according
 to browser behavior. Downloading never replaces the accepted document, and the
 draft remains pending until explicitly discarded. Navigation guards remain active.
+
+### Measured synchronous whitespace work
+
+A follow-up review measured a quadratic trailing-space regex on long _internal_
+whitespace runs. Match each horizontal run once and inspect its following
+character in a callback. The serialization regression covers 100,000 internal
+spaces. This removes the new quadratic matcher; it is not a universal parser
+deadline. The upstream Markdown parser independently remained slow on that
+input, so the existing visual-analysis budget now treats runs above 8,192
+horizontal whitespace characters as Source-only before parsing. Exact source
+remains editable/exportable in Source. A visual candidate crossing that budget
+is refused with a specific reason and retained for explicit recovery; no
+original is overwritten. Ordinary whitespace and Markdown limits are unchanged.

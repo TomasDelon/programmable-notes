@@ -3,6 +3,7 @@ import {
   editableMarkdown,
   markdownBlocks,
   patchMarkdown,
+  visualAnalysisLimited,
 } from '../../src/editor/markdownEdits';
 
 it('limits patches to literal root paragraphs and preserves surrounding bytes', () => {
@@ -451,4 +452,12 @@ it('keeps quote-only density and over-size documents as exact whole-source fallb
     expect(editableMarkdown(source)).toEqual([]);
     expect(markdownBlocks(source)).toEqual([{ from: 0, to: source.length }]);
   }
+});
+
+it('keeps excessive horizontal whitespace on the Source-only path before synchronous parsing', () => {
+  expect(visualAnalysisLimited('a' + ' '.repeat(8192) + 'b')).toBe(false);
+  expect(visualAnalysisLimited('a' + ' '.repeat(8193) + 'b')).toBe(true);
+  const source = 'a' + ' '.repeat(20_000) + 'b';
+  expect(editableMarkdown(source)).toEqual([]);
+  expect(markdownBlocks(source)).toEqual([{ from: 0, to: source.length }]);
 });

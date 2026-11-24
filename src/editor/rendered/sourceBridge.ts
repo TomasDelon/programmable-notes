@@ -10,6 +10,7 @@ import {
   type SyntaxNode,
 } from '../math/mathSource';
 import { renderedSchema as schema } from './schema';
+import { visualAnalysisLimited } from '../markdownEdits';
 
 interface AstNode extends SyntaxNode {
   children?: AstNode[];
@@ -726,9 +727,17 @@ const escapedInline = (value: string) =>
 // CommonMark discards spaces at a line end. Encode these authored characters
 // rather than weakening reparse equality or inserting invisible placeholders.
 const escapeTrailingSpaces = (value: string, atEnd = true) =>
-  value.replace(atEnd ? /[ \t]+(?=[\r\n]|$)/g : /[ \t]+(?=[\r\n])/g, (part) =>
-    [...part].map((char) => (char === ' ' ? '&#32;' : '&#9;')).join(''),
-  );
+  value.replace(/[ \t]+/g, (part, offset: number) => {
+    const end = offset + part.length;
+    if (
+      value[end] !== '\r' &&
+      value[end] !== '\n' &&
+      !(atEnd && end === value.length)
+    )
+      return part;
+    return [...part].map((char) => (char === ' ' ? '&#32;' : '&#9;')).join('');
+  });
+
 function escapedText(value: string, atEnd = true): string {
   return escapeTrailingSpaces(escapedPrefixes(escapedInline(value)), atEnd);
 }
@@ -993,6 +1002,10 @@ export function rebaseRenderedProjection(
   newDoc: ProseMirrorNode,
   source: string,
 ): RenderedProjection {
+  if (visualAnalysisLimited(source))
+    throw new Error(
+      'This change exceeds the visual editing work budget. Your accepted source is unchanged. Review the retained draft before continuing in Source.',
+    );
   const parsed = parseRenderedSource(source, previous.mapping.path);
   const ranges = new Map<ProseMirrorNode, RenderedSourceRange>();
   const texts = new Map<ProseMirrorNode, TextRange[]>();
