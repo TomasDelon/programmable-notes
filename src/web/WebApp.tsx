@@ -1395,6 +1395,17 @@ function WorkspaceApp({
         ?.scrollIntoView({ block: 'nearest' });
   }, [commandIndex, commandOpen]);
 
+  useEffect(() => {
+    if (offline.error)
+      notify({
+        id: 'app-offline',
+        tone: 'error',
+        persistent: true,
+        message: 'Offline access needs attention',
+        detail: offline.error,
+      });
+    else dismiss('app-offline');
+  }, [offline.error, notify, dismiss]);
   const latestActions = useRef({ model, canLeaveDraft, preview, switchMode });
   useLayoutEffect(() => {
     latestActions.current = { model, canLeaveDraft, preview, switchMode };
@@ -2478,7 +2489,7 @@ function WorkspaceApp({
                         void model
                           .saveNow()
                           .then((saved) => {
-                            if (saved) activateUpdate();
+                            if (saved) return activateUpdate(model.saveNow);
                             else
                               setToast(
                                 'Save your workspace before applying the update.',

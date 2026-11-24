@@ -162,3 +162,36 @@ This is not yet proof of the repeated Firefox result; hosted repetition follows.
 The `8a58afa` normal native-check passed, while check failed the diagnostic
 helper's caught-error lint rule. The helper now preserves the original exception
 as `cause`; full formatting/lint/type checks passed in the same final local run.
+
+## Full matrix and worker-update follow-up
+
+At `df71f64`, mandatory check/native-check passed
+([run 45478613551](https://github.com/TomasDelon/programmable-notes/actions/runs/45478613551)).
+Zero-retry Firefox diagnostics passed18/18
+([run 45478608140](https://github.com/TomasDelon/programmable-notes/actions/runs/45478608140),
+[artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/45478608140/artifacts/14961386726)).
+Actual candidate `5465a2cd.programmable-notes.pages.dev` passed12/12 in all3
+([run 45479037354](https://github.com/TomasDelon/programmable-notes/actions/runs/45479037354)).
+
+Full all3 CI succeeded
+([run 45479033338](https://github.com/TomasDelon/programmable-notes/actions/runs/45479033338),
+[screenshots/report](https://github.com/TomasDelon/programmable-notes/actions/runs/45479033338/artifacts/14961897321)):
+290 browser cases passed on the first attempt, one WebKit service-worker update
+case was flaky (two activation-state failures before passing), then all12
+Pages-policy cases passed. This is not reported as a zero-retry full matrix.
+The input/notification/recovery cases had no remaining failure in that run.
+
+The updater formerly reloaded on controllerchange, before activation completion.
+A new barrier requires both completed activation and page ownership, then drains
+and verifies saving again immediately before reload. Five unit regressions cover
+both event orders, unconfirmed-save retry, timeout and late-save suppression.
+Four ordering/failure tests failed before the change and allfive passed afterward.
+Independent read-only review found no actionable issue. The optional zero-retry
+diagnostics now include the real worker update case without modifying its worker
+fixture or reducing mandatory CI checks.
+
+The complete local check after this correction exited0: **343 unit / 44files,
+14 tooling, 97 Chromium and4 Pages-policy cases**. The actual update preserved
+source, title, theme, mode and persisted workspace through reload. Pages build
+fingerprint: `703383e3cd38e6f2`. Hosted WebKit repetition remains a separate gate
+before production promotion.

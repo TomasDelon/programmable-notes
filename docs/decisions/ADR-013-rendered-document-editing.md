@@ -142,3 +142,19 @@ obsolete prop echoes before reconciliation. Current external snapshots, exact
 undo/redo and existing compare-and-swap validation remain unchanged. The witness
 grants no edit, storage or IPC authority and is never passed to document code.
 Browser repetition remains required to verify the observed Firefox failure.
+
+### Complete worker activation before app reload
+
+Cross-browser acceptance exposed WebKit remaining in `activating` after reload.
+`controllerchange` can precede completion of the activation event and its
+`waitUntil` work. The editor's explicit update action now waits for both the
+selected worker's `activated` state and control of the page, then verifies a fresh
+completed workspace save before reloading. The update promise stays in flight
+through these stages; raw edits arriving during activation are covered by the
+final save drain and existing unload guards.
+
+Attempts are deduplicated, listeners/timers are cleaned up, and a 15-second
+activation deadline leaves the current workspace open. A late save/event after
+failure cannot reload the page. An activated worker is retained for an explicit
+retry if persistence was not confirmed. No worker, origin, cache or document
+permission is relaxed; document content still never enters the app asset cache.

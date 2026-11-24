@@ -40,3 +40,10 @@ witness vetoes those echoes without relaxing CAS or history checks. Affected
 22 unit tests passed, independent review found no issue, and the full local run
 passed338unit/14tooling/97Chromium/4Pages. Next gate: repeat Firefox on the new
 commit, then all3 and actual edge promotion. The earlier17/18 run remains failed.
+
+The freshness correction passed18/18 zero-retry Firefox and12/12 actual candidate
+checks in all3 browsers. Fullall3 succeeded with one unrelated WebKit worker-update
+flake; all editor cases passed. Fixed premature reload before activation finishes,
+added five update/save/deadline unit regressions and repeated the full local check:
+343unit/14tooling/97Chromium/4Pages passed. Next: zero-retry all3 diagnostics now
+including real worker update, current mandatory CI and fresh edge acceptance.
