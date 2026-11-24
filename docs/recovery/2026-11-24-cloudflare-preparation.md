@@ -70,3 +70,23 @@ procedure and reproducible commands are in [the setup guide](../CLOUDFLARE_PAGES
 GitHub checks for this new commit and any deployment branch promotion must be
 verified separately before owner setup. Complete-history/archive secret scan
 passed before commit and is required again before pushing the new history.
+
+## First real deployment observation
+
+The owner deployed commit `73b3b6e` and supplied
+`https://programmable-notes.pages.dev/`. Live three-browser dispatch
+[45442020674](https://github.com/TomasDelon/programmable-notes/actions/runs/45442020674)
+failed; its artifact was retained, but both normal and escalated downloads of
+GitHub logs/artifacts return proxy Forbidden in this cloud environment. Direct
+site HTTP also returns proxy CONNECT403; Playwright's direct lookup reports
+EAI_AGAIN, including outside the local sandbox. Those infrastructure failures
+are not evidence of the site's actual behavior.
+
+Enable Playwright's standard GitHub reporter alongside list/HTML so actual
+failure details are available as check annotations through the accessible API.
+A local failing network probe verified the annotation includes the failing test,
+line and actual error. Keep deployed-check concurrency separate from baseline
+build checks so diagnosing an existing deployment cannot cancel its candidate's
+native/browser gates. No assertion or sandbox policy is changed. Full local
+check passed again (287 unit, 14 tooling, 87 baseline + 3 hosting Chromium cases).
+The deployed failure's cause is still undiagnosed at this checkpoint.

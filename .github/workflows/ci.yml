@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.deployment_url && 'deployment' || 'build' }}
   cancel-in-progress: true
 
 jobs:

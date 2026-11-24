@@ -21,6 +21,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['list'],
+        ['github'],
         [
           'html',
           { outputFolder: 'playwright-report/cloudflare', open: 'never' },
