@@ -3,10 +3,44 @@ import { readFileSync } from 'node:fs';
 
 const editor = (page: Page) => page.locator('.rendered-editor .ProseMirror');
 
+// Only synthetic test documents are inspected. On failure, expose the owner's
+// explicit reason in CI annotations instead of hiding it inside a trace ZIP.
+async function typingDiagnostics(page: Page) {
+  const view = editor(page);
+  const messages = await page
+    .getByRole('region', { name: 'Notifications' })
+    .allTextContents();
+  const recovery = page
+    .getByRole('alert')
+    .filter({ hasText: 'Your edit was kept for recovery.' });
+  let reason = '';
+  if (await recovery.count()) {
+    await recovery
+      .getByRole('button', { name: 'Details', exact: true })
+      .click();
+    reason = await page
+      .getByRole('dialog', { name: 'Notification details' })
+      .innerText();
+    await page
+      .getByRole('button', { name: 'Close details', exact: true })
+      .click();
+  }
+  return JSON.stringify({
+    document: (await view.innerText()).slice(-3000),
+    messages,
+    reason,
+  });
+}
+
 async function command(page: Page, name: string) {
   await page.locator('.doc-title-row').click();
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Command palette' });
+  try {
+    await expect(palette).toBeVisible({ timeout: 5000 });
+  } catch (error) {
+    throw new Error(String(error) + '\n' + (await typingDiagnostics(page)));
+  }
   await palette.getByLabel('Search commands and notes').fill(name);
   await palette
     .getByRole('button', { name: new RegExp('^' + name) })
@@ -588,7 +622,10 @@ test('Markdown keyboard authoring handles lists, nesting, headings, formatting a
   await page.keyboard.type('1. first');
   await page.keyboard.press('Enter');
   await page.keyboard.type('second');
-  await expect(view.locator('ol > li'), await view.innerText()).toHaveCount(2);
+  await expect(
+    view.locator('ol > li'),
+    await typingDiagnostics(page),
+  ).toHaveCount(2);
   await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
   await page.keyboard.type('ordered nested');
@@ -668,6 +705,10 @@ for (const width of [1440, 820, 390]) {
     await page.keyboard.press('End');
     await page.keyboard.type(' Continue writing.');
     await expect(view).toBeFocused();
+    await expect(
+      page.getByRole('button', { name: 'Review draft' }),
+      await typingDiagnostics(page),
+    ).toHaveCount(0);
     await expect(view.locator('[role="alert"]')).toHaveCount(0);
     await expect(
       page.getByRole('toolbar', { name: 'Text formatting' }),

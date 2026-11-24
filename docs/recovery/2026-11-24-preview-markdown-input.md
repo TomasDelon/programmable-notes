@@ -132,3 +132,12 @@ After the shortcut/test-contract/diagnostic changes, the full local check again
 exited 0: 336 unit, 14 tooling, 97 Chromium and 4 Pages-policy browser cases.
 Independent read-only review found no additional issue and verified that the
 mandatory PR gates remain intact. Fresh hosted diagnostics are still required.
+
+At `24fddf1`, zero-retry Firefox diagnostics passed **17/18 cases** and failed
+one desktop notification/writing case when the palette could not open after
+prose input ([run 45475334224](https://github.com/TomasDelon/programmable-notes/actions/runs/45475334224)).
+This is not treated as cross-browser acceptance. The focused test helper now
+surfaces the retained-edit reason and synthetic editor text in CI annotations on
+failure, and explicitly rejects unexpected recovery after normal typing. Six
+focused Chromium cases passed after this test-only diagnostic change. No product
+behavior, source validation or security assertion was relaxed.
