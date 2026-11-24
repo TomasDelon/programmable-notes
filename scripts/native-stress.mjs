@@ -14,7 +14,7 @@ import {
   artifact,
 } from './native-webdriver-lib.mjs';
 import { button, waitUi, rootPid } from './native-ui-lib.mjs';
-import { oomKillRecord } from './native-journal.ts';
+import { oomKillRecord, runtimeExpiryRecord } from './native-journal.ts';
 import { parseProcessIdentity, waitForCleanup } from './native-cleanup.ts';
 import { checkpointEvidence } from './evidence-checkpoint.mjs';
 await preflight();
@@ -256,23 +256,7 @@ async function stopped(target, seconds = 75) {
   Object.assign(target, { ended: Date.now(), noLiveDescendants: true });
 }
 
-function requireCause(target, pattern) {
-  const journal = execFileSync(
-    'journalctl',
-    ['--user', '--no-pager', '-u', target.unit],
-    { encoding: 'utf8', timeout: 10000 },
-  );
-  assert.match(
-    journal,
-    pattern,
-    `Missing termination cause for ${target.unit}: ${journal}`,
-  );
-  const report = reports.find((report) => report.unit === target.unit);
-  assert.ok(report);
-  report.journal = journal;
-  return journal;
-}
-function requireOomKill(target) {
+function readJournal(target) {
   const journal = execFileSync(
     'journalctl',
     ['--user', '--no-pager', '-u', target.unit, '-o', 'json'],
@@ -283,8 +267,11 @@ function requireOomKill(target) {
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+  return target.journalRecords;
+}
+function requireOomKill(target) {
   target.oomKillRecord = oomKillRecord(
-    target.journalRecords,
+    readJournal(target),
     target.unit,
     process.getuid(),
   );
@@ -299,7 +286,15 @@ function requireExpiry(target) {
     elapsed >= 55000 && elapsed < 75000,
     `Unexpected lifetime ${elapsed}ms`,
   );
-  requireCause(target, /Service reached runtime time limit/);
+  target.runtimeExpiryRecord = runtimeExpiryRecord(
+    readJournal(target),
+    target.unit,
+    process.getuid(),
+  );
+  assert.ok(
+    target.runtimeExpiryRecord,
+    `Missing trusted systemd runtime-expiry cause and timeout result for ${target.unit}`,
+  );
 }
 async function responsive() {
   const begin = Date.now();

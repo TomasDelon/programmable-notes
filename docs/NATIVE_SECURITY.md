@@ -113,6 +113,14 @@ recoveries on a slow VM (the current procedure allows1000s). This does not exten
 any per-case observation, Stop or application lifetime limit. Checkpoints protect
 against observer-process interruption; they do not claim power-loss durability.
 
+Expiry now additionally requires both a matching structured systemd timeout
+failure record and a trusted same-unit runtime-limit cause. The cause's sender
+executable/process/UID/transport and exact message are checked; authored stdout,
+other units and generic start/stop timeouts cannot substitute. OOM validation
+retains its existing strict predicate. See the
+[expiry-oracle correction and dedicated real-native pass](recovery/2026-11-24-expiry-journal-oracle.md).
+The existing elapsed55–75s observation and child60s policy remain unchanged.
+
 ### Bounded cleanup observation
 
 The current stress observer requires both an empty/removed cgroup and every
