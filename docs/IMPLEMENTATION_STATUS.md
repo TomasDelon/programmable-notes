@@ -2,6 +2,14 @@
 
 ## Preview keyboard authoring repair
 
+The corrected web beta is deployed at https://programmable-notes.pages.dev/
+(application commit `854f304`, draft PR #9). Final local gates passed 343 unit,
+14 tooling and 101 Chromium cases. Current zero-retry three-browser diagnostics
+passed 63/63, including real app updates; actual production URL acceptance passed
+12/12. Check/native-check CI passed. Downloadable screenshots and exact failed/
+passed checkpoints are in the [verification log](recovery/2026-11-24-preview-markdown-input.md).
+Native runtime acceptance remains separate.
+
 The web Preview removes its formatting toolbar and uses Markdown input, keyboard
 shortcuts and trusted palette commands. Prefix typing, empty nested lists,
 trailing spaces and bold input are covered by regression tests. Compact animated

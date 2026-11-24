@@ -1,5 +1,36 @@
 # Preview Markdown input repair
 
+## Verified deployed application
+
+Application commit **854f304** was fast-forwarded to `deploy/cloudflare-beta` and
+verified at **https://programmable-notes.pages.dev/** on 24 November 2026. Main,
+repository visibility, public GitHub releases and PR readiness were unchanged.
+The implementation remains in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9).
+
+| Verification                                  | Actual result                                                                                                               |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Final local full check                        | 343 unit / 44 files, 14 tooling, 97 Chromium and 4 Pages-policy cases passed; format/lint/type/build passed                 |
+| Mandatory CI                                  | [check/native-check passed](https://github.com/TomasDelon/programmable-notes/actions/runs/45483573019)                      |
+| Repeated current input/recovery/update paths  | [63/63 passed, zero retries, all three browsers](https://github.com/TomasDelon/programmable-notes/actions/runs/45483572489) |
+| Actual immutable Pages candidate              | [12/12 passed, all three browsers](https://github.com/TomasDelon/programmable-notes/actions/runs/45483797144)               |
+| Actual principal Pages URL after promotion    | [12/12 passed, all three browsers](https://github.com/TomasDelon/programmable-notes/actions/runs/45484849133)               |
+| Secret history/archive scans before promotion | Zero findings; exit 0                                                                                                       |
+
+[Download desktop/tablet/mobile screenshots and the repeated browser report](https://github.com/TomasDelon/programmable-notes/actions/runs/45483572489/artifacts/14962238685).
+[Download the live deployment report](https://github.com/TomasDelon/programmable-notes/actions/runs/45484849133/artifacts/14964311952).
+Artifacts use the existing seven-day retention. The public app is the working
+browser demonstration; source/keyboard instructions are in `docs/WEB_APP.md`.
+
+The earlier full three-browser matrix at `df71f64` had 290 first-attempt passes,
+one WebKit update flake, then 12 Pages-policy passes. It is retained below as
+such. That update path was subsequently corrected and passed nine real update
+cycles in the current zero-retry run. Native GUI/package launch was not rerun;
+compilation and Rust/package inspection CI do not certify native runtime security.
+Refused visual candidates remain in memory until explicitly recovered/discarded;
+download before closing. JSX stays opaque and excessive whitespace uses Source.
+
+The following checkpoints retain the observed failures and corrections.
+
 ## Reproduced problems
 
 - Actual keyboard input rejected incomplete `1.` / `+` prefixes before the
@@ -167,17 +198,17 @@ as `cause`; full formatting/lint/type checks passed in the same final local run.
 
 At `df71f64`, mandatory check/native-check passed
 ([run 45478613551](https://github.com/TomasDelon/programmable-notes/actions/runs/45478613551)).
-Zero-retry Firefox diagnostics passed18/18
+Zero-retry Firefox diagnostics passed 18/18
 ([run 45478608140](https://github.com/TomasDelon/programmable-notes/actions/runs/45478608140),
 [artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/45478608140/artifacts/14961386726)).
-Actual candidate `5465a2cd.programmable-notes.pages.dev` passed12/12 in all3
+Actual candidate `5465a2cd.programmable-notes.pages.dev` passed 12/12 in all three
 ([run 45479037354](https://github.com/TomasDelon/programmable-notes/actions/runs/45479037354)).
 
-Full all3 CI succeeded
+Full all three CI succeeded
 ([run 45479033338](https://github.com/TomasDelon/programmable-notes/actions/runs/45479033338),
 [screenshots/report](https://github.com/TomasDelon/programmable-notes/actions/runs/45479033338/artifacts/14961897321)):
 290 browser cases passed on the first attempt, one WebKit service-worker update
-case was flaky (two activation-state failures before passing), then all12
+case was flaky (two activation-state failures before passing), then all 12
 Pages-policy cases passed. This is not reported as a zero-retry full matrix.
 The input/notification/recovery cases had no remaining failure in that run.
 
@@ -185,13 +216,17 @@ The updater formerly reloaded on controllerchange, before activation completion.
 A new barrier requires both completed activation and page ownership, then drains
 and verifies saving again immediately before reload. Five unit regressions cover
 both event orders, unconfirmed-save retry, timeout and late-save suppression.
-Four ordering/failure tests failed before the change and allfive passed afterward.
+Four ordering/failure tests failed before the change and all five passed afterward.
 Independent read-only review found no actionable issue. The optional zero-retry
 diagnostics now include the real worker update case without modifying its worker
 fixture or reducing mandatory CI checks.
 
-The complete local check after this correction exited0: **343 unit / 44files,
-14 tooling, 97 Chromium and4 Pages-policy cases**. The actual update preserved
+The complete local check after this correction exited 0: **343 unit / 44 files,
+14 tooling, 97 Chromium and 4 Pages-policy cases**. The actual update preserved
 source, title, theme, mode and persisted workspace through reload. Pages build
 fingerprint: `703383e3cd38e6f2`. Hosted WebKit repetition remains a separate gate
 before production promotion.
+
+Documentation closure changes only Markdown files. A fresh `npm run build:cloudflare`
+after that closure reproduced the exact deployed application fingerprint
+`703383e3cd38e6f2` and 77 assets; no application or policy bytes changed.
