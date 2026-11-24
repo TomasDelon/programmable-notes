@@ -33,3 +33,10 @@ zero-retry repetition. Added optional explicitly named input diagnostics; all
 mandatory PR/native gates remain unchanged. Local full checks passed again.
 Next: dispatch Firefox diagnostics, inspect failures, then final all3 and actual
 Pages preview/production acceptance. Do not promote on Chromium results alone.
+
+Firefox diagnostics exposed a raw-source equality refusal. Two RED tests proved
+obsolete React echoes can rewind canonical state; a private read-only freshness
+witness vetoes those echoes without relaxing CAS or history checks. Affected
+22 unit tests passed, independent review found no issue, and the full local run
+passed338unit/14tooling/97Chromium/4Pages. Next gate: repeat Firefox on the new
+commit, then all3 and actual edge promotion. The earlier17/18 run remains failed.

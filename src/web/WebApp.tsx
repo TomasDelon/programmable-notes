@@ -2036,6 +2036,9 @@ function WorkspaceApp({
                 <SourceEditor
                   key={selected}
                   source={source}
+                  sourceIsCurrent={(snapshot) =>
+                    model.isCurrentSource(selected, snapshot)
+                  }
                   rendered={
                     selectedIsNote
                       ? {

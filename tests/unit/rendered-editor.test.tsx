@@ -394,3 +394,39 @@ it('downloads retained raw source with its BOM, CRLF and opaque JSX intact', asy
   );
   expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
 });
+
+it('rejects obsolete React echoes without rejecting subsequent current visual edits', () => {
+  const props = propsFor('Original.');
+  let owned = props.source;
+  const sourceIsCurrent = (snapshot: string) => snapshot === owned;
+  props.apply = vi.fn((expected: string, next: string) => {
+    if (expected !== owned) return false;
+    owned = next;
+    return true;
+  });
+  const ui = render(
+    <RenderedEditor {...props} sourceIsCurrent={sourceIsCurrent} />,
+  );
+  act(() => {
+    expect(props.commandsRef.current!.insertText('First.')).toBe(true);
+  });
+  const earlier = owned;
+  act(() => {
+    expect(props.commandsRef.current!.insertText('Second.')).toBe(true);
+  });
+  const latest = owned;
+  ui.rerender(
+    <RenderedEditor
+      {...props}
+      source={earlier}
+      sourceIsCurrent={sourceIsCurrent}
+    />,
+  );
+  expect(owned).toBe(latest);
+  act(() => {
+    expect(props.commandsRef.current!.insertText('Third.')).toBe(true);
+  });
+  expect(
+    screen.queryByRole('button', { name: 'Review draft' }),
+  ).not.toBeInTheDocument();
+});

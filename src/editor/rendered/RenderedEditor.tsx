@@ -58,6 +58,7 @@ export interface RenderedCommands {
 }
 interface Props {
   source: string;
+  sourceIsCurrent?: (snapshot: string) => boolean;
   path: string;
   active: boolean;
   disabled: boolean;
@@ -875,7 +876,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // Runtime-backed atoms never submit messages or transforms to this editor.
     const onSourceChange = () => {
       const next = latest.current.source;
-      if (next === acceptedSource) return;
+      if (
+        latest.current.sourceIsCurrent?.(next) === false ||
+        next === acceptedSource
+      )
+        return;
       const parsed = parseRenderedSource(next, latest.current.path);
       const position = Math.min(
         editor.state.selection.from,
@@ -1038,7 +1043,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     view.current?.dom.dispatchEvent(new Event('pn-source-change'));
     // Source refreshes are deferred while a math field owns an uncommitted
     // draft. Closing it must also flush a revision received in the meantime.
-  }, [props.source, mathEditing]);
+  }, [props.source, mathEditing, props.sourceIsCurrent]);
   useEffect(() => {
     view.current?.setProps({ editable: () => !latest.current.disabled });
     for (const refresh of imageRefreshers.current) refresh();

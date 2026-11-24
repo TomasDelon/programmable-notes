@@ -62,6 +62,7 @@ export type EditorHistory = Map<
 
 export function SourceEditor({
   source,
+  sourceIsCurrent,
   onChange,
   visual,
   live = false,
@@ -78,6 +79,8 @@ export function SourceEditor({
 }: {
   commandsRef?: React.RefObject<EditorCommands>;
   source: string;
+  /** Host-owned freshness witness for deferred React source echoes. */
+  sourceIsCurrent?: (snapshot: string) => boolean;
   visual?: boolean;
   live?: boolean;
   documentKey?: string;
@@ -375,6 +378,9 @@ export function SourceEditor({
   }, []);
 
   useEffect(() => {
+    // A model may accept more input before an earlier React render commits.
+    // Never turn that obsolete echo into an external edit or history event.
+    if (sourceIsCurrent?.(source) === false) return;
     const editor = view.current;
     if (editor && rawSource(editor.state) !== source)
       editor.dispatch({
@@ -389,7 +395,7 @@ export function SourceEditor({
           isolateHistory.of('full'),
         ],
       });
-  }, [source]);
+  }, [source, sourceIsCurrent]);
 
   useEffect(() => {
     const editor = view.current;
@@ -486,6 +492,7 @@ export function SourceEditor({
       {rendered && (
         <RenderedEditor
           source={source}
+          sourceIsCurrent={sourceIsCurrent}
           path={path}
           active={rendered.active}
           disabled={Boolean(busy || draft)}

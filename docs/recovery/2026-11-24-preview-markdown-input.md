@@ -141,3 +141,24 @@ surfaces the retained-edit reason and synthetic editor text in CI annotations on
 failure, and explicitly rejects unexpected recovery after normal typing. Six
 focused Chromium cases passed after this test-only diagnostic change. No product
 behavior, source validation or security assertion was relaxed.
+
+## Freshness race reproduction and correction
+
+At `8a58afa`, repeated Firefox diagnostics again passed 17/18 and now surfaced the
+actual refusal: `The document changed before this edit could be applied` while
+ordinary prose was still being typed
+([run 45476224695](https://github.com/TomasDelon/programmable-notes/actions/runs/45476224695)).
+Two RED unit tests reproduced an older React source echo replacing newer
+CodeMirror text and causing the next rendered transaction to fail equality.
+
+The private workspace freshness witness now vetoes superseded props in both
+reconciliation paths. It only reads the current source; raw-source equality,
+mutation validation, genuine external updates and exact inverse history are
+preserved. Both regressions turned green. Independent read-only review found no
+additional issue. The full local check exited 0: **338 unit / 43 files, 14 tooling,
+97 Chromium and 4 Pages-policy cases**; Pages fingerprint `2a2dad30ad079cd0`.
+This is not yet proof of the repeated Firefox result; hosted repetition follows.
+
+The `8a58afa` normal native-check passed, while check failed the diagnostic
+helper's caught-error lint rule. The helper now preserves the original exception
+as `cause`; full formatting/lint/type checks passed in the same final local run.

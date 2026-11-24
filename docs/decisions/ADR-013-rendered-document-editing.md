@@ -127,3 +127,18 @@ horizontal whitespace characters as Source-only before parsing. Exact source
 remains editable/exportable in Source. A visual candidate crossing that budget
 is refused with a specific reason and retained for explicit recovery; no
 original is overwritten. Ordinary whitespace and Markdown limits are unchanged.
+
+### Veto obsolete controlled-source echoes
+
+Rapid input can advance the canonical editor/model before a deferred React source
+prop is reconciled. Replaying an older prop as an external source edit can rewind
+CodeMirror, add a phantom history event, and cause the next rendered transaction
+to fail its valid raw-source equality check. Two controlled regression tests
+reproduce both the rewind and the subsequent visual refusal.
+
+The workspace supplies a private read-only `sourceIsCurrent` witness backed by its
+synchronous current-source reference. Both SourceEditor and RenderedEditor veto
+obsolete prop echoes before reconciliation. Current external snapshots, exact
+undo/redo and existing compare-and-swap validation remain unchanged. The witness
+grants no edit, storage or IPC authority and is never passed to document code.
+Browser repetition remains required to verify the observed Firefox failure.

@@ -22,6 +22,47 @@ function view(container: HTMLElement): EditorView {
 }
 
 describe('real editor raw source bridge', () => {
+  it('ignores an obsolete React echo while preserving newer canonical edits and exact history', () => {
+    let owned = 'First.\r\n';
+    const onChange = (next: string) => {
+      owned = next;
+    };
+    const sourceIsCurrent = (snapshot: string) => snapshot === owned;
+    const renderEditor = (snapshot: string) => (
+      <SourceEditor
+        source={snapshot}
+        onChange={onChange}
+        sourceIsCurrent={sourceIsCurrent}
+      />
+    );
+    const ui = render(renderEditor(owned));
+    const editor = view(ui.container);
+    act(() =>
+      editor.dispatch({
+        changes: { from: 0, insert: 'A' },
+        annotations: isolateHistory.of('full'),
+      }),
+    );
+    const earlier = owned;
+    act(() =>
+      editor.dispatch({
+        changes: { from: 0, insert: 'B' },
+        annotations: isolateHistory.of('full'),
+      }),
+    );
+    const latest = owned;
+    ui.rerender(renderEditor(earlier));
+    expect(rawSource(editor.state)).toBe(latest);
+    ui.rerender(renderEditor(latest));
+    act(() => undo(editor));
+    expect(owned).toBe(earlier);
+    act(() => redo(editor));
+    expect(owned).toBe(latest);
+    owned = '\uFEFFExternal.\r\n';
+    ui.rerender(renderEditor(owned));
+    expect(rawSource(editor.state)).toBe(owned);
+  });
+
   it('preserves mixed CRLF, LF, CR, BOM and Unicode through edit, grouped undo and redo', () => {
     const original = '\uFEFF# Title\r\nfirst 🧠\nsecond\rlast';
     const change = vi.fn();

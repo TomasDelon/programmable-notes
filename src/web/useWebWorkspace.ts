@@ -655,6 +655,9 @@ export function useWebWorkspace() {
     conflict,
     setPendingEditorDraft,
     persistentStorage,
+    // Read-only freshness witness. It grants no mutation or storage authority.
+    isCurrentSource: (key: string, source: string): boolean =>
+      current.current?.workspace.files[key] === source,
     canUpdateSource: (key: string, source: string): boolean => {
       if (!current.current || operationBusy.current) return false;
       try {

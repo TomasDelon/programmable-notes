@@ -39,7 +39,9 @@ async function command(page: Page, name: string) {
   try {
     await expect(palette).toBeVisible({ timeout: 5000 });
   } catch (error) {
-    throw new Error(String(error) + '\n' + (await typingDiagnostics(page)));
+    throw new Error(String(error) + '\n' + (await typingDiagnostics(page)), {
+      cause: error,
+    });
   }
   await palette.getByLabel('Search commands and notes').fill(name);
   await palette
