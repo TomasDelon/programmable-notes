@@ -3,11 +3,16 @@
 This procedure is required before treating native preview as safe for hostile documents. No step may be replaced by Chromium, a missing JavaScript global, configuration inspection, or a passing mock test.
 
 Current package-specific results and unresolved gates are linked from
-[implementation status](IMPLEMENTATION_STATUS.md). The [latest complete six-case run](security-evidence/2026-11-19-memory-pages/README.md)
-contains five passes and a failed additional resident-page OOM gate. The unchanged
-original allocation case passed with trusted structured OOM evidence; the new
-page workload expired instead. The complete command failed. Earlier results
-retain their own binary scope and do not certify later binaries.
+[implementation status](IMPLEMENTATION_STATUS.md). The
+[24 November current-package matrix](security-evidence/2026-11-24-current-package/README.md)
+completed with five passes and one failed CPU Stop attribution case: startup
+left too little time to separate Stop from the fixed60s expiry. Both unchanged
+memory workloads passed with trusted structured OOM evidence, followed by real
+interactive recovery. **The complete command failed.** The
+[earlier six-case run](security-evidence/2026-11-19-memory-pages/README.md)
+failed its resident-page OOM case and remains retained under its own binary
+scope. New observations do not explain historical crashes or certify other
+binaries/environments.
 
 ## Milestone 3 production configuration
 
@@ -99,6 +104,14 @@ The current editor suite launches the full installed application using the fixtu
 ## Automated supervisor-only gates
 
 `npm run native:resource:test` compiles a trusted Rust helper (no GTK needed) and exercises the real Linux service/cgroup supervisor: a CPU loop, memory pressure, whole-group Stop, expiry, and restart after collected units. The helper receives only fixed test modes over stdin after limit verification. Missing/rejected backend exits 2, not PASS. It can take over a minute. It does not exercise WebKit or author JavaScript, and memory-pressure termination still requires journal evidence before labelling it an OOM enforcement pass. It passed in the delegated Ubuntu VM, with separate kernel/journal evidence for the helper OOM. Keep these helper results distinct from the actual WebKit JavaScript tests.
+
+The stress observer atomically checkpoints completed cases. A partial checkpoint
+is not a complete pass: require all six expected cases, successful individual
+outcomes, `WEBKIT_STRESS_PASS all` and a zero controller exit status. Keep the
+whole-suite controller window large enough for six independent launches and
+recoveries on a slow VM (the current procedure allows1000s). This does not extend
+any per-case observation, Stop or application lifetime limit. Checkpoints protect
+against observer-process interruption; they do not claim power-loss durability.
 
 ### Bounded cleanup observation
 

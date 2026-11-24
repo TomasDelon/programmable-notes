@@ -2485,3 +2485,80 @@ driver/profile markers and next command. Root driver whitespace-red-1 currently
 must be stopped before installing corrected package/fresh profile2. Do not drop
 old failures. Next run corrected targeted whitespace then unchanged fullfidelity,
 recovery and production IPC/resource gates; never claim crash/security readiness.
+
+## 2026-11-24 — installed acceptance, strict failures and resumable diagnostics
+
+Corrected package3cf7f28 installed and runningELF verified9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd;
+DebianSHA4a126dc47748fdfabc01673a373278f9f3151badd3a0ce27fbe0c100d2d59409.
+Offline cached build45.84s, inspection/install PASS. Focused physical-keyboard
+whitespace/history/positive-disk-reopen test PASS, unauthorizedCSS still denied.
+The earlier Source style failure is fixed without normalization or CSP changes.
+
+Full unchanged seven-option fidelity attempt2 failed React availability at fixed
+expiry; exact fixture then worked in a private diagnostic. Fresh attempt3 EXIT0:
+same-name independent keys/history/save/reopen, dense read-only fallback, actual
+WASM-MDX/React interaction, existing native modes, heading/quote/multiline edits,
+exact mixedEOL/BOM/Unicode disk bytes, mode0640, unsafe pending-input retention,
+opaque JSX navigation guards, dirty-close cancellation, actual restart, explicit
+legacy recovery and invalidUTF8 refusal/delete. Prior failed run retained.
+Separate versioned recovery EXIT0: two exact versions, actual restart/discovery,
+older explicit restore as unsaved, cancelled SaveAs, exact newfile save, corrupt
+newest refusal, valid older retention and explicit deletion; originals unchanged.
+Production IPC EXIT0: positive editor control,17denied preview/recovery calls,
+absent generic privileged plugins, realCounter2, parentDOM/storage and file/network
+fetch denial. Actual supervised namespace/cgroup/automationfalse/Stop checked;
+direct automated preview ACL probe remains outside that resource supervisor.
+Production persistence EXIT0: exact writes, inode replacement, mode+POSIX ACL,
+forgedgrant refusal, read-only retry, conflicts/cancellation/SaveAs/reopen and
+interactive rebuilt Counter/X. Screenshots and sanitized hash-bound evidence in
+security-evidence/2026-11-24-current-package; raw logs remain ignored.
+
+First full stress controller660s interrupted final recovery:5CASE_PASS and actual
+windowclosepreexpiry46.17s retained, no final JSON/complete pass, exitunavailable
+following cloud reattachment. Confirmed finally-only evidence loss fixed with
+atomic per-case checkpoints and nested cleanup even if reporting fails. Actual
+Linux racing1MiB replacements +SIGKILL test REDnaivepartialJSON, GREENatomic;
+requires observed generation advancement, not deterministic boundary/powerloss
+proof. Independent read-only review found no blocker. All security assertions
+and actual application limits remain unchanged.
+
+Fresh checkpoint-enabled full stress controller1000s completed EXIT1:5passes,
+CPU Stop attribution FAILED because armed52.51s left insufficient time before
+60s expiry (earlier run armed43.90s and passed). Both original and resident-page
+memory cases passed trusted systemd oom-kill, peaks536870912, empty groups/no
+known live descendants and interactive Counter2 recovery. Expiry/editorSIGKILL/
+windowclose+recovery passed. Separate structured journal reads independently
+confirmed trusted timeout records for expiry and editor-death cases. Do not call
+this complete matrix green or attribute prior failures to the source-style fix.
+
+CPU edit/native-save test EXIT1: exact disk comparison passed, but5133ms exceeded
+unchanged5000ms latency gate. Later CPU-delta/rebuild assertions not reached.
+Heap edit/save failed before editing: marker was visibly captured, but Tesseract
+was missing. Observer attempts and screenshot retained. VM package installation
+failed DNS for archive.ubuntu.com; escalated retry had no execution result after
+cloud runtime replacement. No heap/disk pass claimed. New CLI pressure preflight
+checks Tesseract+English data before native launch; missing-tool control NOT RUN
+EXIT2. No OCR or pressure assertion waived. All driver units stopped; guest was
+normally powered off, disk/source/package/raw evidence preserved.
+
+Ordinary CI3cf7f28 run45299830820 BOTH SUCCESS. Optional three-engine45300006229
+attempt1 timed out30m after26m18sdependencysetup; attempt2 timed out duringsetup
+(01:23:36–01:53:27UTC), no check executed. GitHub annotations confirm30mceiling;
+logs/artifact download API remainsForbidden. Earlier21b3a48 three-engine run
+45290660173 passed and retained report14874553610for7days. Only future explicit
+browser QA gets45m; ordinary PR15m/native45m and all test/security bounds unchanged.
+No paid runner, permission, billing, license, deployment or release change.
+
+Final npm ci installed 429 packages in 6 seconds. Full local check exited 0:
+281 unit, 12 tooling (zero skips), 87 Chromium tests, production build, formatting,
+lint and strict TypeScript. Final OCR preflight lint/format and missing-tool
+exit2 control passed; independent read-only review found no blocker. The dated
+package evidence retains the failed native gates. Publication and hosted results
+are linked from draft PR #7; verify its exact head/run instead of inferring a
+hosted pass from local checks.
+Next independent task: plans/2026-11-24-native-hosted-acceptance.md, direct standard
+Ubuntu hosted native validation to investigate TCG startup margins; this job is
+NOT implemented/verified yet. Add phase-level latency evidence and improve expiry
+journal automation; preserve known renderer/JSC failures. Physical GPU/Wayland is
+separate compatibility work. Root/native redistribution rights remain owner gates.
+Keep PR6 focused/draft909efe3; continuation PR7 stacked/draft. No merge/readiness.

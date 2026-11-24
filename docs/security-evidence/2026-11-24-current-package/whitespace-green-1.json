@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "observerSha256": "e9a7dce6d342beda84f845d7f410cb734e3e29502a66ac065c3a8dbf38c97354",
+  "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+  "styles": {
+    "before": "break-spaces",
+    "hostNoncePresent": true,
+    "after": "break-spaces"
+  },
+  "exactSaveHistoryAndReopen": true,
+  "originalSha256": "d109dc588b74001f5e015830f0487d3d44fef34574f1339fb4ac5f27f39b5bf8",
+  "savedSha256": "df4f39ae6a89fddcfe5f6831f0cc2246811a3870a6e9c8260326438c1f62080a",
+  "sessionClosed": true
+}

@@ -39,5 +39,6 @@ The actual installed Linux failure and event/style probes are retained. A browse
 test reproduces the nonce policy and fails before correction because whitespace
 is collapsing. It then verifies preformatted editor whitespace, continued denial
 of a style without a nonce, exact typed ASCII space beside explicit NBSP, BOM and
-CRLF, undo/redo, export and reopen. Native package acceptance must be rerun on the
-corrected executable before claiming a native fidelity pass.
+CRLF, undo/redo, export and reopen. The corrected optimized package passed the focused physical-keyboard/disk/history/
+reopen regression in real WebKitGTK. Full-suite failures remain separate; see
+[exact candidate identities and results](../security-evidence/2026-11-24-current-package/README.md).

@@ -1,7 +1,9 @@
 # Public repository remediation
 
 The owner intentionally made this repository public. This report does not request
-publication approval or propose reversing visibility. PR #1 remains draft.
+publication approval or propose reversing visibility. PR #1 was draft during the
+original audit and was subsequently merged on 22 November. Current development
+continues in draft PRs #6 and #7; no additional merge or release is authorized.
 
 **Recommendation: NO-GO for an unqualified public-remediation sign-off or general
 redistribution.** No live credential was confirmed; immediate current-file privacy

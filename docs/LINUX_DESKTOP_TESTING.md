@@ -340,3 +340,25 @@ Hosted compilation or a normal `npm run check` does not execute this GUI command
 It was actually executed on the recorded disposable Ubuntu/WebKitGTK desktop
 against the existing optimized production ELF. Keep that binary scope distinct
 from newer CI-generated packages.
+
+## Current nonced Source editor regression
+
+Tauri's nonced boot stylesheet can cause browsers to ignore style unsafe-inline.
+CodeMirror must use the host's existing nonce for its runtime CSS; otherwise its
+whitespace rules are blocked and a physical ASCII Space can become NBSP. Do not
+normalize NBSP or loosen CSP to hide this failure.
+
+On a fresh fixture/profile with the installed production package, run
+`NATIVE_DISPOSABLE_PROFILE=1 npm run native:source-whitespace:test`. It requires
+actual preformatted whitespace, continued denial of unauthorized CSS, physical
+OS key input, exact BOM/CRLF/explicit NBSP disk bytes, Undo/Redo, mode0640, and a
+positive reopen after an external change to the owned fixture. The JSON binds
+observer and executable hashes. Follow with the unchanged complete fidelity,
+versioned recovery, persistence and resource suites, each on a separate fresh
+fixture. Allow1000s for the outer six-case controller on TCG; keep all security
+and per-case deadlines unchanged. Record controller exit status as well as JSON.
+
+[24 November exact installed candidates, screenshot, RED/GREEN source tests,
+completed acceptance, retained resource/latency failures and reproducible limits](security-evidence/2026-11-24-current-package/README.md).
+The [next hosted acceptance plan](plans/2026-11-24-native-hosted-acceptance.md)
+is a handoff, not an already-executed GitHub native GUI job.

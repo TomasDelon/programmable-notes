@@ -7,7 +7,7 @@ web selector: **Source** retains canonical CodeMirror transactions, while
 **Preview** edits rendered Markdown directly, including formatting, lists,
 tasks, tables, attachments and in-place dollar-delimited LaTeX. The separate
 Live web mode is removed and old `live` preferences migrate to Preview.
-The native `/engine` editor is unchanged.
+The native `/engine` retains its separate existing interface.
 See [ADR 013](decisions/ADR-013-rendered-document-editing.md) for the source
 preservation contract, isolated React islands, full-document runtime and the
 cross-tab persistence fix. This does not add cross-device synchronization or
@@ -26,7 +26,21 @@ and a real pending-field/focus-read race regression. A native startup diagnostic
 also now reuses the bounded cleanup observer, correcting premature refusal and
 late/repopulated-group acceptance in the test harness. See the
 [startup observer review](recovery/2026-11-23-startup-observer-review.md).
-This is not new native runtime acceptance or a renderer-crash fix.
+
+Current-package disposable Linux testing then reproduced a source-input defect:
+Tauri's style nonce blocked CodeMirror's unnonced runtime CSS, collapsing spaces.
+SourceEditor now supplies the existing authorized nonce through CodeMirror's
+supported facet; CSP directives and preview privileges remain unchanged. Browser
+and installed native regression tests passed exact ASCII/NBSP, BOM/CRLF,
+save/history/reopen and continued unauthorized-style refusal. The unchanged full
+fidelity/recovery suite passed on a fresh retry; the preceding intermittent
+React preview availability failure remains retained. Exact results are recorded in the [24 November package evidence](security-evidence/2026-11-24-current-package/README.md).
+The installed production IPC, file persistence and separate versioned-recovery
+suites also passed. The complete current resource run exited1: five cases passed,
+CPU Stop attribution overlapped earliest expiry. A separate CPU edit/save exceeded
+its5s budget despite exact saved bytes; heap edit/save was blocked by missing OCR
+and VM package-mirror DNS. No security/timing assertion was relaxed. These results
+are not a renderer-crash fix or full native security acceptance.
 
 ## Historical native implementation record
 

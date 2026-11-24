@@ -1,0 +1,373 @@
+{
+  "candidateCommit": "3cf7f28",
+  "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+  "controllerExitCode": 1,
+  "outerControllerSeconds": 1000,
+  "originalReportSha256": "e8464020b4ee40bb336969b7a362b384142ca2a36614b65ff1b67b6cf26065cc",
+  "logSha256": "bc63ee378aea34b83e285c79fbbb9a4d62f9e0ae47192d7acccd78ba3ae3b393",
+  "helperHashes": {
+    "scripts/native-stress.mjs": "6c6ca723098df6611d733c82c046103cf917c71ad310a82777c66ceb1703a26d",
+    "scripts/evidence-checkpoint.mjs": "3a62a354e95be21c91792e76e71e77f54fce5b563e7806bfc2217558867003f0",
+    "scripts/native-cleanup.ts": "8febe406bf616795501f5523c2baa894aa317a7d9a155f78728f2dfef33925da",
+    "scripts/native-journal.ts": "637db391c7b4ee4075e21fcf51b259af700fa06464ee1fcf70ca149b5687ca09"
+  },
+  "cases": {
+    "cpu-stop": "failed",
+    "memory": "passed",
+    "memory-pages": "passed",
+    "expiry": "passed",
+    "editor-crash": "passed",
+    "window-close": "passed"
+  },
+  "targets": [
+    {
+      "case": "cpu-stop",
+      "fixture": "cpu-loop",
+      "artifactSha256": "383fbdac5d6934312c3f7b0a5b56c32cbebc7dd3a1337693dedfa75264b6ab8f",
+      "unit": "programmable-notes-preview-6701-1795484516638759190.service",
+      "requestedAt": 1795484514819,
+      "started": 1795484519583,
+      "ended": 1795484575667,
+      "noLiveDescendants": true,
+      "caseOutcome": "failed",
+      "caseFailure": "AssertionError [ERR_ASSERTION]: Stop overlapped the earliest possible expiry; cannot attribute termination to Stop",
+      "sampleCount": 106,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68370432,
+      "memory.currentMaxObserved": 66490368
+    },
+    {
+      "case": "memory",
+      "fixture": "memory",
+      "artifactSha256": "966a83ed1c6ff5a2c10b539dea68c36c9f31d4045a899c41860e76677ca2d30f",
+      "unit": "programmable-notes-preview-6701-1795484576091084140.service",
+      "requestedAt": 1795484575804,
+      "started": 1795484578829,
+      "ended": 1795484635984,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 425,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 536870912,
+      "memory.currentMaxObserved": 536711168,
+      "trustedOomRecord": {
+        "_UID": "1000",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_TRANSPORT": "journal",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-6701-1795484576091084140.service",
+        "UNIT_RESULT": "oom-kill",
+        "_COMM": "systemd"
+      }
+    },
+    {
+      "case": "memory",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-6701-1795484636975592630.service",
+      "requestedAt": 1795484636177,
+      "started": 1795484640350,
+      "ended": 1795484685074,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 83,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68546560,
+      "memory.currentMaxObserved": 66387968
+    },
+    {
+      "case": "memory-pages",
+      "fixture": "memory-pages",
+      "artifactSha256": "f397704efd41f167251b1e11e48f22e5f7d99a5deebcc24979eb2fce753a3b60",
+      "unit": "programmable-notes-preview-6701-1795484685637868600.service",
+      "requestedAt": 1795484685369,
+      "started": 1795484688277,
+      "ended": 1795484738591,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 376,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 536870912,
+      "memory.currentMaxObserved": 536870912,
+      "trustedOomRecord": {
+        "_UID": "1000",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_TRANSPORT": "journal",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-6701-1795484685637868600.service",
+        "UNIT_RESULT": "oom-kill",
+        "_COMM": "systemd"
+      }
+    },
+    {
+      "case": "memory-pages",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-6701-1795484739890720520.service",
+      "requestedAt": 1795484739384,
+      "started": 1795484742747,
+      "ended": 1795484790541,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 90,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68538368,
+      "memory.currentMaxObserved": 66084864
+    },
+    {
+      "case": "expiry",
+      "fixture": "cpu-loop",
+      "artifactSha256": "383fbdac5d6934312c3f7b0a5b56c32cbebc7dd3a1337693dedfa75264b6ab8f",
+      "unit": "programmable-notes-preview-6701-1795484790978057180.service",
+      "requestedAt": 1795484790723,
+      "started": 1795484793674,
+      "ended": 1795484852646,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 177,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68284416,
+      "memory.currentMaxObserved": 66621440,
+      "independentlyCheckedTrustedTimeoutRecord": {
+        "_UID": "1000",
+        "_COMM": "systemd",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_TRANSPORT": "journal",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-6701-1795484790978057180.service",
+        "UNIT_RESULT": "timeout"
+      },
+      "originalJournalSha256": "a62df67337ac1cb70ae413b3953ac6f8de2927ece0db968f669062b42ee824f2"
+    },
+    {
+      "case": "expiry",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-6701-1795484853807640230.service",
+      "requestedAt": 1795484853238,
+      "started": 1795484856532,
+      "ended": 1795484903945,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 90,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68714496,
+      "memory.currentMaxObserved": 66232320
+    },
+    {
+      "case": "editor-crash",
+      "fixture": "cpu-loop",
+      "artifactSha256": "383fbdac5d6934312c3f7b0a5b56c32cbebc7dd3a1337693dedfa75264b6ab8f",
+      "unit": "programmable-notes-preview-6701-1795484904346813830.service",
+      "requestedAt": 1795484904121,
+      "started": 1795484907598,
+      "ended": 1795484965872,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 214,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68214784,
+      "memory.currentMaxObserved": 66396160,
+      "independentlyCheckedTrustedTimeoutRecord": {
+        "_UID": "1000",
+        "_COMM": "systemd",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_TRANSPORT": "journal",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-6701-1795484904346813830.service",
+        "UNIT_RESULT": "timeout"
+      },
+      "originalJournalSha256": "ae55cb30edb67d67d0368e17be6e6e1e42d18fefc70aeb5591f21757bc80c804"
+    },
+    {
+      "case": "editor-crash",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-7546-1795484978604334030.service",
+      "requestedAt": 1795484978125,
+      "started": 1795484981781,
+      "ended": 1795485026947,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 90,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68624384,
+      "memory.currentMaxObserved": 66011136
+    },
+    {
+      "case": "window-close",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-7546-1795485027382517910.service",
+      "requestedAt": 1795485027153,
+      "started": 1795485029846,
+      "ended": 1795485076480,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 94,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68562944,
+      "memory.currentMaxObserved": 65798144
+    },
+    {
+      "case": "window-close",
+      "fixture": "counter",
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "unit": "programmable-notes-preview-7546-1795485077317007490.service",
+      "requestedAt": 1795485076487,
+      "started": 1795485080509,
+      "ended": 1795485127391,
+      "noLiveDescendants": true,
+      "caseOutcome": "passed",
+      "sampleCount": 96,
+      "limits": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "memory.peakMaxObserved": 68415488,
+      "memory.currentMaxObserved": 66048000
+    }
+  ],
+  "observations": [
+    {
+      "unit": "programmable-notes-preview-6701-1795484516638759190.service",
+      "pid": "6819",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484516638759190.service",
+      "usage_usec": 772842,
+      "elapsed_ms": 3044,
+      "throttled_periods": 31,
+      "editor_response_ms": 440
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484576091084140.service",
+      "pid": "6910",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484636975592630.service",
+      "pid": "7026",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484685637868600.service",
+      "pid": "7124",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484739890720520.service",
+      "pid": "7216",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484790978057180.service",
+      "pid": "7308",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484853807640230.service",
+      "pid": "7399",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-6701-1795484904346813830.service",
+      "pid": "7488",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-7546-1795484978604334030.service",
+      "pid": "7655",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-7546-1795485027382517910.service",
+      "pid": "7744",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    },
+    {
+      "unit": "programmable-notes-preview-7546-1795485027382517910.service",
+      "closeElapsedMs": 49329.79188000003
+    },
+    {
+      "unit": "programmable-notes-preview-7546-1795485077317007490.service",
+      "pid": "7848",
+      "comm": "WebKitWebProces",
+      "seccomp": 2,
+      "noNewPrivileges": true
+    }
+  ]
+}

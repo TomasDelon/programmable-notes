@@ -123,3 +123,14 @@ was changed by these corrections. Unapplied fields remain memory-only; automatic
 recovery stores committed source, not unfinished equation drafts. PR #6 stays
 draft. Merge, deployment, license/permissions/billing changes, history rewrite
 and release publication still require separate explicit authorization.
+
+## Follow-up — 24 November
+
+The separate draft PR #7 continued the roadmap with hosted three-engine QA,
+bounded startup-oracle regression tests and actual current-package Linux work.
+That work exposed and corrected a real source-whitespace defect under Tauri's
+nonce policy. Installed fidelity/restart/recovery and production IPC checks have
+now run; see [exact package identities, results, retained failures and current
+limits](../security-evidence/2026-11-24-current-package/README.md). These later
+observations do not change the historical scope of this audit or prove original
+snapshot byte identity. PR #6 remains focused on equation recovery corrections.
