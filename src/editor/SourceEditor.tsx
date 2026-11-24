@@ -190,6 +190,14 @@ export function SourceEditor({
       documentKey === undefined ? undefined : cache?.get(documentKey);
     const initial = new RawSourceMap(source);
     const extensions = [
+      // Tauri authorizes its inline boot style with a nonce. Once present,
+      // unsafe-inline is ignored: CodeMirror's runtime CSS needs the same
+      // authority, including the whitespace rules that preserve typed spaces.
+      EditorView.cspNonce.of(
+        element.current?.ownerDocument.querySelector<HTMLStyleElement>(
+          'style[nonce]',
+        )?.nonce ?? '',
+      ),
       rawSourceField.init(() => source),
       rawSourceHistory,
       compositionHistory(),

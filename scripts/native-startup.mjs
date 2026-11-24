@@ -16,6 +16,10 @@ import {
   artifact,
 } from './native-webdriver-lib.mjs';
 import { rootPid, button, waitUi, pause } from './native-ui-lib.mjs';
+import {
+  parseProcessIdentity,
+  waitForStartupCleanup,
+} from './native-cleanup.ts';
 
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
@@ -32,6 +36,9 @@ const run = promisify(execFile);
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const executableSha256 = digest(await readFile(installed));
 const observerSha256 = digest(await readFile(new URL(import.meta.url)));
+const cleanupObserverSha256 = digest(
+  await readFile(new URL('./native-cleanup.ts', import.meta.url)),
+);
 console.log('NATIVE_STARTUP_EVIDENCE', output);
 let executableUnchanged;
 const counter = await artifact(
@@ -103,36 +110,26 @@ async function snapshot(target) {
   return row;
 }
 async function gone(target) {
-  const deadline = performance.now() + 5000;
-  while (performance.now() < deadline) {
-    const row = await snapshot(target);
-    if (!row.transient && (row.groupGone || row['cgroup.procs'] === '')) {
-      for (const [pid, prior] of Object.entries(target.known)) {
+  Object.assign(
+    target,
+    await waitForStartupCleanup({
+      requested: target.requested,
+      initial: target.known,
+      now: () => performance.now(),
+      pause: () => pause(100),
+      sample: () => snapshot(target),
+      identity: async (pid) => {
         try {
-          const stat = (await readFile(`/proc/${pid}/stat`, 'utf8'))
-            .split(') ')
-            .at(-1)
-            .split(' ');
-          assert.ok(
-            stat[19] !== prior.start || stat[0] === 'Z',
-            `Known live descendant survived: ${pid}`,
+          return parseProcessIdentity(
+            await readFile(`/proc/${pid}/stat`, 'utf8'),
           );
         } catch (error) {
-          if (error.code !== 'ENOENT' && error.code !== 'ESRCH') throw error;
+          if (error.code === 'ENOENT' || error.code === 'ESRCH')
+            return undefined;
+          throw error;
         }
-      }
-      target.cleanupMs = performance.now() - target.requested;
-      assert.ok(
-        target.cleanupMs < 60000,
-        'Cleanup overlaps earliest expiry; cannot attribute it to Stop',
-      );
-      target.noKnownLiveDescendants = true;
-      return;
-    }
-    await pause(100);
-  }
-  throw Error(
-    'Cgroup removal/empty membership and known-process exit not verified',
+      },
+    }),
   );
 }
 async function ui(target, name, action = 'find') {
@@ -318,6 +315,7 @@ try {
       {
         executableSha256,
         observerSha256,
+        cleanupObserverSha256,
         executableUnchanged,
         accessibleObservationsOnly: true,
         noPolicyChanges: true,

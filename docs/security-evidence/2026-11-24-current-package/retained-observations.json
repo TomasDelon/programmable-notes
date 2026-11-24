@@ -1,0 +1,168 @@
+[
+  {
+    "case": "fidelity-1",
+    "outcome": "failed-space-fidelity",
+    "logSha256": "6ee2c9c6956cb58b203e2122b6115c516f219e79629187fb97b615ce1a260ba9",
+    "observedPassMarkers": []
+  },
+  {
+    "case": "fidelity-2",
+    "outcome": "failed-react-availability",
+    "logSha256": "ca76b1d276785bd0fa623ade8df3ff46d556636405a0663215f34e0a3fa89dd4",
+    "observedPassMarkers": [
+      "NATIVE_SAME_NAME_DISTINCT_CHOICES_INDEPENDENT_DIRTY_KEYS_BYTES_HISTORY_SAVE_REOPEN_PASS",
+      "NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS"
+    ]
+  },
+  {
+    "case": "pipeline-3",
+    "outcome": "passed-react-diagnostic",
+    "logSha256": "ecea6188fcc096e833cfbebe2a72ffd202e01ad1108ff56835e79e7a6438de9c",
+    "observedPassMarkers": ["PIPELINE_REAL_REACT_PASS"]
+  },
+  {
+    "case": "fidelity-3",
+    "outcome": "passed",
+    "exitCode": 0,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "7faebddcc934769fc46fb9d8ac9188e199f958f9607ba08643fbf695f32c5184",
+    "logSha256": "b9125295ace0e3fbe407983bccaaeba8220e3013e28401ae8953ddfc77eb0178",
+    "observedPassMarkers": [
+      "NATIVE_SAME_NAME_DISTINCT_CHOICES_INDEPENDENT_DIRTY_KEYS_BYTES_HISTORY_SAVE_REOPEN_PASS",
+      "NATIVE_DENSE_VISUAL_READONLY_SOURCE_NAVIGATION_EXACT_SAVE_PASS",
+      "NATIVE_MIXED_MDX_PREVIEW_AND_UNCHANGED_BOM_CRLF_SAVE_PASS",
+      "NATIVE_SOURCE_SPLIT_VISUAL_MODES_PASS",
+      "NATIVE_LITERAL_QUOTE_EXACT_DISK_HISTORY_AND_UNSAFE_INPUT_RETENTION_PASS",
+      "NATIVE_MULTILINE_QUOTE_PREFIX_MIXED_ENDINGS_NOOP_HISTORY_UNSAFE_RETENTION_PASS",
+      "NATIVE_INLINE_UNDO_REDO_SAVE_PASS exact UTF-8/CRLF, punctuation, multiline, mode 0640",
+      "NATIVE_INTERNAL_MIXED_LF_CRLF_EDIT_SAVE_UNDO_REDO_EXACT_PASS",
+      "NATIVE_OPAQUE_SOURCE_JUMP_PENDING_GUARD_EXACT_CARET_BYTES_UNDO_REDO_PASS",
+      "NATIVE_DIRTY_CLOSE_CANCEL_AND_RESTART_PASS",
+      "NATIVE_EXPLICIT_RECOVERY_PASS original unchanged",
+      "NATIVE_INVALID_DRAFT_AND_EXPLICIT_DELETE_PASS"
+    ]
+  },
+  {
+    "case": "versioned-recovery-1",
+    "outcome": "passed",
+    "exitCode": 0,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "56d8f6c4db31a9d21b6510e1e3f1106a1b9a602935f1c66433daf3aa64f5194d",
+    "logSha256": "b7c80b977f19b7310b5c3bc14c9024f1468ea85e6c441e4e931fa3cf51040cf6",
+    "observedPassMarkers": [
+      "NATIVE_VERSIONS_EXACT_CRLF_AND_NO_ORIGINAL_WRITE_PASS",
+      "NATIVE_VERSION_DISCOVERY_AFTER_ACTUAL_RESTART_PASS",
+      "NATIVE_RESTORE_UNSAVED_SAVE_AS_CANCEL_AND_EXACT_SAVE_PASS",
+      "NATIVE_CORRUPT_VERSION_REFUSAL_VALID_OLDER_RECOVERY_AND_EXPLICIT_DELETE_PASS"
+    ]
+  },
+  {
+    "case": "production-ipc-1",
+    "outcome": "passed",
+    "exitCode": 0,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "3ebe5deb63f64b1bd40f889d7b0e98ba510615709d9c42dfa2a2e2bd8eed9846",
+    "logSha256": "5a1ea82e9d64f5673297cdc9a6cd87db9d78cd7cd0b2f811876bbd65b83969cd",
+    "ipcDenials": 17,
+    "observations": [
+      "IPC_EDITOR {\"ok\":true,\"value\":\"editor-host-only\"}",
+      "NATIVE_OS_POLICY {\"editorNetwork\":\"net:[4026531840]\",\"previewNetwork\":\"net:[4026532266]\",\"noNewPrivileges\":true}",
+      "PRODUCTION_AUTOMATION {\"pid\":\"5042\",\"automation\":\"false\",\"sandboxDisableVariableAbsent\":true}",
+      "EFFECTIVE_LIMITS {\"unit\":\"programmable-notes-preview-4971-1795483614632667830.service\",\"group\":\"/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-4971-1795483614632667830.service\",\"memoryMax\":\"536870912\",\"swapMax\":\"0\",\"cpuMax\":\"25000 100000\",\"pidsMax\":\"128\"}",
+      "PASS: editor positive IPC control, resource-unit limits and full-group Stop",
+      "PRIVATE_STORAGE editor canary absent from incognito preview",
+      "WEBKIT_COUNTER Count: 2",
+      "WEBKIT_AUTHOR_FETCH_DENIED {\"violations\":[{\"directive\":\"connect-src\",\"blocked\":\"http://127.0.0.1:9/native-security-probe\"},{\"directive\":\"connect-src\",\"blocked\":\"http://127.0.0.1:9/native-security-probe\"},{\"directive\":\"connect-src\",\"blocked\":\"file\"},{\"directive\":\"connect-src\",\"blocked\":\"file\"}],\"results\":[{\"url\":\"http://127.0.0.1:9/native-security-probe\",\"denied\":true},{\"url\":\"file:///etc/passwd\",\"denied\":true}]}",
+      "PASS: preview native ACL denial, absent privileged plugins, real WebKitGTK React counter and iframe DOM/storage denial"
+    ]
+  },
+  {
+    "case": "stress-1",
+    "outcome": "incomplete-final-recovery-under-660s-controller",
+    "exitStatusObserved": false,
+    "logSha256": "51c56b10a1bd4724e449b06d8b3a5df2d07d53577f993afd4d249fcc1557f54b",
+    "completedCases": [
+      "cpu-stop",
+      "memory",
+      "memory-pages",
+      "expiry",
+      "editor-crash"
+    ],
+    "structuredReportProduced": false
+  },
+  {
+    "case": "stress-2",
+    "outcome": "failed",
+    "exitCode": 1,
+    "completedCases": {
+      "cpu-stop": "failed",
+      "memory": "passed",
+      "memory-pages": "passed",
+      "expiry": "passed",
+      "editor-crash": "passed",
+      "window-close": "passed"
+    },
+    "structuredReport": "stress-2-summary.json"
+  },
+  {
+    "case": "production-persistence-1",
+    "outcome": "passed",
+    "exitCode": 0,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "bd58be92e9db25a138455d32bbaf48f7d082c95f71e426d1594beef97abf0cbe",
+    "logSha256": "0ff20638ddf04c87658cf5f4a33e1fdf1bdd7f921eb7bed93519453fd66c0523",
+    "observedPassMarkers": [
+      "PICKER_CANCEL_PASS",
+      "EDITOR_FORGED_GRANT_DENIED {\"error\":\"Unknown document authorization\",\"ok\":false}",
+      "NATIVE_ATOMIC_SAVE_PASS {\"path\":\"/tmp/pn-native-umSuXq/note.mdx\",\"utf8CrlfExact\":true,\"mode\":\"0640\",\"posixAclPreserved\":true,\"replacedInode\":true}",
+      "READ_ONLY_RECOVERY_PASS",
+      "CONFLICT_SAVE_AS_PASS",
+      "REOPEN_PASS",
+      "NATIVE_PERSISTENCE_PASS actual picker, atomic disk writes, permission/conflict/cancel/reopen, interactive release preview"
+    ]
+  },
+  {
+    "case": "editor-cpu-1",
+    "outcome": "failed",
+    "exitCode": 1,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "f3ba21a72f1ff7e4de159da478f691ed6c0cb069148ef86252541e1e48f0d82d",
+    "logSha256": "ae96d6f7a00cf3a502629168066fa52831b69c9ac65c25aedb3650a7049d83c4",
+    "exactDiskSaveAssertionPassed": true,
+    "responseMs": 5133,
+    "requiredResponseBelowMs": 5000,
+    "laterCpuDeltaAndRebuildGatesExecuted": false
+  },
+  {
+    "case": "editor-heap-1",
+    "outcome": "infrastructure-failed",
+    "exitCode": 1,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "observerSha256": "f3ba21a72f1ff7e4de159da478f691ed6c0cb069148ef86252541e1e48f0d82d",
+    "logSha256": "db44305e5ecd4a66ea65904e1977ec56436484ac49c29afe68fe2b1c3c65ad98",
+    "missingPrerequisite": "tesseract",
+    "markerScreenshotCaptured": true,
+    "automatedMarkerVerified": false,
+    "diskSaveDuringHeapExecuted": false,
+    "observerElapsedMs": 55093,
+    "attemptCount": 48
+  },
+  {
+    "case": "editor-heap-2-portable-ocr",
+    "outcome": "failed-latency",
+    "exitCode": 1,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "details": "heap-2-summary.json",
+    "automatedMarkerVerified": true,
+    "exactDiskSaveAssertionPassed": true,
+    "responseMs": 6528,
+    "requiredResponseBelowMs": 5000
+  },
+  {
+    "case": "strict-expiry-1",
+    "outcome": "passed",
+    "exitCode": 0,
+    "details": "expiry-1-strict-summary.json",
+    "scope": "Dedicated expiry and interactive recovery only; full six-case matrix not rerun/passed"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "passed": false,
+  "observerSha256": "2d5cb5ad96b751f12e6f572552d4b90dd1c307ba110083b45ddfdb5563818e4e",
+  "executableSha256": "e26aeaf828b90c404856582563a4b5ea941e0ff139cdc2b955a88802e43f51bb",
+  "styles": {
+    "before": "normal",
+    "hostNoncePresent": true,
+    "after": "normal"
+  },
+  "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^(pre-wrap|break-spaces)$/. Input:\n\n'normal'\n",
+  "sessionClosed": true
+}

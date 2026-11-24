@@ -4,6 +4,14 @@ Status: implemented; production runtime validation is recorded separately from c
 
 The existing compiler, source editor and separate preview supervisor remain. No visual editing or new source grammar is introduced.
 
+This records the original persistence baseline. Explicit draft recovery and
+versioned/automatic committed-source snapshots were added later in
+[ADR-006](ADR-006-draft-recovery.md) and [ADR-008](ADR-008-versioned-recovery.md).
+Their current restart/cancellation/integrity behavior is recorded in the
+[24 November installed-package evidence](../security-evidence/2026-11-24-current-package/README.md).
+The original statement below about missing recovery describes this ADR's baseline,
+not the current application; native document authorization remains unchanged.
+
 ## Native document authority
 
 Only the editor can invoke the seven document commands. They repeat native caller-label/child-mode authorization before accessing state or opening a dialog. The child receives no document state or dialog plugin. Generic filesystem, shell and dialog IPC permissions remain absent. Renderer arguments contain source and opaque grants/revisions, never a filesystem path to authorize. Native pickers are the source of authorization; cancellation creates no grant. Display paths returned to the trusted editor are informational.

@@ -1,7 +1,7 @@
 /** Actual hostile JavaScript in WebKit, with the production supervisor unchanged. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import { performance } from 'node:perf_hooks';
@@ -14,8 +14,9 @@ import {
   artifact,
 } from './native-webdriver-lib.mjs';
 import { button, waitUi, rootPid } from './native-ui-lib.mjs';
-import { oomKillRecord } from './native-journal.ts';
+import { oomKillRecord, runtimeExpiryRecord } from './native-journal.ts';
 import { parseProcessIdentity, waitForCleanup } from './native-cleanup.ts';
+import { checkpointEvidence } from './evidence-checkpoint.mjs';
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -255,23 +256,7 @@ async function stopped(target, seconds = 75) {
   Object.assign(target, { ended: Date.now(), noLiveDescendants: true });
 }
 
-function requireCause(target, pattern) {
-  const journal = execFileSync(
-    'journalctl',
-    ['--user', '--no-pager', '-u', target.unit],
-    { encoding: 'utf8', timeout: 10000 },
-  );
-  assert.match(
-    journal,
-    pattern,
-    `Missing termination cause for ${target.unit}: ${journal}`,
-  );
-  const report = reports.find((report) => report.unit === target.unit);
-  assert.ok(report);
-  report.journal = journal;
-  return journal;
-}
-function requireOomKill(target) {
+function readJournal(target) {
   const journal = execFileSync(
     'journalctl',
     ['--user', '--no-pager', '-u', target.unit, '-o', 'json'],
@@ -282,8 +267,11 @@ function requireOomKill(target) {
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+  return target.journalRecords;
+}
+function requireOomKill(target) {
   target.oomKillRecord = oomKillRecord(
-    target.journalRecords,
+    readJournal(target),
     target.unit,
     process.getuid(),
   );
@@ -298,7 +286,15 @@ function requireExpiry(target) {
     elapsed >= 55000 && elapsed < 75000,
     `Unexpected lifetime ${elapsed}ms`,
   );
-  requireCause(target, /Service reached runtime time limit/);
+  target.runtimeExpiryRecord = runtimeExpiryRecord(
+    readJournal(target),
+    target.unit,
+    process.getuid(),
+  );
+  assert.ok(
+    target.runtimeExpiryRecord,
+    `Missing trusted systemd runtime-expiry cause and timeout result for ${target.unit}`,
+  );
 }
 async function responsive() {
   const begin = Date.now();
@@ -417,6 +413,8 @@ async function runCase(name, task) {
       /* Deliberately killed editor. */
     }
   }
+  // Retain completed cases even if a later case or the external controller dies.
+  await checkpointEvidence(`${output}/webkit-stress.json`, reports);
 }
 try {
   await launchEditor();
@@ -537,14 +535,14 @@ try {
     process.exitCode = 1;
   } else console.log('WEBKIT_STRESS_PASS', requested || 'all');
 } finally {
-  await writeFile(
-    `${output}/webkit-stress.json`,
-    JSON.stringify(reports, null, 2) + '\n',
-  );
   try {
-    await invoke('stop_preview');
-  } catch {
-    /* A deliberately killed editor cannot receive Stop. */
+    await checkpointEvidence(`${output}/webkit-stress.json`, reports);
+  } finally {
+    try {
+      await invoke('stop_preview');
+    } catch {
+      /* A deliberately killed editor cannot receive Stop. */
+    }
+    await close();
   }
-  await close();
 }

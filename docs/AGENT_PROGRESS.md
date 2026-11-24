@@ -2383,3 +2383,247 @@ cross-browser claim. Preserve these failures. Next safe task: opt-in hosted Ubun
 cross-browser validation on a separate branch, avoiding duplicate native build.
 No fresh native GUI claim; intermittent JSC/startup, current-package acceptance,
 distribution attributions/root licensing remain. Do not merge/deploy/release.
+
+## 2026-11-23 — independent hosted browser QA continuation
+
+PR6 correction `909efe3` pushed; API verified BOTH check/native-check SUCCESS
+in run45287285963. PR6 body updated with exact result and remains Draft.
+Continued separately on test/hosted-browser-recovery-qa-20261123.
+
+Added opt-in browser_qa dispatch to existing CI: all3 browser projects, standard
+Ubuntu runner, actual dependency install, complete production check; retain HTML
+report on success/failure. Normal PR/push gates unchanged, including native-check.
+Only explicit browser-only dispatch avoids duplicate native build. No paid service
+or permission change. Added real in-place equation during held real IndexedDB
+open regression, preserves original results/checksums and actual CAS conflict.
+Read-only review found potential false pass on delayed-open watchdog; final test
+also verifies saved status after read closes, before applying local source.
+
+Local fullcheck273unit/86Chromium/10tooling(no skips) PASS. Focused regression
+passed again after final review assertion. New workflow must still execute hosted
+before claiming Firefox/WebKit results. BROWSER_QA.md records commands/artifacts.
+Independent native review found obsolete cleanup observer in native-startup.mjs:
+immediate known-live failure, no final membership confirmation, late-read success.
+Production startup/security diff unchanged since current main; no newly proven
+escape/crash cause. Next safe native task: reuse existing bounded native-cleanup
+helper without changing5second/60second attribution bounds, then real package run.
+
+## 2026-11-23 — startup diagnostic cleanup correction, no native runtime claim
+
+Continued validation branch after20a7b94. Extracted obsolete startup cleanup
+algorithm under controlled IO:4RED/3PASS, reproducing immediate-live failure,
+missing final membership confirmation and late-read success. Startup now calls
+shared waitForStartupCleanup/native-cleanup, retains5second and pre60second bounds,
+rejects unknown/ENODEV membership and uses strict process identity parser. Report
+also hashes shared cleanup module; no production policy, timeout or sandbox change.
+Independent read-only review no blocking finding; added remaining-lifetime case.
+
+Final fullcheck PASS281unit/86Chromium/10tooling; new actual owned-child/proc Linux
+integration PASS, then all11tooling PASS/no skips. Group emptiness remainsfixture
+in that integration; no actual Tauri/cgroup/installed GUI/security pass claimed.
+Startup CLI node--check and direct Node24 helper import passed; final ESLint passed.
+See recovery/2026-11-23-startup-observer-review.md. Actual current-package disposable
+desktop startup/security/recovery matrix still next; historical crashes unchanged.
+
+Hosted optional3browser run45288551129 at20a7b94 is executing; install-dependencies
+step remains active, native-check correctly skipped only for this dispatch.
+No cross-browser success claimed before it completes. PR6 staysDraft909efe3 with
+both hosted jobs green; this validation branch will be a separate stacked DraftPR.
+
+## Hosted QA checkpoint — resumed session
+
+Validation continuation is now draft PR7, base recovery branch, commits20a7b94
+(optional3browser CI + real refresh race) andf601c8f (native observer correction).
+PR6 remainsDraft909efe3 and both jobs passed run45287285963.
+
+First optional run45288551129 at20a7b94 spent over10minutes in browser-dependency
+installation. Cancelled/superseded explicitly before testing under the unsuitable
+original15minute ceiling; this is NOT a browser pass. Run logs retained by GitHub;
+CLI log-download endpoint returnedForbidden, so no lower-level cause is claimed.
+Raised only explicit browser_qa dispatch ceiling to30minutes; normal PR checks15,
+native build45 and actual native resource/expiry limits unchanged. No paid runner.
+Dispatch the corrected workflow; observe exact run/head and artifact before any
+Firefox/WebKit claim. PR7 ordinary hosted run45289950404 atf601c8f was in progress.
+Final hosted outcomes belong in PR7 description/checks; do not infer them here.
+
+Native follow-up remains a fresh current-package disposable desktop run using
+corrected startup observer and full IPC/resource/file/recovery gates, then concrete
+WebKit/JSC crash diagnosis. No unexecuted GUI/cgroup test may be called passing.
+
+## 2026-11-24 — current package exposed a real Source CSP/fidelity defect
+
+Both jobs at21b3a48 run45290649176 SUCCESS; optional all3browser check45290660173
+SUCCESS, artifact14874553610/playwright-results retained7days. Download API403,
+direct owner-accessible artifact link inPR7. Local matchingMCR pull also403;
+workspace-only Debian libs cannot satisfy Playwright's ldconfig cache check;
+no validation override used. Hosted results supply real browser coverage.
+
+Restored original disposable Ubuntu/QEMU guest (kernel6.8.0-149, WebKit2.52.6,
+AppArmorY, cpu/memory/pids delegated). Current21 package built offline3m14 after
+container registry fetch failed and host fetched430archives verified againstlock.
+PackageSHA9f59b9085888b9da25e04688ad12520a303bfa86a91a910699bd756559463312;
+installedELFe26aeaf828b90c404856582563a4b5ea941e0ff139cdc2b955a88802e43f51bb.
+Olda6d00cbb binary preserved. Package inspection/install PASS. Fresh-profile
+production startup Static/Counter+Stop PASS, real sandboxed WebKit and Count2;
+ready36.54s/45.35s, cleanup37.30s/50.59s before60s. NoJSC or sandbox-disable env.
+
+Full seven-option native fidelity FAILED early: physical ASCII Space savedNBSP
+in second same-named document. Failure retained, not a current fidelity pass.
+Input trace proved key/data ASCII, modifiers false; CM computedwhitespaceNORMAL.
+Readonly probe: nonced trusted boot stylesheet active, unnonced CM stylesheet
+blocked. Tauri nonce makes unsafe-inline ignored. No Unicode normalization fix.
+
+Actual browser nonced-CSP regression RED normalwhitespace; minimal SourceEditor
+official cspNonce facet using existing ownerDocument style.nonce GREEN. Unauthorized
+style still denied; BOM/CRLF/explicitNBSP+ASCIIspace/history/export/reopen PASS.
+Full localcheck281unit/87Chromium/11tooling PASS. New focused native whitespace
+harness RED on still-installed olde26a (normalwhitespace); actual corrected-package
+rebuild/retest pending. No native policy/CSP directive change. Read-only review
+no blocking finding. ADR014 records design. All actual logs, oldpackage and source
+archives in ignored .cache/native-current-21b3a48; CONTINUATION.md has exact VM
+driver/profile markers and next command. Root driver whitespace-red-1 currently
+must be stopped before installing corrected package/fresh profile2. Do not drop
+old failures. Next run corrected targeted whitespace then unchanged fullfidelity,
+recovery and production IPC/resource gates; never claim crash/security readiness.
+
+## 2026-11-24 — installed acceptance, strict failures and resumable diagnostics
+
+Corrected package3cf7f28 installed and runningELF verified9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd;
+DebianSHA4a126dc47748fdfabc01673a373278f9f3151badd3a0ce27fbe0c100d2d59409.
+Offline cached build45.84s, inspection/install PASS. Focused physical-keyboard
+whitespace/history/positive-disk-reopen test PASS, unauthorizedCSS still denied.
+The earlier Source style failure is fixed without normalization or CSP changes.
+
+Full unchanged seven-option fidelity attempt2 failed React availability at fixed
+expiry; exact fixture then worked in a private diagnostic. Fresh attempt3 EXIT0:
+same-name independent keys/history/save/reopen, dense read-only fallback, actual
+WASM-MDX/React interaction, existing native modes, heading/quote/multiline edits,
+exact mixedEOL/BOM/Unicode disk bytes, mode0640, unsafe pending-input retention,
+opaque JSX navigation guards, dirty-close cancellation, actual restart, explicit
+legacy recovery and invalidUTF8 refusal/delete. Prior failed run retained.
+Separate versioned recovery EXIT0: two exact versions, actual restart/discovery,
+older explicit restore as unsaved, cancelled SaveAs, exact newfile save, corrupt
+newest refusal, valid older retention and explicit deletion; originals unchanged.
+Production IPC EXIT0: positive editor control,17denied preview/recovery calls,
+absent generic privileged plugins, realCounter2, parentDOM/storage and file/network
+fetch denial. Actual supervised namespace/cgroup/automationfalse/Stop checked;
+direct automated preview ACL probe remains outside that resource supervisor.
+Production persistence EXIT0: exact writes, inode replacement, mode+POSIX ACL,
+forgedgrant refusal, read-only retry, conflicts/cancellation/SaveAs/reopen and
+interactive rebuilt Counter/X. Screenshots and sanitized hash-bound evidence in
+security-evidence/2026-11-24-current-package; raw logs remain ignored.
+
+First full stress controller660s interrupted final recovery:5CASE_PASS and actual
+windowclosepreexpiry46.17s retained, no final JSON/complete pass, exitunavailable
+following cloud reattachment. Confirmed finally-only evidence loss fixed with
+atomic per-case checkpoints and nested cleanup even if reporting fails. Actual
+Linux racing1MiB replacements +SIGKILL test REDnaivepartialJSON, GREENatomic;
+requires observed generation advancement, not deterministic boundary/powerloss
+proof. Independent read-only review found no blocker. All security assertions
+and actual application limits remain unchanged.
+
+Fresh checkpoint-enabled full stress controller1000s completed EXIT1:5passes,
+CPU Stop attribution FAILED because armed52.51s left insufficient time before
+60s expiry (earlier run armed43.90s and passed). Both original and resident-page
+memory cases passed trusted systemd oom-kill, peaks536870912, empty groups/no
+known live descendants and interactive Counter2 recovery. Expiry/editorSIGKILL/
+windowclose+recovery passed. Separate structured journal reads independently
+confirmed trusted timeout records for expiry and editor-death cases. Do not call
+this complete matrix green or attribute prior failures to the source-style fix.
+
+CPU edit/native-save test EXIT1: exact disk comparison passed, but5133ms exceeded
+unchanged5000ms latency gate. Later CPU-delta/rebuild assertions not reached.
+Heap edit/save failed before editing: marker was visibly captured, but Tesseract
+was missing. Observer attempts and screenshot retained. VM package installation
+failed DNS for archive.ubuntu.com; escalated retry had no execution result after
+cloud runtime replacement. No heap/disk pass claimed. New CLI pressure preflight
+checks Tesseract+English data before native launch; missing-tool control NOT RUN
+EXIT2. No OCR or pressure assertion waived. All driver units stopped; guest was
+normally powered off, disk/source/package/raw evidence preserved.
+
+Ordinary CI3cf7f28 run45299830820 BOTH SUCCESS. Optional three-engine45300006229
+attempt1 timed out30m after26m18sdependencysetup; attempt2 timed out duringsetup
+(01:23:36–01:53:27UTC), no check executed. GitHub annotations confirm30mceiling;
+logs/artifact download API remainsForbidden. Earlier21b3a48 three-engine run
+45290660173 passed and retained report14874553610for7days. Only future explicit
+browser QA gets45m; ordinary PR15m/native45m and all test/security bounds unchanged.
+No paid runner, permission, billing, license, deployment or release change.
+
+Final npm ci installed 429 packages in 6 seconds. Full local check exited 0:
+281 unit, 12 tooling (zero skips), 87 Chromium tests, production build, formatting,
+lint and strict TypeScript. Final OCR preflight lint/format and missing-tool
+exit2 control passed; independent read-only review found no blocker. The dated
+package evidence retains the failed native gates. Publication and hosted results
+are linked from draft PR #7; verify its exact head/run instead of inferring a
+hosted pass from local checks.
+Next independent task: plans/2026-11-24-native-hosted-acceptance.md, direct standard
+Ubuntu hosted native validation to investigate TCG startup margins; this job is
+NOT implemented/verified yet. Add phase-level latency evidence and improve expiry
+journal automation; preserve known renderer/JSC failures. Physical GPU/Wayland is
+separate compatibility work. Root/native redistribution rights remain owner gates.
+Keep PR6 focused/draft909efe3; continuation PR7 stacked/draft. No merge/readiness.
+
+### Follow-up — portable OCR and explicit heap latency failure
+
+Existing host Tesseract 5.5.0/Leptonica 1.84.1, loader/libraries and English data
+were copied to ignored workspace storage, with a SHA256 manifest. A private
+wrapper sets its own loader/library path only for the external OCR process.
+The driver/native application uses its original environment and libraries; ELF
+9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd verified before/after.
+No package/network installation or public binary upload was needed.
+
+Fresh heap attempt 2 verified the real PID-bound OCR marker at 52.161s within the
+unchanged 55s deadline. Exact saved disk bytes also passed independent comparison.
+The complete command exited 1: 6528ms exceeded the unchanged below5000ms edit/save
+budget; later growth/rebuild gates were not reached. Keep the first missing-tool
+failure and both latency failures. Evidence includes the verified screenshot,
+sanitized partial result, tool manifest and log hash. Driver stopped and guest
+shut down normally again; all prior disk/evidence retained.
+
+Source/diagnostic corrections and prior evidence were pushed at 525b70b. Its
+ordinary CI 45318116068 and new45minute browser-only dispatch45318464348 were
+running at this checkpoint; check terminal results before any hosted pass claim.
+This follow-up changes documentation/evidence only. Previous full local check
+281 unit /12 tooling /87 Chromium remains valid for unchanged application/code;
+scoped formatting and publication credential scan are repeated for new evidence.
+
+### Follow-up — trusted expiry oracle
+
+A diagnostic false-positive risk remained: formatted journal text alone could
+match author stdout. The expiry helper now requires trusted manager fields on
+both exact same-unit runtime-limit cause and structured timeout failure result.
+The existing OOM predicate and all elapsed/Stop/resource limits are preserved.
+Four new regressions RED against naive phrase matching, all six journal cases
+GREEN. Actual captured expiry/editor-death journals accepted, forged stdout
+rejected, actual OOM records still accepted only as OOM. Fresh production-ELF
+expiry-only run EXIT0 with real loop, cause/result, descendants gone and Count2
+recovery. Sanitized result and review under 2026-11-24 evidence. Independent
+read-only review found no blocker. Full six-case CPU attribution failure remains.
+
+Hosted525b70b ordinary run45318116068 BOTH SUCCESS; three-engine run45318464348
+SUCCESS, native skipped only for explicit browser QA. Report14886669317 retained
+seven days. Updated local checks for the new oracle are recorded on completion;
+no future commit inherits those hosted outcomes without checking its own run.
+
+Final stricter-oracle local check EXIT0: 285 unit, 12 tooling with zero skips,
+87 Chromium tests, types/lint/format and fresh production build. The dedicated
+native expiry case passed with its stricter trusted cause/result requirement;
+the earlier complete six-case CPU-attribution failure and both5s edit/save
+failures remain unchanged. No full security-readiness claim. VM shut down normally.
+
+### Publication scan correction
+
+The scan after49fb85b flagged two generic-key candidates in the portable OCR
+manifest. Both were recomputed against existing libkeyutils/libgssapi ELF bytes:
+SHA256 metadata, not credentials. No values printed. A sequencing mistake let
+push run before the failed scan was inspected, so the manifest was already
+public. No shared history rewrite or evidence deletion. Added only two immutable
+commit/path/rule/line false-positive fingerprints; no rule/path bypass. Independent
+read-only review found no blocker. Full history/archive scan and Git/ZIP synthetic
+credential controls are rerun and must complete successfully before the next push.
+
+Audited-digest correction checks completed successfully: full history and archive
+scan zero additional findings; all12tooling tests passed with zero skips, including
+synthetic Git/ZIP credential-refusal controls. The exact six known historical
+false-positive fingerprints do not waive any credential rule or future finding.
+The next push waits for the new postcommit scan to finish before publication.

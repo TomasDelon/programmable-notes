@@ -91,3 +91,45 @@ export async function waitForCleanup(options: CleanupOptions): Promise<void> {
     'Cleanup deadline exceeded: group or historical process still unverified',
   );
 }
+
+interface StartupCleanupOptions {
+  requested: number;
+  initial: CleanupSample['members'];
+  now: () => number;
+  pause: () => Promise<void>;
+  sample: () => Promise<
+    CleanupSample & { transient?: boolean; groupGone?: boolean }
+  >;
+  identity: (pid: string) => Promise<ProcessIdentity | undefined>;
+}
+
+/** Diagnostic-only Stop attribution, bounded by cleanup AND service expiry. */
+export async function waitForStartupCleanup(options: StartupCleanupOptions) {
+  const remaining = 60000 - (options.now() - options.requested);
+  if (!Number.isFinite(remaining) || remaining <= 0)
+    throw Error(
+      'Cleanup overlaps earliest expiry; cannot attribute it to Stop',
+    );
+  await waitForCleanup({
+    ...options,
+    milliseconds: Math.min(5000, remaining),
+    sample: async () => {
+      const row = await options.sample();
+      return {
+        ...row,
+        observerTransient: Boolean(
+          row.observerTransient ||
+          row.transient ||
+          (!row.groupGone && row['cgroup.procs'] === undefined),
+        ),
+      };
+    },
+    observeLive: async () => undefined,
+  });
+  const cleanupMs = options.now() - options.requested;
+  if (cleanupMs >= 60000)
+    throw Error(
+      'Cleanup overlaps earliest expiry; cannot attribute it to Stop',
+    );
+  return { cleanupMs, noKnownLiveDescendants: true };
+}

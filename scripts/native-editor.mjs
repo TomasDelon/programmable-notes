@@ -23,12 +23,27 @@ import {
   session,
 } from './native-webdriver-lib.mjs';
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const pressure = process.argv.includes('--pressure');
+if (pressure) {
+  try {
+    const languages = execFileSync('tesseract', ['--list-langs'], {
+      encoding: 'utf8',
+      timeout: 10000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.match(languages, /^eng\r?$/m);
+  } catch {
+    console.error(
+      'NOT RUN: heap observation requires tesseract-ocr and English language data',
+    );
+    process.exit(2);
+  }
+}
 await preflight();
 const source = await readFile(
   'docs/handoff/samples/fixtures/counter.mdx',
   'utf8',
 );
-const pressure = process.argv.includes('--pressure');
 const attack = await artifact(
   pressure
     ? `import {useEffect,useState} from 'react'\n\nexport function Pressure() { const [active,setActive]=useState(false);useEffect(()=>{const retained=[];const timer=setInterval(()=>{const block=new Uint8Array(16*1024*1024);block.fill(1);retained.push(block);if(retained.length===2)setActive(true)},500);return()=>clearInterval(timer)},[]);return <button disabled>{active?'Heap pressure active':'Starting heap pressure'}</button> }\n\n<Pressure />`

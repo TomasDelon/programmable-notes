@@ -235,6 +235,85 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   await other.close();
 });
 
+test('an equation opened during a real focus read prevents stale workspace adoption', async ({
+  page,
+  context,
+}) => {
+  const original = 'Keep $x^2$.\n\nLocal tail.\n';
+  await importNote(page, original);
+  await saved(page);
+  const other = await context.newPage();
+  await other.goto('/');
+  await saved(other);
+  await command(other, 'Edit source');
+  await other
+    .getByRole('textbox', { name: 'MDX source' })
+    .fill('Keep $x^2$.\n\nRemote tail.\n');
+  await saved(other);
+
+  // Hold only delivery of the real database-open result. All data, checksums,
+  // transactions and final CAS writes still come from actual IndexedDB.
+  await page.evaluate(() => {
+    const probe = window as Window & {
+      __releaseFocusRead?: () => void;
+      __focusReadClosed?: boolean;
+    };
+    const open = indexedDB.open;
+    indexedDB.open = function (name: string, version?: number) {
+      const request = open.call(indexedDB, name, version);
+      if (name === 'programmable-notes-web-v1') {
+        indexedDB.open = open;
+        request.addEventListener('success', (event) => {
+          event.stopImmediatePropagation();
+          const database = request.result;
+          const close = database.close.bind(database);
+          database.close = () => {
+            close();
+            probe.__focusReadClosed = true;
+          };
+          probe.__releaseFocusRead = () => {
+            delete probe.__releaseFocusRead;
+            request.onsuccess?.call(request, event);
+          };
+        });
+      }
+      return request;
+    };
+    window.dispatchEvent(new Event('focus'));
+  });
+  await page.waitForFunction(
+    () =>
+      typeof (window as Window & { __releaseFocusRead?: () => void })
+        .__releaseFocusRead === 'function',
+  );
+  await editor(page)
+    .getByRole('button', { name: 'Edit inline equation: x^2' })
+    .click();
+  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await field.fill('$x^7 + 1$');
+  await page.evaluate(() =>
+    (window as Window & { __releaseFocusRead?: () => void })
+      .__releaseFocusRead!(),
+  );
+  await page.waitForFunction(
+    () =>
+      (window as Window & { __focusReadClosed?: boolean }).__focusReadClosed,
+  );
+  // A late open also closes after the storage watchdog fires. That is not a
+  // successful refresh: assert its error was not mistaken for race protection.
+  await saved(page);
+  await expect(field).toHaveValue('$x^7 + 1$');
+  await expect(editor(page)).toContainText('Local tail.');
+  await field.press('Enter');
+  await expect(page.locator('.web-shell')).toHaveAttribute(
+    'data-save-status',
+    'conflict',
+  );
+  expect(await exportedSource(page)).toBe('Keep $x^7 + 1$.\n\nLocal tail.\n');
+  expect(await exportedSource(other)).toBe('Keep $x^2$.\n\nRemote tail.\n');
+  await other.close();
+});
+
 test('editable Markdown coexists with interactive React without granting source authority', async ({
   page,
 }) => {

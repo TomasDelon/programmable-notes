@@ -1,0 +1,18 @@
+{
+  "kernelPolicy": {
+    "unprivileged_userns_clone": "1",
+    "apparmor_restrict_unprivileged_userns": "1",
+    "apparmor_restrict_unprivileged_unconfined": "0"
+  },
+  "profiles": [
+    {
+      "name": "programmable-notes",
+      "sha256": "131408b8ef50eddbf551258dab52a35ea2a466bbb143cccaee96307bdf851e7f"
+    },
+    {
+      "name": "pn-m3-systemd-executor",
+      "sha256": "2504441b7f3847619c4e9f66b614497d73c827856c59c8fb55338e39b90036e4"
+    }
+  ],
+  "scope": "Existing disposable guest administrator executor opt-in; package does not install it. File hashes identify on-disk policies; actual namespace/cgroup observations remain separate."
+}

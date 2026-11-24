@@ -1,0 +1,87 @@
+{
+  "executableSha256": "e26aeaf828b90c404856582563a4b5ea941e0ff139cdc2b955a88802e43f51bb",
+  "observerSha256": "984fcc1e63c4b5c2f1b807b8188d479e7a510be0b02f0e7eb2952c8878eb46a7",
+  "cleanupObserverSha256": "8febe406bf616795501f5523c2baa894aa317a7d9a155f78728f2dfef33925da",
+  "executableUnchanged": true,
+  "accessibleObservationsOnly": true,
+  "noPolicyChanges": true,
+  "reports": [
+    {
+      "kind": "static",
+      "htmlBytes": 153,
+      "htmlSha256": "bc2c06215520ffa698101048bb42fa683255dab22e30b7e41fef55509b7a855b",
+      "invokeMs": 1827.8234499999999,
+      "sandboxObservedMs": 14568.617719999998,
+      "accessibleReadyMs": 36542.204580000005,
+      "cleanupMs": 37304.789730000004,
+      "noKnownLiveDescendants": true,
+      "unitResult": "success",
+      "errors": [],
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "ui": [
+        {
+          "elapsedMs": 36541.529800000004,
+          "result": {
+            "pid": 949,
+            "button": "Static ready",
+            "action": "find",
+            "passed": true
+          }
+        }
+      ]
+    },
+    {
+      "kind": "counter",
+      "htmlBytes": 224305,
+      "htmlSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "invokeMs": 2414.8103499999997,
+      "sandboxObservedMs": 14824.919129999995,
+      "accessibleReadyMs": 45353.931509999995,
+      "cleanupMs": 50591.93145999999,
+      "noKnownLiveDescendants": true,
+      "unitResult": "success",
+      "errors": [],
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "ui": [
+        {
+          "elapsedMs": 45350.12238,
+          "result": {
+            "pid": 1035,
+            "button": "Count: 0",
+            "action": "find",
+            "passed": true
+          }
+        },
+        {
+          "elapsedMs": 47756.49492,
+          "result": {
+            "pid": 1035,
+            "button": "Count: 0",
+            "action": "click",
+            "passed": true
+          }
+        },
+        {
+          "elapsedMs": 49177.69791999999,
+          "result": {
+            "pid": 1035,
+            "button": "Count: 1",
+            "action": "find",
+            "passed": true
+          }
+        }
+      ]
+    }
+  ],
+  "originalReportSha256": "4347844ff14e9daf5b6b5333aa05861622e2f7f9812598085bfb21f48d7121f2"
+}

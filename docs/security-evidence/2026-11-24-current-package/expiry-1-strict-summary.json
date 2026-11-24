@@ -1,0 +1,53 @@
+{
+  "scope": "Dedicated expiry case only; this is not a repeat/pass of all six cases.",
+  "controllerExitCode": 0,
+  "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+  "observerSha256": "4c1dfdfd25352df5075a39f0953d192935ba560720a4ff128d24a1a3c5e15482",
+  "journalOracleSha256": "4780e3f32a59bd2867f415ef1ff595785e4e17742cb4e3d930d178ab73e967a2",
+  "rawReportSha256": "ecc3ab86724258e64c547c0d36e52ab6a79676b1d23e6fab027565a365e765c7",
+  "logSha256": "766b5572725224ba048a929b9fe5dd8a896e66e0230f91254f4e54e639aa92d5",
+  "targets": [
+    {
+      "case": "expiry",
+      "fixture": "cpu-loop",
+      "unit": "programmable-notes-preview-575-1795529504232245600.service",
+      "caseOutcome": "passed",
+      "noLiveDescendants": true,
+      "artifactSha256": "383fbdac5d6934312c3f7b0a5b56c32cbebc7dd3a1337693dedfa75264b6ab8f",
+      "requestedAt": 1795529503978,
+      "started": 1795529508343,
+      "ended": 1795529566865,
+      "sampleCount": 227,
+      "trustedRuntimeLimitCause": {
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_COMM": "systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "USER_UNIT": "programmable-notes-preview-575-1795529504232245600.service",
+        "MESSAGE": "programmable-notes-preview-575-1795529504232245600.service: Service reached runtime time limit. Stopping."
+      },
+      "trustedTimeoutResult": {
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_COMM": "systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "USER_UNIT": "programmable-notes-preview-575-1795529504232245600.service",
+        "MESSAGE": "programmable-notes-preview-575-1795529504232245600.service: Failed with result 'timeout'.",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "UNIT_RESULT": "timeout"
+      }
+    },
+    {
+      "case": "expiry",
+      "fixture": "counter",
+      "unit": "programmable-notes-preview-575-1795529568039711430.service",
+      "caseOutcome": "passed",
+      "noLiveDescendants": true,
+      "artifactSha256": "459540e98e52b365052f7222c3d616b1706ce185333f12da7077be755864a017",
+      "requestedAt": 1795529567483,
+      "started": 1795529570876,
+      "ended": 1795529622308,
+      "sampleCount": 101
+    }
+  ]
+}
