@@ -4,7 +4,11 @@ import {
   TextSelection,
   type Transaction,
 } from 'prosemirror-state';
-import { splitListItem } from 'prosemirror-schema-list';
+import {
+  sinkListItem,
+  splitListItem,
+  wrapInList,
+} from 'prosemirror-schema-list';
 import { addRowAfter } from 'prosemirror-tables';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import {
@@ -58,6 +62,125 @@ function replace(
 }
 
 describe('rendered Markdown source bridge', () => {
+  it('keeps sibling list markers and mixed physical breaks after a trailing space is followed by text', () => {
+    let projection = parseRenderedSource('+ one\r\n+ untouched\n');
+    projection = replace(projection, 'one', 'one ');
+    projection = replace(projection, 'one ', 'one next');
+    expect(projection.mapping.source).toBe('+ one&#32;next\r\n+ untouched\n');
+  });
+
+  it.each(['#', '##', '1.', '+', '-'])(
+    'keeps %s literal before physical soft line breaks',
+    (prefix) => {
+      for (const newline of ['\n', '\r\n']) {
+        const result = replace(
+          parseRenderedSource('a' + newline + 'tail'),
+          'a',
+          prefix,
+        );
+        expect(result.doc.childCount).toBe(1);
+        expect(result.doc.textContent).toBe(prefix + '\ntail');
+        expect(result.mapping.source.endsWith(newline + 'tail')).toBe(true);
+      }
+    },
+  );
+  it.each(['#', '##', '1.', '+', '---'])(
+    'keeps %s literal in compact quote containers',
+    (prefix) => {
+      for (const source of ['>foo', '>>foo', '- >foo']) {
+        const result = replace(parseRenderedSource(source), 'foo', prefix);
+        expect(result.doc.textContent).toBe(prefix);
+        expect(
+          result.mapping.source.startsWith(
+            source.slice(0, source.indexOf('foo')),
+          ),
+        ).toBe(true);
+      }
+    },
+  );
+  it.each([
+    '1.',
+    '+',
+    '-',
+    '*',
+    '2)',
+    '>',
+    '##',
+    '###',
+    '####',
+    '#####',
+    '######',
+    '---',
+  ])(
+    'keeps the incomplete typed prefix %s literal until an input rule transforms it',
+    (prefix) => {
+      let projection = parseRenderedSource(
+        'Before.\r\n\r\n<span>Opaque</span>\r\n',
+      );
+      let state = EditorState.create({ doc: projection.doc });
+      projection = apply(projection, state.tr.split(8));
+      for (const character of prefix) {
+        state = EditorState.create({ doc: projection.doc });
+        projection = apply(
+          projection,
+          state.tr.insertText(
+            character,
+            10 + projection.doc.child(1).content.size,
+          ),
+        );
+      }
+      expect(projection.doc.child(1).type).toBe(schema.nodes.paragraph);
+      expect(projection.doc.child(1).textContent).toBe(prefix);
+      expect(projection.mapping.source).toContain('<span>Opaque</span>\r\n');
+    },
+  );
+  it('keeps heading-like text literal inside a nested list item', () => {
+    const source = '+ outer\r\n  + inner\r\n+ tail\r\n';
+    const result = replace(parseRenderedSource(source), 'inner', '##');
+    expect(result.doc.firstChild!.child(0).lastChild!.textContent).toBe('##');
+  });
+  it('preserves list markers and mixed breaks while a nested heading prefix is typed incrementally', () => {
+    const source = '+ outer\r\n  + inner\n+ tail\r\n';
+    let projection = replace(parseRenderedSource(source), 'inner', '#');
+    expect(projection.mapping.source).toBe(source.replace('inner', '\\#'));
+    projection = replace(projection, '#', '##');
+    expect(projection.mapping.source).toBe(source.replace('inner', '\\##'));
+  });
+  it('preserves an ordinary hyphen-led paragraph without normalizing unrelated punctuation', () => {
+    const source = '-not-a-list has  spaces  here.\r\n';
+    const projection = replace(parseRenderedSource(source), 'here.', 'there.');
+    expect(projection.mapping.source).toBe(source.replace('here.', 'there.'));
+  });
+  it('reopens an unfinished blockquote as an editable empty paragraph', () => {
+    const projection = parseRenderedSource('> ');
+    expect(projection.doc.firstChild!.firstChild?.type.name).toBe('paragraph');
+    const state = EditorState.create({ doc: projection.doc });
+    const result = apply(projection, state.tr.insertText('quote', 2));
+    expect(result.mapping.source).toContain('> quote');
+  });
+  it.each(['bullet_list', 'ordered_list'])(
+    'accepts a newly wrapped empty %s before its first character',
+    (type) => {
+      let projection = parseRenderedSource('');
+      const state = EditorState.create({
+        doc: projection.doc,
+        selection: TextSelection.create(projection.doc, 1),
+      });
+      let transaction: Transaction | undefined;
+      expect(
+        wrapInList(schema.nodes[type]!)(state, (tr) => {
+          transaction = tr;
+        }),
+      ).toBe(true);
+      projection = apply(projection, transaction!);
+      const next = EditorState.create({ doc: projection.doc });
+      projection = apply(projection, next.tr.insertText('first', 3));
+      expect(projection.doc.textContent).toBe('first');
+      expect(projection.mapping.source).toContain(
+        type === 'bullet_list' ? '- first' : '1. first',
+      );
+    },
+  );
   it('projects all ordinary Markdown structures into editable semantic nodes', () => {
     const source =
       '# Heading\n\nA **bold**, *italic*, ~~deleted~~ and `code` paragraph.\n\n- item\n  - nested\n- [ ] task\n\n3. three\n4. four\n\n> quote\n\n---\n\n```ts\nconst x = 1;\n```\n\n| A | B |\n| :--- | ---: |\n| x | y |\n\n$x$\n\n$$\nx^2\n$$\n\n[[Target|Label]] and ![Alt](attachment:abc)';
@@ -204,6 +327,74 @@ describe('rendered Markdown source bridge', () => {
     expect(projection.mapping.source).toBe('First\n\n\n\nAB');
   });
 
+  it.each([
+    '**one**\n\ntwo',
+    '| one | two |\n| --- | --- |\n| a | b |',
+    '- one\r- two',
+  ])(
+    'types trailing whitespace inside marks, cells and CR paragraphs: %s',
+    (source) => {
+      expect(
+        replace(parseRenderedSource(source), 'one', 'one ').doc.textContent,
+      ).toContain('one ');
+    },
+  );
+  it.each([
+    '- one\n- two',
+    '> one\n>\n> two',
+    '- one\n  - two',
+    '- one\n\n  two',
+  ])(
+    'types a space at the end of a nonfinal nested paragraph: %s',
+    (source) => {
+      const result = replace(parseRenderedSource(source), 'one', 'one ');
+      expect(result.doc.textContent).toContain('one ');
+      expect(result.mapping.source).toContain('two');
+    },
+  );
+  it('preserves a typed space at the end of a paragraph', () => {
+    const projection = parseRenderedSource('Write here.\n\n<Probe />\n');
+    const result = replace(projection, 'Write here.', 'Write here. ');
+    expect(result.doc.textContent).toContain('Write here. ');
+  });
+  it('indents an empty list item before typing its text', () => {
+    const projection = parseRenderedSource('- bullet\n- \n');
+    const state = EditorState.create({
+      doc: projection.doc,
+      selection: TextSelection.create(
+        projection.doc,
+        projection.doc.content.size - 3,
+      ),
+    });
+    let transaction: Transaction | undefined;
+    expect(
+      sinkListItem(schema.nodes.list_item!)(state, (tr) => {
+        transaction = tr;
+      }),
+    ).toBe(true);
+    const result = apply(projection, transaction!);
+    expect(result.mapping.source).toContain('  - ');
+  });
+  it('indents an empty ordered list item before typing its text', () => {
+    const projection = parseRenderedSource('1. first\n2. \n');
+    const state = EditorState.create({
+      doc: projection.doc,
+      selection: TextSelection.create(
+        projection.doc,
+        projection.doc.content.size - 3,
+      ),
+    });
+    let transaction: Transaction | undefined;
+    expect(
+      sinkListItem(schema.nodes.list_item!)(state, (tr) => {
+        transaction = tr;
+      }),
+    ).toBe(true);
+    const next = apply(projection, transaction!);
+    expect(next.doc.firstChild!.firstChild!.lastChild!.type.name).toBe(
+      'ordered_list',
+    );
+  });
   it('continues a list with Enter and accepts text in the new list item', () => {
     const initial = parseRenderedSource('- First\n');
     const end = findText(initial.doc, 'First') + 5;

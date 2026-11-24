@@ -383,7 +383,9 @@ export function parseRenderedSource(
       case 'blockquote':
         result = schema.nodes.blockquote!.create(
           null,
-          (ast.children ?? []).map(block),
+          ast.children?.length
+            ? ast.children.map(block)
+            : schema.nodes.paragraph!.create(),
         );
         break;
       case 'list':
@@ -578,8 +580,26 @@ function atomMarkdown(node: ProseMirrorNode): string {
 const serializer = new MarkdownSerializer(
   {
     ...defaultMarkdownSerializer.nodes,
+    text(state, node, parent, index) {
+      // A marker is literal until the editor's space input rule transforms it.
+      // Escape once, including incomplete list prefixes ("+", "1."). The
+      // default escaper followed by escapeExtraCharacters double-escapes ">".
+      state.text(
+        escapedText(node.text!, index === parent.childCount - 1),
+        false,
+      );
+    },
     bullet_list(state, node) {
+      // An empty list cannot interrupt a paragraph; '-' would become a
+      // Setext underline. Flush the paragraph's blank separator first.
+      if (node.childCount === 1 && emptyParagraph(node.firstChild!.firstChild!))
+        state.write();
       state.renderList(node, '  ', () => '- ');
+    },
+    ordered_list(state, node, parent, index) {
+      if (node.childCount === 1 && emptyParagraph(node.firstChild!.firstChild!))
+        state.write();
+      defaultMarkdownSerializer.nodes.ordered_list!(state, node, parent, index);
     },
     list_item(state, node) {
       if (typeof node.attrs.checked === 'boolean')
@@ -692,10 +712,58 @@ function offsetsFor(raw: string): number[] {
   }
   return offsets;
 }
-function escapedText(value: string): string {
+function escapedPrefixes(value: string): string {
   return value
-    .replace(/[\\`*_[\]{}<>$|&~]/g, '\\$&')
-    .replace(/(^|\n)([ \t]*)([-+#>]|\d+[.)])(?=[ \t])/g, '$1$2\\$3');
+    .replace(/(^|[\r\n])([ \t]*)([-+>]|#{1,6})(?=[ \t\r\n]|$)/g, '$1$2\\$3')
+    .replace(
+      /(^|[\r\n])([ \t]*)(-(?:[ \t]*-){2,})(?=[ \t]*(?:[\r\n]|$))/g,
+      '$1$2\\$3',
+    )
+    .replace(/(^|[\r\n])([ \t]*\d+)([.)])(?=[ \t\r\n]|$)/g, '$1$2\\$3');
+}
+const escapedInline = (value: string) =>
+  value.replace(/[\\`*_[\]{}<>$|&~]/g, '\\$&');
+// CommonMark discards spaces at a line end. Encode these authored characters
+// rather than weakening reparse equality or inserting invisible placeholders.
+const escapeTrailingSpaces = (value: string, atEnd = true) =>
+  value.replace(atEnd ? /[ \t]+(?=[\r\n]|$)/g : /[ \t]+(?=[\r\n])/g, (part) =>
+    [...part].map((char) => (char === ' ' ? '&#32;' : '&#9;')).join(''),
+  );
+function escapedText(value: string, atEnd = true): string {
+  return escapeTrailingSpaces(escapedPrefixes(escapedInline(value)), atEnd);
+}
+
+/** Decode only unambiguous CommonMark punctuation escapes, then verify the
+ * complete value against the parser's text. Only our two whitespace references
+ * are additionally mapped; unknown entity decoding still falls back. */
+function textOffsets(
+  raw: string,
+  expected: string,
+  code: boolean,
+): number[] | null {
+  if (normalized(raw) === expected) return offsetsFor(raw);
+  if (code) return null;
+  let decoded = '';
+  const offsets = [0];
+  for (let index = 0; index < raw.length;) {
+    const whitespace =
+      raw[index] === '&' ? /^&#(32|9);/.exec(raw.slice(index)) : null;
+    if (whitespace) {
+      decoded += whitespace[1] === '32' ? ' ' : '\t';
+      index += whitespace[0].length;
+    } else if (
+      raw[index] === '\\' &&
+      /[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]/.test(raw[index + 1] ?? '')
+    ) {
+      decoded += raw[index + 1];
+      index += 2;
+    } else if (raw[index] === '\r') {
+      decoded += '\n';
+      index += raw[index + 1] === '\n' ? 2 : 1;
+    } else decoded += raw[index++];
+    offsets.push(index);
+  }
+  return decoded === expected ? offsets : null;
 }
 function sparseBlock(
   previous: RenderedProjection,
@@ -748,7 +816,8 @@ function sparseBlock(
       if (!spans || spans.length !== 1) return false;
       const span = spans[0]!;
       const raw = mapping.source.slice(span.from, span.to);
-      if (normalized(raw) !== before.text) return false;
+      const offsets = textOffsets(raw, before.text!, span.code);
+      if (!offsets) return false;
       const oldValue = before.text!,
         newValue = after.text!;
       let start = 0;
@@ -784,16 +853,31 @@ function sparseBlock(
         /[`\r\n]/.test(inserted)
       )
         return false;
-      const offsets = offsetsFor(raw);
-      const value = (span.code ? inserted : escapedText(inserted)).replace(
+      const value = (span.code ? inserted : escapedInline(inserted)).replace(
         /\n/g,
         newlineOf(raw, newlineOf(mapping.source)),
       );
-      patches.push({
-        from: span.from + offsets[start]!,
-        to: span.from + offsets[end]!,
-        value,
-      });
+      let replacement =
+        raw.slice(0, offsets[start]!) + value + raw.slice(offsets[end]!);
+      if (!span.code) {
+        const lineStart =
+          Math.max(
+            mapping.source.lastIndexOf('\n', span.from - 1),
+            mapping.source.lastIndexOf('\r', span.from - 1),
+          ) + 1;
+        const prefix = mapping.source
+          .slice(lineStart, span.from)
+          .replace(/^\uFEFF/, '');
+        // Heading/mark/table delimiters protect an existing inline prefix.
+        // Paragraphs in list/quote containers still need prefix escaping.
+        const atStart =
+          /^[ \t]*(?:>[ \t]*|(?:[-+*]|\d+[.)])[ \t]+)*[ \t]*$/.test(prefix);
+        const sentinel = atStart ? '' : 'x';
+        replacement = escapeTrailingSpaces(
+          escapedPrefixes(sentinel + replacement).slice(sentinel.length),
+        );
+      }
+      patches.push({ from: span.from, to: span.to, value: replacement });
       return true;
     }
     for (let index = 0; index < before.childCount; index++)
