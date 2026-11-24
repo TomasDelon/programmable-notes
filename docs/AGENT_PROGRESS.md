@@ -2449,3 +2449,39 @@ Final hosted outcomes belong in PR7 description/checks; do not infer them here.
 Native follow-up remains a fresh current-package disposable desktop run using
 corrected startup observer and full IPC/resource/file/recovery gates, then concrete
 WebKit/JSC crash diagnosis. No unexecuted GUI/cgroup test may be called passing.
+
+## 2026-11-24 — current package exposed a real Source CSP/fidelity defect
+
+Both jobs at21b3a48 run45290649176 SUCCESS; optional all3browser check45290660173
+SUCCESS, artifact14874553610/playwright-results retained7days. Download API403,
+direct owner-accessible artifact link inPR7. Local matchingMCR pull also403;
+workspace-only Debian libs cannot satisfy Playwright's ldconfig cache check;
+no validation override used. Hosted results supply real browser coverage.
+
+Restored original disposable Ubuntu/QEMU guest (kernel6.8.0-149, WebKit2.52.6,
+AppArmorY, cpu/memory/pids delegated). Current21 package built offline3m14 after
+container registry fetch failed and host fetched430archives verified againstlock.
+PackageSHA9f59b9085888b9da25e04688ad12520a303bfa86a91a910699bd756559463312;
+installedELFe26aeaf828b90c404856582563a4b5ea941e0ff139cdc2b955a88802e43f51bb.
+Olda6d00cbb binary preserved. Package inspection/install PASS. Fresh-profile
+production startup Static/Counter+Stop PASS, real sandboxed WebKit and Count2;
+ready36.54s/45.35s, cleanup37.30s/50.59s before60s. NoJSC or sandbox-disable env.
+
+Full seven-option native fidelity FAILED early: physical ASCII Space savedNBSP
+in second same-named document. Failure retained, not a current fidelity pass.
+Input trace proved key/data ASCII, modifiers false; CM computedwhitespaceNORMAL.
+Readonly probe: nonced trusted boot stylesheet active, unnonced CM stylesheet
+blocked. Tauri nonce makes unsafe-inline ignored. No Unicode normalization fix.
+
+Actual browser nonced-CSP regression RED normalwhitespace; minimal SourceEditor
+official cspNonce facet using existing ownerDocument style.nonce GREEN. Unauthorized
+style still denied; BOM/CRLF/explicitNBSP+ASCIIspace/history/export/reopen PASS.
+Full localcheck281unit/87Chromium/11tooling PASS. New focused native whitespace
+harness RED on still-installed olde26a (normalwhitespace); actual corrected-package
+rebuild/retest pending. No native policy/CSP directive change. Read-only review
+no blocking finding. ADR014 records design. All actual logs, oldpackage and source
+archives in ignored .cache/native-current-21b3a48; CONTINUATION.md has exact VM
+driver/profile markers and next command. Root driver whitespace-red-1 currently
+must be stopped before installing corrected package/fresh profile2. Do not drop
+old failures. Next run corrected targeted whitespace then unchanged fullfidelity,
+recovery and production IPC/resource gates; never claim crash/security readiness.

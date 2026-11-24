@@ -40,6 +40,15 @@ Save through the native editor, verify the disk bytes against a copy of the fixt
 
 ## Packaged acceptance runner
 
+Before the longer acceptance matrix, use a fresh disposable profile and generated
+fixture environment to run `NATIVE_DISPOSABLE_PROFILE=1 npm run native:source-whitespace:test`.
+It checks actual Source styles under Tauri's CSP, continued rejection of
+unauthorized CSS, physical trailing ASCII space, explicit NBSP/BOM/CRLF bytes,
+mode0640, native Save, Undo/Redo and a positive external-disk change/Reopen.
+Its source-whitespace.json binds the executable and observer. Never normalize
+source characters or relax CSP to pass it. See
+[ADR 014](decisions/ADR-014-editor-style-authority.md).
+
 Use the installed .deb in a disposable Ubuntu desktop profile with a working user systemd manager and the prerequisites in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). Start the external WebKit driver and source a fresh fixture environment from `scripts/native-test-setup.mjs`. Run:
 
 ```sh
