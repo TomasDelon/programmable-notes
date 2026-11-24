@@ -90,3 +90,33 @@ build checks so diagnosing an existing deployment cannot cancel its candidate's
 native/browser gates. No assertion or sandbox policy is changed. Full local
 check passed again (287 unit, 14 tooling, 87 baseline + 3 hosting Chromium cases).
 The deployed failure's cause is still undiagnosed at this checkpoint.
+
+## Output-directory correction
+
+The annotated root run
+[45448925269](https://github.com/TomasDelon/programmable-notes/actions/runs/45448925269)
+returned HTTP200 from Cloudflare on the requested origin, with the application
+root/title present, no Access login or challenge, and no compiled application
+script. It still served the default referrer policy and no working editor. The
+original immutable deployment reproduced the transport/UI failure in
+[45448447364](https://github.com/TomasDelon/programmable-notes/actions/runs/45448447364).
+Local Vite output contains `/assets/index-*.js`; the repository's original HTML
+references `/src/main.tsx`. These observations identify the wrong published
+output, rather than justify weakening runtime checks.
+
+The repository now declares `pages_build_output_dir = "./dist"` in root
+`wrangler.toml`, the documented Pages Git configuration source of truth. It sets
+only the actual project name, output directory and compatibility date: no Worker,
+Functions, bindings or paid services. A missing build now fails to find dist
+instead of silently publishing source. The dashboard must still run the documented
+build command. Transport acceptance explicitly rejects the uncompiled entry and
+requires the compiled script, without logging HTML on failure.
+
+Independent review found no blocker and corrected the guide's project name to
+match the existing `programmable-notes` project. Local full checks are required
+before commit; old-live regression, new immutable-preview acceptance and exact
+candidate GitHub gates are required before production-branch promotion. Latest
+executed deployment results are maintained in
+[draft PR #8](https://github.com/TomasDelon/programmable-notes/pull/8), with linked
+workflow runs/artifacts. This historical checkpoint is not a claim that the
+production alias has already been corrected or validated.

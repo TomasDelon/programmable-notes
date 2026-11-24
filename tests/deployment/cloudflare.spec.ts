@@ -51,6 +51,8 @@ test('hosting serves correct transport policies and compiler MIME without exposi
       /cf-chl-|challenges\.cloudflare\.com|Just a moment/i.test(html),
   });
   expect(response.ok()).toBe(true);
+  expect(/src=["']\/src\/main\.tsx["']/.test(html), diagnostic).toBe(false);
+  expect(/\/assets\/index-[^"'\s]+\.js/.test(html), diagnostic).toBe(true);
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
   expect(response.headers()['referrer-policy'], diagnostic).toBe('no-referrer');
   expect(response.headers()['x-frame-options']).toBe('DENY');

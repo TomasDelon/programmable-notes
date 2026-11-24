@@ -1,0 +1,5 @@
+# Pages publishes only the compiled static application, never the repository root.
+# No Worker entry point, Functions, bindings or privileged services are configured.
+name = "programmable-notes"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-11-24"

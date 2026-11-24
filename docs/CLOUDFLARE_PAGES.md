@@ -25,18 +25,26 @@ the older `/engine` interface.
 
 ## One-time owner setup
 
-No Cloudflare account, project, DNS record or deployment has been changed by this
-preparation. These steps require the owner to sign in directly; never send a
-password or API token through chat.
+The owner has connected the testing project `programmable-notes`. The steps
+below document a fresh setup; do not recreate or overwrite an existing project.
+Account operations require signing in directly; never send a password or API
+token through chat. Deployment evidence and failed acceptance checkpoints are
+recorded in [the verification log](recovery/2026-11-24-cloudflare-preparation.md).
 
 1. In Cloudflare **Workers & Pages**, create a **Pages** project using **Connect
    to Git**. Authorize the GitHub integration for **only**
    `TomasDelon/programmable-notes`. Do not grant access to every repository.
-2. Use the proposed project name `programmable-notes-beta` if available. Set the
+2. Use project name `programmable-notes`, matching `wrangler.toml`. For a fork,
+   choose an available name and update that file to match before deploying. Set the
    production branch to **`deploy/cloudflare-beta`**. This dedicated branch must
    point at an explicitly verified commit before creating the deployment; it
    does not require merging draft PRs into `main`.
 3. Select no framework preset and set:
+
+   `wrangler.toml` also fixes the published directory to `./dist`, preventing
+   an empty dashboard output field from publishing the repository's uncompiled
+   `index.html`. This is static Pages configuration, with no Worker entry point
+   or service bindings. The build command remains a dashboard setting.
 
    | Setting                | Value                                                                  |
    | ---------------------- | ---------------------------------------------------------------------- |
@@ -70,9 +78,10 @@ password or API token through chat.
    `https://notes-beta.tomasdelon.com/`. Confirm the exact SHA in the Pages
    deployment screen and run the live checks below.
 
-Project-name availability, DNS provider/records, account permissions/limits and
-certificate issuance have not been verified. The name above is a proposal,
-not an assertion that the site is already online.
+The custom hostname remains a proposal. DNS provider/records, account limits
+and custom-domain certificate issuance have not been verified. A successful
+Pages upload alone does not prove that the editor works; require the live
+acceptance below before treating a deployment as validated.
 
 ## Verification and updates
 
