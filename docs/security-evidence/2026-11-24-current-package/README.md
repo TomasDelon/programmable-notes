@@ -254,10 +254,46 @@ namespace setup and native redistribution/license decisions remain open.
 Physical GPU/Wayland coverage is independent compatibility work; it does not
 block web/source-fidelity corrections. Never disable isolation to satisfy a gate.
 
+## Follow-up: existing OCR tools resolved without a download
+
+After the missing-package attempt, the host's already installed Tesseract5.5.0
+and Leptonica1.84.1 were copied with their loader, libraries and English data to
+an ignored workspace directory. [SHA256 manifest](portable-ocr-manifest.json)
+identifies the external observation tools. Its wrapper uses its own loader and
+library path only for OCR; the driver and installed application's libraries and
+environment remain unchanged. The same ELF hash was verified before and after.
+No package download, host system installation or public binary upload occurred.
+
+A fresh ordinary-user profile ran the unchanged heap assertions with that tool.
+The actual whole-client OCR marker passed at52.161s within the existing55s bound,
+and the actual native disk bytes exactly matched expected source. The complete
+command still exited1: end-to-end edit/save took6528ms against the unchanged
+below5000ms gate. Later memory-growth and unsaved-rebuild checks were not reached.
+[Structured partial result](heap-2-summary.json) distinguishes marker success from
+whole-suite failure. The missing-OCR attempt remains retained; the current
+remaining gate is latency, not missing observation software.
+
+![PID-bound native marker verified by the real OCR observer](heap-marker-verified.png)
+
+## Follow-up: trusted expiry cause
+
+Expiry observation now requires a trusted same-unit systemd runtime-limit cause
+and the matching structured timeout result. Plain author console text or a
+non-runtime timeout cannot satisfy that pair; existing elapsed/resource/cleanup
+bounds and OOM checks remain unchanged. Four new journal regressions failed
+against phrase-only matching, then all six journal tests passed. Real captured
+expiry/editor-death and OOM records were checked with the stricter predicates.
+
+A fresh dedicated `--case=expiry` run on the same installed production ELF exited0,
+including real loop arming, lifetime termination, trusted cause/result, whole-group
+cleanup and interactive Counter2 recovery. [Structured result](expiry-1-strict-summary.json)
+and [oracle review](../../recovery/2026-11-24-expiry-journal-oracle.md) preserve exact
+scope. This single-case pass does not turn the previous full matrix green.
+
 ## Final local verification and continuation
 
 `npm ci` installed429packages in6s. Final `npm run check` exited0: formatting,
-ESLint, strict TypeScript, **281 unit / 12 tooling / 87 Chromium tests**, zero
+ESLint, strict TypeScript, **285 unit / 12 tooling / 87 Chromium tests**, zero
 skipped tooling controls, and a fresh production build. The final pressure
 preflight additionally passed scoped lint/format and a real missing-tool
 exit2/NOT RUN control before native launch. Read-only code reviews found no
@@ -272,7 +308,7 @@ production security-readiness claim follows.
 
 The next implementation is scoped in the
 [direct hosted Linux acceptance handoff](../../plans/2026-11-24-native-hosted-acceptance.md).
-Investigate startup/latency phases on a suitable Linux VM, complete OCR-backed
-heap/save validation and preserve strict cause/termination checks. GPU/Wayland
+Investigate startup/latency phases on a suitable Linux VM, complete the strict
+heap/save latency and remaining checks and preserve strict cause/termination checks. GPU/Wayland
 compatibility can proceed separately; it does not block browser/source fidelity
 work. The proposed hosted native runtime job is not implemented yet.

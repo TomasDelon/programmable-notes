@@ -37,9 +37,10 @@ fidelity/recovery suite passed on a fresh retry; the preceding intermittent
 React preview availability failure remains retained. Exact results are recorded in the [24 November package evidence](security-evidence/2026-11-24-current-package/README.md).
 The installed production IPC, file persistence and separate versioned-recovery
 suites also passed. The complete current resource run exited1: five cases passed,
-CPU Stop attribution overlapped earliest expiry. A separate CPU edit/save exceeded
-its5s budget despite exact saved bytes; heap edit/save was blocked by missing OCR
-and VM package-mirror DNS. No security/timing assertion was relaxed. These results
+CPU Stop attribution overlapped earliest expiry. Separate CPU and heap edit/save runs exceeded
+the5s budget despite exact saved bytes. Missing OCR initially blocked heap
+observation; existing workspace tools resolved it without a package download,
+and the real marker then passed. The complete heap run still failed latency. No security/timing assertion was relaxed. These results
 are not a renderer-crash fix or full native security acceptance.
 
 ## Historical native implementation record

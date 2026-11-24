@@ -86,3 +86,11 @@ are incomplete and GitHub's annotations explicitly identify the 30-minute ceilin
 explicit browser-only dispatches 45 minutes. Ordinary PR checks remain 15 minutes,
 native-check 45 minutes and actual application security limits unchanged. This
 avoids repeatedly downloading dependencies only to cancel the test phase.
+
+At `525b70b`, [ordinary CI45318116068](https://github.com/TomasDelon/programmable-notes/actions/runs/45318116068)
+passed both jobs, and [three-engine QA45318464348](https://github.com/TomasDelon/programmable-notes/actions/runs/45318464348)
+passed its full check with native-check intentionally skipped. The
+[Playwright report14886669317](https://github.com/TomasDelon/programmable-notes/actions/runs/45318464348/artifacts/14886669317)
+is retained for seven days. No downloaded per-engine count is claimed. These
+terminal results apply to525b70b; subsequent diagnostic/evidence changes require
+their own checks and must not inherit that head's status silently.

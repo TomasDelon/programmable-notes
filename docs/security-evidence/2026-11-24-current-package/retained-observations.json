@@ -146,5 +146,23 @@
     "diskSaveDuringHeapExecuted": false,
     "observerElapsedMs": 55093,
     "attemptCount": 48
+  },
+  {
+    "case": "editor-heap-2-portable-ocr",
+    "outcome": "failed-latency",
+    "exitCode": 1,
+    "executableSha256": "9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd",
+    "details": "heap-2-summary.json",
+    "automatedMarkerVerified": true,
+    "exactDiskSaveAssertionPassed": true,
+    "responseMs": 6528,
+    "requiredResponseBelowMs": 5000
+  },
+  {
+    "case": "strict-expiry-1",
+    "outcome": "passed",
+    "exitCode": 0,
+    "details": "expiry-1-strict-summary.json",
+    "scope": "Dedicated expiry and interactive recovery only; full six-case matrix not rerun/passed"
   }
 ]

@@ -2562,3 +2562,51 @@ NOT implemented/verified yet. Add phase-level latency evidence and improve expir
 journal automation; preserve known renderer/JSC failures. Physical GPU/Wayland is
 separate compatibility work. Root/native redistribution rights remain owner gates.
 Keep PR6 focused/draft909efe3; continuation PR7 stacked/draft. No merge/readiness.
+
+### Follow-up — portable OCR and explicit heap latency failure
+
+Existing host Tesseract 5.5.0/Leptonica 1.84.1, loader/libraries and English data
+were copied to ignored workspace storage, with a SHA256 manifest. A private
+wrapper sets its own loader/library path only for the external OCR process.
+The driver/native application uses its original environment and libraries; ELF
+9c527058610b66d6293282ff0681476f60e7cc9050cbcb89fb05e92e8d4fa7dd verified before/after.
+No package/network installation or public binary upload was needed.
+
+Fresh heap attempt 2 verified the real PID-bound OCR marker at 52.161s within the
+unchanged 55s deadline. Exact saved disk bytes also passed independent comparison.
+The complete command exited 1: 6528ms exceeded the unchanged below5000ms edit/save
+budget; later growth/rebuild gates were not reached. Keep the first missing-tool
+failure and both latency failures. Evidence includes the verified screenshot,
+sanitized partial result, tool manifest and log hash. Driver stopped and guest
+shut down normally again; all prior disk/evidence retained.
+
+Source/diagnostic corrections and prior evidence were pushed at 525b70b. Its
+ordinary CI 45318116068 and new45minute browser-only dispatch45318464348 were
+running at this checkpoint; check terminal results before any hosted pass claim.
+This follow-up changes documentation/evidence only. Previous full local check
+281 unit /12 tooling /87 Chromium remains valid for unchanged application/code;
+scoped formatting and publication credential scan are repeated for new evidence.
+
+### Follow-up — trusted expiry oracle
+
+A diagnostic false-positive risk remained: formatted journal text alone could
+match author stdout. The expiry helper now requires trusted manager fields on
+both exact same-unit runtime-limit cause and structured timeout failure result.
+The existing OOM predicate and all elapsed/Stop/resource limits are preserved.
+Four new regressions RED against naive phrase matching, all six journal cases
+GREEN. Actual captured expiry/editor-death journals accepted, forged stdout
+rejected, actual OOM records still accepted only as OOM. Fresh production-ELF
+expiry-only run EXIT0 with real loop, cause/result, descendants gone and Count2
+recovery. Sanitized result and review under 2026-11-24 evidence. Independent
+read-only review found no blocker. Full six-case CPU attribution failure remains.
+
+Hosted525b70b ordinary run45318116068 BOTH SUCCESS; three-engine run45318464348
+SUCCESS, native skipped only for explicit browser QA. Report14886669317 retained
+seven days. Updated local checks for the new oracle are recorded on completion;
+no future commit inherits those hosted outcomes without checking its own run.
+
+Final stricter-oracle local check EXIT0: 285 unit, 12 tooling with zero skips,
+87 Chromium tests, types/lint/format and fresh production build. The dedicated
+native expiry case passed with its stricter trusted cause/result requirement;
+the earlier complete six-case CPU-attribution failure and both5s edit/save
+failures remain unchanged. No full security-readiness claim. VM shut down normally.

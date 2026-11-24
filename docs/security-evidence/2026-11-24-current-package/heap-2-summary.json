@@ -1,0 +1,20 @@
+{
+  "pid": 766,
+  "expectedText": "Heap pressure active",
+  "passed": true,
+  "observedText": "Heap pressure active",
+  "elapsedMs": 52161,
+  "attemptCount": 12,
+  "screenshotSha256": "cc69e7c1847175ef37581eaa42051493a7543ca69b436e9e07a8d0a236513135",
+  "scope": "OCR marker passed; complete editor/heap test failed latency, exit1.",
+  "tesseractVersion": "5.5.0",
+  "leptonicaVersion": "1.84.1",
+  "portableManifestSha256": "1503bbb50cca7a55e3d7b10c8bc36a9a7287d6e7ce2d6c2ee8eb9b2f0c7e8f0d",
+  "exactSavedSourceSha256": "fb4e2a0d4959be8653d972963aa16fc416bdeea1185bba89707d155645c24bee",
+  "editorResponseMs": 6528,
+  "requiredResponseBelowMs": 5000,
+  "remainingMemoryGrowthAndRebuildGatesExecuted": false,
+  "logSha256": "2304722e2044c0d4fd3d9c3f47169ef7702d8fa24a03a49d7b360d7eb1de7e45",
+  "observerSha256": "ac509f3758400e65b2a5f10d70f80de1b2e1159688a4d908cc56e60c18bbd9d8",
+  "visibleObserverSha256": "630506030eb4df84c38403f12247607b679ed547e55111171ca194983669ddb7"
+}
