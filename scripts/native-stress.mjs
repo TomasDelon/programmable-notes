@@ -1,7 +1,7 @@
 /** Actual hostile JavaScript in WebKit, with the production supervisor unchanged. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import { performance } from 'node:perf_hooks';
@@ -16,6 +16,7 @@ import {
 import { button, waitUi, rootPid } from './native-ui-lib.mjs';
 import { oomKillRecord } from './native-journal.ts';
 import { parseProcessIdentity, waitForCleanup } from './native-cleanup.ts';
+import { checkpointEvidence } from './evidence-checkpoint.mjs';
 await preflight();
 assert.equal(process.env.NATIVE_DISPOSABLE_PROFILE, '1');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -417,6 +418,8 @@ async function runCase(name, task) {
       /* Deliberately killed editor. */
     }
   }
+  // Retain completed cases even if a later case or the external controller dies.
+  await checkpointEvidence(`${output}/webkit-stress.json`, reports);
 }
 try {
   await launchEditor();
@@ -537,14 +540,14 @@ try {
     process.exitCode = 1;
   } else console.log('WEBKIT_STRESS_PASS', requested || 'all');
 } finally {
-  await writeFile(
-    `${output}/webkit-stress.json`,
-    JSON.stringify(reports, null, 2) + '\n',
-  );
   try {
-    await invoke('stop_preview');
-  } catch {
-    /* A deliberately killed editor cannot receive Stop. */
+    await checkpointEvidence(`${output}/webkit-stress.json`, reports);
+  } finally {
+    try {
+      await invoke('stop_preview');
+    } catch {
+      /* A deliberately killed editor cannot receive Stop. */
+    }
+    await close();
   }
-  await close();
 }
