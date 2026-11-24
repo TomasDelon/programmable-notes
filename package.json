@@ -18,7 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:tooling && npm run test:e2e",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:tooling && npm run test:e2e && npm run test:cloudflare:built",
     "prepare:runtime": "node scripts/runtime.mjs && node scripts/web-assets.mjs",
     "predev": "npm run prepare:runtime",
     "prebuild": "npm run prepare:runtime && npm run prepare:notices",
@@ -46,7 +46,12 @@
     "test:tooling": "node --test tests/tooling/*.test.mjs",
     "native:save-enospc:test": "node scripts/native-save-enospc.mjs",
     "pretest:tooling": "npm run prepare:runtime",
-    "postbuild": "node scripts/web-offline.mjs"
+    "postbuild": "node scripts/web-offline.mjs",
+    "build:cloudflare": "npm run build && npm run prepare:cloudflare",
+    "prepare:cloudflare": "node scripts/cloudflare-assets.mjs && node scripts/web-offline.mjs",
+    "preview:cloudflare": "node scripts/preview-cloudflare.mjs",
+    "test:cloudflare": "npm run build:cloudflare && playwright test --config playwright.cloudflare.config.ts",
+    "test:cloudflare:built": "npm run prepare:cloudflare && playwright test --config playwright.cloudflare.config.ts"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

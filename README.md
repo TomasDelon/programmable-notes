@@ -19,6 +19,10 @@ copy. Read the [web app guide](docs/WEB_APP.md) for daily use, imports, storage,
 supported code, and current limits. The [integration record](docs/DAILY_USE_INTEGRATION.md)
 documents the agent audit and corrected source provenance.
 
+To try the browser app at a permanent HTTPS address, follow the
+[Cloudflare Pages setup guide](docs/CLOUDFLARE_PAGES.md). Static hosting is included;
+no personal server is needed. Hosting does not synchronize notes between browsers.
+
 ## Original engine and native status
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile
@@ -83,21 +87,23 @@ CI uses Playwright's matching downloaded browser; cloud validation uses the syst
 
 ## Commands
 
-| Command                | Purpose                                                                    |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `npm run dev`          | Start Vite with hot reload                                                 |
-| `npm run build`        | Typecheck and create production output in `dist/`                          |
-| `npm run preview`      | Serve an existing production build on port 4173                            |
-| `npm run typecheck`    | Check application, tests, and TypeScript configuration files               |
-| `npm run lint`         | ESLint with zero warnings allowed                                          |
-| `npm run format`       | Apply Prettier formatting                                                  |
-| `npm run format:check` | Verify formatting without changing files                                   |
-| `npm test`             | Run Vitest unit and regression tests                                       |
-| `npm run test:watch`   | Run Vitest interactively                                                   |
-| `npm run test:e2e`     | Build, start a production preview, and run Chromium integration tests      |
-| `npm run check`        | Run formatting, lint, typecheck, unit tests, and production browser checks |
+| Command                    | Purpose                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| `npm run dev`              | Start Vite with hot reload                                                            |
+| `npm run build`            | Typecheck and create production output in `dist/`                                     |
+| `npm run preview`          | Serve an existing production build on port 4173                                       |
+| `npm run typecheck`        | Check application, tests, and TypeScript configuration files                          |
+| `npm run lint`             | ESLint with zero warnings allowed                                                     |
+| `npm run format`           | Apply Prettier formatting                                                             |
+| `npm run format:check`     | Verify formatting without changing files                                              |
+| `npm test`                 | Run Vitest unit and regression tests                                                  |
+| `npm run test:watch`       | Run Vitest interactively                                                              |
+| `npm run test:e2e`         | Build, start a production preview, and run Chromium integration tests                 |
+| `npm run check`            | Run formatting, lint, typecheck, unit tests, and production browser checks            |
+| `npm run build:cloudflare` | Build static Pages output and transport policy in `dist/`                             |
+| `npm run test:cloudflare`  | Build and test hosting policy, React isolation, source fidelity and offline reopening |
 
-`test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. Browser integration tests exercise actual compilation, React hooks, error recovery, source fidelity, offline rebuilds and negative security probes. Intentional sandbox violations and runtime-error fixtures produce expected console errors. Chromium is the baseline browser; Firefox and WebKit coverage are deferred.
+`test:e2e` owns its preview server and requires port 4173 to be free. It shuts the server down when the run completes. Browser integration tests exercise actual compilation, React hooks, error recovery, source fidelity, offline rebuilds and negative security probes. Intentional sandbox violations and runtime-error fixtures produce expected console errors. Chromium is the baseline browser; opt-in hosted QA also runs Firefox and WebKit (see [browser QA](docs/BROWSER_QA.md)).
 
 Set `PLAYWRIGHT_WORKERS=1` when running the full checks on a constrained shared
 runner. This changes concurrency without skipping tests or adding retries.
