@@ -25,3 +25,11 @@ for the independently slow upstream parser. Full local gates passed again:
 336 unit, 14 tooling, 97 Chromium and 4 Pages-policy cases. New browser coverage
 verifies exact recovery downloads and safe Source-only editing. Re-run hosted
 gates on the follow-up commit; do not promote the earlier candidate.
+
+Cross-browser checkpoint: the old all3 run failed (281 passed/4 failed). Fixed
+Firefox global/editor shortcut collision; WebKit expects its isolated ErrorEvent
+redaction. Earlier intermittent Firefox input remains unclassified until hosted
+zero-retry repetition. Added optional explicitly named input diagnostics; all
+mandatory PR/native gates remain unchanged. Local full checks passed again.
+Next: dispatch Firefox diagnostics, inspect failures, then final all3 and actual
+Pages preview/production acceptance. Do not promote on Chromium results alone.

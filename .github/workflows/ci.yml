@@ -14,6 +14,15 @@ on:
         description: Capture browser walkthrough and upload testing artifacts
         type: boolean
         default: false
+      editing_qa:
+        description: Run repeatable Preview input diagnostics only; does not replace mandatory PR checks
+        type: boolean
+        default: false
+      editing_browser:
+        description: Browser for the optional Preview input diagnostics
+        type: choice
+        default: all
+        options: [all, firefox, webkit, chromium]
       deployment_url:
         description: HTTPS root URL for deployed web acceptance only (no native build)
         type: string
@@ -28,7 +37,7 @@ concurrency:
 
 jobs:
   check:
-    if: github.event_name != 'workflow_dispatch' || !inputs.deployment_url
+    if: github.event_name != 'workflow_dispatch' || (!inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -88,7 +97,7 @@ jobs:
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.browser_qa && !inputs.deployment_url)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -199,4 +208,48 @@ jobs:
           path: |
             playwright-report/cloudflare/
             test-results/cloudflare/
+          retention-days: 7
+
+  # Optional, explicitly named diagnostics. Pull requests still run the complete
+  # check/native-check gates above; success here is never a substitute for them.
+  preview-input-regression:
+    if: github.event_name == 'workflow_dispatch' && inputs.editing_qa
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PN_ALL_BROWSERS: '1'
+      PN_EDITING_BROWSER: ${{ inputs.editing_browser }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Pin the repository npm version
+        run: npm install --global npm@11.9.0
+      - run: npm ci
+      - name: Install the requested matching browsers
+        run: |
+          case "$PN_EDITING_BROWSER" in
+            all) npx playwright install --with-deps chromium firefox webkit ;;
+            chromium|firefox|webkit) npx playwright install --with-deps "$PN_EDITING_BROWSER" ;;
+            *) exit 1 ;;
+          esac
+      - run: npm run build
+      - name: Repeat real keyboard, notifications and recovery without retries
+        run: |
+          browser_args=()
+          if [ "$PN_EDITING_BROWSER" != all ]; then
+            browser_args=(--project "$PN_EDITING_BROWSER")
+          fi
+          npx playwright test tests/e2e/web-rendered-editor.spec.ts "${browser_args[@]}" --grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal' --repeat-each=3 --retries=0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: preview-input-regression
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 7

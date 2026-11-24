@@ -207,7 +207,7 @@ test('ordinary keyboard Markdown authoring remains usable after deployment', asy
   await page.keyboard.type('1. first');
   await page.keyboard.press('Enter');
   await page.keyboard.type('second');
-  await expect(view.locator('ol > li')).toHaveCount(2);
+  await expect(view.locator('ol > li'), await view.innerText()).toHaveCount(2);
   await page.keyboard.press('Enter');
   await page.keyboard.press('Enter');
   await page.keyboard.type('- bullet');
@@ -215,6 +215,30 @@ test('ordinary keyboard Markdown authoring remains usable after deployment', asy
   await page.keyboard.press('Tab');
   await page.keyboard.type('nested');
   await expect(view.locator('ul ul li')).toHaveText('nested');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('## New heading');
+  await expect(
+    view.getByRole('heading', { level: 2, name: 'New heading' }),
+  ).toBeVisible();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('**bold** and *italic* with `code`.');
+  await expect(view.locator('strong'), await view.innerText()).toHaveText(
+    'bold',
+  );
+  await expect(view.locator('em'), await view.innerText()).toHaveText('italic');
+  await expect(
+    view.locator('code').filter({ hasText: 'code' }),
+    await view.innerText(),
+  ).toHaveText('code');
+  await page.keyboard.press('Control+Shift+K');
+  await expect(page.getByRole('textbox', { name: 'Link URL' })).toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+
   await expect(
     page.getByRole('toolbar', { name: 'Text formatting' }),
   ).toHaveCount(0);

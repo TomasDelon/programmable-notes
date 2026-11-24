@@ -588,7 +588,7 @@ test('Markdown keyboard authoring handles lists, nesting, headings, formatting a
   await page.keyboard.type('1. first');
   await page.keyboard.press('Enter');
   await page.keyboard.type('second');
-  await expect(view.locator('ol > li')).toHaveCount(2);
+  await expect(view.locator('ol > li'), await view.innerText()).toHaveCount(2);
   await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
   await page.keyboard.type('ordered nested');
@@ -612,9 +612,10 @@ test('Markdown keyboard authoring handles lists, nesting, headings, formatting a
   await page.keyboard.type('**bold** and *italic* with `code`.');
   await expect(view.locator('strong')).toHaveText('bold');
   await expect(view.locator('em')).toHaveText('italic');
-  await expect(view.locator('code').filter({ hasText: 'code' })).toHaveText(
-    'code',
-  );
+  await expect(
+    view.locator('code').filter({ hasText: 'code' }),
+    await view.innerText(),
+  ).toHaveText('code');
   await page.keyboard.press('Control+Shift+K');
   await expect(page.getByRole('textbox', { name: 'Link URL' })).toBeVisible();
   await expect(
@@ -645,6 +646,7 @@ test('Markdown keyboard authoring handles lists, nesting, headings, formatting a
 for (const width of [1440, 820, 390]) {
   test(`minimal error notifications keep the document stable at ${width}px`, async ({
     page,
+    browserName,
   }) => {
     await page.setViewportSize({ width, height: 900 });
     const source =
@@ -685,7 +687,9 @@ for (const width of [1440, 820, 390]) {
     await notice.getByRole('button', { name: 'Details' }).click();
     await expect(
       page.getByRole('dialog', { name: 'Notification details' }),
-    ).toContainText('Notification demonstration');
+    ).toContainText(
+      browserName === 'webkit' ? 'Script error.' : 'Notification demonstration',
+    );
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     if (width === 1440) {

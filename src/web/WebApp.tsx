@@ -811,12 +811,16 @@ function WorkspaceApp({
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (event.isComposing || event.repeat) return;
+      if (event.defaultPrevented || event.isComposing || event.repeat) return;
       const key = event.key.toLocaleLowerCase();
       if ((event.metaKey || event.ctrlKey) && key === 's') {
         event.preventDefault();
         if (canLeaveDraft()) void model.saveNow();
-      } else if ((event.metaKey || event.ctrlKey) && key === 'k') {
+      } else if (
+        (event.metaKey || event.ctrlKey) &&
+        key === 'k' &&
+        !event.shiftKey
+      ) {
         event.preventDefault();
         if (!canLeaveDraft()) return;
         setModal(null);

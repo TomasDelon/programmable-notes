@@ -99,3 +99,36 @@ the follow-up revision requires its own hosted gates before promotion.
 Refused visual candidates remain in memory while the app stays open. Download
 the retained source before closing; this work does not add crash persistence for
 unapplied rich-text transactions. Accepted document persistence is unchanged.
+
+## Cross-browser diagnostic checkpoint
+
+The first three-browser run at `122b3ae` was **not green**: 281 cases passed,
+one Firefox authoring case failed (different attempts stopped at list/code input
+and at the link shortcut), and three WebKit notification cases failed. See
+[run 45470974735](https://github.com/TomasDelon/programmable-notes/actions/runs/45470974735).
+The `ce98b87` normal CI passed both mandatory jobs
+([run 45473151417](https://github.com/TomasDelon/programmable-notes/actions/runs/45473151417));
+its now-obsolete cross-browser run was cancelled while fixing the observed issues.
+
+Firefox exposed a concrete shortcut ownership bug: Ctrl+Shift+K could also open
+the global Ctrl+K palette. The global handler now respects editor-prevented events
+and excludes Shift from the palette binding. WebKit consistently redacts the
+isolated runtime ErrorEvent detail to `Script error.`; its tests assert that
+specific browser contract while preserving all notification, state, source and
+sandbox checks. No origin, CSP or exception-isolation restriction was relaxed.
+Intermittent earlier Firefox list/code failures still need repeatable hosted
+results; they are not declared resolved solely by the shortcut fix.
+
+Local Firefox launch was blocked by its attempt to create the profile registry
+under read-only `$HOME/.config/mozilla`, despite an explicit writable profile;
+writable TMPDIR/XDG configuration did not resolve it. Local WebKit dependency
+validation reported missing lzo2/GLES libraries. Neither browser sandbox was
+disabled. A separately named optional `preview-input-regression` job runs the
+focused actual keyboard, notification and recovery cases three times with zero
+retries on a selected standard Ubuntu-hosted browser. It does not replace the
+unconditional full check/native-check jobs on pull requests or pushes.
+
+After the shortcut/test-contract/diagnostic changes, the full local check again
+exited 0: 336 unit, 14 tooling, 97 Chromium and 4 Pages-policy browser cases.
+Independent read-only review found no additional issue and verified that the
+mandatory PR gates remain intact. Fresh hosted diagnostics are still required.
