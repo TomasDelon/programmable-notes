@@ -21,9 +21,12 @@ for (const file of files) {
   digest.update(await readFile(file));
 }
 const version = digest.digest('hex').slice(0, 16);
-const paths = files.map(
-  (file) => '/' + path.relative(root, file).split(path.sep).join('/'),
-);
+// Pages consumes these files instead of serving them as application assets.
+// Keep their bytes in the version digest: header-only updates need a new cache.
+const consumed = new Set(['_headers', '_redirects']);
+const paths = files
+  .filter((file) => !consumed.has(path.relative(root, file)))
+  .map((file) => '/' + path.relative(root, file).split(path.sep).join('/'));
 const script = `/* Generated from the exact production assets. Notes never enter this cache. */
 const CACHE = 'programmable-notes-web-${version}';
 const ASSETS = ${JSON.stringify(paths)};
@@ -47,7 +50,15 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
   // A release's HTML and lazy chunks stay together until an explicit update.
   if (request.mode === 'navigate') {
-    event.respondWith(caches.open(CACHE).then(async cache => (await cache.match('/index.html')) || fetch(request)));
+    event.respondWith(caches.open(CACHE).then(async cache => {
+      const cached = await cache.match('/index.html');
+      if (!cached) return fetch(request);
+      // Pages redirects /index.html to /. Navigation requests reject redirected
+      // cached responses; preserve the body and every response policy header.
+      return cached.redirected
+        ? new Response(cached.body, {status: cached.status, statusText: cached.statusText, headers: cached.headers})
+        : cached;
+    }));
   } else if (ASSETS.includes(url.pathname)) {
     event.respondWith(caches.open(CACHE).then(async cache => (await cache.match(url.pathname)) || fetch(request)));
   }

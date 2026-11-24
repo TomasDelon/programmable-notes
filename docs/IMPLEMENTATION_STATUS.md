@@ -1,5 +1,23 @@
 # Programmable Notes implementation status
 
+## Permanent web testing preparation
+
+A separate Cloudflare preparation branch adds a static Pages build target,
+transport/cache metadata and real browser acceptance under those headers.
+See the [owner setup guide](CLOUDFLARE_PAGES.md). The owner has connected the
+Pages testing project. The repository fixes its published directory to `dist`
+through Pages configuration; no backend or privileged services are introduced.
+Executed deployment results and failed checkpoints are recorded in the
+[verification log](recovery/2026-11-24-cloudflare-preparation.md) and
+[draft PR #8](https://github.com/TomasDelon/programmable-notes/pull/8).
+Hosting adds no synchronization: each origin is a separate local browser
+workspace. The custom domain's DNS/TLS still requires separate verification.
+Local full checks passed 287 unit, 14 tooling and 90 Chromium cases, including
+Pages canonical-redirect/offline regression coverage. See the
+[verification record](recovery/2026-11-24-cloudflare-preparation.md).
+Native package/runtime acceptance remains separate and is not certified by web
+hosting. The app UI, document authority and native capabilities are unchanged.
+
 ## Current web application
 
 The integrated browser beta remains on `main`. Draft PR #6 adds a two-mode
