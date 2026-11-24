@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useNotifications } from '../../ui/useNotifications';
+import { Modal } from '../../ui/Modal';
 import { createRoot, type Root } from 'react-dom/client';
 import {
   Slice,
@@ -52,6 +54,7 @@ import './rendered.css';
 export interface RenderedCommands {
   insertText: (text: string) => boolean;
   focus: () => void;
+  format: (action: string) => void;
 }
 interface Props {
   source: string;
@@ -81,17 +84,47 @@ function markRule(expression: RegExp, mark: MarkType) {
 }
 
 /** Host-owned structured editing. The CodeMirror source transaction owns persistence and undo. */
-export function RenderedEditor(props: Props) {
+export function RenderedEditor({ commandsRef, ...props }: Props) {
+  const { notify, dismiss } = useNotifications();
+  const noticeId = useId();
   const mount = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const latest = useRef(props);
-  const runtimeRoots = useRef(new Set<{ root: Root; raw: string }>());
+  const runtimeRoots = useRef(
+    new Set<{ root: Root; raw: string; report: (message: string) => void }>(),
+  );
+  const runtimeCounter = useRef(0);
   const imageRefreshers = useRef(new Set<() => void>());
   const [error, setError] = useState('');
   const [unappliedText, setUnappliedText] = useState<string | null>(null);
-  const [blockType, setCurrentBlockType] = useState('paragraph');
+  const retainedDraft = useRef<string | null>(null);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
   const [mathEditing, setMathEditing] = useState(false);
+  useEffect(() => {
+    if (error || unappliedText !== null)
+      notify({
+        id: noticeId,
+        tone: 'error',
+        persistent: unappliedText !== null,
+        dismissible: unappliedText === null,
+        message:
+          unappliedText !== null ? 'Your edit was kept for recovery.' : error,
+        detail: unappliedText !== null ? error : undefined,
+        actions:
+          unappliedText !== null
+            ? [{ label: 'Review draft', run: () => setRecoveryOpen(true) }]
+            : undefined,
+      });
+    else dismiss(noticeId);
+  }, [error, unappliedText, noticeId, notify, dismiss]);
+  useEffect(
+    () => () => {
+      dismiss(noticeId);
+      dismiss(noticeId + '-math');
+    },
+    [dismiss, noticeId],
+  );
   const linkSelection = useRef<{
     from: number;
     to: number;
@@ -163,7 +196,7 @@ export function RenderedEditor(props: Props) {
       })),
       markRule(/\*\*([^*]+)\*\*$/, marks.strong!),
       markRule(/__([^_]+)__$/, marks.strong!),
-      markRule(/\*([^*]+)\*$/, marks.em!),
+      markRule(/(?<!\*)\*([^*]+)\*$/, marks.em!),
       markRule(/`([^`]+)`$/, marks.code!),
       markRule(/~~([^~]+)~~$/, marks.strike!),
       new InputRule(/^\[( |x|X)\]\s$/, (state, match, start, end) => {
@@ -228,7 +261,6 @@ export function RenderedEditor(props: Props) {
       let field: HTMLInputElement | HTMLTextAreaElement | null = null;
       let span: MathSpan | null = null;
       let snapshot: string | null = null;
-      let feedback: HTMLElement | null = null;
 
       function renderEquation() {
         button.setAttribute(
@@ -250,15 +282,21 @@ export function RenderedEditor(props: Props) {
         field = null;
         span = null;
         snapshot = null;
-        feedback = null;
+        dismiss(noticeId + '-math');
         if (activeMath === actions) activeMath = null;
         renderEquation();
         setMathEditing(false);
       }
       function showError(reason: string) {
-        if (!feedback) return;
-        feedback.textContent = reason;
-        feedback.hidden = false;
+        notify({
+          id: noticeId + '-math',
+          tone: 'error',
+          message: 'Check the equation. Your LaTeX is retained.',
+          detail: reason,
+          persistent: true,
+        });
+        field?.setAttribute('aria-invalid', 'true');
+        field?.setAttribute('aria-describedby', noticeId + '-math');
         wrapper.classList.add('rendered-math-invalid');
       }
       function commit(): boolean {
@@ -402,18 +440,15 @@ export function RenderedEditor(props: Props) {
           button.focus();
         });
         row.append(applyButton, cancelButton);
-        const message = document.createElement('span');
-        message.className = 'rendered-math-error';
-        message.setAttribute('role', 'alert');
-        message.hidden = true;
-        feedback = message;
         wrapper.classList.remove('rendered-math-invalid');
-        wrapper.replaceChildren(input, row, message);
+        wrapper.replaceChildren(input, row);
         activeMath = actions;
         setMathEditing(true);
         input.addEventListener('input', () => {
           wrapper.classList.remove('rendered-math-invalid');
-          if (feedback) feedback.hidden = true;
+          input.removeAttribute('aria-invalid');
+          input.removeAttribute('aria-describedby');
+          dismiss(noticeId + '-math');
         });
         input.addEventListener('keydown', (event) => {
           const key = event as KeyboardEvent;
@@ -556,15 +591,35 @@ export function RenderedEditor(props: Props) {
       dom.className = 'rendered-source-block';
       const raw = String(node.attrs.raw ?? node.attrs.value ?? '');
       const kind = String(node.attrs.kind);
-      let runtime: { root: Root; raw: string } | null = null;
+      let runtime: {
+        root: Root;
+        raw: string;
+        report: (message: string) => void;
+      } | null = null;
       const executable = kind.startsWith('mdx') && kind !== 'mdxjsEsm';
       if (executable) {
         const target = document.createElement('div');
         dom.append(target);
-        runtime = { root: createRoot(target), raw };
+        const id = noticeId + '-runtime-' + ++runtimeCounter.current;
+        const report = (message: string) => {
+          if (message)
+            notify({
+              id,
+              tone: 'error',
+              persistent: true,
+              message: 'Preview needs attention',
+              detail: message,
+            });
+          else dismiss(id);
+        };
+        runtime = { root: createRoot(target), raw, report };
         runtimeRoots.current.add(runtime);
         runtime.root.render(
-          <RenderedRuntime context={latest.current.runtime} raw={raw} />,
+          <RenderedRuntime
+            context={latest.current.runtime}
+            raw={raw}
+            onError={report}
+          />,
         );
       } else {
         const details = document.createElement('details');
@@ -602,6 +657,7 @@ export function RenderedEditor(props: Props) {
         ignoreMutation: () => true,
         destroy: () => {
           if (runtime) {
+            runtime.report('');
             runtimeRoots.current.delete(runtime);
             const root = runtime.root;
             queueMicrotask(() => root.unmount());
@@ -652,6 +708,14 @@ export function RenderedEditor(props: Props) {
             'Mod-b': toggleMark(marks.strong!),
             'Mod-i': toggleMark(marks.em!),
             'Mod-`': toggleMark(marks.code!),
+            'Mod-Shift-7': (state, dispatch) =>
+              wrapInList(nodes.ordered_list!)(state, dispatch),
+            'Mod-Shift-8': (state, dispatch) =>
+              wrapInList(nodes.bullet_list!)(state, dispatch),
+            'Mod-Shift-k': () => {
+              toolbar.current?.run('link');
+              return true;
+            },
             'Shift-Enter': (state, dispatch) => {
               if (state.selection.$from.parent.type.spec.code) return false;
               dispatch?.(
@@ -740,7 +804,12 @@ export function RenderedEditor(props: Props) {
         return true;
       },
       dispatchTransaction: (transaction) => {
-        if (transaction.docChanged && (latest.current.disabled || activeMath)) {
+        if (
+          transaction.docChanged &&
+          (latest.current.disabled ||
+            activeMath ||
+            retainedDraft.current !== null)
+        ) {
           // A failed blur leaves the original equation draft alive. A nearby
           // edit (including Select All / Delete or a browser DOM mutation)
           // must not destroy its NodeView and silently discard that text.
@@ -749,12 +818,18 @@ export function RenderedEditor(props: Props) {
         }
         const nextState = editor.state.apply(transaction);
         if (transaction.docChanged) {
+          let attempted = nextState.doc.textBetween(
+            0,
+            nextState.doc.content.size,
+            '\n\n',
+          );
           try {
             const next = serializeRenderedChange(
               projection,
               nextState.doc,
               transaction,
             );
+            attempted = next;
             const rebased = rebaseRenderedProjection(
               projection,
               nextState.doc,
@@ -773,13 +848,8 @@ export function RenderedEditor(props: Props) {
               setError(
                 'The document changed before this edit could be applied. Your saved source is unchanged.',
               );
-              setUnappliedText(
-                nextState.doc.textBetween(
-                  0,
-                  nextState.doc.content.size,
-                  '\n\n',
-                ),
-              );
+              retainedDraft.current = attempted;
+              setUnappliedText(attempted);
               editor.updateState(editor.state);
               return;
             }
@@ -792,22 +862,13 @@ export function RenderedEditor(props: Props) {
                 ? reason.message
                 : 'This edit could not be applied.',
             );
-            setUnappliedText(
-              nextState.doc.textBetween(0, nextState.doc.content.size, '\n\n'),
-            );
+            retainedDraft.current = attempted;
+            setUnappliedText(attempted);
             editor.updateState(editor.state);
             return;
           }
         }
         editor.updateState(nextState);
-        const parent = editor.state.selection.$from.parent;
-        setCurrentBlockType(
-          parent.type === nodes.heading
-            ? `heading${parent.attrs.level}`
-            : parent.type === nodes.code_block
-              ? 'code'
-              : 'paragraph',
-        );
       },
     });
     view.current = editor;
@@ -845,10 +906,16 @@ export function RenderedEditor(props: Props) {
     };
     editor.dom.addEventListener('pn-source-change', sourceChanged);
     editor.dom.addEventListener('compositionend', afterComposition);
-    props.commandsRef.current = {
+    commandsRef.current = {
       focus: () => editor.focus(),
+      format: (action) => toolbar.current?.run(action),
       insertText: (text) => {
-        if (latest.current.disabled || activeMath) return false;
+        if (
+          latest.current.disabled ||
+          activeMath ||
+          retainedDraft.current !== null
+        )
+          return false;
         const before = acceptedSource;
         const parsed = parseRenderedSource(text, latest.current.path);
         editor.dispatch(
@@ -913,17 +980,6 @@ export function RenderedEditor(props: Props) {
         }
         editor.focus();
       },
-      block: (name) => {
-        setBlockType(
-          name === 'code'
-            ? nodes.code_block!
-            : name.startsWith('heading')
-              ? nodes.heading!
-              : nodes.paragraph!,
-          name.startsWith('heading') ? { level: Number(name.slice(7)) } : null,
-        )(editor.state, editor.dispatch.bind(editor));
-        editor.focus();
-      },
       link: (href) => {
         if (activeMath) {
           setError(
@@ -967,16 +1023,15 @@ export function RenderedEditor(props: Props) {
       if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
       editor.destroy();
       view.current = null;
-      props.commandsRef.current = null;
+      commandsRef.current = null;
       toolbar.current = null;
     };
     // The host switches presentation without replacing the canonical source/history.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.path]);
+  }, [props.path, commandsRef]);
 
   const toolbar = useRef<{
     run: (name: string) => void;
-    block: (name: string) => void;
     link: (href: string) => void;
   } | null>(null);
   useLayoutEffect(() => {
@@ -989,55 +1044,15 @@ export function RenderedEditor(props: Props) {
     for (const refresh of imageRefreshers.current) refresh();
     for (const runtime of runtimeRoots.current)
       runtime.root.render(
-        <RenderedRuntime context={props.runtime} raw={runtime.raw} />,
+        <RenderedRuntime
+          context={props.runtime}
+          raw={runtime.raw}
+          onError={runtime.report}
+        />,
       );
   }, [props.runtime, props.disabled, props.wikilinks]);
-  const button = (label: string, text: string, action: string) => (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      disabled={props.disabled}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={() => toolbar.current?.run(action)}
-    >
-      {text}
-    </button>
-  );
   return (
     <div className="rendered-editor" hidden={!props.active}>
-      <div
-        className="rendered-toolbar"
-        role="toolbar"
-        aria-label="Text formatting"
-      >
-        <select
-          aria-label="Block type"
-          value={blockType}
-          disabled={props.disabled}
-          onChange={(event) => toolbar.current?.block(event.target.value)}
-        >
-          <option value="paragraph">Paragraph</option>
-          <option value="heading1">Heading 1</option>
-          <option value="heading2">Heading 2</option>
-          <option value="heading3">Heading 3</option>
-          <option value="heading4">Heading 4</option>
-          <option value="heading5">Heading 5</option>
-          <option value="heading6">Heading 6</option>
-          <option value="code">Code block</option>
-        </select>
-        {button('Bold', 'B', 'bold')}
-        {button('Italic', 'I', 'italic')}
-        {button('Inline code', '</>', 'code')}
-        {button('Bullet list', '•', 'bullet')}
-        {button('Ordered list', '1.', 'ordered')}
-        {button('Task list', '☑', 'task')}
-        {button('Blockquote', '❞', 'quote')}
-        {button('Insert link', 'Link', 'link')}
-        {button('Insert table', 'Table', 'table')}
-        {button('Add table row', '+ Row', 'row')}
-        {button('Insert equation', '∑', 'math')}
-      </div>
       {linkDraft !== null && (
         <form
           className="rendered-link-form"
@@ -1059,19 +1074,51 @@ export function RenderedEditor(props: Props) {
           </button>
         </form>
       )}
-      {error && <p role="alert">{error}</p>}
-      {unappliedText !== null && (
-        <details open className="rendered-unapplied">
-          <summary>Unapplied text, kept for recovery</summary>
+      {recoveryOpen && unappliedText !== null && (
+        <Modal title="Retained edit" onClose={() => setRecoveryOpen(false)}>
+          <p>
+            This text was not saved. Download or copy it before discarding it;
+            your accepted source is unchanged.
+          </p>
           <textarea
             aria-label="Unapplied text"
             readOnly
             value={unappliedText}
           />
-          <button type="button" onClick={() => setUnappliedText(null)}>
-            Dismiss recovered draft
+          <button
+            type="button"
+            onClick={() => {
+              const url = URL.createObjectURL(
+                new Blob([unappliedText], {
+                  type: 'text/plain;charset=utf-8',
+                  endings: 'transparent',
+                }),
+              );
+              const anchor = document.createElement('a');
+              anchor.href = url;
+              anchor.download =
+                'recovered-' + (props.path.split('/').pop() || 'note.mdx');
+              anchor.click();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }}
+          >
+            Download retained source
           </button>
-        </details>
+          <button type="button" onClick={() => setRecoveryOpen(false)}>
+            Keep draft
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setUnappliedText(null);
+              retainedDraft.current = null;
+              setError('');
+              setRecoveryOpen(false);
+            }}
+          >
+            Discard retained draft
+          </button>
+        </Modal>
       )}
       <div ref={mount} />
     </div>

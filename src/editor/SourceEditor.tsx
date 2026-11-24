@@ -50,6 +50,7 @@ export type EditorCommands = {
   redo: () => void;
   revealSource: (offset: number, expectedSource: string) => void;
   insertText: (text: string) => boolean;
+  formatRendered?: (action: string) => void;
 } | null;
 
 // Preserve the real immutable history field, not its JSON serialization:
@@ -203,13 +204,17 @@ export function SourceEditor({
       compositionHistory(),
       lineNumbers(),
       history(),
-      keymap.of([...defaultKeymap, ...historyKeymap]),
+      keymap.of([
+        { key: 'Mod-Shift-z', run: redo, preventDefault: true },
+        ...defaultKeymap,
+        ...historyKeymap,
+      ]),
       markdown({ defaultCodeLanguage: javascriptLanguage }),
       EditorView.lineWrapping,
       EditorView.contentAttributes.of({ 'aria-label': 'MDX source' }),
       presentation.current.of([]),
       // Pending file/save I/O does not lock raw source. The document model
-      // retains edits made during that operation; only unapplied math drafts
+      // retains edits made during that operation; only unapplied editor drafts
       // temporarily protect the source surface from concurrent editing.
       editable.current.of(EditorState.readOnly.of(false)),
       EditorState.transactionFilter.of((transaction) => {
@@ -321,6 +326,10 @@ export function SourceEditor({
         },
         redo: () => {
           if (!draftRef.current) redo(editor);
+        },
+        formatRendered: (action) => {
+          if (!draftRef.current && renderedActive.current)
+            renderedCommands.current?.format(action);
         },
         revealSource: (offset, expectedSource) => {
           if (rawSource(editor.state) !== expectedSource || draftRef.current)

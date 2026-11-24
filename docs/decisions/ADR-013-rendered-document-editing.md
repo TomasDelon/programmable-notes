@@ -14,7 +14,7 @@ the requested rendered-document editing experience.
 Preview is now a trusted ProseMirror projection of the note's Markdown syntax
 tree. Paragraphs, headings, formatting, lists, tasks, tables and mathematical
 atoms are edited directly. Keyboard commands, Markdown input rules, list
-continuation and a formatting toolbar operate on that projection.
+continuation and editor-owned formatting commands operate on that projection.
 
 The existing CodeMirror instance remains the canonical source transaction and
 undo engine. Every projected change must serialize and reparse successfully
@@ -76,7 +76,41 @@ paragraph/task continuation, mixed line endings, code pipes in tables, shifted
 math offsets, rejected drafts, IME refresh, late attachment catalogs, shared
 compiler leases and competing tab writes.
 
-Browser acceptance covers rendered editing, toolbar and Markdown commands, real
+Browser acceptance covers rendered editing, keyboard/palette and Markdown commands, real
 task controls, table and equation editing, undo across modes, source export and
 reload, composition, narrow layouts, React state, full-document execution and
 host security. The existing native/browser suite remains required before release.
+
+## 24 November: keyboard authoring and notifications
+
+The web Preview no longer displays a formatting toolbar. Markdown input rules,
+keyboard shortcuts and editor-owned command-palette actions invoke the same
+revision-guarded source transactions. Ctrl/Cmd+Shift+K opens the explicit link
+form; Ctrl/Cmd+Shift+7/8 starts ordered/bullet lists. The native `/engine` UI is
+unchanged.
+
+Ordinary typing includes incomplete Markdown prefixes, trailing spaces and empty
+nested list items. Text serialization must preserve these intermediate states:
+escape literal prefixes once, use numeric references for authored trailing
+spaces that CommonMark would discard, and retain a paragraph separator before an
+empty nested list (otherwise a dash can become a Setext underline). Decoded
+punctuation offsets are accepted only after the complete decoded span matches the
+parser text. The two emitted whitespace references have verified offsets; unknown entity
+mappings still fall back to block serialization. Typed whitespace may remain
+represented by standard Markdown character references; existing raw source is
+not decoded or normalized for presentation.
+Strict semantic reparse, source revision checks and opaque JSX remain required.
+Unchanged blocks and unrelated raw slices are reused byte-for-byte.
+
+Editor and web workspace feedback use a host-owned notification provider. Notices
+never take writing focus; transient notices pause for keyboard focus, hover or
+inspection, and animations respect reduced-motion preferences. Detailed errors
+appear only after an explicit Details action. No preview message can call this
+provider or authorize edits, exports or filesystem operations.
+
+A refused transaction retains the first complete serialized source candidate and
+blocks later modifications until explicit resolution. The notification opens an
+editor-owned recovery dialog; downloading its retained source preserves BOM and
+physical line endings. Copying the textarea may normalize line endings according
+to browser behavior. Downloading never replaces the accepted document, and the
+draft remains pending until explicitly discarded. Navigation guards remain active.

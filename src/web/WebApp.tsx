@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -73,6 +74,7 @@ import {
   type WebState,
 } from './workspace';
 import './web.css';
+import { useNotifications } from '../ui/useNotifications';
 
 type WorkspaceModel = ReturnType<typeof useWebWorkspace>;
 type SettingsTab = 'storage' | 'recovery' | 'trash' | 'help';
@@ -117,6 +119,12 @@ function Dialog({
       panel.current?.querySelector<HTMLElement>('input, button');
     first?.focus();
     const keydown = (event: KeyboardEvent) => {
+      // A native top-layer dialog owns its focus trap and Escape handling.
+      if (
+        event.target instanceof Element &&
+        event.target.closest('dialog[open]')
+      )
+        return;
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
@@ -338,6 +346,7 @@ function WorkspaceApp({
   model: WorkspaceModel;
   state: WebState;
 }) {
+  const { notify, dismiss } = useNotifications();
   const { workspace } = state;
   const offline = useOffline();
   const selected = workspace.selected;
@@ -478,7 +487,7 @@ function WorkspaceApp({
   );
   const words = source.trim() ? source.trim().split(/\s+/).length : 0;
   const saveLabel = pendingEdit
-    ? 'Apply or cancel your math draft'
+    ? 'Resolve the pending edit before saving'
     : (
         {
           loading: 'Opening workspace',
@@ -537,9 +546,10 @@ function WorkspaceApp({
   }, [newItem?.kind, newItem?.parent]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!toast) return;
+    notify({ id: 'workspace-feedback', message: toast });
     const timer = setTimeout(() => setToast(''), 3500);
     return () => clearTimeout(timer);
-  }, [toast]);
+  }, [toast, notify]);
   useEffect(() => {
     const location = pendingLocation.current;
     if (location && selected === location.key && mode === 'source') {
@@ -1177,6 +1187,23 @@ function WorkspaceApp({
     .sort((first, second) => commandMatchRank(first) - commandMatchRank(second))
     .slice(0, 30);
   const actions = [
+    ...(selectedIsNote && mode === 'preview'
+      ? [
+          ['Insert link', 'link'],
+          ['Insert table', 'table'],
+          ['Add table row', 'row'],
+          ['Insert equation', 'math'],
+          ['Bullet list', 'bullet'],
+          ['Ordered list', 'ordered'],
+          ['Task list', 'task'],
+          ['Blockquote', 'quote'],
+        ].map(([name, action]) => ({
+          name: name!,
+          description: 'Format the selected Markdown',
+          icon: Pencil,
+          actionId: 'format:' + action,
+        }))
+      : []),
     {
       name: 'New document',
       description: 'Create a note in this workspace',
@@ -1300,6 +1327,11 @@ function WorkspaceApp({
   ];
   const runCommand = (result: { id: string }) => {
     setCommandOpen(false);
+    if (result.id.startsWith('action:format:')) {
+      const action = result.id.slice('action:format:'.length);
+      requestAnimationFrame(() => commands.current?.formatRendered?.(action));
+      return;
+    }
     if (result.id.startsWith('document:')) {
       openDocument(result.id.slice('document:'.length));
       return;
@@ -1359,6 +1391,94 @@ function WorkspaceApp({
         ?.scrollIntoView({ block: 'nearest' });
   }, [commandIndex, commandOpen]);
 
+  const latestActions = useRef({ model, canLeaveDraft, preview, switchMode });
+  useLayoutEffect(() => {
+    latestActions.current = { model, canLeaveDraft, preview, switchMode };
+  });
+  useEffect(() => {
+    if (model.error || model.conflict)
+      notify({
+        id: 'workspace-storage',
+        tone: 'error',
+        persistent: true,
+        dismissible: false,
+        message: model.conflict
+          ? 'This workspace changed in another tab.'
+          : model.error,
+        detail: model.conflict ? model.error : undefined,
+        actions: [
+          {
+            label: 'Export current backup',
+            run: () => latestActions.current.model.exportBackup(),
+          },
+          model.conflict
+            ? {
+                label: 'Load latest saved workspace',
+                run: () => {
+                  if (latestActions.current.canLeaveDraft())
+                    void latestActions.current.model.reloadFromStorage();
+                },
+              }
+            : {
+                label: 'Retry save',
+                run: () => {
+                  void latestActions.current.model.saveNow();
+                },
+              },
+        ],
+      });
+    else dismiss('workspace-storage');
+    // Actions read the current verified model; notifications never authorize a write.
+  }, [model.error, model.conflict, notify, dismiss]);
+  useEffect(() => {
+    if (model.backupNotice)
+      notify({
+        id: 'workspace-backup',
+        tone: 'success',
+        message: model.backupNotice,
+      });
+  }, [model.backupNotice, notify]);
+  useEffect(() => {
+    if (preview.error)
+      notify({
+        id: 'document-preview',
+        tone: 'error',
+        persistent: true,
+        message: 'Preview needs attention',
+        detail: preview.error,
+        actions: [
+          {
+            label: 'Try preview again',
+            run: () => latestActions.current.preview.rebuild(),
+          },
+          {
+            label: 'Show source',
+            run: () => {
+              const { model, preview, canLeaveDraft, switchMode } =
+                latestActions.current;
+              if (!canLeaveDraft()) return;
+              const location = preview.locations[0];
+              if (location) {
+                pendingLocation.current = {
+                  key: location.file,
+                  offset: location.offset,
+                  source: location.source,
+                };
+                model.select(location.file);
+                model.setMode('source');
+                requestAnimationFrame(() =>
+                  commands.current?.revealSource(
+                    location.offset,
+                    location.source,
+                  ),
+                );
+              } else switchMode('source');
+            },
+          },
+        ],
+      });
+    else dismiss('document-preview');
+  }, [preview.error, notify, dismiss]);
   return (
     <div
       className={
@@ -1950,49 +2070,6 @@ function WorkspaceApp({
                 />
               </div>
               <div className="web-preview-panel" hidden={mode !== 'preview'}>
-                {preview.error && (
-                  <section className="web-preview-error" role="alert">
-                    <div>
-                      <AlertCircle size={18} />
-                      <strong>Preview needs attention</strong>
-                    </div>
-                    <pre>{preview.error}</pre>
-                    {preview.locations.map((location, index) => (
-                      <button
-                        type="button"
-                        className="web-button"
-                        key={location.file + ':' + index}
-                        onClick={() => {
-                          if (!canLeaveDraft()) return;
-                          pendingLocation.current = {
-                            key: location.file,
-                            offset: location.offset,
-                            source: location.source,
-                          };
-                          model.select(location.file);
-                          model.setMode('source');
-                          requestAnimationFrame(() =>
-                            commands.current?.revealSource(
-                              location.offset,
-                              location.source,
-                            ),
-                          );
-                        }}
-                      >
-                        Open{' '}
-                        {location.file.slice(location.file.indexOf('/') + 1)}
-                        {location.line ? ':' + location.line : ''}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="web-button"
-                      onClick={preview.rebuild}
-                    >
-                      <RotateCcw size={14} /> Try preview again
-                    </button>
-                  </section>
-                )}
                 {preview.html && runtimeDocument === selected && (
                   <WebPreview
                     html={preview.html}
@@ -2026,11 +2103,6 @@ function WorkspaceApp({
                   )}
               </div>
             </div>
-            {model.backupNotice && (
-              <p className="web-backup-notice" role="status">
-                {model.backupNotice}
-              </p>
-            )}
           </div>
         </div>
       </main>
@@ -2162,47 +2234,6 @@ function WorkspaceApp({
           </section>
         </div>
       </aside>
-      {(model.error || model.conflict) && (
-        <div className="web-storage-banner" role="alert">
-          <AlertCircle size={17} />
-          <div>
-            <strong>
-              {model.conflict
-                ? 'This workspace changed in another tab.'
-                : 'Your latest changes need attention.'}
-            </strong>
-            <p>{model.error}</p>
-            <div className="web-inline-actions">
-              <button
-                type="button"
-                className="web-button"
-                onClick={model.exportBackup}
-              >
-                <Download size={14} /> Export current backup
-              </button>
-              {model.conflict ? (
-                <button
-                  type="button"
-                  className="web-button"
-                  onClick={() => {
-                    if (canLeaveDraft()) void model.reloadFromStorage();
-                  }}
-                >
-                  Load latest saved workspace
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="web-button"
-                  onClick={() => void model.saveNow()}
-                >
-                  Retry save
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       <input
         ref={attachmentInput}
         hidden
@@ -2826,12 +2857,6 @@ function WorkspaceApp({
             </div>
           </div>
         </Dialog>
-      )}
-      {toast && (
-        <div role="status" className="toast">
-          <Check size={15} />
-          {toast}
-        </div>
       )}
     </div>
   );

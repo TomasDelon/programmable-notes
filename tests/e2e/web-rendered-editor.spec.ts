@@ -44,6 +44,29 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
+for (const marker of ['1.', '-', '*', '+']) {
+  test(`typing ${marker} space starts a list in a mixed MDX document`, async ({
+    page,
+  }) => {
+    const original =
+      '\uFEFF# Writing\r\n\r\nStart here.\r\n\r\n<span data-opaque="kept">Opaque</span>\r\n';
+    await importNote(page, original);
+    await editor(page).getByText('Start here.', { exact: true }).click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type(marker + ' first');
+    await expect(editor(page).locator('li')).toContainText('first');
+    await expect(
+      page.getByText('This edit cannot be represented faithfully', {
+        exact: false,
+      }),
+    ).toHaveCount(0);
+    expect(await exportedSource(page)).toContain(
+      '<span data-opaque="kept">Opaque</span>\r\n',
+    );
+  });
+}
+
 test('Preview renders a real editable document with bullets, tasks and centered math', async ({
   page,
 }) => {
@@ -548,3 +571,140 @@ test('clicking outside a focused inline equation commits its dollar-delimited so
   ).toBeVisible();
   expect(await exportedSource(page)).toBe(source.replace('x^2', 'x^3'));
 });
+
+test('Markdown keyboard authoring handles lists, nesting, headings, formatting and exact history without a toolbar', async ({
+  page,
+}) => {
+  const original =
+    '\uFEFF# Writing\r\n\r\nStart here.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
+  await importNote(page, original);
+  await expect(
+    page.getByRole('toolbar', { name: 'Text formatting' }),
+  ).toHaveCount(0);
+  const view = editor(page);
+  await view.getByText('Start here.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('1. first');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('second');
+  await expect(view.locator('ol > li')).toHaveCount(2);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('ordered nested');
+  await expect(view.locator('ol ol li')).toHaveText('ordered nested');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('- bullet');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('nested');
+  await expect(view.locator('ul ul li')).toHaveText('nested');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('## New heading');
+  await expect(
+    view.getByRole('heading', { level: 2, name: 'New heading' }),
+  ).toBeVisible();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('**bold** and *italic* with `code`.');
+  await expect(view.locator('strong')).toHaveText('bold');
+  await expect(view.locator('em')).toHaveText('italic');
+  await expect(view.locator('code').filter({ hasText: 'code' })).toHaveText(
+    'code',
+  );
+  await page.keyboard.press('Control+Shift+K');
+  await expect(page.getByRole('textbox', { name: 'Link URL' })).toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
+  const after = await exportedSource(page);
+  expect(after.startsWith('\uFEFF# Writing\r\n\r\nStart here.\r\n')).toBe(true);
+  expect(after.endsWith('<span data-kept="yes">Opaque JSX</span>\r\n')).toBe(
+    true,
+  );
+  await command(page, 'Edit source');
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+z');
+  expect(await exportedSource(page)).not.toBe(after);
+  await source.press('Control+Shift+Z');
+  expect(await exportedSource(page)).toBe(after);
+  await saved(page);
+  await page.reload();
+  await command(page, 'Preview document');
+  await expect(
+    editor(page).getByRole('heading', { name: 'New heading', exact: true }),
+  ).toBeVisible();
+  expect(await exportedSource(page)).toBe(after);
+});
+
+for (const width of [1440, 820, 390]) {
+  test(`minimal error notifications keep the document stable at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const source =
+      "import {useState} from 'react'\n\nexport function Probe(){const [n,setN]=useState(0);return <><button onClick={()=>setN(n+1)}>Counter: {n}</button><button onClick={()=>{throw new Error('Notification demonstration')}}>Trigger error</button></>}\n\n# A quiet document\n\nWrite here.\n\n<Probe />\n";
+    await importNote(page, source);
+    const view = editor(page);
+    const frame = page.frameLocator('iframe[title="Document preview"]');
+    await frame.getByRole('button', { name: 'Counter: 0' }).click();
+    await expect(
+      frame.getByRole('button', { name: 'Counter: 1' }),
+    ).toBeVisible();
+    const before = await view.boundingBox();
+    await frame.getByRole('button', { name: 'Trigger error' }).click();
+    const notice = page
+      .getByRole('alert')
+      .filter({ hasText: 'Preview needs attention' });
+    await expect(notice).toHaveCount(1);
+    await view.getByText('Write here.', { exact: true }).click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' Continue writing.');
+    await expect(view).toBeFocused();
+    await expect(view.locator('[role="alert"]')).toHaveCount(0);
+    await expect(
+      page.getByRole('toolbar', { name: 'Text formatting' }),
+    ).toHaveCount(0);
+    expect((await view.boundingBox())!.y).toBe(before!.y);
+    expect(await exportedSource(page)).toBe(
+      source.replace('Write here.', 'Write here.&#32;Continue&#32;writing.'),
+    );
+    await expect(
+      frame.getByRole('button', { name: 'Counter: 1' }),
+    ).toBeVisible();
+    const path = test.info().outputPath(`preview-notifications-${width}.png`);
+    await page.screenshot({ path, fullPage: true, animations: 'disabled' });
+    await test
+      .info()
+      .attach(`Preview ${width}px`, { path, contentType: 'image/png' });
+    await notice.getByRole('button', { name: 'Details' }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'Notification details' }),
+    ).toContainText('Notification demonstration');
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    if (width === 1440) {
+      await command(page, 'Settings');
+      await expect(
+        page.getByRole('dialog', { name: 'Settings', exact: true }),
+      ).toBeVisible();
+      await notice.getByRole('button', { name: 'Details' }).click();
+      await expect(
+        page.getByRole('dialog', { name: 'Notification details' }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(
+        page.getByRole('dialog', { name: 'Notification details' }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole('dialog', { name: 'Settings', exact: true }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+    }
+  });
+}

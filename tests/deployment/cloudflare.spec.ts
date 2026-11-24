@@ -186,3 +186,51 @@ test('visual and source edits retain exact bytes through history, saving and off
     await context.setOffline(false);
   }
 });
+
+test('ordinary keyboard Markdown authoring remains usable after deployment', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF# Hosted writing\r\n\r\nStart here.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Keyboard.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view.getByText('Start here.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.type(' Keep writing.');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('1. first');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('second');
+  await expect(view.locator('ol > li')).toHaveCount(2);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('- bullet');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('nested');
+  await expect(view.locator('ul ul li')).toHaveText('nested');
+  await expect(
+    page.getByRole('toolbar', { name: 'Text formatting' }),
+  ).toHaveCount(0);
+  await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
+  const after = await exported(page);
+  expect(
+    after
+      .toString()
+      .startsWith(
+        '\uFEFF# Hosted writing\r\n\r\nStart here.&#32;Keep&#32;writing.\r\n',
+      ),
+  ).toBe(true);
+  expect(
+    after.toString().endsWith('<span data-kept="yes">Opaque JSX</span>\r\n'),
+  ).toBe(true);
+  await saved(page);
+  await page.reload();
+  expect(await exported(page)).toEqual(after);
+});

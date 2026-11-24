@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { StoredAsset } from '../../assets/catalog';
 import { parseLiveSource } from '../math/mathSource';
 import { useWebPreview } from '../../web/useWebPreview';
@@ -26,9 +26,11 @@ function runtimeIslandSource(source: string, path: string, raw: string) {
 export function RenderedRuntime({
   context,
   raw,
+  onError,
 }: {
   context: RenderedRuntimeContext;
   raw: string;
+  onError: (message: string) => void;
 }) {
   const serializedFiles = useMemo(
     () =>
@@ -57,11 +59,14 @@ export function RenderedRuntime({
     images,
     enabled: !context.stopped,
   });
+  useEffect(() => {
+    onError(context.stopped ? '' : preview.error);
+  }, [context.stopped, preview.error, onError]);
+  useEffect(() => () => onError(''), [onError]);
   if (context.stopped)
     return <p className="rendered-runtime-status">React preview is paused.</p>;
   return (
     <div className="rendered-runtime">
-      {preview.error && <p role="alert">{preview.error}</p>}
       {preview.html ? (
         <WebPreview
           html={preview.html}

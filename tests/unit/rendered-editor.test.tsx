@@ -1,11 +1,12 @@
 import {
   act,
   fireEvent,
-  render,
+  render as renderUI,
   screen,
   waitFor,
 } from '@testing-library/react';
-import { createRef, type ComponentProps } from 'react';
+import { createRef, type ComponentProps, type ReactElement } from 'react';
+import { NotificationProvider } from '../../src/ui/Notifications';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RenderedEditor,
@@ -19,6 +20,8 @@ vi.mock('../../src/editor/rendered/RenderedRuntime', () => ({
 }));
 
 type Props = ComponentProps<typeof RenderedEditor>;
+const render = (ui: ReactElement) =>
+  renderUI(ui, { wrapper: NotificationProvider });
 function propsFor(source: string): Props {
   return {
     source,
@@ -91,6 +94,46 @@ afterEach(() => {
 });
 
 describe('rendered editor host transaction boundary', () => {
+  it('keeps the first rejected edit until explicit recovery instead of overwriting it with another attempt', () => {
+    const props = propsFor('Saved source.');
+    props.apply = vi.fn(() => false);
+    render(<RenderedEditor {...props} />);
+    act(() => {
+      props.commandsRef.current!.insertText('First retained draft.');
+    });
+    act(() => {
+      props.commandsRef.current!.insertText('Second rejected attempt.');
+    });
+    expect(props.apply).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Review draft' }));
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'Unapplied text',
+        }) as HTMLTextAreaElement
+      ).value,
+    ).toContain('First retained draft.');
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'Unapplied text',
+        }) as HTMLTextAreaElement
+      ).value,
+    ).not.toContain('Second rejected attempt.');
+  });
+  it('keeps formatting out of the document and opens link editing with its shortcut', () => {
+    render(<RenderedEditor {...propsFor('A link target.')} />);
+    expect(
+      screen.queryByRole('toolbar', { name: 'Text formatting' }),
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(
+      screen.getByRole('textbox', { name: 'Editable document' }),
+      { key: 'K', code: 'KeyK', keyCode: 75, ctrlKey: true, shiftKey: true },
+    );
+    expect(screen.getByRole('textbox', { name: 'Link URL' })).toHaveValue(
+      'https://',
+    );
+  });
   it('rejects refused inserts, keeps the attempted text, and restores browser-mutated DOM', async () => {
     const props = propsFor('Saved note.');
     props.apply = vi.fn(() => false);
@@ -103,6 +146,7 @@ describe('rendered editor host transaction boundary', () => {
     });
     expect(props.apply).toHaveBeenCalledOnce();
     expect(editor.textContent).toBe('Saved note.');
+    fireEvent.click(screen.getByRole('button', { name: 'Review draft' }));
     expect(
       (
         screen.getByRole('textbox', {
@@ -113,17 +157,22 @@ describe('rendered editor host transaction boundary', () => {
     act(() => {
       editor.querySelector('p')!.textContent = 'Rejected browser input.';
     });
-    await waitFor(() => expect(props.apply).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(editor.textContent).toBe('Saved note.'));
-    expect(screen.getByRole('textbox', { name: 'Unapplied text' })).toHaveValue(
-      'Rejected browser input.',
-    );
+    expect(props.apply).toHaveBeenCalledOnce();
+    await waitFor(() => expect(editor.textContent).toBe('Saved note.'));
+    expect(
+      (
+        screen.getByRole('textbox', {
+          name: 'Unapplied text',
+        }) as HTMLTextAreaElement
+      ).value,
+    ).toContain('Rejected insertion.');
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'saved source is unchanged',
+      'Your edit was kept for recovery',
     );
     expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
     fireEvent.click(
-      screen.getByRole('button', { name: 'Dismiss recovered draft' }),
+      screen.getByRole('button', { name: 'Discard retained draft' }),
     );
     expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
   });
@@ -263,7 +312,10 @@ describe('rendered editor host transaction boundary', () => {
   it('retains an existing link URL when an invalid equation prevents its application', () => {
     const props = propsFor('Link target and $x$.');
     render(<RenderedEditor {...props} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Insert link' }));
+    fireEvent.keyDown(
+      screen.getByRole('textbox', { name: 'Editable document' }),
+      { key: 'K', code: 'KeyK', keyCode: 75, ctrlKey: true, shiftKey: true },
+    );
     const url = screen.getByRole('textbox', { name: 'Link URL' });
     fireEvent.change(url, {
       target: { value: 'https://example.org/retained' },
@@ -291,7 +343,10 @@ describe('rendered editor host transaction boundary', () => {
   it('retains a link draft and refuses stale selection coordinates after an external source update', () => {
     const props = propsFor('Original paragraph with a link target.');
     const ui = render(<RenderedEditor {...props} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Insert link' }));
+    fireEvent.keyDown(
+      screen.getByRole('textbox', { name: 'Editable document' }),
+      { key: 'K', code: 'KeyK', keyCode: 75, ctrlKey: true, shiftKey: true },
+    );
     expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
     const url = screen.getByRole('textbox', { name: 'Link URL' });
     fireEvent.change(url, {
@@ -310,4 +365,32 @@ describe('rendered editor host transaction boundary', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
     expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
   });
+});
+
+it('downloads retained raw source with its BOM, CRLF and opaque JSX intact', async () => {
+  const props = propsFor('\uFEFFOriginal.\r\n\r\n<span>Opaque</span>\r\n');
+  props.apply = vi.fn(() => false);
+  render(<RenderedEditor {...props} />);
+  act(() => {
+    props.commandsRef.current!.insertText('Rejected.');
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Review draft' }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Download retained source' }),
+  );
+  const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)![0] as Blob;
+  const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob);
+  });
+  expect(Array.from(new Uint8Array(bytes))).toEqual(
+    Array.from(
+      new TextEncoder().encode(
+        '\uFEFFRejected.\r\n\r\nOriginal.\r\n\r\n<span>Opaque</span>\r\n',
+      ),
+    ),
+  );
+  expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
 });

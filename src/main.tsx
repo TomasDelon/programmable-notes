@@ -4,6 +4,7 @@ import { isTauri } from '@tauri-apps/api/core';
 import { RootBoundary } from './web/RootBoundary';
 import { startOffline } from './web/offline';
 import { EditorEntry } from './web/EditorEntry';
+import { NotificationProvider } from './ui/Notifications';
 
 // Keep the native editor and its regression fixture on their existing path.
 // The browser product has its own presentation and persistence adapter.
@@ -15,13 +16,15 @@ document.documentElement.dataset.runtime = legacy ? 'engine' : 'web';
 
 createRoot(root).render(
   <StrictMode>
-    <RootBoundary>
-      <Suspense
-        fallback={<p className="boot-message">Opening your workspace…</p>}
-      >
-        <EditorEntry />
-      </Suspense>
-    </RootBoundary>
+    <NotificationProvider>
+      <RootBoundary>
+        <Suspense
+          fallback={<p className="boot-message">Opening your workspace…</p>}
+        >
+          <EditorEntry />
+        </Suspense>
+      </RootBoundary>
+    </NotificationProvider>
   </StrictMode>,
 );
 

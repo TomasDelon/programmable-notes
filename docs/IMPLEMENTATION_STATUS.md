@@ -1,5 +1,16 @@
 # Programmable Notes implementation status
 
+## Preview keyboard authoring repair
+
+The web Preview removes its formatting toolbar and uses Markdown input, keyboard
+shortcuts and trusted palette commands. Prefix typing, empty nested lists,
+trailing spaces and bold input are covered by regression tests. Compact animated
+notifications replace inline editor errors. Explicit recovery retains the first
+refused raw candidate, blocks later mutations, and offers an exact-byte download.
+Source revision checks, semantic reparsing and JSX opacity remain mandatory.
+See the [verification log](recovery/2026-11-24-preview-markdown-input.md) and
+[ADR 013](decisions/ADR-013-rendered-document-editing.md).
+
 ## Permanent web testing preparation
 
 A separate Cloudflare preparation branch adds a static Pages build target,

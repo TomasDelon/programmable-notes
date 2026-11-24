@@ -138,16 +138,16 @@ test('rejects invalid backup and oversize paste without changing saved source', 
     mimeType: 'application/json',
     buffer: Buffer.from('{"format":"other","state":{}}'),
   });
-  await expect(page.locator('.web-storage-banner')).toContainText(
-    /backup|format/i,
-  );
+  await expect(
+    page.locator('[data-notification-id="workspace-storage"]'),
+  ).toContainText(/backup|format/i);
   expect(await selectedSavedSource(page)).toBe('Keep this exact note.');
   await page
     .getByRole('textbox', { name: 'MDX source' })
     .fill('x'.repeat(500001));
-  await expect(page.locator('.web-storage-banner')).toContainText(
-    /not inserted|500 KB/i,
-  );
+  await expect(
+    page.locator('[data-notification-id="workspace-storage"]'),
+  ).toContainText(/not inserted|500 KB/i);
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toHaveText(
     'Keep this exact note.',
   );
@@ -183,14 +183,16 @@ test('a stale tab retains its draft and cannot overwrite the other tab', async (
     'data-save-status',
     'conflict',
   );
-  await expect(other.locator('.web-storage-banner')).toBeVisible();
+  await expect(
+    other.locator('[data-notification-id="workspace-storage"]'),
+  ).toBeVisible();
   await expect(other.getByRole('textbox', { name: 'MDX source' })).toHaveText(
     'Retained draft from second tab',
   );
   expect(await selectedSavedSource(page)).toBe('Saved from first tab');
   const backupDownload = other.waitForEvent('download');
   await other
-    .locator('.web-storage-banner')
+    .locator('[data-notification-id="workspace-storage"]')
     .getByRole('button', { name: 'Export current backup' })
     .click();
   const payload = JSON.parse(
@@ -224,7 +226,9 @@ test('an idle tab can switch editing modes without overwriting a newer saved not
   await saved(page);
   await command(other, 'Preview document');
   await saved(other);
-  await expect(other.locator('.web-storage-banner')).toHaveCount(0);
+  await expect(
+    other.locator('[data-notification-id="workspace-storage"]'),
+  ).toHaveCount(0);
   await expect(
     other.getByRole('textbox', { name: 'Editable document' }),
   ).toContainText('New text published by the first tab');

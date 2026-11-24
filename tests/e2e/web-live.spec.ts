@@ -107,7 +107,7 @@ test('invalid or cancelled inline display math retains the original and mobile h
   await latex.fill('$$\n\\unknowncommand\n$$');
   await latex.press('Control+Enter');
   await expect(
-    page.locator('.rendered-math-error[role="alert"]'),
+    page.getByRole('alert').filter({ hasText: 'Check the equation' }),
   ).toBeVisible();
   await latex.press('Escape');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
@@ -134,7 +134,7 @@ test('unfinished invalid math survives document-wide deletion until explicitly c
   await field.fill('$\\unknowncommand$');
   await field.press('Enter');
   await expect(
-    page.locator('.rendered-math-error[role="alert"]'),
+    page.getByRole('alert').filter({ hasText: 'Check the equation' }),
   ).toBeVisible();
 
   const view = page.locator('.rendered-editor .ProseMirror');

@@ -392,3 +392,17 @@ engine regressions. Unit storage simulations do not replace actual browser
 reload, offline, multitab, and deployment checks. Report results with their
 exact source revision and runner. Native GUI and process-security acceptance
 require the separate native environment and evidence.
+
+### Writing in Preview
+
+Type Markdown prefixes directly: `1. ` or `- ` starts a list; Enter continues it,
+Enter on an empty item exits, and Tab/Shift+Tab nests or lifts items. `## ` makes
+a heading; `**bold**`, `*italic*` and backticks format inline text. Ctrl/Cmd+B/I
+toggles bold/italic. Ctrl/Cmd+Shift+K inserts a link. Additional table, list and
+equation commands are in Ctrl/Cmd+K; there is no formatting toolbar.
+
+Errors and important workspace feedback appear as small notifications without
+moving the document or taking focus. Details opens an optional dialog. If an edit
+is refused, **Review draft** exposes its retained source; **Download retained
+source** preserves exact bytes. Copy or download before explicitly discarding;
+your accepted source remains unchanged. Keep regular workspace backups.
