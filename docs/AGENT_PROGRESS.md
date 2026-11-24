@@ -2610,3 +2610,20 @@ Final stricter-oracle local check EXIT0: 285 unit, 12 tooling with zero skips,
 native expiry case passed with its stricter trusted cause/result requirement;
 the earlier complete six-case CPU-attribution failure and both5s edit/save
 failures remain unchanged. No full security-readiness claim. VM shut down normally.
+
+### Publication scan correction
+
+The scan after49fb85b flagged two generic-key candidates in the portable OCR
+manifest. Both were recomputed against existing libkeyutils/libgssapi ELF bytes:
+SHA256 metadata, not credentials. No values printed. A sequencing mistake let
+push run before the failed scan was inspected, so the manifest was already
+public. No shared history rewrite or evidence deletion. Added only two immutable
+commit/path/rule/line false-positive fingerprints; no rule/path bypass. Independent
+read-only review found no blocker. Full history/archive scan and Git/ZIP synthetic
+credential controls are rerun and must complete successfully before the next push.
+
+Audited-digest correction checks completed successfully: full history and archive
+scan zero additional findings; all12tooling tests passed with zero skips, including
+synthetic Git/ZIP credential-refusal controls. The exact six known historical
+false-positive fingerprints do not waive any credential rule or future finding.
+The next push waits for the new postcommit scan to finish before publication.

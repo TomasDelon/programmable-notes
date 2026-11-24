@@ -199,3 +199,21 @@ and unsaved MDX compilation passed against the dev server. Packaged Tauri assets
 and authority were unchanged. This is development-server protection, not a claim
 that every ignored file is inaccessible or that an unauthenticated server is
 suitable for public hosting. Tooling tests explicitly generate runtime first.
+
+## 24 November: audited external-tool digest false positives
+
+The portable OCR integrity manifest introduced two generic-key findings because
+library names contain `key`/`api`. Both values were independently recomputed
+against the existing libkeyutils/libgssapi ELF library bytes and are SHA-256
+integrity digests, not credentials. Values are not reproduced here. Two exact
+immutable commit/path/rule/line fingerprints were added to `.gitleaksignore`,
+alongside the four historical certificate findings. No rule/path exemption,
+inline bypass or secret acceptance was introduced; future commits remain scanned.
+
+The publication sequence incorrectly launched the push before inspecting this
+scan's nonzero exit, so the benign manifest was already public. This process
+mistake is recorded rather than hidden or repaired by rewriting shared history.
+No confirmed credential was found and no rotation is indicated by these two
+metadata findings. The corrected publication sequence checks scan completion
+and synthetic Git/ZIP credential-refusal controls before a subsequent push.
+Actual rerun outcomes are retained in the progress log and PR description.
