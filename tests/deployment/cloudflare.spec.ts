@@ -28,9 +28,31 @@ test('hosting serves correct transport policies and compiler MIME without exposi
   request,
 }) => {
   const response = await request.get('/');
+  // Diagnose edge/login/interstitial responses without logging HTML, cookies,
+  // redirected account hostnames or authentication query parameters.
+  const html = await response.text();
+  const origin = new URL(response.url()).origin;
+  const diagnostic = JSON.stringify({
+    status: response.status(),
+    cloudflareServer: response.headers()['server'] === 'cloudflare',
+    challengeHeader: response.headers()['cf-mitigated'] === 'challenge',
+    stayedOnOrigin: origin === new URL(test.info().project.use.baseURL!).origin,
+    accessLogin: new URL(response.url()).hostname.endsWith(
+      '.cloudflareaccess.com',
+    ),
+    accessPage:
+      /cloudflareaccess\.com|cloudflare access|cf-access|\/cdn-cgi\/access/i.test(
+        html,
+      ),
+    appRoot: /\bid=["']root["']/.test(html),
+    compiledApp: /\/assets\/index-[^"'\s]+\.js/.test(html),
+    appTitle: /<title>Programmable Notes<\/title>/.test(html),
+    cloudflareChallenge:
+      /cf-chl-|challenges\.cloudflare\.com|Just a moment/i.test(html),
+  });
   expect(response.ok()).toBe(true);
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
-  expect(response.headers()['referrer-policy']).toBe('no-referrer');
+  expect(response.headers()['referrer-policy'], diagnostic).toBe('no-referrer');
   expect(response.headers()['x-frame-options']).toBe('DENY');
   expect(response.headers()['content-security-policy']).toContain(
     "frame-ancestors 'none'",
