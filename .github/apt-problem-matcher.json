@@ -1,0 +1,13 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "programmable-notes-apt",
+      "pattern": [
+        {
+          "regexp": "^((?:E:|Err:).*)$",
+          "message": 1
+        }
+      ]
+    }
+  ]
+}

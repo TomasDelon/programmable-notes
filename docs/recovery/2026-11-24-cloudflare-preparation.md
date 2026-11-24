@@ -120,3 +120,27 @@ executed deployment results are maintained in
 [draft PR #8](https://github.com/TomasDelon/programmable-notes/pull/8), with linked
 workflow runs/artifacts. This historical checkpoint is not a claim that the
 production alias has already been corrected or validated.
+
+## CI diagnostics and dependency-install checkpoint
+
+The stronger old-alias run
+[45450469248](https://github.com/TomasDelon/programmable-notes/actions/runs/45450469248)
+explicitly detected `/src/main.tsx` in served HTML, confirming the source-output
+regression. The new Pages build still requires real preview acceptance before
+promotion; an in-progress provider check is not a successful deployment.
+
+Normal run 45450456650 passed native checks but failed the web check without
+readable historical logs. Adding the standard GitHub reporter to baseline
+Playwright makes future errors visible through annotations as well. A complete
+local `CI=1 npm run check` then passed 287 unit, 14 tooling and 90 Chromium cases
+without flaky cases. Normal run 45452540588 also passed all 87 baseline and three
+hosting cases; the earlier web failure has not been diagnosed and is not claimed
+fixed by reporting changes.
+
+That latter run failed native setup with apt exit100, before compilation. Native
+prerequisites now use bounded network retries/timeouts and a scoped GitHub
+problem matcher for actual apt errors. Package/signature verification, required
+dependencies and fatal failure behavior are preserved. YAML/JSON parsing, Bash
+syntax and matcher error/progress classification were checked locally; a fresh
+hosted native run must establish the actual result. No native runtime behavior
+is inferred from these setup changes.
