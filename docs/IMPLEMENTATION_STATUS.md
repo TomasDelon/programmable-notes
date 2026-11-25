@@ -1,10 +1,19 @@
 # Programmable Notes implementation status
 
-## Active follow-up: incomplete mathematical delimiters
+## Incomplete mathematical delimiters: implemented, deployment pending
 
-The user clarified that unpaired dollars mean ordinary editable text, with no
-math error notice or global write barrier. Closed invalid TeX stays raw/red.
-This supersedes the older missing-delimiter refusal UX; implementation is pending.
+Unpaired dollars now remain editable literal text, without red feedback, math
+notices or a global editing barrier. Completed invalid TeX remains raw/red and
+correctable. ADR 016 records the shared source/compiler/link-index parser, exact
+raw-span patches, JSX preservation and editor-owned first-dollar mapping.
+
+The complete local gate passed **377 unit /46 files, 14 tooling (zero skips),
+117 Chromium and 8 Pages-policy cases**. The final link-parser follow-up passed
+all **378 unit tests**, fresh format/lint/typecheck/build, **14 targeted Chromium**
+and **8 Pages-policy cases**. Hosted full-gate, repeated cross-browser and actual-
+origin confirmation are pending. The principal origin still serves `7628521`.
+Details, including genuinely failed checkpoints, are in the
+[verification record](recovery/2026-11-25-core-plugins.md).
 
 ## Core plugins, hidden setup and recoverable LaTeX
 
@@ -34,7 +43,10 @@ Pages fingerprint `2df713071e4a8c04`. Focused hosted diagnostics are pending and
 the deployed app remains `7628521`. The next focused run isolated Firefox
 composition Undo; forwarding host composition phases now passes **363 unit,
 14 tooling, 116 Chromium and 7 Pages-policy cases** locally (Pages fingerprint
-`a02f5abbd04aa496`). Hosted confirmation of that correction is pending. Full failed/passed checkpoints are in the verification record.
+`a02f5abbd04aa496`). The focused hosted three-browser repeated workflow passed at `2cd021d`
+([45658934348](https://github.com/TomasDelon/programmable-notes/actions/runs/45658934348));
+mandatory check/native-check also passed ([45657518609](https://github.com/TomasDelon/programmable-notes/actions/runs/45657518609)).
+The missing-delimiter follow-up still needs its own final acceptance. Full failed/passed checkpoints are in the verification record.
 
 ## Caret-based mathematics
 
@@ -44,7 +56,7 @@ display newlines, local draft undo/redo and canonical source history retain the
 existing revision and lossless-patch guards. Hover does not activate equations.
 The same original source reappears on entry, including dollar delimiters.
 Multiline CRLF/CR comparison and composition completion/focus ordering were
-corrected. Unsafe-delimiter/stale drafts remain protected and memory-only until resolved;
+corrected. Stale/unsafe-mapping drafts remain protected and memory-only until resolved;
 ordinary TeX errors now follow ADR 015.
 The native `/engine` interface and all preview authority boundaries are unchanged.
 The corrected application commit `7628521` is deployed at

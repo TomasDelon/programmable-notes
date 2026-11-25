@@ -308,7 +308,8 @@ export function parseRenderedSource(
               {
                 ...attrs,
                 value: normalized(span.originalInner),
-                kind: 'inline',
+                kind: span.kind,
+                literal: span.literal === true,
               },
               null,
               marks,
@@ -372,9 +373,22 @@ export function parseRenderedSource(
     let result: ProseMirrorNode;
     const attrs = atomAttrs(ast);
     switch (ast.type) {
-      case 'paragraph':
-        result = schema.nodes.paragraph!.create(null, paragraphContent(ast));
+      case 'paragraph': {
+        const child = ast.children?.length === 1 ? ast.children[0] : undefined;
+        const literal = child?.data?.pnMathDraft
+          ? safeMathSpan(source, child)
+          : null;
+        result =
+          literal?.kind === 'display'
+            ? schema.nodes.math_block!.create({
+                ...attrs,
+                value: normalized(literal.originalOuter),
+                literal: true,
+                kind: 'display',
+              })
+            : schema.nodes.paragraph!.create(null, paragraphContent(ast));
         break;
+      }
       case 'heading':
         result = schema.nodes.heading!.create(
           { level: ast.depth ?? 1 },
@@ -565,9 +579,11 @@ export function parseRenderedSource(
 function atomMarkdown(node: ProseMirrorNode): string {
   switch (node.type.name) {
     case 'inline_math':
-      return `$${node.attrs.value}$`;
+      return node.attrs.literal ? node.attrs.value : `$${node.attrs.value}$`;
     case 'math_block':
-      return `$$\n${node.attrs.value}\n$$`;
+      return node.attrs.literal
+        ? node.attrs.value
+        : `$$\n${node.attrs.value}\n$$`;
     case 'wikilink':
       return `[[${node.attrs.target}${node.attrs.alias === null ? '' : `|${node.attrs.alias}`}]]`;
     case 'source_inline':
@@ -1069,4 +1085,39 @@ export function rebaseRenderedProjection(
       tasks,
     },
   };
+}
+
+/** Exact text caret mapping for editor-owned dollar authoring, never DOM messages. */
+export function renderedTextSourceOffset(
+  projection: RenderedProjection,
+  position: number,
+): number | null {
+  let result: number | null = null;
+  projection.doc.descendants((node, start) => {
+    if (!node.isText || position < start || position > start + node.nodeSize)
+      return;
+    const parts = projection.mapping.texts.get(node);
+    if (!parts || parts.length !== 1 || parts[0]!.code) return;
+    const part = parts[0]!;
+    const offsets = textOffsets(
+      projection.mapping.source.slice(part.from, part.to),
+      node.text!,
+      false,
+    );
+    const offset = offsets?.[position - start];
+    if (offset !== undefined) result = part.from + offset;
+  });
+  if (result !== null) return result;
+  const caret = projection.doc.resolve(position);
+  const range = projection.mapping.ranges.get(caret.parent);
+  if (
+    caret.parent.isTextblock &&
+    caret.parent.content.size === 0 &&
+    range?.from === range?.to &&
+    range
+  )
+    return range.from;
+  if (!projection.mapping.source.trim() && caret.parent.isTextblock)
+    return projection.mapping.source.length;
+  return null;
 }

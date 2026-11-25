@@ -47,12 +47,15 @@ import { assetBlob } from '../../assets/catalog';
 import type { LinkResolution } from '../../links';
 import {
   collectLiveMath,
-  planMathReplacement,
+  planMathSourceReplacement,
+  completedMath,
+  mathSourceContextPreserved,
   type MathSpan,
 } from '../math/mathSource';
 import { renderedSchema } from './schema';
 import {
   parseRenderedSource,
+  renderedTextSourceOffset,
   serializeRenderedChange,
   rebaseRenderedProjection,
   renderedSourceRange,
@@ -291,13 +294,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         }
         return null;
       }),
-      new InputRule(/\$([^$\n]+)\$$/, (state, match, start, end) =>
-        state.tr.replaceWith(
-          start,
-          end,
-          nodes.inline_math!.create({ value: match[1] }),
-        ),
-      ),
       new InputRule(/\[\[([^\]\n]+)\]\]$/, (state, match, start, end) => {
         const [target, ...alias] = match[1]!.split('|');
         return state.tr.replaceWith(
@@ -326,7 +322,10 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // original Markdown dollars in place; the existing source transaction
     // remains the sole authority for persistence and undo.
     let activeMath: { commit: () => boolean; cancel: () => void } | null = null;
-    const mathEntrances = new WeakMap<Node, (edge: 'start' | 'end') => void>();
+    const mathEntrances = new WeakMap<
+      Node,
+      (edge: 'start' | 'end' | number) => void
+    >();
     function mathView(
       node: ProseNode,
       _view: EditorView,
@@ -377,6 +376,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           'aria-label',
           `Edit ${display ? 'display' : 'inline'} equation: ${String(node.attrs.value).trim()}`,
         );
+        const raw = String(node.attrs.raw);
+        const paired = completedMath(raw);
         const valid = renderMathematics(
           button,
           String(node.attrs.value),
@@ -387,7 +388,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
                 : `$${node.attrs.value}$`),
           ),
           display,
-          corePluginEnabled(latest.current.runtime.corePlugins, 'mathematics'),
+          !!paired &&
+            corePluginEnabled(
+              latest.current.runtime.corePlugins,
+              'mathematics',
+            ),
         );
         wrapper.classList.toggle('rendered-math-invalid', !valid);
         wrapper.replaceChildren(button);
@@ -432,24 +437,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           close();
           return true;
         }
-        const delimiters = display ? '$$' : '$';
-        if (
-          !entered.startsWith(delimiters) ||
-          !entered.endsWith(delimiters) ||
-          entered.length <= delimiters.length * 2 ||
-          (!display && (entered.startsWith('$$') || entered.endsWith('$$')))
-        ) {
-          showError(
-            `Keep the original ${delimiters} delimiters around the LaTeX.`,
-          );
-          return false;
-        }
-        const inner = entered.slice(delimiters.length, -delimiters.length);
-        const planned = planMathReplacement(
+        const planned = planMathSourceReplacement(
           latest.current.source,
           snapshot,
           span,
-          inner,
+          entered,
           latest.current.path,
         );
         if (!planned.ok) {
@@ -467,7 +459,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         }
         // The canonical CodeMirror transaction will refresh this NodeView.
         // In the meantime keep the equation visually current.
-        node = node.type.create({ ...node.attrs, value: inner, raw: entered });
+        const paired = completedMath(entered);
+        node = node.type.create({
+          ...node.attrs,
+          value: paired?.originalInner ?? entered,
+          raw: entered,
+        });
         close();
         return true;
       }
@@ -475,10 +472,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         close();
       }
       const actions = { commit, cancel };
-      function activate(entryEdge?: 'start' | 'end') {
+      function activate(entryEdge?: 'start' | 'end' | number) {
         if (field || latest.current.disabled || activeMath) return;
-        const source = latest.current.source;
-        const math = collectLiveMath(source, latest.current.path);
+        const source =
+          latest.current.sourceIsCurrent?.(acceptedSource) === true
+            ? acceptedSource
+            : latest.current.source;
+        const math = collectLiveMath(source, latest.current.path, true);
         const offset = sourceOffset(node);
         const match =
           math.find(
@@ -507,7 +507,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           corePluginEnabled(
             latest.current.runtime.corePlugins,
             'mathematics',
-          ) && !validLatex(String(node.attrs.value), display),
+          ) &&
+            !!completedMath(match.originalOuter) &&
+            !validLatex(String(node.attrs.value), display),
         );
         wrapper.replaceChildren(host);
         activeMath = actions;
@@ -560,7 +562,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
                     return true;
                   },
                 },
-                { key: 'Enter', run: () => !display && leave(1) },
+                {
+                  key: 'Enter',
+                  run: () =>
+                    !display &&
+                    !field?.state.doc.toString().startsWith('$$') &&
+                    leave(1),
+                },
                 { key: 'Mod-Enter', run: () => leave(1) },
                 ...historyKeymap,
                 ...defaultKeymap,
@@ -576,18 +584,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               MathView.updateListener.of((update) => {
                 if (!update.docChanged) return;
                 const raw = update.state.doc.toString();
-                const delimiters = display ? '$$' : '$';
+                const paired = completedMath(raw);
                 const valid =
+                  !paired ||
                   !corePluginEnabled(
                     latest.current.runtime.corePlugins,
                     'mathematics',
                   ) ||
-                  (raw.startsWith(delimiters) &&
-                    raw.endsWith(delimiters) &&
-                    validLatex(
-                      raw.slice(delimiters.length, -delimiters.length),
-                      display,
-                    ));
+                  validLatex(paired.originalInner, paired.kind === 'display');
                 wrapper.classList.toggle('rendered-math-invalid', !valid);
                 if (valid)
                   update.view.contentDOM.removeAttribute('aria-invalid');
@@ -645,11 +649,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         field.dispatch({
           selection: {
             anchor:
-              entryEdge === 'start'
-                ? 0
-                : entryEdge === 'end'
-                  ? field.state.doc.length
-                  : field.state.doc.length - (display ? 2 : 1),
+              typeof entryEdge === 'number'
+                ? Math.min(entryEdge, field.state.doc.length)
+                : entryEdge === 'start'
+                  ? 0
+                  : entryEdge === 'end'
+                    ? field.state.doc.length
+                    : field.state.doc.length - (display ? 2 : 1),
           },
         });
       }
@@ -908,6 +914,65 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     let composingSource = false;
     let firstComposingChange = true;
     let compositionFrame: number | null = null;
+    function insertDollar(
+      current: EditorView,
+      from: number,
+      to: number,
+      text: string,
+    ): boolean {
+      if (
+        !text.includes('$') ||
+        current.composing ||
+        composingSource ||
+        from !== to ||
+        latest.current.disabled ||
+        activeMath ||
+        retainedDraft.current !== null
+      )
+        return false;
+      const offset = renderedTextSourceOffset(projection, from);
+      if (offset === null) return false;
+      const next =
+        acceptedSource.slice(0, offset) + text + acceptedSource.slice(offset);
+      if (
+        !mathSourceContextPreserved(
+          acceptedSource,
+          next,
+          offset,
+          offset,
+          latest.current.path,
+        )
+      )
+        return false;
+      const parsed = parseRenderedSource(next, latest.current.path);
+      const target = collectLiveMath(next, latest.current.path, true).find(
+        (span) => span.from <= offset && span.to >= offset + text.length,
+      );
+      if (!target || !latest.current.apply(acceptedSource, next, false))
+        return false;
+      selectingAll = false;
+      projection = parsed;
+      acceptedSource = next;
+      const transaction = current.state.tr.replaceWith(
+        0,
+        current.state.doc.content.size,
+        parsed.doc.content,
+      );
+      let targetPosition: number | null = null;
+      transaction.doc.descendants((node, position) => {
+        if (
+          (node.type === nodes.inline_math || node.type === nodes.math_block) &&
+          node.attrs.sourceFrom === target.from
+        )
+          targetPosition = position;
+      });
+      current.updateState(current.state.apply(transaction));
+      if (targetPosition !== null) {
+        const dom = current.nodeDOM(targetPosition);
+        if (dom) mathEntrances.get(dom)?.(offset + text.length - target.from);
+      }
+      return true;
+    }
     const editor = new EditorView(mount.current, {
       state: EditorState.create({
         schema: renderedSchema,
@@ -1029,6 +1094,19 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         beforeinput: (current, event) => {
           if (latest.current.disabled || event.isComposing) return false;
           if (
+            event.inputType === 'insertText' &&
+            typeof event.data === 'string' &&
+            insertDollar(
+              current,
+              current.state.selection.from,
+              current.state.selection.to,
+              event.data,
+            )
+          ) {
+            event.preventDefault();
+            return true;
+          }
+          if (
             selectingAll &&
             current.state.selection instanceof AllSelection &&
             event.inputType === 'insertText' &&
@@ -1051,7 +1129,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           return true;
         },
       },
-      handleTextInput: (current, _from, _to, text) => {
+      handleTextInput: (current, from, to, text) => {
+        if (insertDollar(current, from, to, text)) return true;
         // Native DOM selection cannot reliably span display:none setup atoms.
         // Honor the editor-owned Select All rather than the browser's collapsed
         // DOM range; the transaction guard below retains invisible setup.

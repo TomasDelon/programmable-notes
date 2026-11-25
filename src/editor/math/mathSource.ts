@@ -1,18 +1,20 @@
 import { createProcessor } from '@mdx-js/mdx';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
+import { remarkMathAuthoring } from '../../plugins/core/mathSyntax';
 import { visualAnalysisLimited } from '../markdownEdits';
 
 export interface SyntaxNode {
   type: string;
   value?: string;
   depth?: number;
+  data?: { pnMathDraft?: boolean };
   children?: SyntaxNode[];
   position?: { start: { offset?: number }; end: { offset?: number } };
 }
 
 export interface MathSpan {
   kind: 'inline' | 'display';
+  literal?: boolean;
   from: number;
   to: number;
   innerFrom: number;
@@ -23,11 +25,11 @@ export interface MathSpan {
 
 const markdownProcessor = createProcessor({
   format: 'md',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring],
 });
 const mdxProcessor = createProcessor({
   format: 'mdx',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring],
 });
 
 /** Keep frontmatter opaque while preserving every original UTF-16 offset. */
@@ -79,9 +81,23 @@ export function safeMathSpan(
     to > source.length
   )
     return null;
-  const kind = node.type === 'math' ? 'display' : 'inline';
-  const delimiter = kind === 'display' ? '$$' : '$';
   const originalOuter = source.slice(from, to);
+  if (node.data?.pnMathDraft)
+    return {
+      kind: originalOuter.startsWith('$$') ? 'display' : 'inline',
+      literal: true,
+      from,
+      to,
+      innerFrom: from,
+      innerTo: to,
+      originalInner: originalOuter,
+      originalOuter,
+    };
+  const kind =
+    node.type === 'math' || originalOuter.startsWith('$$')
+      ? 'display'
+      : 'inline';
+  const delimiter = kind === 'display' ? '$$' : '$';
   if (
     !originalOuter.startsWith(delimiter) ||
     !originalOuter.endsWith(delimiter) ||
@@ -107,7 +123,11 @@ export function safeMathSpan(
   return { kind, from, to, innerFrom, innerTo, originalInner, originalOuter };
 }
 
-export function collectLiveMath(source: string, path = 'note.mdx'): MathSpan[] {
+export function collectLiveMath(
+  source: string,
+  path = 'note.mdx',
+  includeLiteral = false,
+): MathSpan[] {
   const tree = parseLiveSource(source, path);
   const spans: MathSpan[] = [];
   function visit(node: SyntaxNode): void {
@@ -119,7 +139,7 @@ export function collectLiveMath(source: string, path = 'note.mdx'): MathSpan[] {
     )
       return;
     const span = safeMathSpan(source, node);
-    if (span) spans.push(span);
+    if (span && (!span.literal || includeLiteral)) spans.push(span);
     if (!span) node.children?.forEach(visit);
   }
   if (tree) visit(tree);
@@ -195,4 +215,101 @@ export function planMathReplacement(
     };
   }
   return { ok: true, source: candidate, replacement };
+}
+
+/** Completed pairs alone are mathematics. Unfinished delimiters are ordinary text. */
+export function completedMath(raw: string): MathSpan | null {
+  const spans = collectLiveMath(raw, 'note.md');
+  return spans.length === 1 &&
+    spans[0]!.from === 0 &&
+    spans[0]!.to === raw.length
+    ? spans[0]!
+    : null;
+}
+
+/** Replace the explicitly activated source span, including its delimiters. */
+export function planMathSourceReplacement(
+  source: string,
+  expectedSource: string,
+  span: MathSpan,
+  input: string,
+  path = 'note.mdx',
+):
+  | { ok: true; source: string; replacement: string }
+  | { ok: false; reason: string } {
+  if (source !== expectedSource)
+    return { ok: false, reason: 'The source changed. Your text is retained.' };
+  if (
+    !collectLiveMath(source, path, true).some(
+      (item) =>
+        item.from === span.from &&
+        item.to === span.to &&
+        item.originalOuter === span.originalOuter &&
+        item.kind === span.kind &&
+        !!item.literal === !!span.literal,
+    )
+  )
+    return {
+      ok: false,
+      reason:
+        'The original source range is no longer available. Your text is retained.',
+    };
+  const replacement = preserveMathBreaks(span.originalOuter, input);
+  const candidate =
+    source.slice(0, span.from) + replacement + source.slice(span.to);
+  if (!mathSourceContextPreserved(source, candidate, span.from, span.to, path))
+    return {
+      ok: false,
+      reason:
+        'The edit cannot be mapped without changing unrelated React source. Your text is retained.',
+    };
+  return { ok: true, source: candidate, replacement };
+}
+
+/** Retain every pre-existing opaque MDX range outside an explicitly owned patch. */
+export function mathSourceContextPreserved(
+  source: string,
+  candidate: string,
+  from: number,
+  to: number,
+  path: string,
+): boolean {
+  const before = parseLiveSource(source, path),
+    after = parseLiveSource(candidate, path);
+  if (!before || !after) return false;
+  const shift = candidate.length - source.length;
+  const opaque = (
+    tree: SyntaxNode,
+    text: string,
+    adjust: boolean,
+  ): string[] => {
+    const result: string[] = [];
+    const visit = (node: SyntaxNode) => {
+      const start = node.position?.start.offset,
+        end = node.position?.end.offset;
+      if (
+        node.type.startsWith('mdx') &&
+        start !== undefined &&
+        end !== undefined
+      ) {
+        const boundary = adjust ? to + shift : to;
+        if (end <= from || start >= boundary)
+          result.push(
+            JSON.stringify([
+              node.type,
+              start >= boundary && adjust ? start - shift : start,
+              text.slice(start, end),
+            ]),
+          );
+        return;
+      }
+      node.children?.forEach(visit);
+    };
+    visit(tree);
+    return result;
+  };
+  return (
+    JSON.stringify(opaque(before, source, false)) ===
+    JSON.stringify(opaque(after, candidate, true))
+  );
 }

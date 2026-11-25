@@ -153,7 +153,12 @@ const nodes: Record<string, NodeSpec> = {
     inline: true,
     group: 'inline',
     atom: true,
-    attrs: { ...origin, value: { default: '' }, kind: { default: 'inline' } },
+    attrs: {
+      ...origin,
+      value: { default: '' },
+      kind: { default: 'inline' },
+      literal: { default: false },
+    },
     toDOM: (node) => [
       'span',
       { class: 'rendered-inline-math', 'data-math': 'inline' },
@@ -168,6 +173,7 @@ const nodes: Record<string, NodeSpec> = {
       ...origin,
       value: { default: '' },
       kind: { default: 'display' },
+      literal: { default: false },
     },
     toDOM: (node) => [
       'div',

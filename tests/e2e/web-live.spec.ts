@@ -89,42 +89,41 @@ test('Preview reveals dollar delimiters at the caret and preserves exact LaTeX u
   expect(await exportSource(page)).toEqual(Buffer.from(original));
 });
 
-test('unsafe display math delimiters retain the original and mobile has no popup', async ({
+test('unfinished display dollars remain ordinary text, survive reload, and become mathematics when completed', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const original = '# Equations\n\n$$\r\n\\frac{a}{b}\r\n$$\n\nEnd';
+  const raw = "$$\r\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\r\n$";
+  const original = '\uFEFF# Equations\r\n\r\n' + raw + '\r\n\r\nTail.\r\n';
   await importNote(page, original);
   await command(page, 'Preview document');
-  await page
-    .getByRole('button', { name: 'Edit display equation: \\frac{a}{b}' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Display LaTeX source' });
-  await expect(latex).toHaveText('$$\n\\frac{a}{b}\n$$', {
-    useInnerText: true,
-  });
-  await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
-    0,
-  );
-  await latex.fill('$$\n\\unknowncommand\n$');
-  await latex.press('Control+Enter');
-  await expect(
-    page.getByRole('alert').filter({ hasText: 'Check the equation' }),
-  ).toBeVisible();
-  await latex.press('Escape');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await expect(view).toContainText("f'(x)");
+  await expect(view.getByText('Tail.', { exact: true })).toBeVisible();
+  await expect(view.locator('.rendered-math-invalid, .katex')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(await exportSource(page)).toEqual(Buffer.from(original));
+  await page.reload();
+  await expect(view.getByText('Tail.', { exact: true })).toBeVisible();
+  await view.getByRole('button', { name: /^Edit display equation:/ }).click();
+  const field = page.getByRole('textbox', { name: 'Display LaTeX source' });
+  await field.press('Control+End');
+  await page.keyboard.insertText('$');
+  await field.press('Control+Enter');
+  await expect(view.locator('.katex')).toHaveCount(1);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const completed = original.replace(raw, () => raw + '$');
+  expect(await exportSource(page)).toEqual(Buffer.from(completed));
+  await command(page, 'Edit source');
+  await page.getByRole('textbox', { name: 'MDX source' }).press('Control+z');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await page
-    .getByRole('button', { name: 'Edit display equation: \\frac{a}{b}' })
-    .click();
-  const valid = page.getByRole('textbox', { name: 'Display LaTeX source' });
-  await valid.fill('$$\n\\frac{a+1}{b}\n$$');
-  await valid.press('Control+Enter');
-  expect(await exportSource(page)).toEqual(
-    Buffer.from(original.replace('\\frac{a}{b}', '\\frac{a+1}{b}')),
-  );
+    .getByRole('textbox', { name: 'MDX source' })
+    .press('Control+Shift+z');
+  expect(await exportSource(page)).toEqual(Buffer.from(completed));
 });
 
-test('unfinished unsafe math delimiters survive document-wide deletion until explicitly cancelled', async ({
+test('removing a dollar commits literal text without blocking other editing or correction', async ({
   page,
 }) => {
   const original =
@@ -133,27 +132,54 @@ test('unfinished unsafe math delimiters survive document-wide deletion until exp
   await command(page, 'Preview document');
   await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
   const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await field.fill('$x');
+  await field.press('Control+End');
+  await field.press('Backspace');
   await field.press('Enter');
-  await expect(
-    page.getByRole('alert').filter({ hasText: 'Check the equation' }),
-  ).toBeVisible();
-
+  await expect(page.getByRole('alert')).toHaveCount(0);
   const view = page.locator('.rendered-editor .ProseMirror');
-  await view.getByRole('heading', { name: 'Keep this' }).click();
-  await page.keyboard.press('Control+a');
-  await page.keyboard.press('Backspace');
-  await expect(field).toHaveText('$x');
-  await expect(view.getByRole('heading', { name: 'Keep this' })).toBeVisible();
-
-  await field.press('Escape');
-  expect(await exportSource(page)).toEqual(Buffer.from(original));
-  // Cancelling the field must release the guard, rather than freezing editing.
+  await expect(view.locator('.rendered-math-invalid, .katex')).toHaveCount(0);
   await view.getByRole('heading', { name: 'Keep this' }).click();
   await page.keyboard.press('End');
   await page.keyboard.insertText(' safe');
+  const incomplete = original
+    .replace('$x^2$', '$x^2')
+    .replace('Keep this', 'Keep this safe');
+  expect(await exportSource(page)).toEqual(Buffer.from(incomplete));
+  await view.getByRole('button', { name: /^Edit inline equation:/ }).click();
+  const draft = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await draft.press('Control+Home');
+  await draft.press('ArrowRight');
+  await draft.press('ArrowRight');
+  await draft.press('ArrowRight');
+  await draft.press('ArrowRight');
+  await page.keyboard.insertText('$');
+  await draft.press('Enter');
+  await expect(view.locator('.katex')).toHaveCount(1);
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('Keep this', 'Keep this safe')),
+  );
+});
+
+test('typing a first dollar in ordinary prose opens literal source and enables math only when paired', async ({
+  page,
+}) => {
+  const original = '# Typing\n\nA value ';
+  await importNote(page, original);
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view.getByText('A value', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.type('$');
+  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await expect(field).toBeFocused();
+  await page.keyboard.type('x');
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
+  await page.keyboard.type('$');
+  await field.press('Enter');
+  await expect(view.locator('.katex')).toHaveCount(1);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(await exportSource(page)).toEqual(
+    Buffer.from(original.trimEnd() + '$x$ '),
   );
 });
 

@@ -450,3 +450,42 @@ test('hidden setup survives real selection replacement, undo, redo and exact reo
   await page.reload();
   expect(await exported(page)).toEqual(Buffer.from(changed));
 });
+
+test('unfinished dollars stay literal and correct without notices on the deployed application', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const raw = "$$\r\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\r\n$";
+  const source =
+    '\uFEFF# Mathematics\r\n\r\n' + raw + '\r\n\r\nContinue writing here.\r\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'literal-math.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(source),
+  });
+  await command(page, 'Preview document');
+  const editor = page.getByRole('textbox', { name: 'Editable document' });
+  await expect(
+    editor.getByText('Continue writing here.', { exact: true }),
+  ).toBeVisible();
+  await expect(editor.locator('.katex, .rendered-math-invalid')).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await saved(page);
+  expect(await exported(page)).toEqual(Buffer.from(source));
+  await page.screenshot({
+    path: testInfo.outputPath('literal-math-mobile.png'),
+    fullPage: true,
+  });
+  await page.reload();
+  await editor.getByRole('button', { name: /^Edit display equation:/ }).click();
+  const field = page.getByRole('textbox', { name: 'Display LaTeX source' });
+  await field.press('Control+End');
+  await page.keyboard.insertText('$');
+  await field.press('Control+Enter');
+  await expect(editor.locator('.katex')).toHaveCount(1);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(await exported(page)).toEqual(
+    Buffer.from(source.replace(raw, () => raw + '$')),
+  );
+});

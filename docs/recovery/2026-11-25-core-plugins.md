@@ -202,3 +202,62 @@ type/build. Pages fingerprint: `a02f5abbd04aa496`, 77 assets. Hosted verificatio
 this history correction remains pending. The user additionally clarified that
 missing math delimiters must demote to ordinary text, not a protected math error;
 that follow-up is pending and supersedes the earlier delimiter-refusal UX.
+
+## Literal delimiter authoring follow-up
+
+The user explicitly superseded the old delimiter-refusal UX: missing dollars are
+ordinary text; only invalid completed mathematics is raw/red. ADR 016 records the
+paired-only flow parser, literal draft tokens, exact raw-source patch validation,
+opaque MDX protection and editor-owned first-dollar mapping.
+
+The new regressions initially reproduced parser failures for incomplete display
+blocks and MDX argument braces. Six parser tests then passed; the expanded targeted
+parser/editor suites passed **31/31**. Targeted real Chromium acceptance passed
+**3/3**: the supplied display example survives exact export/reload and correction
+with undo/redo; removing a dollar does not block editing elsewhere; typing a first
+dollar in prose creates editable literal source before completing mathematics.
+The first browser attempt exposed a test-fixture JavaScript replacement-string
+`$$` substitution; using a callback made the expectation reflect the actual exact
+source. No application source was changed to accommodate that test mistake.
+
+Independent static review identified dollar promotion during IME reconciliation as
+a composition-history risk. Promotion now declines while the editor is composing;
+the established guarded composition path remains responsible for that DOM read.
+
+The preceding composition-history correction `2cd021d` passed mandatory
+[check/native-check 45657518609](https://github.com/TomasDelon/programmable-notes/actions/runs/45657518609)
+and the focused repeated three-browser [45658934348](https://github.com/TomasDelon/programmable-notes/actions/runs/45658934348).
+Raw job logs/artifact downloads remain Forbidden in this workspace. Workflow/job
+conclusions are available through GitHub metadata; downloadable evidence remains
+on GitHub. The final combined follow-up still needs its own full verification.
+
+A further structural-edit regression reproduced invented dollar delimiters when a
+paragraph containing literal math was converted to a heading. The projection now
+marks literal math atoms explicitly and the serializer emits their literal value,
+without generating mathematical wrappers. The red test passed after that change;
+the source-bridge and math-authoring suites passed **84/84**. The final combined
+build must include this correction before delivery.
+
+The link index still used the old implicit-end-of-file math parser. A new red test
+showed a link in a subsequent paragraph disappearing after an unfinished display
+fence. Reusing the same core math parser fixes that inconsistency. Its first pass
+exposed an existing literal-currency/wikilink regression; literal-dollar tokens now
+stop before a wikilink boundary. The authoring and link integration suites passed
+**24/24**, preserving ordinary currency, opaque code and following links. A fresh
+complete gate is required for this final shared-parser change.
+
+## Local verification before submitting literal authoring
+
+The complete local `npm run check` exited **0** after the literal projection and
+structural-serialization fix: **377 unit /46 files, 14 tooling (zero skips),
+117 Chromium and 8 Pages-policy cases**, plus format/lint/typecheck/fresh build.
+
+The final shared link-parser follow-up then passed fresh format/lint/typecheck and
+**all 378 unit tests /46 files**. Its fresh production build passed **14/14** real
+Chromium math/source/history/link/attachment cases and **8/8** Pages-policy cases.
+This explicitly distinguishes the full earlier gate from the later focused browser
+rerun; hosted CI must still run the entire gate from a clean checkout of this head.
+Final Pages fingerprint: `b1fd47147dd08115`, 77 assets. No native GUI or physical
+Android runtime result is implied. Independent static review found no further
+concrete source-loss or composition issue after the final guards and literal
+serializer changes. Full cross-browser and actual-origin acceptance remain pending.

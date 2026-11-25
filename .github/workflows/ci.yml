@@ -250,7 +250,7 @@ jobs:
             browser_args=(--project "$PN_EDITING_BROWSER")
           fi
           test_files=(tests/e2e/web-rendered-editor.spec.ts tests/e2e/web-update.spec.ts tests/e2e/web-live.spec.ts tests/e2e/web-math-composition.spec.ts tests/e2e/web-core-plugins.spec.ts)
-          grep_args=(--grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update|caret math is ordinary|display math reveals|moving between equations|normal document flow|math composition|blurred composition|invalid LaTeX stays red|setup is invisible|core plugins can be disabled|disabled mathematics stays literal|preview messages cannot change|hidden setup survives|core plugin settings remain usable')
+          grep_args=(--grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update|caret math is ordinary|display math reveals|moving between equations|normal document flow|math composition|blurred composition|invalid LaTeX stays red|setup is invisible|core plugins can be disabled|disabled mathematics stays literal|preview messages cannot change|hidden setup survives|core plugin settings remain usable|unfinished display dollars|removing a dollar|typing a first dollar')
           if [ "$PN_EDITING_CORE_ONLY" = true ]; then
             test_files=(tests/e2e/web-core-plugins.spec.ts)
             grep_args=()

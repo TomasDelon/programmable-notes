@@ -211,7 +211,7 @@ describe('rendered editor host transaction boundary', () => {
     expect(props.apply).not.toHaveBeenCalled();
   });
 
-  it('refuses inserted content while an unsafe delimiter edit is pending', () => {
+  it('commits missing delimiters as literal source without an alert or pending guard', () => {
     const props = propsFor('Keep $x$ here.');
     render(<RenderedEditor {...props} />);
     fireEvent.click(
@@ -219,17 +219,19 @@ describe('rendered editor host transaction boundary', () => {
     );
     const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
     changeMath(field, '$x');
+    expect(field.closest('.rendered-math-host')).not.toHaveClass(
+      'rendered-math-invalid',
+    );
     fireEvent.keyDown(field, { key: 'Enter' });
-    act(() => {
-      expect(props.commandsRef.current!.insertText('Replacement.')).toBe(false);
-    });
-    expect(props.apply).not.toHaveBeenCalled();
-    expect(mathValue(field)).toBe('$x');
-    expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
-    fireEvent.keyDown(field, { key: 'Escape' });
-    act(() => {
-      expect(props.commandsRef.current!.insertText('Allowed.')).toBe(true);
-    });
+    expect(props.apply).toHaveBeenCalledWith(
+      'Keep $x$ here.',
+      'Keep $x here.',
+      false,
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: 'Inline LaTeX source' }),
+    ).not.toBeInTheDocument();
     expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
   });
 
@@ -329,8 +331,10 @@ describe('rendered editor host transaction boundary', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-fixture');
   });
 
-  it('retains an existing link URL when an invalid equation prevents its application', () => {
+  it('retains an existing link URL when a stale equation prevents its application', () => {
     const props = propsFor('Link target and $x$.');
+    const apply = vi.fn(() => false);
+    props.apply = apply;
     render(<RenderedEditor {...props} />);
     fireEvent.keyDown(
       screen.getByRole('textbox', { name: 'Editable document' }),
@@ -351,7 +355,9 @@ describe('rendered editor host transaction boundary', () => {
       'https://example.org/retained',
     );
     expect(mathValue(math)).toBe('$x');
-    expect(props.apply).not.toHaveBeenCalled();
+    expect(apply).toHaveBeenCalled();
+    apply.mockClear();
+    apply.mockReturnValue(true);
     fireEvent.keyDown(math, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
     expect(
@@ -672,4 +678,24 @@ it('undoes rendered composition replacement as one exact canonical source event'
     redoSource(canonical);
   });
   expect(rawSource(canonical.state)).toBe(second);
+});
+
+it('does not promote dollars from composing DOM through the ordinary text-input shortcut', () => {
+  const props = propsFor('Before text.');
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  act(() => fireEvent.compositionStart(editor));
+  const event = new InputEvent('beforeinput', {
+    bubbles: true,
+    cancelable: true,
+    inputType: 'insertText',
+    data: '$',
+    isComposing: true,
+  });
+  act(() => editor.dispatchEvent(event));
+  expect(event.defaultPrevented).toBe(false);
+  expect(props.apply).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole('textbox', { name: 'Inline LaTeX source' }),
+  ).not.toBeInTheDocument();
 });

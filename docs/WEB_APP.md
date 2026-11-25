@@ -112,9 +112,12 @@ canonical document history restores the whole source patch. `Escape` explicitly
 discards the current draft. Invalid LaTeX inside valid dollar delimiters stays
 visible as raw red source, saves normally and does not block typing elsewhere.
 Correcting it clears red feedback immediately; leaving renders the valid formula.
-There are no notifications for ordinary LaTeX errors. Removed delimiters or stale
-source revisions keep the editable draft and show an error instead of overwriting
-the source. Resolve an unfinished draft before
+There are no notifications for ordinary LaTeX errors. Missing dollar delimiters
+are ordinary literal text, without red styling or an error; leaving commits that
+text normally. Add the missing delimiter to enable rendering again. An unmatched
+block does not consume following paragraphs or React components. Stale source
+revisions or unsafe mappings still retain the draft instead of overwriting source.
+Resolve a genuinely refused draft before
 switching documents, exporting, restoring or changing the surrounding document.
 If validation fails, nearby deletion and formatting cannot discard the equation;
 finish it or cancel explicitly before continuing. Cancelling a stale field shows

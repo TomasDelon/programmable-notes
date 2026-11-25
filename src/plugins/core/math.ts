@@ -1,5 +1,5 @@
 import katex from 'katex';
-import remarkMath from 'remark-math';
+import { remarkMathAuthoring } from './mathSyntax';
 import rehypeKatex from 'rehype-katex';
 
 export const mathematicsPlugin = {
@@ -8,7 +8,7 @@ export const mathematicsPlugin = {
   description:
     'Render LaTeX mathematics and reveal editable source at the caret.',
 } as const;
-export const mathRemarkPlugin = remarkMath;
+export const mathRemarkPlugin = remarkMathAuthoring;
 export const mathRehypePlugin = rehypeKatex;
 export const mathSafety = {
   trust: false,
@@ -70,7 +70,7 @@ function transformMathematics(invalidOnly: boolean) {
   type Node = {
     type: string;
     value?: string;
-    data?: { hProperties: { style: string } };
+    data?: { pnMathDraft?: boolean; hProperties?: { style: string } };
     children?: Node[];
     position?: { start: { offset?: number }; end: { offset?: number } };
   };
@@ -82,6 +82,7 @@ function transformMathematics(invalidOnly: boolean) {
     const visit = (parent: Node) => {
       parent.children = parent.children?.map((node) => {
         if (node.type === 'inlineMath' || node.type === 'math') {
+          if (node.data?.pnMathDraft) return node;
           const display = node.type === 'math';
           if (invalidOnly && validLatex(node.value ?? '', display)) return node;
           const delimiter = display ? '$$' : '$';

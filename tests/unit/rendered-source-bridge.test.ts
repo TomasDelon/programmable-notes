@@ -710,3 +710,18 @@ describe('rendered Markdown source bridge', () => {
     );
   });
 });
+
+it('does not invent closing dollars when changing a paragraph containing unfinished mathematical text into a heading', () => {
+  const source = '\uFEFFBefore $x \\mathbb{R}\r\n\r\n<Counter />\r\n';
+  const projection = parseRenderedSource(source);
+  const node = projection.doc.firstChild!;
+  const state = EditorState.create({ doc: projection.doc });
+  const changed = apply(
+    projection,
+    state.tr.setNodeMarkup(0, schema.nodes.heading, {
+      ...node.attrs,
+      level: 2,
+    }),
+  );
+  expect(changed.mapping.source).toBe(source.replace('Before', '## Before'));
+});
