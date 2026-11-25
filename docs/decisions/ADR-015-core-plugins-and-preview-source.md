@@ -35,6 +35,13 @@ retains hidden setup at the document edges; a selection crossing interleaved hid
 code fails closed with recoverable attempted text. Actual deletion of hidden setup
 requires explicit Source editing. This protects code bytes as well as rendering.
 
+Native DOM selection cannot represent all hidden/noneditable atoms consistently.
+A host Select All intent therefore preserves ProseMirror's AllSelection during
+native reconciliation; actual pointer/focus/navigation changes cancel it. Normal
+navigation collapses to editable text. Accepted source refreshes (including undo)
+clear intent and select a visible position, so an old selection cannot authorize
+replacement of a new revision.
+
 ## Mathematical errors are local feedback
 
 This supersedes ADR 013's earlier refusal of invalid LaTeX. Invalid TeX inside

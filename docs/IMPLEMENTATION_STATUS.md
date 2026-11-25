@@ -17,8 +17,12 @@ is unchanged. See [ADR 015](decisions/ADR-015-core-plugins-and-preview-source.md
 and the [verification record](recovery/2026-11-25-core-plugins.md).
 The final local full gate passed **359 unit /45 files, 14 tooling (zero skips),
 116 Chromium and 6 Pages-policy cases**, including format/lint/type/build.
-Pages fingerprint: `f5c1e68720ba977f`, 77 assets. Hosted validation/promotion is
-pending at this checkpoint; the previous deployed app remains `7628521`.
+After cross-browser selection corrections, the full local gate passed again
+with the same counts. Pages fingerprint: `2924a01765a41438`, 77 assets. CI now
+refuses flaky acceptance even if a retry passes. The first hosted candidate
+passed 18 actual-origin cases but failed repeated selection diagnostics and was
+not promoted. The corrected hosted validation is pending; the deployed app
+remains `7628521`. Full failed/passed checkpoints are in the verification record.
 
 ## Caret-based mathematics
 

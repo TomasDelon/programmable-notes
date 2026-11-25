@@ -893,6 +893,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       });
       return { dom: button, stopEvent: () => true, ignoreMutation: () => true };
     }
+    // Browsers normalize a native Select All range around display:none and
+    // noneditable runtime atoms. Preserve the editor's explicit selection until
+    // the user chooses a different caret/range, rather than accepting a partial
+    // DOM selection as authorization to replace only part of the document.
+    let selectingAll = false;
     const editor = new EditorView(mount.current, {
       state: EditorState.create({
         schema: renderedSchema,
@@ -902,6 +907,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           inputRules({ rules }),
           keymap({
             'Mod-a': (state, dispatch) => {
+              selectingAll = true;
               dispatch?.(state.tr.setSelection(new AllSelection(state.doc)));
               return true;
             },
@@ -971,7 +977,21 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         spellcheck: 'true',
       },
       editable: () => !latest.current.disabled,
+      createSelectionBetween: (current) =>
+        selectingAll ? new AllSelection(current.state.doc) : null,
       handleDOMEvents: {
+        mousedown: () => {
+          selectingAll = false;
+          return false;
+        },
+        touchstart: () => {
+          selectingAll = false;
+          return false;
+        },
+        blur: () => {
+          selectingAll = false;
+          return false;
+        },
         beforeinput: (_editor, event) => {
           if (latest.current.disabled || event.isComposing) return false;
           if (
@@ -994,6 +1014,39 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         return true;
       },
       handleKeyDown: (current, event) => {
+        if (event.isComposing || current.composing) return false;
+        if (
+          /^(?:Arrow(?:Left|Right|Up|Down)|PageUp|PageDown|Home|End|Escape|Tab)$/.test(
+            event.key,
+          )
+        ) {
+          selectingAll = false;
+          if (
+            current.state.selection instanceof AllSelection &&
+            event.key !== 'Escape' &&
+            event.key !== 'Tab' &&
+            !event.shiftKey &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey
+          ) {
+            // The browser may hold an empty native range around invisible
+            // setup. Collapse the actual editor selection to editable text.
+            const forward = /(?:Right|Down|End)$/.test(event.key);
+            const edge = forward ? current.state.doc.content.size : 0;
+            const caret = Selection.findFrom(
+              current.state.doc.resolve(edge),
+              forward ? -1 : 1,
+              true,
+            );
+            if (caret) {
+              current.dispatch(
+                current.state.tr.setSelection(caret).scrollIntoView(),
+              );
+              return true;
+            }
+          }
+        }
         if (
           event.isComposing ||
           event.shiftKey ||
@@ -1160,6 +1213,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           );
           return;
         }
+        if (transaction.docChanged) selectingAll = false;
         const nextState = editor.state.apply(transaction);
         if (transaction.docChanged) {
           let attempted = nextState.doc.textBetween(
@@ -1224,6 +1278,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         next === acceptedSource
       )
         return;
+      // A Select All intent belongs to its original source revision. Undo,
+      // redo or an accepted external refresh must not carry it into new text.
+      const previousAllSelection =
+        selectingAll || editor.state.selection instanceof AllSelection;
+      selectingAll = false;
       const parsed = parseRenderedSource(next, latest.current.path);
       const position = Math.min(
         editor.state.selection.from,
@@ -1235,7 +1294,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         parsed.doc.content,
       );
       transaction.setSelection(
-        TextSelection.near(transaction.doc.resolve(position)),
+        (previousAllSelection ? visibleStart(transaction.doc) : undefined) ??
+          TextSelection.near(transaction.doc.resolve(position)),
       );
       editor.updateState(editor.state.apply(transaction));
       projection = parsed;

@@ -30,6 +30,9 @@ test.beforeEach(async ({ page }) => {
     mimeType: 'text/plain',
     buffer: Buffer.from(original),
   });
+  await expect(
+    page.getByRole('textbox', { name: 'Document title' }),
+  ).toHaveValue('Plugins');
   await command(page, 'Preview document');
 });
 
@@ -68,6 +71,10 @@ test('setup is invisible, source is optional ordinary code and JSX stays interac
   expect(readFileSync((await (await downloaded).path())!)).toEqual(
     Buffer.from(original),
   );
+  await expect(page.locator('.web-shell')).toHaveAttribute(
+    'data-save-status',
+    'saved',
+  );
   await page.reload();
   await expect(
     view.locator('pre').filter({ hasText: 'export function Counter' }),
@@ -96,6 +103,10 @@ test('core plugins can be disabled independently, persist and do not rewrite sou
   await closeSettings(page);
   await expect(view.locator('.katex')).toHaveCount(0);
   await expect(view).toContainText('$x^2$');
+  await expect(page.locator('.web-shell')).toHaveAttribute(
+    'data-save-status',
+    'saved',
+  );
   await page.reload();
   await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
   await expect(view.locator('.katex')).toHaveCount(0);
@@ -117,10 +128,14 @@ test('core plugins can be disabled independently, persist and do not rewrite sou
 test('disabled mathematics stays literal in the full React runtime and disabled React terminates it', async ({
   page,
 }) => {
-  await command(page, 'Edit source');
-  await page
-    .getByRole('textbox', { name: 'MDX source' })
-    .fill(original.replace('$x^2$', '$\\mathbb{R}$'));
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Literal runtime.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original.replace('$x^2$', '$\\mathbb{R}$')),
+  });
+  await expect(
+    page.getByRole('textbox', { name: 'Document title' }),
+  ).toHaveValue('Literal runtime');
   await command(page, 'Preview document');
   let dialog = await settings(page);
   await dialog
@@ -203,12 +218,37 @@ test('hidden setup survives boundary Backspace and selecting/replacing the visib
   // Keep the source-only declarations as a prefix; selection must refer to the
   // visible body, not to invisible imports/exports preceding it.
   const exact = original.replace('{/* Hidden comment */}\r\n\r\n', '');
-  await command(page, 'Edit source');
-  await page.getByRole('textbox', { name: 'MDX source' }).fill(exact);
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Boundary.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(exact),
+  });
+  await expect(
+    page.getByRole('textbox', { name: 'Document title' }),
+  ).toHaveValue('Boundary');
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
   await view.getByRole('heading', { name: 'Components', exact: true }).click();
   await page.keyboard.press('Home');
+  await expect
+    .poll(() =>
+      view
+        .getByRole('heading', { name: 'Components', exact: true })
+        .evaluate((element) => {
+          const selection = window.getSelection();
+          if (
+            !selection?.isCollapsed ||
+            !selection.anchorNode ||
+            !element.contains(selection.anchorNode)
+          )
+            return false;
+          const prefix = document.createRange();
+          prefix.selectNodeContents(element);
+          prefix.setEnd(selection.anchorNode, selection.anchorOffset);
+          return prefix.toString().length === 0;
+        }),
+    )
+    .toBe(true);
   await page.keyboard.press('Backspace');
   let download = page.waitForEvent('download');
   await command(page, 'Export current source');
@@ -245,6 +285,20 @@ test('hidden setup survives boundary Backspace and selecting/replacing the visib
   download = page.waitForEvent('download');
   await command(page, 'Export current source');
   expect(readFileSync((await (await download).path())!).toString()).toBe(next);
+  await view.getByText('Replacement body.', { exact: true }).click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('PageDown');
+  await page.keyboard.insertText(' Page navigation.');
+  await expect(view).toContainText('Replacement body.');
+  await expect(view).toContainText('Page navigation.');
+  // An accepted source-history refresh must also cancel the old selection intent.
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Control+z');
+  await expect(view).not.toContainText('Page navigation.');
+  await page.keyboard.insertText('After undo. ');
+  await expect(view).toContainText('Replacement body.');
+  await expect(view).toContainText('After undo.');
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('hidden setup survives interleaved selection refusal and React-disabled deletion', async ({
@@ -289,8 +343,14 @@ test('invalid LaTeX stays red raw source in full-document execution without disa
   page,
 }) => {
   const broken = original.replace('$x^2$', '$x \\in \\mathbb{R$');
-  await command(page, 'Edit source');
-  await page.getByRole('textbox', { name: 'MDX source' }).fill(broken);
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Invalid runtime.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(broken),
+  });
+  await expect(
+    page.getByRole('textbox', { name: 'Document title' }),
+  ).toHaveValue('Invalid runtime');
   await command(page, 'Preview document');
   await page.getByRole('button', { name: 'Open right panel' }).click();
   await page
