@@ -452,3 +452,25 @@ test('invalid LaTeX stays red and editable without blocking other text or later 
   await page.reload();
   await expect(view.locator('.katex')).toHaveCount(2);
 });
+
+test('literal mathematics work budget retains exact source and recovers through source editing and undo', async ({
+  page,
+}) => {
+  const original = '\uFEFF' + '$$draft\r\n'.repeat(1000);
+  await importNote(page, original);
+  await command(page, 'Preview document');
+  const view = page.getByRole('textbox', { name: 'Editable document' });
+  await expect(view.locator('pre code')).toContainText('$$draft');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(await exportSource(page)).toEqual(Buffer.from(original));
+  await command(page, 'Edit source');
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+a');
+  await page.keyboard.insertText('# Recovered\n\n$x^2$');
+  await source.press('Control+z');
+  expect(await exportSource(page)).toEqual(Buffer.from(original));
+  await source.press('Control+Shift+z');
+  await command(page, 'Preview document');
+  await expect(view.getByRole('heading', { name: 'Recovered' })).toBeVisible();
+  await expect(view.locator('.katex')).toHaveCount(1);
+});

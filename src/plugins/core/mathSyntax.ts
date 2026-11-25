@@ -23,27 +23,57 @@ const lineEnding = (code: number | null) =>
 const letter = (code: number | null) =>
   code !== null && ((code >= 65 && code <= 90) || (code >= 97 && code <= 122));
 
+// Bound speculative lookahead across every math construct in one parser run.
+// The weak key is micromark's fresh ParseContext, never a document/source string.
+const lookaheadWork = new WeakMap<object, { remaining: number }>();
+function mathLookaheadBudget(parser: object) {
+  let budget = lookaheadWork.get(parser);
+  if (!budget) {
+    budget = { remaining: 2_000_000 };
+    lookaheadWork.set(parser, budget);
+  }
+  return budget;
+}
+function chargeLookahead(budget: { remaining: number }) {
+  if (--budget.remaining < 0)
+    throw new Error(
+      'Mathematical source analysis reached its work limit. Source remains available.',
+    );
+}
+
 // End literal drafts at a possible JSX tag. Do not consume a component while
 // allowing ordinary comparison signs without a tag terminator to remain text.
 const jsxBoundary: Construct = {
   partial: true,
   tokenize(effects, ok, nok) {
+    const allowance = mathLookaheadBudget(this.parser);
+    function consume(code: number | null) {
+      chargeLookahead(allowance);
+      effects.consume(code);
+    }
     return start;
     function start(code: number | null): State | undefined {
       if (code !== 60) return nok(code);
-      effects.consume(code);
+      effects.enter('pnMathLiteralData');
+      consume(code);
       return name;
     }
     function name(code: number | null): State | undefined {
-      if (code === 62) return ok(code);
+      if (code === 62) {
+        effects.exit('pnMathLiteralData');
+        return ok(code);
+      }
       if (!letter(code) && code !== 47) return nok(code);
-      effects.consume(code);
+      consume(code);
       return tail;
     }
     function tail(code: number | null): State | undefined {
       if (code === null || lineEnding(code)) return nok(code);
-      if (code === 62) return ok(code);
-      effects.consume(code);
+      if (code === 62) {
+        effects.exit('pnMathLiteralData');
+        return ok(code);
+      }
+      consume(code);
       return tail;
     }
   },
@@ -246,9 +276,17 @@ export function remarkMathAuthoring(this: Processor) {
       : [];
   if (!syntax || !flow)
     throw new Error('The pinned math tokenizer is unavailable.');
+  // Closing-fence lookahead can otherwise repeatedly scan the same suffix for
+  // unfinished fences. Charge attempts (including rolled-back checks) to one
+  // parser invocation; the WeakMap never retains a document or source string.
   const closedFlow: Construct = {
     partial: true,
     tokenize(effects, ok, nok) {
+      const allowance = mathLookaheadBudget(this.parser);
+      function consume(code: number | null) {
+        chargeLookahead(allowance);
+        effects.consume(code);
+      }
       let opening = 0;
       let closing = 0;
       let indent = 0;
@@ -257,7 +295,7 @@ export function remarkMathAuthoring(this: Processor) {
       function opener(code: number | null): State | undefined {
         if (code === 36) {
           opening++;
-          effects.consume(code);
+          consume(code);
           return opener;
         }
         if (opening < 2) return nok(code);
@@ -265,7 +303,7 @@ export function remarkMathAuthoring(this: Processor) {
       }
       function scan(code: number | null): State | undefined {
         if (code === null) return nok(code);
-        effects.consume(code);
+        consume(code);
         if (lineEnding(code)) {
           indent = 0;
           return lineStart;
@@ -275,7 +313,7 @@ export function remarkMathAuthoring(this: Processor) {
       function lineStart(code: number | null): State | undefined {
         if (code === 32 && indent < 3) {
           indent++;
-          effects.consume(code);
+          consume(code);
           return lineStart;
         }
         if (code === 36) {
@@ -287,7 +325,7 @@ export function remarkMathAuthoring(this: Processor) {
       function fence(code: number | null): State | undefined {
         if (code === 36) {
           closing++;
-          effects.consume(code);
+          consume(code);
           return fence;
         }
         if (closing < opening) return scan(code);
@@ -299,7 +337,7 @@ export function remarkMathAuthoring(this: Processor) {
           return ok(code);
         }
         if (code === 32 || code === -1 || code === -2) {
-          effects.consume(code);
+          consume(code);
           return tail;
         }
         return scan(code);

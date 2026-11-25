@@ -1,18 +1,29 @@
 # Programmable Notes implementation status
 
-## Incomplete mathematical delimiters: implemented, deployment pending
+## Incomplete mathematical delimiters: implementation and verification
 
 Unpaired dollars now remain editable literal text, without red feedback, math
 notices or a global editing barrier. Completed invalid TeX remains raw/red and
 correctable. ADR 016 records the shared source/compiler/link-index parser, exact
 raw-span patches, JSX preservation and editor-owned first-dollar mapping.
 
-The complete local gate passed **377 unit /46 files, 14 tooling (zero skips),
-117 Chromium and 8 Pages-policy cases**. The final link-parser follow-up passed
-all **378 unit tests**, fresh format/lint/typecheck/build, **14 targeted Chromium**
-and **8 Pages-policy cases**. Hosted full-gate, repeated cross-browser and actual-
-origin confirmation are pending. The principal origin still serves `7628521`.
-Details, including genuinely failed checkpoints, are in the
+The initial implementation passed a clean-checkout mandatory CI and repeated
+three-browser workflow at `eb03c8d`, plus actual Cloudflare candidate acceptance.
+It was not promoted while a speculative-parser work-limit follow-up was completed.
+That follow-up bounds repeated unfinished fences and possible JSX-tag lookahead;
+exhaustion retains exact source and the existing Source fallback, with no write or
+sandbox relaxation.
+
+The local full gate passed **379 unit, 14 tooling, 117 Chromium and 8 Pages-policy
+cases** before the final shared-lookahead change. The final code passed **all 380
+unit tests /46 files**, fresh format/lint/typecheck/build, **15 targeted Chromium**
+and **8 Pages-policy cases**, including exact work-limit recovery and undo/redo.
+The final head's clean-checkout, hosted acceptance and deployment state are
+tracked in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)
+and its checks. Promotion requires mandatory CI, repeated browser diagnostics and
+actual candidate/principal-origin acceptance; a pushed source commit is not proof
+of deployment. Older deployment hashes below describe historical checkpoints.
+Details, including genuine failed checkpoints and downloadable reports, are in the
 [verification record](recovery/2026-11-25-core-plugins.md).
 
 ## Core plugins, hidden setup and recoverable LaTeX

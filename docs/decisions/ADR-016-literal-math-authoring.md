@@ -43,3 +43,20 @@ available. In-place source drafts are memory-only until committed by leaving the
 span; genuine stale revisions or unsafe source maps still retain the draft rather
 than overwrite source. Physical Android keyboard and native packaged GUI validation
 are separate from desktop browser automation.
+
+## Bound speculative lookahead
+
+A benchmark found repeated unfinished display fences could cause quadratic closing-
+fence scans: 5,000 short lines (40,000 source units) took about 2.6 seconds before
+projection/compiler repetition. Possible JSX-tag checks could rescan an unfinished
+line in the same way. Both speculative paths now charge a shared **2,000,000 consume
+step** allowance per micromark ParseContext, including rolled-back checks. A weak
+map retains only parser keys and counters, never document strings. A new parse has
+its own budget. Literal-token consumption itself is linear.
+
+Exhaustion refuses analysis, retaining exact source in the existing opaque/Source
+fallback. It does not relax mappings, execute document code, mutate files or erase
+a draft. The link index reports bounded analysis failure; compilation retains its
+worker/deadline controls. Tests exercise both adversarial paths, subsequent-document
+recovery, exact bytes, Source editing and canonical undo/redo. This is a work bound
+for these new lookaheads, not a blanket guarantee about every upstream parser path.

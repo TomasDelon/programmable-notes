@@ -152,3 +152,35 @@ it('keeps subsequent document links indexed when a display delimiter is unfinish
   const source = '$$\nx \\mathbb{R}\n$\n\nSee [[Target]].';
   expect(parseSourceWikilinks(source)).toHaveLength(1);
 });
+
+it('bounds repeated unfinished display-fence scans and resets the work budget for the next document', async () => {
+  const { createProcessor } = await import('@mdx-js/mdx');
+  const { remarkMathAuthoring } =
+    await import('../../src/plugins/core/mathSyntax');
+  const processor = createProcessor({
+    format: 'mdx',
+    remarkPlugins: [remarkMathAuthoring],
+  });
+  expect(() => processor.parse('$$draft\n'.repeat(1000))).toThrow(
+    'Mathematical source analysis reached its work limit',
+  );
+  expect(() => processor.parse('$$\nx^2\n$$')).not.toThrow();
+  const source = '$$draft\n'.repeat(1000);
+  const projection = parseRenderedSource(source);
+  expect(projection.doc.firstChild?.type.name).toBe('source_block');
+  expect(projection.doc.firstChild?.attrs.raw).toBe(source);
+});
+
+it('bounds repeated unfinished JSX-looking comparisons in literal mathematics without retaining the previous document budget', async () => {
+  const { createProcessor } = await import('@mdx-js/mdx');
+  const { remarkMathAuthoring } =
+    await import('../../src/plugins/core/mathSyntax');
+  const processor = createProcessor({
+    format: 'mdx',
+    remarkPlugins: [remarkMathAuthoring],
+  });
+  expect(() => processor.parse('$' + '<a'.repeat(3000))).toThrow(
+    'Mathematical source analysis reached its work limit',
+  );
+  expect(() => processor.parse('Before $x < y\n\n<Counter />')).not.toThrow();
+});

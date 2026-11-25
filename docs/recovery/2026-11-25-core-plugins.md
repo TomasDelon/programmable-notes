@@ -261,3 +261,45 @@ Final Pages fingerprint: `b1fd47147dd08115`, 77 assets. No native GUI or physica
 Android runtime result is implied. Independent static review found no further
 concrete source-loss or composition issue after the final guards and literal
 serializer changes. Full cross-browser and actual-origin acceptance remain pending.
+
+## Speculative math parsing work bound
+
+Before principal-origin promotion, a bounded standalone benchmark found closing-
+fence lookahead grew quadratically for repeated unfinished `$$draft` lines:
+100/500/1,000/5,000 lines took 14/49/121/2,631 ms respectively in this workspace.
+The source-size guard alone would accept substantially larger examples. A new red
+unit regression confirmed analysis had no deterministic work refusal.
+
+A shared per-micromark-ParseContext allowance now bounds speculative closing-fence
+and possible-JSX-tag scans to 2,000,000 consume steps, including failed lookahead.
+Independent static review identified the second path and the regression also
+exposed a missing own token in JSX-boundary lookahead; both were fixed. The guard
+retains exact raw source through the existing opaque fallback, not partial patches.
+Normal subsequent parsing gets a fresh budget. No permissions or sandbox were
+changed. The closing-fence benchmark then took 16/52/53/54 ms, refusing the last
+two oversized-work examples. These timings are observations, not timing assertions
+or universal performance guarantees. Focused authoring/link tests passed **26/26**.
+A real browser regression covers exact fallback export and recovery/undo in Source.
+
+Functional commit `eb03c8d` passed mandatory check/native-check
+[45664645984](https://github.com/TomasDelon/programmable-notes/actions/runs/45664645984)
+and actual candidate acceptance
+[45664885675](https://github.com/TomasDelon/programmable-notes/actions/runs/45664885675).
+It was not promoted while the additional analysis work bound was being completed.
+
+The initial closing-fence-bound version passed a complete local gate: **379 unit,
+14 tooling (zero skips), 117 Chromium and 8 Pages-policy cases**. After adding the
+shared JSX-lookahead accounting and its own check token, final format/lint/typecheck
+and **all 380 unit tests /46 files** passed. A fresh final production build passed
+**15/15** Chromium math/source/history/link/attachment/work-budget recovery cases
+and **8/8** Pages-policy cases. Final Pages fingerprint: `d3e28c2c99d6142c`, 77 assets.
+The earlier matching Playwright Chromium binary also passed the three authoring
+cases nine times without retries before this work-bound follow-up.
+
+The full repeated three-browser workflow passed at `eb03c8d`:
+[45664641539](https://github.com/TomasDelon/programmable-notes/actions/runs/45664641539),
+[downloadable report](https://github.com/TomasDelon/programmable-notes/actions/runs/45664641539/artifacts/15046174267).
+Its actual-origin report/screenshots are
+[available here](https://github.com/TomasDelon/programmable-notes/actions/runs/45664885675/artifacts/15046793591).
+These are genuine successful prior checkpoints; the final work-bound head still
+requires fresh clean-checkout CI and hosted browser/deployment acceptance.
