@@ -17,12 +17,20 @@ finishes its provisional DOM read, then its whole attempt is retained without a
 canonical write and the surface becomes read-only. Source revisions, opaque JSX,
 filesystem/IPC grants, disabled history and recovery guards remain mandatory.
 
-The final complete fresh local `npm run check` passed: **422 unit tests /48 files,
+The final complete fresh local `npm run check` passed: **426 unit tests /48 files,
 14 tooling (zero skips), 128 Chromium browser cases and 8 Pages-policy cases**,
 plus formatting, lint, strict TypeScript and production build. Pages fingerprint:
-`82731c41b8b68486`, 77 assets. The seven focused real-browser math/navigation
+`fc20e87af304619a`, 77 assets. The seven focused real-browser math/navigation
 cases also passed with zero retries. Failed checkpoints and their causes remain
 in the dated verification record.
+
+The final gate used matching Playwright Chromium 1255 (Chrome for Testing
+159.0.8154.6). A separate system-Chromium 156 run produced one absent security
+probe report; it remains recorded, not accepted or silently retried. The unchanged
+probe passed 20/20 matching-browser repetitions and the full matching gate.
+The hosted candidate also exposed Firefox paragraph LF normalization and a real
+Chromium stale-native-selection write into a heading; both have deterministic
+regressions. The corrected browser scenario passed 20/20 repetitions, zero retries.
 
 Hosted clean-checkout CI, repeated Chromium/Firefox/WebKit diagnostics and actual
 Cloudflare candidate/principal-origin acceptance remain required before promotion.

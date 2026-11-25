@@ -614,6 +614,33 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     let mathCompositionBase: EditorState | null = null;
     let firstComposingChange = true;
     let compositionFrame: number | null = null;
+    function ownedNativeInputRange(
+      current: EditorView,
+    ): { from: number; to: number } | null {
+      const native = current.dom.ownerDocument.getSelection();
+      if (
+        !native?.anchorNode ||
+        !native.focusNode ||
+        !current.dom.contains(native.anchorNode) ||
+        !current.dom.contains(native.focusNode)
+      )
+        return null;
+      for (const node of [native.anchorNode, native.focusNode]) {
+        const element = node instanceof Element ? node : node.parentElement;
+        if (element?.closest('[contenteditable="false"]')) return null;
+      }
+      try {
+        const anchor = current.posAtDOM(native.anchorNode, native.anchorOffset);
+        const head = current.posAtDOM(native.focusNode, native.focusOffset);
+        const from = Math.min(anchor, head),
+          to = Math.max(anchor, head);
+        return from >= 0 && to <= current.state.doc.content.size
+          ? { from, to }
+          : null;
+      } catch {
+        return null;
+      }
+    }
     function insertDollar(
       current: EditorView,
       from: number,
@@ -648,7 +675,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         let physical = acceptedSource.slice(offset, end);
         if (!/[\r\n]/.test(physical)) {
           const parent = projection.mapping.ranges.get(
-            current.state.selection.$head.parent,
+            current.state.doc.resolve(from).parent,
           );
           if (parent) physical = acceptedSource.slice(parent.from, parent.to);
         }
@@ -879,15 +906,23 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           if (
             event.inputType === 'insertText' &&
             typeof event.data === 'string' &&
-            insertDollar(
-              current,
-              current.state.selection.from,
-              current.state.selection.to,
-              event.data,
-            )
+            event.data.includes('$')
           ) {
-            event.preventDefault();
-            return true;
+            // selectionchange is asynchronous: the native range may already be
+            // in a different paragraph than the cached PM selection. Map the
+            // owned pre-input range through public APIs before a source write.
+            // Explicit Select All remains authoritative around hidden atoms.
+            const range =
+              selectingAll && current.state.selection instanceof AllSelection
+                ? current.state.selection
+                : ownedNativeInputRange(current);
+            if (
+              range &&
+              insertDollar(current, range.from, range.to, event.data)
+            ) {
+              event.preventDefault();
+              return true;
+            }
           }
           if (
             selectingAll &&

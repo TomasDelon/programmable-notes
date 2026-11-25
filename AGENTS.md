@@ -13,7 +13,7 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - Use the Node version in `.nvmrc` and npm version in `package.json`.
 - Install with `npm ci`. Keep exact versions and commit `package-lock.json` when intentionally changing dependencies.
 - `.npmrc` puts npm's cache in ignored `.cache/npm`. Keep generated output, browser artifacts, credentials, and local environment files out of commits.
-- For cloud browser tests, export `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` to use the preinstalled system browser. CI uses Playwright's matching downloaded browser. If installing browsers in the cloud, export `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` before installation and tests; the required download domains must be active.
+- Prefer Playwright's matching downloaded browser for final browser gates, as CI does. If cached in the cloud, set `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` and unset `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. The preinstalled `/usr/bin/chromium` remains available for separately recorded system-browser smoke tests by setting that executable variable; do not silently conflate different browser versions or discard their failures. If installing matching browsers, set the browser-cache path before installation and tests; the required download domains must be active. Never disable browser isolation to work around unavailable infrastructure.
 - No application secrets, backend, or database are required for this scaffold.
 
 ## Public repository privacy

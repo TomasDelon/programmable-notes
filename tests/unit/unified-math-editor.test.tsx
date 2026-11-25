@@ -556,6 +556,71 @@ describe('mathematics shares the document text editor', () => {
     );
   });
 
+  it('retains CRLF when a native DOM-only final dollar completes multiline literal mathematics', async () => {
+    const raw = "$$\r\nf'(x) = \\frac{x}{h}.\r\n$";
+    const original =
+      '\uFEFF# Mathematics\r\n\r\n' + raw + '\r\n\r\nContinue writing.\r\n';
+    const { editor, props } = mount(original);
+    const literal = editor.querySelector<HTMLElement>('[data-math-source]')!;
+    const text = literal.firstChild as Text;
+    await act(async () => {
+      editor.focus();
+      document.getSelection()!.collapse(text, text.length);
+      document.dispatchEvent(new Event('selectionchange'));
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    });
+    await act(async () => {
+      text.appendData('$');
+      document.getSelection()!.collapse(text, text.length);
+      editor.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          inputType: 'insertText',
+          data: '$',
+        }),
+      );
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(props.apply).toHaveBeenLastCalledWith(
+        original,
+        original.replace(raw, () => raw + '$'),
+        true,
+      ),
+    );
+    expect(document.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('uses the owned native math range when beforeinput arrives before selectionchange updates the model', () => {
+    const invalid = '$x \\in \\mathbb{R$';
+    const corrected = '$x \\in \\mathbb{R}$';
+    const original = '# Modular note\n\nFirst ' + invalid + '.\n';
+    const { editor, props } = mount(original);
+    editor.focus();
+    const source = editor.querySelector<HTMLElement>('.rendered-math-source')!;
+    // Do not emit selectionchange: this reproduces the native-event ordering
+    // where the real range has moved but the PM selection is still the heading.
+    const range = document.createRange();
+    range.selectNodeContents(source);
+    const selection = document.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    const event = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertText',
+      data: corrected,
+    });
+    fireEvent(editor, event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(props.apply).toHaveBeenLastCalledWith(
+      original,
+      original.replace(invalid, () => corrected),
+      true,
+    );
+    expect(editor.querySelector('h1')!.textContent).toBe('Modular note');
+  });
+
   it('removes the final draft dollar without leaving an unsafe stale mark or blocking typing', async () => {
     const original = 'Before $x';
     const { editor, props } = mount(original);

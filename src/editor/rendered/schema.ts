@@ -42,6 +42,9 @@ const nodes: Record<string, NodeSpec> = {
   doc: { content: 'block+' },
   paragraph: {
     content: 'inline*',
+    // The document model and rendered surface retain authored soft line breaks.
+    // Native DOM reconciliation must not replace those source characters by spaces.
+    whitespace: 'pre',
     group: 'block',
     attrs: { sourceId },
     parseDOM: [{ tag: 'p' }],

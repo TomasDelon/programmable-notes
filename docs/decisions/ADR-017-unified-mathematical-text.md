@@ -43,6 +43,20 @@ movement and movement within or out of source retain native behavior. These
 selection-only bridges repair browser skipping of hidden source without creating
 history events or adding field focus.
 
+The paragraph schema explicitly declares `whitespace: 'pre'`, matching its
+existing LF-preserving text model and `white-space: pre-wrap` presentation.
+Without that declaration ProseMirror's native DOM reconciliation converts LF to
+spaces in Firefox before the text-input hook runs. Headings keep their existing
+whitespace policy. This is DOM text fidelity, not a Markdown grammar extension.
+
+The dollar-specific pre-input shortcut maps the editor-owned native selection
+through public `posAtDOM` before authorizing its exact source range. Native
+`selectionchange` can lag behind `beforeinput`; using the cached model selection
+can insert into an unrelated heading even though the browser selected a formula.
+Endpoints outside the editor or inside inert runtime/rendering DOM are rejected.
+Explicit Select All remains authoritative around hidden source atoms. DOM-diff
+input and input-only reconciliation retain their existing guarded paths.
+
 Metadata title is a passive heading. Existing Rename command/dialog remains the explicit metadata operation and does not rewrite a Markdown H1. Real links, task controls and isolated React UI retain their actual keyboard semantics.
 
 ## Acceptance and limitations

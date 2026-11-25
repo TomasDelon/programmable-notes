@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EditorState } from 'prosemirror-state';
+import { DOMParser, DOMSerializer } from 'prosemirror-model';
+import { renderedSchema as schema } from '../../src/editor/rendered/schema';
 import {
   parseRenderedSource,
   rebaseRenderedProjection,
@@ -156,4 +158,49 @@ it('maps a whole-equation replacement to undelimited adjacent TeX text tokens ex
     transaction,
   );
   expect(next).toBe(source.slice(0, end) + '^2' + source.slice(end));
+});
+
+it('preserves unfinished formula line breaks through a native DOM mutation and exact source serialization', () => {
+  const raw = "$$\r\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\r\n$";
+  const prefix = '\uFEFF# Mathematics\r\n\r\n';
+  const suffix = '\r\n\r\n<Counter value={1} />\r\n';
+  const projection = parseRenderedSource(prefix + raw + suffix);
+  const paragraph = projection.doc.child(1);
+  const dom = document.createElement('div');
+  dom.append(
+    DOMSerializer.fromSchema(schema).serializeFragment(
+      schema.nodes.doc!.create(null, paragraph).content,
+    ),
+  );
+  const literal = dom.querySelector('[data-math-source]')!;
+  literal.firstChild!.nodeValue += '$';
+  // Firefox's DOM observer reparses this ordinary paragraph before forwarding
+  // its native text insertion. CSS white-space alone cannot control that parse.
+  const parsed = DOMParser.fromSchema(schema).parse(dom);
+  expect(parsed.textContent).toBe(raw.replace(/\r\n/g, '\n') + '$');
+  const nativeDoc = projection.doc.copy(
+    projection.doc.content.replaceChild(
+      1,
+      paragraph.copy(parsed.firstChild!.content),
+    ),
+  );
+  const source = serializeRenderedChange(projection, nativeDoc);
+  expect(source).toBe(prefix + raw + '$' + suffix);
+  expect(parseRenderedSource(source).doc.child(1).type.name).toBe('math_block');
+});
+
+it('preserves authored paragraph soft breaks while leaving heading DOM normalization unchanged', () => {
+  const dom = document.createElement('div');
+  const paragraph = document.createElement('p');
+  paragraph.textContent = 'ordinary\nparagraph';
+  dom.append(paragraph);
+  expect(DOMParser.fromSchema(schema).parse(dom).textContent).toBe(
+    'ordinary\nparagraph',
+  );
+  const heading = document.createElement('h2');
+  heading.textContent = 'ordinary\nheading';
+  dom.replaceChildren(heading);
+  expect(DOMParser.fromSchema(schema).parse(dom).textContent).toBe(
+    'ordinary heading',
+  );
 });
