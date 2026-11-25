@@ -103,3 +103,23 @@ local Pages checks use the real production build with policy headers, and are
 not claims about an edge deployment. Hosted verification and promotion remain
 pending at this implementation checkpoint. The native GUI, physical Android
 keyboards, physical GPUs and Wayland were not tested by this milestone.
+
+## Visual flow follow-up
+
+Actual desktop/mobile screenshot inspection found inherited Source-panel CSS
+imposing a **420px** minimum height on the nested mathematical editor. The
+initial source/history tests and `ca22bbb` mandatory check/native-check passed,
+but that candidate was not promoted to the beta. Two explicit geometry
+regressions failed at 1440px and 390px. Scope `height: auto` / `min-height: 0`
+to the mathematical editor/content only. The corrected inline source measures
+approximately 25px at default settings; screenshots show ordinary paragraph
+flow, with no input frame or action buttons.
+
+The corrected full local command, including `PN_GITLEAKS_BIN`, exited **0**:
+**346 unit /44 files, 14 tooling (zero skips), 107 Chromium and 5 Pages-policy
+cases passed**, plus format/lint/type/build. A screenshot-attachment-only test
+edit initially omitted its fixture argument; the targeted run exposed that
+ReferenceError. After correction both final geometry cases passed **2/2, zero
+retries**, and strict TypeScript/lint were rerun. The Pages-prepared fingerprint
+is now `1139cf95c6288890` (77 assets). Hosted verification/promotion of this
+layout correction is still pending at this checkpoint.

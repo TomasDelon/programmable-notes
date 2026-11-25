@@ -320,3 +320,46 @@ test('moving between equations commits only the edited exact span and reopening 
   await source.press('Control+Shift+Z');
   expect(await exportSource(page)).toEqual(Buffer.from(expected));
 });
+
+for (const width of [1440, 390]) {
+  test(`mathematical source stays in normal document flow at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await importNote(
+      page,
+      '# Flow\n\nBefore $x^2$ after.\n\n$$\ny^2\n$$\n\nTail.\n',
+    );
+    await command(page, 'Preview document');
+    const paragraph = page
+      .locator('.rendered-editor p')
+      .filter({ hasText: 'Before' });
+    const before = (await paragraph.boundingBox())!.height;
+    await page
+      .getByRole('button', { name: 'Edit inline equation: x^2' })
+      .click();
+    const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+    await expect(inline).toBeFocused();
+    const mathHeight = await inline.evaluate(
+      (node) => node.closest('.cm-editor')!.getBoundingClientRect().height,
+    );
+    expect(mathHeight).toBeLessThan(48);
+    await testInfo.attach(`inline-math-source-${width}px`, {
+      body: await page.screenshot(),
+      contentType: 'image/png',
+    });
+    expect((await paragraph.boundingBox())!.height).toBeLessThan(before + 32);
+    await inline.press('End');
+    await inline.press('ArrowRight');
+    await page
+      .getByRole('button', { name: 'Edit display equation: y^2' })
+      .click();
+    const display = page.getByRole('textbox', { name: 'Display LaTeX source' });
+    await expect(display).toBeFocused();
+    expect(
+      await display.evaluate(
+        (node) => node.closest('.cm-editor')!.getBoundingClientRect().height,
+      ),
+    ).toBeLessThan(120);
+  });
+}

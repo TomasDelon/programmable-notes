@@ -199,6 +199,8 @@
   text-align: left;
 }
 .rendered-editor .rendered-math-source .cm-editor {
+  height: auto;
+  min-height: 0;
   background: transparent;
   color: inherit;
   font:
@@ -214,6 +216,7 @@
   overflow: visible;
 }
 .rendered-editor .rendered-math-source .cm-content {
+  min-height: 0;
   padding: 0;
   caret-color: currentColor;
 }

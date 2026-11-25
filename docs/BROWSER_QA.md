@@ -94,3 +94,10 @@ passed its full check with native-check intentionally skipped. The
 is retained for seven days. No downloaded per-engine count is claimed. These
 terminal results apply to525b70b; subsequent diagnostic/evidence changes require
 their own checks and must not inherit that head's status silently.
+
+The optional `editing_qa` diagnostic also repeats caret mathematics: in-place
+source/history, display newlines, desktop/mobile flow and Chromium composition
+integration. Chrome-specific DOM/EditContext fixtures are explicitly skipped in
+Firefox/WebKit; ordinary mathematical editing and geometry run in all three.
+It retains zero retries and the existing three repetitions. This supplements
+the mandatory PR gates; it does not replace native/package or full web checks.

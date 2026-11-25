@@ -238,13 +238,13 @@ jobs:
             *) exit 1 ;;
           esac
       - run: npm run build
-      - name: Repeat real keyboard, notifications and recovery without retries
+      - name: Repeat real keyboard, math, notifications and recovery without retries
         run: |
           browser_args=()
           if [ "$PN_EDITING_BROWSER" != all ]; then
             browser_args=(--project "$PN_EDITING_BROWSER")
           fi
-          npx playwright test tests/e2e/web-rendered-editor.spec.ts tests/e2e/web-update.spec.ts "${browser_args[@]}" --grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update' --repeat-each=3 --retries=0
+          npx playwright test tests/e2e/web-rendered-editor.spec.ts tests/e2e/web-update.spec.ts tests/e2e/web-live.spec.ts tests/e2e/web-math-composition.spec.ts "${browser_args[@]}" --grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update|caret math is ordinary|display math reveals|moving between equations|normal document flow|math composition|blurred composition' --repeat-each=3 --retries=0
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
