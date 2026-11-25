@@ -152,22 +152,26 @@ const nodes: Record<string, NodeSpec> = {
   inline_math: {
     inline: true,
     group: 'inline',
-    atom: true,
+    content: 'text*',
+    marks: '',
+    code: true,
     attrs: {
       ...origin,
       value: { default: '' },
       kind: { default: 'inline' },
       literal: { default: false },
     },
-    toDOM: (node) => [
+    toDOM: () => [
       'span',
       { class: 'rendered-inline-math', 'data-math': 'inline' },
-      node.attrs.value,
+      0,
     ],
   },
   math_block: {
     group: 'block',
-    atom: true,
+    content: 'text*',
+    marks: '',
+    code: true,
     attrs: {
       sourceId,
       ...origin,
@@ -175,10 +179,10 @@ const nodes: Record<string, NodeSpec> = {
       kind: { default: 'display' },
       literal: { default: false },
     },
-    toDOM: (node) => [
+    toDOM: () => [
       'div',
       { class: 'rendered-display-math', 'data-math': 'display' },
-      node.attrs.value,
+      0,
     ],
   },
   wikilink: {
@@ -244,6 +248,13 @@ const nodes: Record<string, NodeSpec> = {
 nodes.table = { ...nodes.table, attrs: { ...nodes.table?.attrs, sourceId } };
 
 const marks: Record<string, MarkSpec> = {
+  // Source provenance only: these remain ordinary text in the same editor.
+  math_source: {
+    inclusive: true,
+    excludes: '',
+    parseDOM: [{ tag: 'span[data-math-source]' }],
+    toDOM: () => ['span', { 'data-math-source': '' }, 0],
+  },
   strong: {
     parseDOM: [{ tag: 'strong' }, { tag: 'b' }],
     toDOM: () => ['strong', 0],

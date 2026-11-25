@@ -12,6 +12,7 @@ import {
 } from 'prosemirror-model';
 import {
   AllSelection,
+  Plugin,
   EditorState,
   Selection,
   TextSelection,
@@ -40,25 +41,21 @@ import {
 } from 'prosemirror-schema-list';
 import { addRowAfter, goToNextCell, tableEditing } from 'prosemirror-tables';
 import { renderMathematics, validLatex } from '../../plugins/core/math';
-import { EditorState as MathState } from '@codemirror/state';
-import { EditorView as MathView, keymap as mathKeymap } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { assetBlob } from '../../assets/catalog';
 import type { LinkResolution } from '../../links';
 import {
   collectLiveMath,
-  planMathSourceReplacement,
   completedMath,
+  preserveMathBreaks,
   mathSourceContextPreserved,
-  type MathSpan,
 } from '../math/mathSource';
 import { renderedSchema } from './schema';
 import {
   parseRenderedSource,
   renderedTextSourceOffset,
+  renderedPositionFromSourceOffset,
   serializeRenderedChange,
   rebaseRenderedProjection,
-  renderedSourceRange,
 } from './sourceBridge';
 import {
   RenderedRuntime,
@@ -124,7 +121,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   const retainedDraft = useRef<string | null>(null);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
-  const [mathEditing, setMathEditing] = useState(false);
+  const [mathComposing, setMathComposing] = useState(false);
   useEffect(() => {
     if (error || unappliedText !== null)
       notify({
@@ -158,7 +155,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     latest.current = props;
   });
   const hasPendingDraft =
-    linkDraft !== null || unappliedText !== null || mathEditing;
+    linkDraft !== null || unappliedText !== null || mathComposing;
   useLayoutEffect(() => {
     latest.current.onPendingChange?.(hasPendingDraft);
   }, [hasPendingDraft]);
@@ -307,409 +304,111 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       }),
     ];
 
-    function sourceOffset(node: ProseNode): number {
-      const mapped = renderedSourceRange(projection, node);
-      if (mapped) return mapped.from;
-      const raw = String(node.attrs.raw ?? node.attrs.value ?? '');
-      const expected = Number(node.attrs.sourceFrom ?? 0);
-      const source = latest.current.source;
-      if (raw && source.slice(expected, expected + raw.length) === raw)
-        return expected;
-      const found = raw ? source.indexOf(raw) : -1;
-      return found < 0 ? 0 : found;
-    }
-    // One active inline field at a time. A focused equation reveals its
-    // original Markdown dollars in place; the existing source transaction
-    // remains the sole authority for persistence and undo.
-    let activeMath: { commit: () => boolean; cancel: () => void } | null = null;
-    const mathEntrances = new WeakMap<
-      Node,
-      (edge: 'start' | 'end' | number) => void
-    >();
+    // Mathematical source is child text owned by this same ProseMirror view.
+    // Rendering is presentation only: selection changes never edit source/history.
     function mathView(
-      node: ProseNode,
-      _view: EditorView,
+      initial: ProseNode,
+      current: EditorView,
       getPos: () => number | undefined,
     ): NodeView {
+      let node = initial;
       const display = node.type === nodes.math_block;
-      const wrapper = document.createElement(display ? 'div' : 'span');
-      wrapper.className = display
+      const dom = document.createElement(display ? 'div' : 'span');
+      dom.className = display
         ? 'rendered-math-host rendered-math-host-block'
         : 'rendered-math-host';
-      wrapper.contentEditable = 'false';
-      const button = document.createElement('span');
-      button.setAttribute('role', 'button');
-      button.tabIndex = 0;
-      button.className = `rendered-math${display ? ' rendered-math-block' : ''}`;
-      let field: MathView | null = null;
-      let span: MathSpan | null = null;
-      let snapshot: string | null = null;
-      let compositionFrame: number | null = null;
-      let editContext: EventTarget | null = null;
-      function cancelCompositionFrame() {
-        if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
-        compositionFrame = null;
-      }
-
-      function afterComposition() {
-        cancelCompositionFrame();
-        // Register after CM's built-in observer/listener, including Android's
-        // deferred DOM read. Never close a composing or unread source buffer.
-        compositionFrame = requestAnimationFrame(() => {
-          compositionFrame = null;
-          if (field && !field.hasFocus) {
-            // Resume CM's skipped blur cleanup only after its final DOM read.
-            // The normal blur handler attempts the guarded commit; a refused
-            // draft remains editable with correctly synchronized focus state.
-            field.contentDOM.dispatchEvent(new FocusEvent('blur'));
-          }
-        });
-      }
-      function detachComposition() {
-        cancelCompositionFrame();
-        editContext?.removeEventListener('compositionend', afterComposition);
-        editContext = null;
-      }
-
-      function renderEquation() {
-        button.setAttribute(
-          'aria-label',
-          `Edit ${display ? 'display' : 'inline'} equation: ${String(node.attrs.value).trim()}`,
-        );
-        const raw = String(node.attrs.raw);
-        const paired = completedMath(raw);
-        const valid = renderMathematics(
-          button,
-          String(node.attrs.value),
-          String(
-            node.attrs.raw ||
-              (display
-                ? `$$\n${node.attrs.value}\n$$`
-                : `$${node.attrs.value}$`),
-          ),
-          display,
-          !!paired &&
-            corePluginEnabled(
-              latest.current.runtime.corePlugins,
-              'mathematics',
-            ),
-        );
-        wrapper.classList.toggle('rendered-math-invalid', !valid);
-        wrapper.replaceChildren(button);
-      }
-      function close() {
-        if (!field) return;
-        detachComposition();
-        const previous = field;
-        field = null;
-        previous.destroy();
-        span = null;
-        snapshot = null;
-        dismiss(noticeId + '-math');
-        if (activeMath === actions) activeMath = null;
-        renderEquation();
-        setMathEditing(false);
-      }
-      function showError(reason: string) {
-        notify({
-          id: noticeId + '-math',
-          tone: 'error',
-          message: 'Check the equation. Your LaTeX is retained.',
-          detail: reason,
-          persistent: true,
-        });
-        field?.contentDOM.setAttribute('aria-invalid', 'true');
-        field?.contentDOM.setAttribute('aria-describedby', noticeId + '-math');
-        wrapper.classList.add('rendered-math-invalid');
-      }
-      function commit(): boolean {
-        if (!field || !span || snapshot === null) return true;
-        // compositionStarted also covers the phase before the first insertion.
-        // Every commit path must wait for the final composition DOM read.
-        if (field.compositionStarted || compositionFrame !== null) return false;
-        if (latest.current.disabled) {
-          showError('Editing is unavailable. Your LaTeX text is retained.');
-          return false;
+      dom.dataset.math = display ? 'display' : 'inline';
+      const contentDOM = document.createElement(display ? 'div' : 'span');
+      contentDOM.className = 'rendered-math-source';
+      const rendered = document.createElement(display ? 'div' : 'span');
+      rendered.className = 'rendered-math-render';
+      rendered.contentEditable = 'false';
+      dom.append(contentDOM, rendered);
+      let cachedRaw: string | null = null;
+      let cachedPair: ReturnType<typeof completedMath> = null;
+      let cachedValid = false;
+      let renderedRaw: string | null = null;
+      function refresh() {
+        const position = getPos();
+        if (position === undefined) return;
+        const raw = node.textContent;
+        if (cachedRaw !== raw) {
+          cachedRaw = raw;
+          cachedPair = completedMath(raw);
+          cachedValid =
+            !!cachedPair && validLatex(cachedPair.originalInner, display);
         }
-        const original = span.originalOuter.replace(/\r\n?|\n/g, '\n');
-        const entered = field.state.doc.toString();
-        if (entered === original) {
-          close();
-          return true;
-        }
-        const planned = planMathSourceReplacement(
-          latest.current.source,
-          snapshot,
-          span,
-          entered,
-          latest.current.path,
-        );
-        if (!planned.ok) {
-          showError(planned.reason);
-          return false;
-        }
-        if (
-          planned.source !== snapshot &&
-          !latest.current.apply(snapshot, planned.source, false)
-        ) {
-          showError(
-            'The note changed or the edit could not be saved. Your LaTeX is retained.',
-          );
-          return false;
-        }
-        // The canonical CodeMirror transaction will refresh this NodeView.
-        // In the meantime keep the equation visually current.
-        const paired = completedMath(entered);
-        node = node.type.create({
-          ...node.attrs,
-          value: paired?.originalInner ?? entered,
-          raw: entered,
-        });
-        close();
-        return true;
-      }
-      function cancel() {
-        close();
-      }
-      const actions = { commit, cancel };
-      function activate(entryEdge?: 'start' | 'end' | number) {
-        if (field || latest.current.disabled || activeMath) return;
-        const source =
-          latest.current.sourceIsCurrent?.(acceptedSource) === true
-            ? acceptedSource
-            : latest.current.source;
-        const math = collectLiveMath(source, latest.current.path, true);
-        const offset = sourceOffset(node);
-        const match =
-          math.find(
-            (candidate) =>
-              candidate.from === offset &&
-              candidate.kind === (display ? 'display' : 'inline'),
-          ) ??
-          math.find(
-            (candidate) =>
-              candidate.originalInner.trim() ===
-                String(node.attrs.value).trim() &&
-              math.filter(
-                (item) =>
-                  item.originalInner.trim() === candidate.originalInner.trim(),
-              ).length === 1,
-          );
-        if (!match) return;
-        span = match;
-        snapshot = source;
-        const host = document.createElement(display ? 'div' : 'span');
-        host.className = display
-          ? 'rendered-math-source rendered-math-source-block'
-          : 'rendered-math-source';
-        wrapper.classList.toggle(
-          'rendered-math-invalid',
-          corePluginEnabled(
-            latest.current.runtime.corePlugins,
-            'mathematics',
-          ) &&
-            !!completedMath(match.originalOuter) &&
-            !validLatex(String(node.attrs.value), display),
-        );
-        wrapper.replaceChildren(host);
-        activeMath = actions;
-        setMathEditing(true);
-        const leave = (direction: -1 | 1) => {
-          const position = getPos();
-          if (position === undefined || !commit()) return true;
-          editor.dispatch(
-            editor.state.tr.setSelection(
-              TextSelection.near(
-                editor.state.doc.resolve(
-                  direction < 0 ? position : position + node.nodeSize,
-                ),
-                direction,
-              ),
-            ),
-          );
-          editor.focus();
-          return true;
-        };
-        const edge = (direction: -1 | 1, vertical = false) => {
-          if (!field || field.compositionStarted) return false;
-          const selection = field.state.selection.main;
-          if (!selection.empty) return false;
-          const atEdge = vertical
-            ? field.state.doc.lineAt(selection.head).number ===
-              (direction < 0 ? 1 : field.state.doc.lines)
-            : selection.head === (direction < 0 ? 0 : field.state.doc.length);
-          return atEdge && leave(direction);
-        };
-        field = new MathView({
-          parent: host,
-          state: MathState.create({
-            doc: match.originalOuter.replace(/\r\n?|\n/g, '\n'),
-            extensions: [
-              history(),
-              MathView.lineWrapping,
-              mathKeymap.of([
-                { key: 'ArrowLeft', run: () => edge(-1) },
-                { key: 'ArrowRight', run: () => edge(1) },
-                { key: 'ArrowUp', run: () => edge(-1, true) },
-                { key: 'ArrowDown', run: () => edge(1, true) },
-                { key: 'Tab', run: () => leave(1) },
-                { key: 'Shift-Tab', run: () => leave(-1) },
-                {
-                  key: 'Escape',
-                  run: () => {
-                    cancel();
-                    editor.focus();
-                    return true;
-                  },
-                },
-                {
-                  key: 'Enter',
-                  run: () =>
-                    !display &&
-                    !field?.state.doc.toString().startsWith('$$') &&
-                    leave(1),
-                },
-                { key: 'Mod-Enter', run: () => leave(1) },
-                ...historyKeymap,
-                ...defaultKeymap,
-              ]),
-              MathView.contentAttributes.of({
-                'aria-label': display
-                  ? 'Display LaTeX source'
-                  : 'Inline LaTeX source',
-                'aria-description':
-                  'Dollar-delimited mathematical source. Move the caret outside to render.',
-                spellcheck: 'false',
-              }),
-              MathView.updateListener.of((update) => {
-                if (!update.docChanged) return;
-                const raw = update.state.doc.toString();
-                const paired = completedMath(raw);
-                const valid =
-                  !paired ||
-                  !corePluginEnabled(
-                    latest.current.runtime.corePlugins,
-                    'mathematics',
-                  ) ||
-                  validLatex(paired.originalInner, paired.kind === 'display');
-                wrapper.classList.toggle('rendered-math-invalid', !valid);
-                if (valid)
-                  update.view.contentDOM.removeAttribute('aria-invalid');
-                else
-                  update.view.contentDOM.setAttribute('aria-invalid', 'true');
-                update.view.contentDOM.removeAttribute('aria-describedby');
-                dismiss(noticeId + '-math');
-              }),
-              MathView.domEventHandlers({
-                blur: () => {
-                  if (field && !field.compositionStarted) commit();
-                },
-                compositionend: afterComposition,
-              }),
-            ],
-          }),
-        });
-        // Modern Android composition events target the browser EditContext,
-        // not necessarily contentDOM. CM has already installed its listeners.
-        editContext =
-          (
-            field.contentDOM as HTMLElement & {
-              editContext?: EventTarget | null;
-            }
-          ).editContext ?? null;
-        editContext?.addEventListener('compositionend', afterComposition);
-        field.contentDOM.addEventListener(
-          'blur',
-          (event) => {
-            if (field?.compositionStarted || compositionFrame !== null) {
-              // CM's ordinary blur observer schedules a focus redraw, which can
-              // replace an unread final composition before Android's DOM flush.
-              // Native focus still moves; the completion listener owns closing.
-              event.stopImmediatePropagation();
-            }
-          },
-          true,
-        );
-        field.contentDOM.addEventListener(
-          'keydown',
-          (event) => {
-            if (
-              event.isComposing ||
-              field?.compositionStarted ||
-              compositionFrame !== null
-            ) {
-              // Preserve native IME default behavior, but do not interpret its
-              // Enter/Escape/Tab as an editor commit or cancellation command.
-              event.stopImmediatePropagation();
-            }
-          },
-          true,
-        );
-        field.focus();
-        field.dispatch({
-          selection: {
-            anchor:
-              typeof entryEdge === 'number'
-                ? Math.min(entryEdge, field.state.doc.length)
-                : entryEdge === 'start'
-                  ? 0
-                  : entryEdge === 'end'
-                    ? field.state.doc.length
-                    : field.state.doc.length - (display ? 2 : 1),
-          },
-        });
-      }
-      let mathematicsEnabled = corePluginEnabled(
-        latest.current.runtime.corePlugins,
-        'mathematics',
-      );
-      const refresh = () => {
+        const paired = cachedPair;
         const enabled = corePluginEnabled(
           latest.current.runtime.corePlugins,
           'mathematics',
         );
-        if (enabled === mathematicsEnabled) return;
-        mathematicsEnabled = enabled;
-        if (!field) renderEquation();
-      };
-      presentationRefreshers.current.add(refresh);
-      mathEntrances.set(wrapper, activate);
-      button.addEventListener('click', () => activate());
-      button.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          activate();
+        const valid = cachedValid;
+        const { selection } = current.state;
+        const from = position + 1,
+          to = from + node.content.size;
+        const intersects = selection.empty
+          ? selection.from >= from && selection.from <= to
+          : selection.from < to && selection.to > from;
+        const showSource = !enabled || !valid || intersects;
+        dom.classList.toggle(
+          'rendered-math-invalid',
+          enabled && !!paired && !valid,
+        );
+        dom.classList.toggle('rendered-math-revealed', showSource);
+        contentDOM.hidden = !showSource;
+        rendered.hidden = showSource;
+        if (!showSource && renderedRaw !== raw) {
+          renderMathematics(rendered, paired!.originalInner, raw, display);
+          renderedRaw = raw;
+        } else if (showSource && renderedRaw !== null) {
+          rendered.replaceChildren();
+          renderedRaw = null;
         }
+      }
+      rendered.addEventListener('mousedown', (event) => {
+        if (
+          !(event instanceof MouseEvent) ||
+          event.button !== 0 ||
+          latest.current.disabled
+        )
+          return;
+        const position = getPos();
+        if (position === undefined) return;
+        event.preventDefault();
+        const delimiter = node.textContent.startsWith('$$') ? 2 : 1;
+        current.dispatch(
+          current.state.tr.setSelection(
+            TextSelection.create(
+              current.state.doc,
+              position + 1 + Math.min(delimiter, node.content.size),
+            ),
+          ),
+        );
+        current.focus();
       });
-      renderEquation();
+      presentationRefreshers.current.add(refresh);
+      refresh();
       return {
-        dom: wrapper,
-        stopEvent: () => true,
-        ignoreMutation: () => true,
-        selectNode: () => activate(),
-        deselectNode: () => {
-          if (field && !field.hasFocus) commit();
-        },
-        update: (next) => {
+        dom,
+        contentDOM,
+        update(next) {
           if (next.type !== node.type) return false;
-          const sameRepresentation =
-            next.attrs.value === node.attrs.value &&
-            next.attrs.raw === node.attrs.raw;
           node = next;
-          if (!field && !sameRepresentation) renderEquation();
+          refresh();
           return true;
         },
-        destroy: () => {
+        ignoreMutation(mutation) {
+          // Let PM observe every actual source text/composition mutation.
+          if (mutation.type === 'selection') return false;
+          return (
+            rendered.contains(mutation.target) ||
+            (mutation.type === 'attributes' &&
+              (mutation.target === dom || mutation.target === contentDOM))
+          );
+        },
+        destroy() {
           presentationRefreshers.current.delete(refresh);
-          detachComposition();
-          if (field) {
-            field.destroy();
-            field = null;
-            if (activeMath === actions) {
-              activeMath = null;
-              setMathEditing(false);
-            }
-          }
         },
       };
     }
@@ -912,6 +611,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // DOM selection as authorization to replace only part of the document.
     let selectingAll = false;
     let composingSource = false;
+    let mathCompositionBase: EditorState | null = null;
     let firstComposingChange = true;
     let compositionFrame: number | null = null;
     function insertDollar(
@@ -924,31 +624,68 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         !text.includes('$') ||
         current.composing ||
         composingSource ||
-        from !== to ||
         latest.current.disabled ||
-        activeMath ||
         retainedDraft.current !== null
       )
         return false;
       const offset = renderedTextSourceOffset(projection, from);
-      if (offset === null) return false;
+      const end = renderedTextSourceOffset(projection, to);
+      if (offset === null || end === null || end < offset) return false;
+      let crossesOpaque = false;
+      current.state.doc.nodesBetween(from, to, (node) => {
+        if (
+          node.type === nodes.source_block ||
+          node.type === nodes.source_inline
+        )
+          crossesOpaque = true;
+      });
+      if (crossesOpaque) return false;
+      let replacement = text;
+      if (text.includes('\n') && !text.includes('\r')) {
+        // Browsers expose editable newlines as LF. Keep the selected source's
+        // physical breaks; a collapsed insertion inherits its local block.
+        // Explicit CR/CRLF input remains authored bytes rather than inferred.
+        let physical = acceptedSource.slice(offset, end);
+        if (!/[\r\n]/.test(physical)) {
+          const parent = projection.mapping.ranges.get(
+            current.state.selection.$head.parent,
+          );
+          if (parent) physical = acceptedSource.slice(parent.from, parent.to);
+        }
+        if (!/[\r\n]/.test(physical))
+          physical =
+            /\r\n|\r|\n/.exec(acceptedSource.slice(offset))?.[0] ??
+            /\r\n|\r|\n/.exec(acceptedSource)?.[0] ??
+            '\n';
+        replacement = preserveMathBreaks(physical, text);
+      }
       const next =
-        acceptedSource.slice(0, offset) + text + acceptedSource.slice(offset);
+        acceptedSource.slice(0, offset) +
+        replacement +
+        acceptedSource.slice(end);
       if (
         !mathSourceContextPreserved(
           acceptedSource,
           next,
           offset,
-          offset,
+          end,
           latest.current.path,
         )
       )
         return false;
       const parsed = parseRenderedSource(next, latest.current.path);
       const target = collectLiveMath(next, latest.current.path, true).find(
-        (span) => span.from <= offset && span.to >= offset + text.length,
+        (span) => span.from <= offset && span.to >= offset + replacement.length,
       );
-      if (!target || !latest.current.apply(acceptedSource, next, false))
+      const caret = renderedPositionFromSourceOffset(
+        parsed,
+        offset + replacement.length,
+      );
+      if (
+        caret === null ||
+        !target ||
+        !latest.current.apply(acceptedSource, next, true)
+      )
         return false;
       selectingAll = false;
       projection = parsed;
@@ -958,19 +695,10 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         current.state.doc.content.size,
         parsed.doc.content,
       );
-      let targetPosition: number | null = null;
-      transaction.doc.descendants((node, position) => {
-        if (
-          (node.type === nodes.inline_math || node.type === nodes.math_block) &&
-          node.attrs.sourceFrom === target.from
-        )
-          targetPosition = position;
-      });
+      transaction.setSelection(
+        TextSelection.near(transaction.doc.resolve(caret)),
+      );
       current.updateState(current.state.apply(transaction));
-      if (targetPosition !== null) {
-        const dom = current.nodeDOM(targetPosition);
-        if (dom) mathEntrances.get(dom)?.(offset + text.length - target.from);
-      }
       return true;
     }
     const editor = new EditorView(mount.current, {
@@ -979,6 +707,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         doc: projection.doc,
         selection: visibleStart(projection.doc),
         plugins: [
+          new Plugin({
+            view: () => ({
+              update: () => {
+                for (const refresh of presentationRefreshers.current) refresh();
+              },
+            }),
+          }),
           inputRules({ rules }),
           keymap({
             'Mod-a': (state, dispatch) => {
@@ -987,15 +722,30 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               return true;
             },
             'Mod-z': () => {
-              latest.current.undo();
+              if (
+                !latest.current.disabled &&
+                !mathCompositionBase &&
+                !composingSource
+              )
+                latest.current.undo();
               return true;
             },
             'Mod-y': () => {
-              latest.current.redo();
+              if (
+                !latest.current.disabled &&
+                !mathCompositionBase &&
+                !composingSource
+              )
+                latest.current.redo();
               return true;
             },
             'Mod-Shift-z': () => {
-              latest.current.redo();
+              if (
+                !latest.current.disabled &&
+                !mathCompositionBase &&
+                !composingSource
+              )
+                latest.current.redo();
               return true;
             },
             'Mod-b': toggleMark(marks.strong!),
@@ -1051,13 +801,46 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         'aria-multiline': 'true',
         spellcheck: 'true',
       },
-      editable: () => !latest.current.disabled,
+      // Let an already-owned IME finish its atomic DOM read before making
+      // the surface read-only. Source writes still obey latest.disabled.
+      editable: () => !latest.current.disabled || mathCompositionBase !== null,
       createSelectionBetween: (current) =>
         selectingAll ? new AllSelection(current.state.doc) : null,
       handleDOMEvents: {
-        compositionstart: () => {
+        compositionstart: (current) => {
           if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
           compositionFrame = null;
+          if (latest.current.disabled && !mathCompositionBase) return false;
+          const { selection } = current.state;
+          const ownsMath = (node: ProseNode | null) =>
+            !!node &&
+            (node.type === nodes.inline_math ||
+              node.type === nodes.math_block ||
+              node.marks.some((mark) => mark.type === marks.math_source));
+          let touchesMath = [
+            selection.$head.parent,
+            selection.$anchor.parent,
+            selection.$head.nodeBefore,
+            selection.$head.nodeAfter,
+            selection.$anchor.nodeBefore,
+            selection.$anchor.nodeAfter,
+          ].some(ownsMath);
+          if (!touchesMath && !selection.empty)
+            current.state.doc.nodesBetween(
+              selection.from,
+              selection.to,
+              (node) => {
+                if (ownsMath(node)) touchesMath = true;
+                return !touchesMath;
+              },
+            );
+          if (touchesMath) {
+            if (!mathCompositionBase) mathCompositionBase = current.state;
+            current.setProps({});
+            // The source model reads this ref synchronously for navigation.
+            latest.current.onPendingChange?.(true);
+            setMathComposing(true);
+          }
           composingSource = true;
           firstComposingChange = true;
           return false;
@@ -1124,6 +907,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           )
             return false;
           event.preventDefault();
+          if (mathCompositionBase || composingSource || latest.current.disabled)
+            return true;
           if (event.inputType === 'historyUndo') latest.current.undo();
           else latest.current.redo();
           return true;
@@ -1170,6 +955,101 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               current.dispatch(
                 current.state.tr.setSelection(caret).scrollIntoView(),
               );
+              return true;
+            }
+          }
+        }
+        if (
+          !latest.current.disabled &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey &&
+          (event.key === 'ArrowRight' || event.key === 'ArrowLeft') &&
+          current.state.selection instanceof TextSelection &&
+          (current.state.selection.empty || event.shiftKey)
+        ) {
+          const selection = current.state.selection;
+          const forward = event.key === 'ArrowRight';
+          const neighbor = forward
+            ? selection.$head.nodeAfter
+            : selection.$head.nodeBefore;
+          if (
+            neighbor &&
+            neighbor.type === nodes.inline_math &&
+            neighbor.content.size
+          ) {
+            const position = forward
+              ? selection.head
+              : selection.head - neighbor.nodeSize;
+            // The hidden source and inert KaTeX sibling can make native arrows
+            // skip an inline node or enter its wrong edge. Cross that one model
+            // boundary while consuming exactly one visible dollar character.
+            // Inside source and when leaving it, native text movement remains.
+            const target =
+              position + 1 + (forward ? 1 : neighbor.content.size - 1);
+            current.dispatch(
+              current.state.tr.setSelection(
+                TextSelection.create(
+                  current.state.doc,
+                  event.shiftKey ? selection.anchor : target,
+                  target,
+                ),
+              ),
+            );
+            current.focus();
+            return true;
+          }
+        }
+        if (
+          !latest.current.disabled &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.altKey &&
+          /^Arrow(?:Right|Left|Down|Up)$/.test(event.key) &&
+          current.state.selection instanceof TextSelection &&
+          (current.state.selection.empty || event.shiftKey)
+        ) {
+          const selection = current.state.selection;
+          const head = selection.$head;
+          const forward =
+            event.key === 'ArrowRight' || event.key === 'ArrowDown';
+          if (head.depth > 0 && head.parent.isTextblock) {
+            let position = forward ? head.after() : head.before();
+            const boundary = current.state.doc.resolve(position);
+            const neighbor = forward ? boundary.nodeAfter : boundary.nodeBefore;
+            const direction =
+              event.key === 'ArrowDown'
+                ? 'down'
+                : event.key === 'ArrowUp'
+                  ? 'up'
+                  : forward
+                    ? 'forward'
+                    : 'backward';
+            if (
+              neighbor &&
+              neighbor.type === nodes.math_block &&
+              neighbor.content.size &&
+              current.endOfTextblock(direction)
+            ) {
+              if (!forward) position -= neighbor.nodeSize;
+              // Enter only an adjacent hidden display block at a proven text
+              // boundary. Wrapped lines and movement inside source stay native.
+              const target =
+                position +
+                1 +
+                (forward
+                  ? Math.min(2, neighbor.content.size)
+                  : Math.max(0, neighbor.content.size - 2));
+              current.dispatch(
+                current.state.tr.setSelection(
+                  TextSelection.create(
+                    current.state.doc,
+                    event.shiftKey ? selection.anchor : target,
+                    target,
+                  ),
+                ),
+              );
+              current.focus();
               return true;
             }
           }
@@ -1223,38 +1103,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             }
           }
         }
-        const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
-        const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
-        if (!forward && !backward) return false;
-        const head = current.state.selection.$head;
-        const vertical = event.key === 'ArrowDown' || event.key === 'ArrowUp';
-        let position = head.pos;
-        let neighbor = forward ? head.nodeAfter : head.nodeBefore;
-        if (!vertical && backward && neighbor) position -= neighbor.nodeSize;
-        if (
-          vertical &&
-          head.depth > 0 &&
-          (forward
-            ? head.parentOffset === head.parent.content.size
-            : head.parentOffset === 0)
-        ) {
-          position = forward ? head.after() : head.before();
-          const boundary = current.state.doc.resolve(position);
-          neighbor = forward ? boundary.nodeAfter : boundary.nodeBefore;
-          if (!forward && neighbor) position -= neighbor.nodeSize;
-        }
-        if (
-          !neighbor ||
-          (vertical
-            ? neighbor.type !== nodes.math_block
-            : neighbor.type !== nodes.inline_math)
-        )
-          return false;
-        const dom = current.nodeDOM(position);
-        const enter = dom && mathEntrances.get(dom);
-        if (!enter) return false;
-        enter(forward ? 'start' : 'end');
-        return true;
+        return false;
       },
       // Drop HTML before ProseMirror creates DOM from clipboard markup. Even
       // detached img elements can issue requests before a node view is created.
@@ -1289,13 +1138,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       dispatchTransaction: (transaction) => {
         if (
           transaction.docChanged &&
-          (latest.current.disabled ||
-            activeMath ||
+          ((latest.current.disabled && mathCompositionBase === null) ||
             retainedDraft.current !== null)
         ) {
-          // A failed blur leaves the original equation draft alive. A nearby
-          // edit (including Select All / Delete or a browser DOM mutation)
-          // must not destroy its NodeView and silently discard that text.
+          // Only an already-owned IME may finish a provisional DOM read while
+          // disabled; its finalizer retains the whole attempt without applying.
+          // Retain a refused source patch until explicit recovery; a later DOM
+          // mutation must not replace the user's unapplied text.
           editor.updateState(editor.state);
           return;
         }
@@ -1381,7 +1230,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           return;
         }
         if (transaction.docChanged) selectingAll = false;
-        const nextState = editor.state.apply(transaction);
+        let nextState = editor.state.apply(transaction);
+        if (transaction.docChanged && mathCompositionBase) {
+          // An IME can temporarily remove dollars, then continue mutating the
+          // same source text. Keep that owned DOM alive until its final read;
+          // commit one source transaction after composition ends.
+          editor.updateState(nextState);
+          return;
+        }
         if (transaction.docChanged) {
           let attempted = nextState.doc.textBetween(
             0,
@@ -1395,11 +1251,90 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               transaction,
             );
             attempted = next;
-            const rebased = rebaseRenderedProjection(
-              projection,
-              nextState.doc,
-              next,
-            );
+            let rebased;
+            try {
+              rebased = rebaseRenderedProjection(
+                projection,
+                nextState.doc,
+                next,
+              );
+            } catch (reason) {
+              // Removing a delimiter intentionally changes math into ordinary
+              // text. Only canonicalize an owned edit wholly inside its exact
+              // original source span; every unrelated MDX byte stays guarded.
+              const oldHead = editor.state.selection.$head;
+              const oldMath = oldHead.parent;
+              const complete =
+                oldMath.type === nodes.inline_math ||
+                oldMath.type === nodes.math_block;
+              const around = [oldHead.nodeBefore, oldHead.nodeAfter].find(
+                (node) =>
+                  node?.isText &&
+                  node.marks.some((mark) => mark.type === marks.math_source),
+              );
+              // Adjacent resolved text may be a cut text node; use its original
+              // parent child identity so provenance is never guessed by string.
+              let draftNode: ProseNode | null = null;
+              if (around)
+                oldMath.forEach((node, start) => {
+                  if (
+                    node.isText &&
+                    node.marks.some(
+                      (mark) => mark.type === marks.math_source,
+                    ) &&
+                    start <= oldHead.parentOffset &&
+                    start + node.nodeSize >= oldHead.parentOffset
+                  )
+                    draftNode = node;
+                });
+              const mathRange = projection.mapping.ranges.get(
+                complete ? oldMath : draftNode!,
+              );
+              if (
+                (!complete && !draftNode) ||
+                !mathRange ||
+                !next.startsWith(acceptedSource.slice(0, mathRange.from)) ||
+                !next.endsWith(acceptedSource.slice(mathRange.to)) ||
+                !mathSourceContextPreserved(
+                  acceptedSource,
+                  next,
+                  mathRange.from,
+                  mathRange.to,
+                  latest.current.path,
+                )
+              )
+                throw reason;
+              const parsed = parseRenderedSource(next, latest.current.path);
+              let changedFrom = 0;
+              while (
+                changedFrom < acceptedSource.length &&
+                changedFrom < next.length &&
+                acceptedSource[changedFrom] === next[changedFrom]
+              )
+                changedFrom++;
+              let oldEnd = acceptedSource.length,
+                newEnd = next.length;
+              while (
+                oldEnd > changedFrom &&
+                newEnd > changedFrom &&
+                acceptedSource[oldEnd - 1] === next[newEnd - 1]
+              ) {
+                oldEnd--;
+                newEnd--;
+              }
+              const caret = renderedPositionFromSourceOffset(parsed, newEnd);
+              if (caret === null) throw reason;
+              const canonical = nextState.tr.replaceWith(
+                0,
+                nextState.doc.content.size,
+                parsed.doc.content,
+              );
+              canonical.setSelection(
+                TextSelection.near(canonical.doc.resolve(caret)),
+              );
+              nextState = nextState.apply(canonical);
+              rebased = parsed;
+            }
             const typing =
               !transaction.getMeta('isolated') &&
               transaction.steps.every(
@@ -1475,12 +1410,52 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       acceptedSource = next;
     };
     const sourceChanged = () => {
-      if (!editor.composing && !activeMath) onSourceChange();
+      if (!editor.composing && !mathCompositionBase) onSourceChange();
     };
     const afterComposition = () => {
       if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
       compositionFrame = requestAnimationFrame(() => {
         compositionFrame = null;
+        if (mathCompositionBase) {
+          const base = mathCompositionBase;
+          mathCompositionBase = null;
+          const final = editor.state;
+          if (latest.current.disabled && !final.doc.eq(base.doc)) {
+            let attempted = final.doc.textBetween(
+              0,
+              final.doc.content.size,
+              '\n\n',
+            );
+            try {
+              attempted = serializeRenderedChange(projection, final.doc);
+            } catch {
+              /* Retain the complete visible attempt when source mapping refuses. */
+            }
+            retainedDraft.current = attempted;
+            setUnappliedText(attempted);
+            setError(
+              'Editing became unavailable during composition. Your text was retained for recovery.',
+            );
+            editor.updateState(base);
+          } else if (!final.doc.eq(base.doc)) {
+            // The canonical apply still compares the original source revision;
+            // a concurrent external update refuses this patch and retains it.
+            editor.updateState(base);
+            const transaction = base.tr.replaceWith(
+              0,
+              base.doc.content.size,
+              final.doc.content,
+            );
+            transaction.setSelection(
+              Selection.fromJSON(transaction.doc, final.selection.toJSON()),
+            );
+            editor.dispatch(transaction);
+          }
+          setMathComposing(false);
+          // Refresh EditorView's cached editable flag even if the composition
+          // made no document change and props did not change again.
+          editor.setProps({});
+        }
         sourceChanged();
         if (!editor.composing) composingSource = false;
       });
@@ -1491,11 +1466,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       focus: () => editor.focus(),
       format: (action) => toolbar.current?.run(action),
       insertText: (text) => {
-        if (
-          latest.current.disabled ||
-          activeMath ||
-          retainedDraft.current !== null
-        )
+        if (latest.current.disabled || retainedDraft.current !== null)
           return false;
         const before = acceptedSource;
         const parsed = parseRenderedSource(text, latest.current.path);
@@ -1512,7 +1483,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // Expose commands only within this component, never on window or iframe APIs.
     toolbar.current = {
       run: (name) => {
-        if (latest.current.disabled || activeMath) return;
+        if (latest.current.disabled) return;
         const state = editor.state;
         const dispatch = editor.dispatch.bind(editor);
         const commands: Record<string, Command> = {
@@ -1548,7 +1519,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         } else if (name === 'math')
           dispatch(
             state.tr
-              .replaceSelectionWith(nodes.math_block!.create({ value: 'x^2' }))
+              .replaceSelectionWith(
+                nodes.math_block!.create(
+                  { value: 'x^2' },
+                  renderedSchema.text('$$\nx^2\n$$'),
+                ),
+              )
               .setMeta('isolated', true),
           );
         else if (name === 'link') {
@@ -1562,12 +1538,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         editor.focus();
       },
       link: (href) => {
-        if (activeMath) {
-          setError(
-            'Finish or cancel the equation edit first. Your URL is retained.',
-          );
-          return;
-        }
         if (!/^(https?:\/\/|mailto:|attachment:)/i.test(href)) {
           setError('Use an https, http, mailto or attachment link.');
           return;
@@ -1617,11 +1587,10 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   } | null>(null);
   useLayoutEffect(() => {
     view.current?.dom.dispatchEvent(new Event('pn-source-change'));
-    // Source refreshes are deferred while a math field owns an uncommitted
-    // draft. Closing it must also flush a revision received in the meantime.
-  }, [props.source, mathEditing, props.sourceIsCurrent]);
+  }, [props.source, props.sourceIsCurrent, mathComposing]);
   useEffect(() => {
-    view.current?.setProps({ editable: () => !latest.current.disabled });
+    // Preserve the editor-owned atomic-IME editable predicate.
+    view.current?.setProps({});
     for (const refresh of imageRefreshers.current) refresh();
     for (const refresh of presentationRefreshers.current) refresh();
     for (const runtime of runtimeRoots.current)

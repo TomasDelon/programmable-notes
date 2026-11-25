@@ -59,18 +59,25 @@ test('real wikilinks navigate, derive backlinks, and survive an atomic note rena
     .getByRole('button', { name: 'Open beta', exact: true })
     .click();
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue('Beta');
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText('Beta');
   const backlinks = panel.getByRole('region', { name: 'Backlinks' });
   await expect(backlinks.getByRole('button', { name: /^Alpha/ })).toBeVisible();
   await command(page, 'Edit source');
-  const title = page.getByRole('textbox', {
+  await command(page, 'Rename document');
+  const rename = page.getByRole('dialog', {
+    name: 'Rename document',
+    exact: true,
+  });
+  await rename
+    .getByRole('textbox', { name: 'Document title', exact: true })
+    .fill('Gamma');
+  await rename.getByRole('button', { name: 'Rename', exact: true }).click();
+  const title = page.getByRole('heading', {
     name: 'Document title',
     exact: true,
   });
-  await title.fill('Gamma');
-  await title.press('Enter');
-  await expect(title).toHaveValue('Gamma');
+  await expect(title).toHaveText('Gamma');
   await backlinks.getByRole('button', { name: /^Alpha/ }).click();
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toContainText(
     '[[Gamma|Open beta]]',
@@ -81,15 +88,15 @@ test('real wikilinks navigate, derive backlinks, and survive an atomic note rena
   await outgoing
     .getByRole('button', { name: 'Open beta', exact: true })
     .click();
-  await expect(title).toHaveValue('Gamma');
+  await expect(title).toHaveText('Gamma');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'saved',
   );
   await page.reload();
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue('Gamma');
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText('Gamma');
   const reopened = await connections(page);
   await expect(
     reopened

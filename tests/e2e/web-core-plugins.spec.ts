@@ -31,8 +31,8 @@ test.beforeEach(async ({ page }) => {
     buffer: Buffer.from(original),
   });
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Plugins');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Plugins');
   await command(page, 'Preview document');
 });
 
@@ -134,8 +134,8 @@ test('disabled mathematics stays literal in the full React runtime and disabled 
     buffer: Buffer.from(original.replace('$x^2$', '$\\mathbb{R}$')),
   });
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Literal runtime');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Literal runtime');
   await command(page, 'Preview document');
   let dialog = await settings(page);
   await dialog
@@ -270,8 +270,8 @@ test('hidden setup survives boundary Backspace and selecting/replacing the visib
     buffer: Buffer.from(exact),
   });
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Boundary');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Boundary');
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
   await view.getByRole('heading', { name: 'Components', exact: true }).click();
@@ -412,8 +412,8 @@ test('invalid LaTeX stays red raw source in full-document execution without disa
     buffer: Buffer.from(broken),
   });
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Invalid runtime');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Invalid runtime');
   await command(page, 'Preview document');
   await page.getByRole('button', { name: 'Open right panel' }).click();
   await page

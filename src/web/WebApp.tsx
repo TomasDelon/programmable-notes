@@ -297,46 +297,11 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
   );
 }
 
-function DocumentTitle({
-  title,
-  onRename,
-  disabled,
-}: {
-  title: string;
-  onRename: (title: string) => void;
-  disabled?: boolean;
-}) {
-  const [draft, setDraft] = useState(title);
-  const [previousTitle, setPreviousTitle] = useState(title);
-  // Preserve spaces while typing; external renames and restores update the input.
-  if (previousTitle !== title) {
-    setPreviousTitle(title);
-    if (draft.trim() !== title) setDraft(title);
-  }
+function DocumentTitle({ title }: { title: string }) {
   return (
-    <input
-      aria-label="Document title"
-      disabled={disabled}
-      className="doc-title-input"
-      value={draft}
-      maxLength={200}
-      spellCheck={false}
-      onChange={(event) => {
-        const value = event.target.value;
-        setDraft(value);
-        if (value.trim() && value.trim() !== title) onRename(value.trim());
-      }}
-      onBlur={() => {
-        if (!draft.trim()) setDraft(title);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur();
-        if (event.key === 'Escape') {
-          setDraft(title);
-          event.currentTarget.blur();
-        }
-      }}
-    />
+    <h1 className="doc-title-text" aria-label="Document title">
+      {title}
+    </h1>
   );
 }
 
@@ -608,7 +573,7 @@ function WorkspaceApp({
     if (next === 'source') {
       requestAnimationFrame(() => {
         // A newer user focus choice owns the next keystroke. In particular,
-        // do not interrupt title input or IME composition after mode switching.
+        // do not interrupt another control or IME composition after mode switching.
         const active = document.activeElement;
         if (active && active !== document.body && active !== initiator) return;
         sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus();
@@ -673,10 +638,7 @@ function WorkspaceApp({
       });
       if (window.innerWidth <= 720) setLeftOpen(false);
       requestAnimationFrame(() => {
-        const titleInput =
-          document.querySelector<HTMLInputElement>('.doc-title-input');
-        titleInput?.focus();
-        titleInput?.select();
+        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus();
       });
       return;
     }
@@ -2013,12 +1975,7 @@ function WorkspaceApp({
           <div className="document-wrap">
             <div className="document-heading">
               <div className="doc-title-row">
-                <DocumentTitle
-                  key={selected}
-                  title={metadata.title}
-                  disabled={pendingEdit}
-                  onRename={(title) => model.rename(selected, title)}
-                />
+                <DocumentTitle title={metadata.title} />
               </div>
             </div>
             <div

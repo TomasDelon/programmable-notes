@@ -1,211 +1,227 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
-// Exercise CodeMirror's real Android/Chrome deferred composition path in a
-// browser, using the pre-EditContext compatibility path (Chrome <126).
-// Synthetic IME events are not physical Android keyboard validation.
+// Synthetic IME events exercise the shared ProseMirror document observer.
+// They are not physical Android keyboard validation or a nested input test.
 test.use({
   userAgent:
     'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36',
 });
 
+async function command(page: Page, name: string) {
+  await page.locator('.doc-title-row').click();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.getByLabel('Search commands and notes').fill(name);
+  await palette
+    .getByRole('button', { name: new RegExp('^' + name) })
+    .first()
+    .click();
+}
+
+async function compose(
+  page: Page,
+  priorInput: boolean,
+  endFirst: boolean,
+  final = '7',
+) {
+  const original = '# Composition\r\n\r\nBefore $x^2$ after.\r\n';
+  await page.goto('/');
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'IME.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await command(page, 'Preview document');
+  const editor = page.getByRole('textbox', { name: 'Editable document' });
+  await editor.locator('.rendered-math-render .katex-html').click();
+  const source = editor.locator('.rendered-math-source');
+  await expect(source).toBeVisible();
+  await expect(editor).toBeFocused();
+  await expect(editor.locator('.cm-editor, input, textarea')).toHaveCount(0);
+  await editor.evaluate(
+    async (dom, { priorInput, endFirst, final }) => {
+      const source = dom.querySelector('.rendered-math-source')!;
+      dom.dispatchEvent(
+        new CompositionEvent('compositionstart', { bubbles: true }),
+      );
+      dom.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          keyCode: 229,
+          isComposing: true,
+          bubbles: true,
+        }),
+      );
+      if (!source.isConnected)
+        throw new Error('IME Escape removed document text.');
+      const write = (value: string) => {
+        const walker = document.createTreeWalker(source, NodeFilter.SHOW_TEXT);
+        let text = walker.nextNode();
+        while (text && !/[23]/.test(text.nodeValue ?? ''))
+          text = walker.nextNode();
+        if (!text) throw new Error('Expected composing digit is absent.');
+        const offset = text.nodeValue!.search(/[23]/);
+        text.nodeValue =
+          text.nodeValue!.slice(0, offset) +
+          value +
+          text.nodeValue!.slice(offset + 1);
+        const selection = window.getSelection()!;
+        const range = document.createRange();
+        range.setStart(text, offset + value.length);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        dom.dispatchEvent(
+          new InputEvent('input', {
+            bubbles: true,
+            inputType: 'insertCompositionText',
+            data: value,
+            isComposing: true,
+          }),
+        );
+      };
+      if (priorInput) {
+        write('3');
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+        if (!source.textContent?.includes('x^3'))
+          throw new Error('Prior composition was lost.');
+      }
+      write(final);
+      const end = () =>
+        dom.dispatchEvent(
+          new CompositionEvent('compositionend', {
+            bubbles: true,
+            data: final,
+          }),
+        );
+      if (endFirst) end();
+      (dom as HTMLElement).blur();
+      if (!endFirst) end();
+    },
+    { priorInput, endFirst, final },
+  );
+  await editor.getByRole('heading', { name: 'Composition' }).click();
+  await expect(page.locator('.web-shell')).toHaveAttribute(
+    'data-save-status',
+    'saved',
+  );
+  const download = page.waitForEvent('download');
+  await command(page, 'Export current source');
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(original.replace('x^2', 'x^' + final)),
+  );
+  await expect(page.getByRole('alert')).toHaveCount(0);
+}
+
 for (const endFirst of [false, true]) {
   for (const firstChange of [false, true]) {
-    test(`math composition retains the final DOM insertion across blur (earlier input: ${firstChange}; end first: ${endFirst})`, async ({
+    test(`document mathematics composition retains the final DOM insertion across blur (earlier input: ${firstChange}; end first: ${endFirst})`, async ({
       page,
       browserName,
     }) => {
       test.skip(
         browserName !== 'chromium',
-        'Specifically exercises the Android Chromium composition scheduling path.',
+        'Exercises synthetic Android Chromium composition scheduling.',
       );
-      await page.goto('/');
-      const original = '# Composition\r\n\r\nBefore $x^2$ after.\r\n';
-      await page.getByLabel('Import note files').setInputFiles({
-        name: 'IME.mdx',
-        mimeType: 'text/plain',
-        buffer: Buffer.from(original),
-      });
-      async function command(name: string) {
-        await page.locator('.doc-title-row').click();
-        await page.keyboard.press('Control+k');
-        const palette = page.getByRole('dialog', { name: 'Command palette' });
-        await palette.getByLabel('Search commands and notes').fill(name);
-        await palette
-          .getByRole('button', { name: new RegExp('^' + name) })
-          .first()
-          .click();
-      }
-      await command('Preview document');
-      await page
-        .getByRole('button', { name: 'Edit inline equation: x^2' })
-        .click();
-      const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-      expect(
-        await field.evaluate(
-          (dom) =>
-            (dom as HTMLElement & { editContext?: unknown }).editContext ??
-            null,
-        ),
-      ).toBeNull();
-      await field.evaluate(
-        async (dom, { priorInput, endFirst }) => {
-          dom.dispatchEvent(
-            new CompositionEvent('compositionstart', { bubbles: true }),
-          );
-          dom.dispatchEvent(
-            new KeyboardEvent('keydown', {
-              key: 'Escape',
-              code: 'Escape',
-              keyCode: 229,
-              isComposing: true,
-              bubbles: true,
-            }),
-          );
-          if (!dom.isConnected)
-            throw new Error('IME Escape incorrectly cancelled the equation.');
-          const write = (digit: string) => {
-            const line = dom.querySelector('.cm-line')!;
-            const walker = document.createTreeWalker(
-              line,
-              NodeFilter.SHOW_TEXT,
-            );
-            let textNode = walker.nextNode();
-            while (textNode && !/[23]/.test(textNode.nodeValue ?? ''))
-              textNode = walker.nextNode();
-            if (!textNode)
-              throw new Error('Expected composing digit is absent.');
-            const position = textNode.nodeValue!.search(/[23]/);
-            textNode.nodeValue =
-              textNode.nodeValue!.slice(0, position) +
-              digit +
-              textNode.nodeValue!.slice(position + 1);
-            const selection = window.getSelection()!;
-            const range = document.createRange();
-            range.setStart(textNode, position + 1);
-            range.collapse(true);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            dom.dispatchEvent(
-              new InputEvent('input', {
-                bubbles: true,
-                inputType: 'insertCompositionText',
-                data: digit,
-                isComposing: true,
-              }),
-            );
-          };
-          if (priorInput) {
-            write('3');
-            await new Promise<void>((resolve) =>
-              requestAnimationFrame(() =>
-                requestAnimationFrame(() => resolve()),
-              ),
-            );
-          }
-          if (priorInput) {
-            const view = (
-              dom as HTMLElement & {
-                cmTile: {
-                  root: {
-                    view: { state: { doc: { toString: () => string } } };
-                  };
-                };
-              }
-            ).cmTile.root.view;
-            if (view.state.doc.toString() !== '$x^3$')
-              throw new Error(
-                'Prior composition input has not reached CodeMirror.',
-              );
-          }
-          write('7');
-          const end = () =>
-            dom.dispatchEvent(
-              new CompositionEvent('compositionend', {
-                bubbles: true,
-                data: '7',
-              }),
-            );
-          if (endFirst) end();
-          (dom as HTMLElement).blur();
-          if (!endFirst) end();
-        },
-        { priorInput: firstChange, endFirst },
-      );
-      await expect(field).toHaveCount(0);
-      const download = page.waitForEvent('download');
-      await command('Export current source');
-      expect(readFileSync((await (await download).path())!)).toEqual(
-        Buffer.from(original.replace('x^2', 'x^7')),
-      );
+      await compose(page, firstChange, endFirst);
     });
   }
 }
 
-test.describe('modern Android EditContext mathematics', () => {
+test.describe('modern Android shared-document mathematics', () => {
   test.use({
     userAgent:
       'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36',
   });
-  test('finishes a blurred composition whose completion is dispatched only on EditContext', async ({
+  test('retains a final Unicode composition in document text without a separate math input', async ({
     page,
     browserName,
   }) => {
     test.skip(
       browserName !== 'chromium',
-      'Requires the Chromium EditContext browser API.',
+      'Exercises synthetic Android Chromium composition scheduling.',
     );
+    await compose(page, true, false, '七');
+  });
+});
+
+for (const endFirst of [false, true]) {
+  test(`removing a math delimiter during composition retains its live DOM and final Unicode text (end first: ${endFirst})`, async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium',
+      'Exercises synthetic Android Chromium composition scheduling.',
+    );
+    const original = '# Delimiter composition\r\n\r\nBefore $x^2$ after.\r\n';
     await page.goto('/');
-    const original = '# EditContext\r\n\r\nBefore $x^2$ after.\r\n';
     await page.getByLabel('Import note files').setInputFiles({
-      name: 'Context.mdx',
+      name: 'Delimiter IME.mdx',
       mimeType: 'text/plain',
       buffer: Buffer.from(original),
     });
-    async function command(name: string) {
-      await page.locator('.doc-title-row').click();
-      await page.keyboard.press('Control+k');
-      const palette = page.getByRole('dialog', { name: 'Command palette' });
-      await palette.getByLabel('Search commands and notes').fill(name);
-      await palette
-        .getByRole('button', { name: new RegExp('^' + name) })
-        .first()
-        .click();
-    }
-    await command('Preview document');
-    await page
-      .getByRole('button', { name: 'Edit inline equation: x^2' })
-      .click();
-    const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-    await field.evaluate((dom) => {
-      type Context = EventTarget & {
-        text: string;
-        updateText: (from: number, to: number, text: string) => void;
-      };
-      const context = (dom as HTMLElement & { editContext?: Context })
-        .editContext;
-      if (!context) throw new Error('Required EditContext API is unavailable.');
-      context.dispatchEvent(new CompositionEvent('compositionstart'));
-      const before = context.text;
-      const text = '$x^7$';
-      context.updateText(0, before.length, text);
-      const update = new Event('textupdate');
-      Object.defineProperties(update, {
-        updateRangeStart: { value: 0 },
-        updateRangeEnd: { value: before.length },
-        text: { value: text },
-        selectionStart: { value: text.length - 1 },
-        selectionEnd: { value: text.length - 1 },
-      });
-      context.dispatchEvent(update);
-      (dom as HTMLElement).blur();
-      context.dispatchEvent(new CompositionEvent('compositionend'));
-    });
-    await expect(field).toHaveCount(0);
-    const download = page.waitForEvent('download');
-    await command('Export current source');
-    expect(readFileSync((await (await download).path())!)).toEqual(
-      Buffer.from(original.replace('x^2', 'x^7')),
+    await command(page, 'Preview document');
+    const editor = page.getByRole('textbox', { name: 'Editable document' });
+    await editor.locator('.rendered-math-render .katex-html').click();
+    await editor.evaluate(
+      async (dom, { endFirst }) => {
+        const source = dom.querySelector('.rendered-math-source')!;
+        dom.dispatchEvent(
+          new CompositionEvent('compositionstart', { bubbles: true }),
+        );
+        const write = (value: string) => {
+          if (!source.isConnected)
+            throw new Error('A source reparse detached the composing text.');
+          const text = source.firstChild!;
+          text.nodeValue = value;
+          const range = document.createRange();
+          range.setStart(text, value.length);
+          range.collapse(true);
+          const selection = window.getSelection()!;
+          selection.removeAllRanges();
+          selection.addRange(range);
+          dom.dispatchEvent(
+            new InputEvent('input', {
+              bubbles: true,
+              inputType: 'insertCompositionText',
+              data: value,
+              isComposing: true,
+            }),
+          );
+        };
+        write('$x^2');
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+        write('$x^七');
+        const end = () =>
+          dom.dispatchEvent(
+            new CompositionEvent('compositionend', {
+              bubbles: true,
+              data: '七',
+            }),
+          );
+        if (endFirst) end();
+        (dom as HTMLElement).blur();
+        if (!endFirst) end();
+      },
+      { endFirst },
     );
+    await editor
+      .getByRole('heading', { name: 'Delimiter composition' })
+      .click();
+    await expect(editor.locator('.rendered-math-host')).toHaveCount(0);
+    await expect(editor).toContainText('Before $x^七 after.');
+    const download = page.waitForEvent('download');
+    await command(page, 'Export current source');
+    expect(readFileSync((await (await download).path())!)).toEqual(
+      Buffer.from(original.replace('$x^2$', '$x^七')),
+    );
+    await expect(page.getByRole('alert')).toHaveCount(0);
   });
-});
+}

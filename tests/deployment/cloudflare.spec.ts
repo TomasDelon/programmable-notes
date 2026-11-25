@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import {
+  openMath,
+  replaceDocumentText,
+  selectDocumentText,
+} from '../e2e/helpers/math-text';
 
 test.describe.configure({ timeout: 60_000 });
 async function command(page: Page, name: string) {
@@ -96,6 +101,16 @@ test('real MDX React stays interactive and unprivileged under hosting headers', 
   await expect(
     page.getByRole('main', { name: 'Document workspace' }),
   ).toBeVisible();
+  const title = page.getByRole('heading', {
+    name: 'Document title',
+    exact: true,
+  });
+  await expect(title).toBeVisible();
+  await expect(
+    page.locator(
+      '.doc-title-row input, .doc-title-row [contenteditable], .doc-title-row [tabindex]',
+    ),
+  ).toHaveCount(0);
   const source =
     "\uFEFFimport {useState} from 'react'\r\n\r\nexport function Probe(){const [n,setN]=useState(0);const [result,setResult]=useState('ready');return <><button onClick={()=>setN(n+1)}>Count: {n}</button><button onClick={async()=>{let parentAccess,network;try{parent.document.body;parentAccess='allowed'}catch{parentAccess='denied'}try{await fetch('https://probe.invalid/hosting');network='allowed'}catch{network='denied'}parent.postMessage({type:'save',source:'FORGED'},'*');setResult(parentAccess+'/'+network)}}>Boundary: {result}</button></>}\r\n\r\n# Hosted React\r\n\r\n<Probe />\r\n";
   await page.getByLabel('Import note files').setInputFiles({
@@ -272,31 +287,23 @@ test('caret mathematics edits in place without forms and preserves source throug
   });
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
-  await view.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
-  const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(inline).toBeFocused();
+  const inline = await openMath(page, '$x^2$');
+  await expect(view).toBeFocused();
   await expect(
-    view.locator('input, textarea, .rendered-math-controls'),
+    view.locator('input, textarea, .cm-editor, [role="button"], [tabindex]'),
   ).toHaveCount(0);
-  await inline.fill('$x^3$');
-  await inline.press('End');
-  await inline.press('ArrowRight');
-  await expect(inline).toHaveCount(0);
-  await view
-    .getByRole('button', { name: 'Edit display equation: y^2' })
-    .click();
-  const display = page.getByRole('textbox', { name: 'Display LaTeX source' });
-  await display.fill('$$\ny^2\n+ z^2\n$$');
-  await expect(display).toHaveText('$$\ny^2\n+ z^2\n$$', {
-    useInnerText: true,
-  });
+  await replaceDocumentText(page, inline, '$x^3$');
+  await view.getByRole('heading', { name: 'Hosted math' }).click();
+  const display = await openMath(page, '$$\ny^2\n$$');
+  await replaceDocumentText(page, display, '$$\ny^2\n+ z^2\n$$');
+  await expect(
+    view.locator('.rendered-math-host-block .rendered-math-source'),
+  ).toHaveText('$$\ny^2\n+ z^2\n$$');
   await testInfo.attach('math-caret-source', {
     body: await view.screenshot(),
     contentType: 'image/png',
   });
-  await display.press('Control+End');
-  await display.press('ArrowDown');
-  await expect(display).toHaveCount(0);
+  await view.getByRole('heading', { name: 'Hosted math' }).click();
   await expect(view.locator('.katex-display')).toBeVisible();
   await testInfo.attach('math-caret-rendered', {
     body: await view.screenshot(),
@@ -340,13 +347,12 @@ test('core plugins, hidden setup and nonblocking invalid mathematics work in the
     .frameLocator('iframe[title="Document preview"]')
     .getByRole('button', { name: 'Plugin count 0', exact: true })
     .click();
-  await view
-    .getByRole('button', { name: 'Edit inline equation: x \\in \\mathbb{R}' })
-    .click();
-  const math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.fill('$x \\in \\mathbb{R$');
+  let math = await openMath(page, '$x \\in \\mathbb{R}$');
+  await replaceDocumentText(page, math, '$x \\in \\mathbb{R$');
   await view.getByRole('heading', { name: 'Modular note' }).click();
-  await expect(math).toHaveCount(0);
+  await expect(
+    view.locator('.rendered-math-invalid .rendered-math-source'),
+  ).toBeVisible();
   await expect(view.locator('.rendered-math-invalid')).toHaveText(
     '$x \\in \\mathbb{R$',
   );
@@ -396,8 +402,8 @@ test('core plugins, hidden setup and nonblocking invalid mathematics work in the
   await page
     .getByRole('button', { name: 'Close Settings', exact: true })
     .click();
-  await view.locator('.rendered-math-invalid').getByRole('button').click();
-  await math.fill('$x \\in \\mathbb{R}$');
+  math = view.locator('.rendered-math-invalid .rendered-math-source');
+  await replaceDocumentText(page, math, '$x \\in \\mathbb{R}$');
   await view.getByRole('heading', { name: 'Modular note' }).click();
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
   await expect(view.locator('.katex')).toBeVisible();
@@ -416,8 +422,8 @@ test('hidden setup survives real selection replacement, undo, redo and exact reo
     buffer: Buffer.from(original),
   });
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Selection');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Selection');
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
   await view
@@ -478,11 +484,11 @@ test('unfinished dollars stay literal and correct without notices on the deploye
     fullPage: true,
   });
   await page.reload();
-  await editor.getByRole('button', { name: /^Edit display equation:/ }).click();
-  const field = page.getByRole('textbox', { name: 'Display LaTeX source' });
-  await field.press('Control+End');
+  const paragraph = editor.locator('p').filter({ hasText: "f'(x)" });
+  const end = (await paragraph.textContent())!.length;
+  await selectDocumentText(paragraph, end, end);
   await page.keyboard.insertText('$');
-  await field.press('Control+Enter');
+  await editor.getByRole('heading', { name: 'Mathematics' }).click();
   await expect(editor.locator('.katex')).toHaveCount(1);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(await exported(page)).toEqual(

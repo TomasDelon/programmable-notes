@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import {
+  openMath,
+  sourceForMath,
+  replaceDocumentText,
+} from './helpers/math-text';
 
 const editor = (page: Page) => page.locator('.rendered-editor .ProseMirror');
 
@@ -214,22 +219,19 @@ test('table cells and equations can be edited in the rendered document', async (
   expect(afterCell).toContain('Old value updated');
   expect(afterCell).toContain('A result $x^2$.');
 
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  const latex = await openMath(page, '$x^2$');
   await expect(latex).toHaveText('$x^2$');
   await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
     0,
   );
-  await latex.fill('$x^3 + 1$');
-  await latex.press('Enter');
+  await replaceDocumentText(page, latex, '$x^3 + 1$');
+  await editor(page).getByRole('cell').first().click();
   expect(await exportedSource(page)).toBe(
     afterCell.replace('$x^2$', '$x^3 + 1$'),
   );
 });
 
-test('an unsaved equation draft survives another tab moving its note to Trash', async ({
+test('a same-document equation edit preserves local text when another tab moves its note to Trash', async ({
   page,
   context,
 }) => {
@@ -239,11 +241,7 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   const other = await context.newPage();
   await other.goto('/');
   await saved(other);
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await latex.fill('$x^7 + 1$');
+  const latex = await openMath(page, '$x^2$');
 
   await other.getByRole('button', { name: 'Open right panel' }).click();
   await other
@@ -259,31 +257,10 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
     .click();
   await saved(other);
 
-  // Observe real storage calls without replacing their results. A pending
-  // widget draft must prevent a focus refresh from even starting its read.
-  const refreshReads = await page.evaluate(() => {
-    const open = indexedDB.open;
-    let calls = 0;
-    indexedDB.open = function (name: string, version?: number) {
-      calls++;
-      return open.call(indexedDB, name, version);
-    };
-    try {
-      window.dispatchEvent(new Event('focus'));
-      return calls;
-    } finally {
-      indexedDB.open = open;
-    }
-  });
-  expect(refreshReads).toBe(0);
-  await expect(latex).toHaveText('$x^7 + 1$');
-  await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Editing');
-
-  // Applying the local draft preserves it and reports the genuine concurrent
-  // content conflict, instead of silently overwriting the remote Trash change.
-  await latex.press('Enter');
+  // Direct editing commits through the canonical source immediately. A stale
+  // local edit must encounter the real CAS conflict rather than overwrite Trash.
+  await replaceDocumentText(page, latex, '$x^7 + 1$');
+  await expect(sourceForMath(page, '$x^7 + 1$')).toHaveText('$x^7 + 1$');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -294,7 +271,7 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   await other.close();
 });
 
-test('an equation opened during a real focus read prevents stale workspace adoption', async ({
+test('a same-document equation edit during a real focus read prevents stale workspace adoption', async ({
   page,
   context,
 }) => {
@@ -345,11 +322,8 @@ test('an equation opened during a real focus read prevents stale workspace adopt
       typeof (window as Window & { __releaseFocusRead?: () => void })
         .__releaseFocusRead === 'function',
   );
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await field.fill('$x^7 + 1$');
+  const field = await openMath(page, '$x^2$');
+  await replaceDocumentText(page, field, '$x^7 + 1$');
   await page.evaluate(() =>
     (window as Window & { __releaseFocusRead?: () => void })
       .__releaseFocusRead!(),
@@ -358,12 +332,10 @@ test('an equation opened during a real focus read prevents stale workspace adopt
     () =>
       (window as Window & { __focusReadClosed?: boolean }).__focusReadClosed,
   );
-  // A late open also closes after the storage watchdog fires. That is not a
-  // successful refresh: assert its error was not mistaken for race protection.
-  await saved(page);
-  await expect(field).toHaveText('$x^7 + 1$');
+  // The local source revision changed while refresh was reading. The older
+  // snapshot must not replace that content; the actual save reports CAS conflict.
+  await expect(sourceForMath(page, '$x^7 + 1$')).toHaveText('$x^7 + 1$');
   await expect(editor(page)).toContainText('Local tail.');
-  await field.press('Enter');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -588,22 +560,19 @@ test('Shift+Enter inserts a real Markdown hard break within the paragraph', asyn
   await expect(editor(page)).toContainText('Second line.');
 });
 
-test('clicking outside a focused inline equation commits its dollar-delimited source without a popup', async ({
+test('clicking outside same-document math renders its already committed source without a popup', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const source = '# Math in context\n\nTry $x^2$ here.\n';
   await importNote(page, source);
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  const latex = await openMath(page, '$x^2$');
   await expect(latex).toHaveText('$x^2$');
-  await latex.fill('$x^3$');
+  await replaceDocumentText(page, latex, '$x^3$');
   await editor(page).getByRole('heading', { name: 'Math in context' }).click();
-  await expect(latex).toHaveCount(0);
+  await expect(sourceForMath(page, '$x^3$')).toBeHidden();
   await expect(
-    editor(page).getByRole('button', { name: 'Edit inline equation: x^3' }),
+    editor(page).locator('.rendered-math-render .katex'),
   ).toBeVisible();
   expect(await exportedSource(page)).toBe(source.replace('x^2', 'x^3'));
 });

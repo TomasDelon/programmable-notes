@@ -1,5 +1,43 @@
 # Programmable Notes implementation status
 
+## Unified document text and mathematical editing
+
+The current development change replaces Preview's nested math CodeMirror view
+with editable child text inside the owning ProseMirror document. Complete valid
+formulas render outside the selection; invalid closed TeX remains red source;
+unfinished delimiters are ordinary paragraph text with unchanged focus geometry.
+The metadata title is passive text, renamed with the existing explicit command.
+Source provenance prevents generated whitespace entities leaking through literal
+math reclassification and maps exact carets across merged spans.
+
+One canonical history and source authority remain. A mathematical IME operation
+keeps its same-view text through final native input; pending state synchronously
+guards navigation. If editing becomes unavailable, only that existing operation
+finishes its provisional DOM read, then its whole attempt is retained without a
+canonical write and the surface becomes read-only. Source revisions, opaque JSX,
+filesystem/IPC grants, disabled history and recovery guards remain mandatory.
+
+The final complete fresh local `npm run check` passed: **422 unit tests /48 files,
+14 tooling (zero skips), 128 Chromium browser cases and 8 Pages-policy cases**,
+plus formatting, lint, strict TypeScript and production build. Pages fingerprint:
+`82731c41b8b68486`, 77 assets. The seven focused real-browser math/navigation
+cases also passed with zero retries. Failed checkpoints and their causes remain
+in the dated verification record.
+
+Hosted clean-checkout CI, repeated Chromium/Firefox/WebKit diagnostics and actual
+Cloudflare candidate/principal-origin acceptance remain required before promotion.
+Their final head, results and downloadable reports are tracked in
+[draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9), avoiding
+repeated documentation-only builds. A source push is not deployment proof.
+
+See [ADR 017](decisions/ADR-017-unified-mathematical-text.md),
+[design](superpowers/specs/2026-11-25-unified-math-text.md), and
+[verification record](recovery/2026-11-25-unified-math-text.md).
+The earlier nested-input approach and its independent math draft history below
+are historical and superseded for the web Preview. Native `/engine` retains its
+existing interface; no new packaged-native GUI or physical-keyboard evidence is
+claimed by this web change.
+
 ## Incomplete mathematical delimiters: implementation and verification
 
 Unpaired dollars now remain editable literal text, without red feedback, math

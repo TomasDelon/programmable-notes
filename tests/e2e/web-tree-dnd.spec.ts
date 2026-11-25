@@ -5,8 +5,8 @@ test.describe.configure({ timeout: 90_000 });
 async function start(page: Page) {
   await page.goto('/');
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue('Welcome');
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText('Welcome');
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(
     page.getByRole('group', { name: 'Documents section' }),
@@ -37,8 +37,8 @@ async function addNote(page: Page, folder: string) {
   await row.hover();
   await row.getByRole('button', { name: 'New document in ' + folder }).click();
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Untitled');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Untitled');
 }
 
 test('reorders documents and folders as mixed siblings and persists after reload', async ({

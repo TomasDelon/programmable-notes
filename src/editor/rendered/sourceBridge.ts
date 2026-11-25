@@ -35,6 +35,8 @@ interface TextRange extends RenderedSourceRange {
   /** Literal parser text, which need not equal its escaped source bytes. */
   text: string;
   code: boolean;
+  /** Unfinished math is editable text; preserve TeX rather than Markdown-escaping it. */
+  rawLiteral: boolean;
 }
 export interface RenderedBlockMapping extends RenderedSourceRange {
   id: string;
@@ -67,7 +69,14 @@ const sourceAttrs = new Set(['sourceId', 'sourceFrom', 'sourceTo', 'raw']);
 function semanticAttrs(node: ProseMirrorNode): string {
   return JSON.stringify(
     Object.fromEntries(
-      Object.entries(node.attrs).filter(([name]) => !sourceAttrs.has(name)),
+      Object.entries(node.attrs).filter(
+        ([name]) =>
+          !sourceAttrs.has(name) &&
+          !(
+            ['inline_math', 'math_block'].includes(node.type.name) &&
+            ['value', 'kind', 'literal'].includes(name)
+          ),
+      ),
     ),
   );
 }
@@ -139,13 +148,14 @@ export function parseRenderedSource(
     marks: readonly Mark[],
     range?: RenderedSourceRange,
     code = false,
+    rawLiteral = false,
   ): ProseMirrorNode[] {
     value = normalized(value);
     if (!value) return [];
     const result = schema.text(value, marks);
     if (range) {
       ranges.set(result, range);
-      texts.set(result, [{ ...range, text: value, code }]);
+      texts.set(result, [{ ...range, text: value, code, rawLiteral }]);
     }
     return [result];
   }
@@ -301,6 +311,14 @@ export function parseRenderedSource(
     }
     if (ast.type === 'inlineMath') {
       const span = safeMathSpan(source, ast);
+      if (span?.literal)
+        return text(
+          literalMathText(span.originalOuter),
+          schema.marks.math_source!.create().addToSet(marks),
+          span,
+          false,
+          true,
+        );
       if (span)
         return [
           remember(
@@ -309,9 +327,9 @@ export function parseRenderedSource(
                 ...attrs,
                 value: normalized(span.originalInner),
                 kind: span.kind,
-                literal: span.literal === true,
+                literal: false,
               },
-              null,
+              text(normalized(span.originalOuter), [], span, true),
               marks,
             ),
             ast,
@@ -374,19 +392,7 @@ export function parseRenderedSource(
     const attrs = atomAttrs(ast);
     switch (ast.type) {
       case 'paragraph': {
-        const child = ast.children?.length === 1 ? ast.children[0] : undefined;
-        const literal = child?.data?.pnMathDraft
-          ? safeMathSpan(source, child)
-          : null;
-        result =
-          literal?.kind === 'display'
-            ? schema.nodes.math_block!.create({
-                ...attrs,
-                value: normalized(literal.originalOuter),
-                literal: true,
-                kind: 'display',
-              })
-            : schema.nodes.paragraph!.create(null, paragraphContent(ast));
+        result = schema.nodes.paragraph!.create(null, paragraphContent(ast));
         break;
       }
       case 'heading':
@@ -471,11 +477,14 @@ export function parseRenderedSource(
       case 'math': {
         const span = safeMathSpan(source, ast);
         result = span
-          ? schema.nodes.math_block!.create({
-              ...attrs,
-              value: normalized(ast.value ?? span.originalInner.trim()),
-              kind: 'display',
-            })
+          ? schema.nodes.math_block!.create(
+              {
+                ...attrs,
+                value: normalized(ast.value ?? span.originalInner.trim()),
+                kind: 'display',
+              },
+              text(normalized(span.originalOuter), [], span, true),
+            )
           : opaque(ast);
         break;
       }
@@ -579,11 +588,8 @@ export function parseRenderedSource(
 function atomMarkdown(node: ProseMirrorNode): string {
   switch (node.type.name) {
     case 'inline_math':
-      return node.attrs.literal ? node.attrs.value : `$${node.attrs.value}$`;
     case 'math_block':
-      return node.attrs.literal
-        ? node.attrs.value
-        : `$$\n${node.attrs.value}\n$$`;
+      return node.textContent;
     case 'wikilink':
       return `[[${node.attrs.target}${node.attrs.alias === null ? '' : `|${node.attrs.alias}`}]]`;
     case 'source_inline':
@@ -602,7 +608,9 @@ const serializer = new MarkdownSerializer(
       // Escape once, including incomplete list prefixes ("+", "1."). The
       // default escaper followed by escapeExtraCharacters double-escapes ">".
       state.text(
-        escapedText(node.text!, index === parent.childCount - 1),
+        node.marks.some((mark) => mark.type.name === 'math_source')
+          ? literalMathEscaped(node.text!)
+          : escapedText(node.text!, index === parent.childCount - 1),
         false,
       );
     },
@@ -700,6 +708,12 @@ const serializer = new MarkdownSerializer(
   },
   {
     ...defaultMarkdownSerializer.marks,
+    math_source: {
+      open: '',
+      close: '',
+      mixable: true,
+      expelEnclosingWhitespace: false,
+    },
     // Angle-bracket autolinks are JSX syntax in MDX. Explicit Markdown links
     // round-trip in both .md and .mdx documents, including URL-as-label links.
     link: {
@@ -721,6 +735,44 @@ const serializer = new MarkdownSerializer(
 interface Patch extends RenderedSourceRange {
   value: string;
 }
+/** Decode only Markdown whitespace references and their explicit ampersand
+ * escape in unfinished source. This is text projection, never HTML parsing. */
+function literalMathProjection(raw: string): {
+  text: string;
+  offsets: number[];
+} {
+  let text = '';
+  const offsets = [0];
+  for (let index = 0; index < raw.length;) {
+    const escaped = /^\\(&#(?:32|9);)/.exec(raw.slice(index));
+    const reference = /^&#(32|9);/.exec(raw.slice(index));
+    if (escaped) {
+      index++;
+      for (const character of escaped[1]!) {
+        text += character;
+        offsets.push(++index);
+      }
+    } else if (reference) {
+      text += reference[1] === '32' ? ' ' : '\t';
+      index += reference[0].length;
+      offsets.push(index);
+    } else if (raw[index] === '\r') {
+      text += '\n';
+      index += raw[index + 1] === '\n' ? 2 : 1;
+      offsets.push(index);
+    } else {
+      text += raw[index++];
+      offsets.push(index);
+    }
+  }
+  return { text, offsets };
+}
+function literalMathText(raw: string): string {
+  return literalMathProjection(raw).text;
+}
+const literalMathEscaped = (value: string) =>
+  value.replace(/&(?=#(?:32|9);)/g, '\\&');
+
 function offsetsFor(raw: string): number[] {
   const offsets = [0];
   for (let index = 0; index < raw.length; index++) {
@@ -765,7 +817,12 @@ function textOffsets(
   raw: string,
   expected: string,
   code: boolean,
+  rawLiteral = false,
 ): number[] | null {
+  if (rawLiteral) {
+    const literal = literalMathProjection(raw);
+    return literal.text === expected ? literal.offsets : null;
+  }
   if (normalized(raw) === expected) return offsetsFor(raw);
   if (code) return null;
   let decoded = '';
@@ -836,12 +893,27 @@ function sparseBlock(
     }
     if (before.isText) {
       const spans = mapping.texts.get(before);
-      // A merged decoded entity / escape needs block serialization; it cannot
-      // safely be addressed with raw character offsets.
-      if (!spans || spans.length !== 1) return false;
-      const span = spans[0]!;
+      if (!spans?.length) return false;
+      const first = spans[0]!;
+      // Adjacent parser tokens can merge into one text node. Address them as
+      // one span only when their source is contiguous and escaping agrees.
+      if (
+        !spans.every(
+          (part, index) =>
+            part.code === first.code &&
+            part.rawLiteral === first.rawLiteral &&
+            (index === 0 || spans[index - 1]!.to === part.from),
+        )
+      )
+        return false;
+      const span = { ...first, to: spans.at(-1)!.to };
       const raw = mapping.source.slice(span.from, span.to);
-      const offsets = textOffsets(raw, before.text!, span.code);
+      const offsets = textOffsets(
+        raw,
+        before.text!,
+        span.code,
+        span.rawLiteral,
+      );
       if (!offsets) return false;
       const oldValue = before.text!,
         newValue = after.text!;
@@ -878,13 +950,24 @@ function sparseBlock(
         /[`\r\n]/.test(inserted)
       )
         return false;
-      const value = (span.code ? inserted : escapedInline(inserted)).replace(
-        /\n/g,
-        newlineOf(raw, newlineOf(mapping.source)),
-      );
+      const value = (
+        span.code
+          ? inserted
+          : span.rawLiteral
+            ? literalMathEscaped(inserted)
+            : escapedInline(inserted)
+      ).replace(/\n/g, newlineOf(raw, newlineOf(mapping.source)));
       let replacement =
         raw.slice(0, offsets[start]!) + value + raw.slice(offsets[end]!);
-      if (!span.code) {
+      // A typed semicolon can complete an entity across the insertion boundary.
+      // Preserve that authored literal text rather than decoding it as a space.
+      // This normalization is confined to the changed source-owned text span.
+      if (span.rawLiteral && literalMathText(replacement) !== newValue)
+        replacement = literalMathEscaped(newValue).replace(
+          /\n/g,
+          newlineOf(raw, newlineOf(mapping.source)),
+        );
+      if (!span.code && !span.rawLiteral) {
         const lineStart =
           Math.max(
             mapping.source.lastIndexOf('\n', span.from - 1),
@@ -1092,22 +1175,37 @@ export function renderedTextSourceOffset(
   projection: RenderedProjection,
   position: number,
 ): number | null {
-  let result: number | null = null;
+  const candidates = new Set<number>();
   projection.doc.descendants((node, start) => {
     if (!node.isText || position < start || position > start + node.nodeSize)
       return;
     const parts = projection.mapping.texts.get(node);
-    if (!parts || parts.length !== 1 || parts[0]!.code) return;
-    const part = parts[0]!;
-    const offsets = textOffsets(
-      projection.mapping.source.slice(part.from, part.to),
-      node.text!,
-      false,
-    );
-    const offset = offsets?.[position - start];
-    if (offset !== undefined) result = part.from + offset;
+    if (!parts?.length || parts.map((part) => part.text).join('') !== node.text)
+      return;
+    let preceding = 0;
+    for (const part of parts) {
+      const local = position - start - preceding;
+      preceding += part.text.length;
+      if (local < 0 || local > part.text.length) continue;
+      if (
+        part.code &&
+        !['inline_math', 'math_block'].includes(
+          projection.doc.resolve(position).parent.type.name,
+        )
+      )
+        continue;
+      const offsets = textOffsets(
+        projection.mapping.source.slice(part.from, part.to),
+        part.text,
+        part.code,
+        part.rawLiteral,
+      );
+      const offset = offsets?.[local];
+      if (offset !== undefined) candidates.add(part.from + offset);
+    }
   });
-  if (result !== null) return result;
+  if (candidates.size === 1) return [...candidates][0]!;
+  if (candidates.size > 1) return null;
   const caret = projection.doc.resolve(position);
   const range = projection.mapping.ranges.get(caret.parent);
   if (
@@ -1120,4 +1218,53 @@ export function renderedTextSourceOffset(
   if (!projection.mapping.source.trim() && caret.parent.isTextblock)
     return projection.mapping.source.length;
   return null;
+}
+
+/** Inverse of the verified editor-text mapping, including physical breaks and
+ * generated whitespace references. Never invent a caret inside an escape. */
+export function renderedPositionFromSourceOffset(
+  projection: RenderedProjection,
+  sourceOffset: number,
+): number | null {
+  let result: number | null = null;
+  projection.doc.descendants((node, position) => {
+    if (!node.isText) return;
+    const parts = projection.mapping.texts.get(node);
+    if (!parts?.length || parts.map((part) => part.text).join('') !== node.text)
+      return;
+    let preceding = 0;
+    for (const part of parts) {
+      const textPosition = position + preceding;
+      preceding += part.text.length;
+      if (sourceOffset < part.from || sourceOffset > part.to) continue;
+      const offsets = textOffsets(
+        projection.mapping.source.slice(part.from, part.to),
+        part.text,
+        part.code,
+        part.rawLiteral,
+      );
+      if (!offsets) continue;
+      const relative = sourceOffset - part.from;
+      let low = 0;
+      let high = offsets.length - 1;
+      while (low <= high) {
+        const middle = (low + high) >>> 1;
+        const candidate = offsets[middle]!;
+        if (candidate === relative) {
+          result = textPosition + middle;
+          break;
+        }
+        if (candidate < relative) low = middle + 1;
+        else high = middle - 1;
+      }
+    }
+  });
+  if (result !== null) return result;
+  projection.doc.descendants((node, position) => {
+    if (!node.isTextblock || node.content.size !== 0) return;
+    const range = projection.mapping.ranges.get(node);
+    if (range?.from === sourceOffset && range.to === sourceOffset)
+      result = position + 1;
+  });
+  return result;
 }

@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import {
+  openMath,
+  sourceForMath,
+  selectDocumentText,
+  replaceDocumentText,
+} from './helpers/math-text';
 
 async function command(page: Page, name: string) {
   await page.locator('.doc-title-row').click();
@@ -63,17 +69,16 @@ test('Preview reveals dollar delimiters at the caret and preserves exact LaTeX u
   await importNote(page, original);
   await command(page, 'Preview document');
   await expect(page.locator('.rendered-editor strong')).toContainText('bold');
-  await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
-  const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  const inline = await openMath(page, '$x^2$');
   await expect(inline).toHaveText('$x^2$');
   await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
     0,
   );
-  await inline.fill('$x^3 + 1$');
-  await inline.press('Enter');
-  await expect(inline).toHaveCount(0);
+  await replaceDocumentText(page, inline, '$x^3 + 1$');
+  await page.locator('.rendered-editor h1').click();
+  await expect(sourceForMath(page, '$x^3 + 1$')).toBeHidden();
   await expect(
-    page.getByRole('button', { name: 'Edit inline equation: x^3 + 1' }),
+    page.locator('.rendered-editor .rendered-math-render .katex').first(),
   ).toBeVisible();
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('x^2', 'x^3 + 1')),
@@ -100,16 +105,17 @@ test('unfinished display dollars remain ordinary text, survive reload, and becom
   const view = page.locator('.rendered-editor .ProseMirror');
   await expect(view).toContainText("f'(x)");
   await expect(view.getByText('Tail.', { exact: true })).toBeVisible();
-  await expect(view.locator('.rendered-math-invalid, .katex')).toHaveCount(0);
+  await expect(
+    view.locator('.rendered-math-host, .rendered-math-invalid, .katex'),
+  ).toHaveCount(0);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await page.reload();
-  await expect(view.getByText('Tail.', { exact: true })).toBeVisible();
-  await view.getByRole('button', { name: /^Edit display equation:/ }).click();
-  const field = page.getByRole('textbox', { name: 'Display LaTeX source' });
-  await field.press('Control+End');
+  const paragraph = view.locator('p').filter({ hasText: "f'(x)" });
+  const length = (await paragraph.textContent())!.length;
+  await selectDocumentText(paragraph, length, length);
   await page.keyboard.insertText('$');
-  await field.press('Control+Enter');
+  await view.getByText('Tail.', { exact: true }).click();
   await expect(view.locator('.katex')).toHaveCount(1);
   await expect(page.getByRole('alert')).toHaveCount(0);
   const completed = original.replace(raw, () => raw + '$');
@@ -130,14 +136,14 @@ test('removing a dollar commits literal text without blocking other editing or c
     '\uFEFF# Keep this\r\n\r\nBefore $x^2$ after.\r\n\r\nTail 🧠\n';
   await importNote(page, original);
   await command(page, 'Preview document');
-  await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
-  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await field.press('Control+End');
-  await field.press('Backspace');
-  await field.press('Enter');
+  const field = await openMath(page, '$x^2$');
+  await selectDocumentText(field, 5, 5);
+  await page.keyboard.press('Backspace');
   await expect(page.getByRole('alert')).toHaveCount(0);
   const view = page.locator('.rendered-editor .ProseMirror');
-  await expect(view.locator('.rendered-math-invalid, .katex')).toHaveCount(0);
+  await expect(
+    view.locator('.rendered-math-host, .rendered-math-invalid, .katex'),
+  ).toHaveCount(0);
   await view.getByRole('heading', { name: 'Keep this' }).click();
   await page.keyboard.press('End');
   await page.keyboard.insertText(' safe');
@@ -145,22 +151,19 @@ test('removing a dollar commits literal text without blocking other editing or c
     .replace('$x^2$', '$x^2')
     .replace('Keep this', 'Keep this safe');
   expect(await exportSource(page)).toEqual(Buffer.from(incomplete));
-  await view.getByRole('button', { name: /^Edit inline equation:/ }).click();
-  const draft = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await draft.press('Control+Home');
-  await draft.press('ArrowRight');
-  await draft.press('ArrowRight');
-  await draft.press('ArrowRight');
-  await draft.press('ArrowRight');
+  const paragraph = view.locator('p').filter({ hasText: 'Before' });
+  const offset =
+    (await paragraph.textContent())!.indexOf('$x^2') + '$x^2'.length;
+  await selectDocumentText(paragraph, offset, offset);
   await page.keyboard.insertText('$');
-  await draft.press('Enter');
+  await view.getByRole('heading', { name: 'Keep this safe' }).click();
   await expect(view.locator('.katex')).toHaveCount(1);
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('Keep this', 'Keep this safe')),
   );
 });
 
-test('typing a first dollar in ordinary prose opens literal source and enables math only when paired', async ({
+test('typing a first dollar in ordinary prose stays document text and enables math only when paired', async ({
   page,
 }) => {
   const original = '# Typing\n\nA value ';
@@ -170,12 +173,14 @@ test('typing a first dollar in ordinary prose opens literal source and enables m
   await view.getByText('A value', { exact: true }).click();
   await page.keyboard.press('End');
   await page.keyboard.type('$');
-  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(field).toBeFocused();
+  await expect(view).toBeFocused();
+  await expect(
+    view.locator('.cm-editor, input, textarea, .rendered-math-host'),
+  ).toHaveCount(0);
   await page.keyboard.type('x');
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
   await page.keyboard.type('$');
-  await field.press('Enter');
+  await view.getByRole('heading', { name: 'Typing' }).click();
   await expect(view.locator('.katex')).toHaveCount(1);
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(await exportSource(page)).toEqual(
@@ -223,7 +228,7 @@ for (const mode of ['Edit source']) {
   });
 }
 
-test('caret math is ordinary in-place source with keyboard exit and local history, without form controls', async ({
+test('caret math is same-document source with keyboard exit and canonical history, without form controls', async ({
   page,
 }) => {
   const original =
@@ -231,33 +236,23 @@ test('caret math is ordinary in-place source with keyboard exit and local histor
   await importNote(page, original);
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
-  await view.locator('p').filter({ hasText: 'Before' }).click();
-  await page.keyboard.press('Home');
-  for (let index = 0; index < 'Before '.length; index++)
-    await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowRight');
-  const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(inline).toBeFocused();
-  expect(await inline.evaluate(() => window.getSelection()!.anchorOffset)).toBe(
-    0,
-  );
-  expect(await inline.evaluate((node) => node.tagName)).not.toMatch(
-    /^(INPUT|TEXTAREA)$/,
-  );
-  await expect(view.locator('.rendered-math-controls')).toHaveCount(0);
+  const inline = await openMath(page, '$x^2$');
+  await expect(view).toBeFocused();
+  await expect(
+    view.locator('input, textarea, .cm-editor, .rendered-math-controls'),
+  ).toHaveCount(0);
   await expect(inline).toHaveText('$x^2$');
-  await inline.press('End');
-  await inline.press('ArrowLeft');
-  await inline.press('Backspace');
+  await selectDocumentText(inline, 3, 4);
   await page.keyboard.insertText('3');
-  await expect(inline).toHaveText('$x^3$');
-  await inline.press('Control+z');
-  await expect(inline).not.toHaveText('$x^3$');
-  await inline.press('Control+Shift+Z');
-  await expect(inline).toHaveText('$x^3$');
-  await inline.press('End');
-  await inline.press('ArrowRight');
-  await expect(inline).toHaveCount(0);
+  await expect(sourceForMath(page, '$x^3$')).toBeVisible();
+  await page.keyboard.press('Control+z');
+  await expect(sourceForMath(page, '$x^2$')).toBeVisible();
+  await page.keyboard.press('Control+Shift+Z');
+  const edited = sourceForMath(page, '$x^3$');
+  await expect(edited).toBeVisible();
+  await selectDocumentText(edited, 5, 5);
+  await page.keyboard.press('ArrowRight');
+  await expect(edited).toBeHidden();
   await expect(view).toBeFocused();
   expect(await exportSource(page)).toEqual(
     Buffer.from(original.replace('x^2', 'x^3')),
@@ -274,69 +269,50 @@ test('display math reveals raw lines, supports ordinary Enter and renders after 
   await importNote(page, original);
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
-  const rendered = view.getByRole('button', {
-    name: 'Edit display equation: x^2',
-  });
+  const rendered = view.locator('.rendered-math-render');
   await rendered.hover();
-  await expect(
-    page.getByRole('textbox', { name: 'Display LaTeX source' }),
-  ).toHaveCount(0);
+  const math = sourceForMath(page, '$$\nx^2\n$$');
+  await expect(math).toBeHidden();
   await rendered.click();
-  const math = page.getByRole('textbox', { name: 'Display LaTeX source' });
   await expect(math).toHaveText('$$\nx^2\n$$', { useInnerText: true });
   await expect(
-    view.locator('input, textarea, .rendered-math-controls'),
+    view.locator('input, textarea, .cm-editor, .rendered-math-controls'),
   ).toHaveCount(0);
-  await math.press('Control+Home');
-  await math.press('ArrowDown');
-  await math.press('End');
-  await math.press('Enter');
+  await selectDocumentText(math, '$$\nx^2'.length, '$$\nx^2'.length);
+  await page.keyboard.press('Enter');
   await page.keyboard.insertText('+ y^2');
-  await expect(math).toHaveText('$$\nx^2\n+ y^2\n$$', { useInnerText: true });
-  await math.press('Control+End');
-  await math.press('ArrowDown');
-  const error = page
-    .getByRole('alert')
-    .filter({ hasText: 'Check the equation' });
-  if (await error.count()) {
-    await error.getByRole('button', { name: 'Details', exact: true }).click();
-    throw new Error(
-      await page
-        .getByRole('dialog', { name: 'Notification details' })
-        .innerText(),
-    );
-  }
-  await expect(math).toHaveCount(0);
+  const edited = sourceForMath(page, '$$\nx^2\n+ y^2\n$$');
+  await expect(edited).toBeVisible();
+  await view.getByText('Tail.', { exact: true }).click();
+  await expect(edited).toBeHidden();
   await expect(view).toBeFocused();
   await expect(view.locator('.katex-display')).toBeVisible();
-  expect(await exportSource(page)).toEqual(
-    Buffer.from(original.replace('x^2\r\n', 'x^2\r\n+ y^2\r\n')),
-  );
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const expected = original.replace('x^2\r\n', 'x^2\r\n+ y^2\r\n');
+  expect(await exportSource(page)).toEqual(Buffer.from(expected));
   await page.reload();
   await expect(page.locator('.rendered-editor .katex-display')).toBeVisible();
-  expect(await exportSource(page)).toEqual(
-    Buffer.from(original.replace('x^2\r\n', 'x^2\r\n+ y^2\r\n')),
-  );
+  expect(await exportSource(page)).toEqual(Buffer.from(expected));
 });
 
-test('moving between equations commits only the edited exact span and reopening without editing preserves bytes', async ({
+test('moving between equations changes only the edited exact span and reopening without editing preserves bytes', async ({
   page,
 }) => {
   const original =
     '\uFEFF# Two\r\n\r\nFirst $x$ and second $x$.\r\n\r\n<span title="unchanged">Opaque</span>\n';
   await importNote(page, original);
   await command(page, 'Preview document');
-  const equations = page.getByRole('button', {
-    name: 'Edit inline equation: x',
-    exact: true,
-  });
-  await equations.nth(1).click();
-  const math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.fill('$y$');
-  await equations.first().click();
-  await expect(math).toHaveText('$x$');
+  const equations = sourceForMath(page, '$x$');
+  await equations.nth(1).locator('..').locator('.rendered-math-render').click();
+  await replaceDocumentText(page, equations.nth(1), '$y$');
+  await equations
+    .first()
+    .locator('..')
+    .locator('.rendered-math-render')
+    .click();
+  await expect(equations.first()).toBeVisible();
   await page.locator('.rendered-editor h1').click();
-  await expect(math).toHaveCount(0);
+  await expect(equations.first()).toBeHidden();
   const expected = original.replace('second $x$', 'second $y$');
   expect(await exportSource(page)).toEqual(Buffer.from(expected));
   await command(page, 'Edit source');
@@ -361,13 +337,10 @@ for (const width of [1440, 390]) {
       .locator('.rendered-editor p')
       .filter({ hasText: 'Before' });
     const before = (await paragraph.boundingBox())!.height;
-    await page
-      .getByRole('button', { name: 'Edit inline equation: x^2' })
-      .click();
-    const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-    await expect(inline).toBeFocused();
+    const inline = await openMath(page, '$x^2$');
+    await expect(page.locator('.rendered-editor .ProseMirror')).toBeFocused();
     const mathHeight = await inline.evaluate(
-      (node) => node.closest('.cm-editor')!.getBoundingClientRect().height,
+      (node) => node.getBoundingClientRect().height,
     );
     expect(mathHeight).toBeLessThan(48);
     await testInfo.attach(`inline-math-source-${width}px`, {
@@ -375,17 +348,10 @@ for (const width of [1440, 390]) {
       contentType: 'image/png',
     });
     expect((await paragraph.boundingBox())!.height).toBeLessThan(before + 32);
-    await inline.press('End');
-    await inline.press('ArrowRight');
-    await page
-      .getByRole('button', { name: 'Edit display equation: y^2' })
-      .click();
-    const display = page.getByRole('textbox', { name: 'Display LaTeX source' });
-    await expect(display).toBeFocused();
+    const display = await openMath(page, '$$\ny^2\n$$');
+    await expect(page.locator('.rendered-editor .ProseMirror')).toBeFocused();
     expect(
-      await display.evaluate(
-        (node) => node.closest('.cm-editor')!.getBoundingClientRect().height,
-      ),
+      await display.evaluate((node) => node.getBoundingClientRect().height),
     ).toBeLessThan(120);
   });
 }
@@ -398,25 +364,20 @@ test('invalid LaTeX stays red and editable without blocking other text or later 
   await importNote(page, original);
   await command(page, 'Preview document');
   const view = page.locator('.rendered-editor .ProseMirror');
-  await view
-    .getByRole('button', { name: 'Edit inline equation: x \\in \\mathbb{R}' })
-    .click();
-  let math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.fill('$x \\in \\mathbb{R$');
+  const math = await openMath(page, '$x \\in \\mathbb{R}$');
+  await replaceDocumentText(page, math, '$x \\in \\mathbb{R$');
   await view.getByText('Continue here.', { exact: true }).click();
-  await expect(math).toHaveCount(0);
   const invalid = view.locator('.rendered-math-invalid');
-  await expect(invalid).toHaveText('$x \\in \\mathbb{R$');
-  await expect(invalid.locator('.katex')).toHaveCount(0);
+  await expect(invalid.locator('.rendered-math-source')).toHaveText(
+    '$x \\in \\mathbb{R$',
+  );
+  await expect(invalid.locator('.rendered-math-render')).toBeHidden();
   await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
   await page.keyboard.press('End');
   await page.keyboard.insertText(' Still writing.');
   await expect(view).toContainText('Continue here. Still writing.');
-  await view
-    .getByRole('button', { name: 'Edit inline equation: y', exact: true })
-    .click();
-  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.fill('$\\frac{a}{b$');
+  const second = await openMath(page, '$y$');
+  await replaceDocumentText(page, second, '$\\frac{a}{b$');
   await view.getByRole('heading', { name: 'Forgiving math' }).click();
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(2);
   const badSource = await exportSource(page);
@@ -424,33 +385,28 @@ test('invalid LaTeX stays red and editable without blocking other text or later 
   expect(badSource.toString()).toContain('$\\frac{a}{b$');
   await page.reload();
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(2);
-  await view
-    .getByRole('button', {
-      name: 'Edit inline equation: x \\in \\mathbb{R',
-      exact: true,
-    })
-    .click();
-  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.press('End');
-  await math.press('ArrowLeft');
+  const firstBad = await openMath(page, '$x \\in \\mathbb{R$');
+  await selectDocumentText(
+    firstBad,
+    '$x \\in \\mathbb{R'.length,
+    '$x \\in \\mathbb{R'.length,
+  );
   await page.keyboard.insertText('}');
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(1);
   await view.getByRole('heading', { name: 'Forgiving math' }).click();
-  await expect(math).toHaveCount(0);
-  await expect(view.locator('.rendered-math-invalid')).toHaveCount(1);
-  await view.locator('.rendered-math-invalid').getByRole('button').click();
-  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await math.fill('$\\frac{a}{b}$');
+  await expect(sourceForMath(page, '$x \\in \\mathbb{R}$')).toBeHidden();
+  const secondBad = await openMath(page, '$\\frac{a}{b$');
+  await replaceDocumentText(page, secondBad, '$\\frac{a}{b}$');
   await view.getByRole('heading', { name: 'Forgiving math' }).click();
   await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
-  await expect(view.locator('.katex')).toHaveCount(2);
+  await expect(view.locator('.rendered-math-render .katex')).toHaveCount(2);
   const after = await exportSource(page);
   expect(after.toString()).toContain(
     '$x \\in \\mathbb{R}$ and second $\\frac{a}{b}$',
   );
   expect(after.toString()).toContain('Still');
   await page.reload();
-  await expect(view.locator('.katex')).toHaveCount(2);
+  await expect(view.locator('.rendered-math-render .katex')).toHaveCount(2);
 });
 
 test('literal mathematics work budget reports its refusal, retains exact source and recovers through source editing and undo', async ({

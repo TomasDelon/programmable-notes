@@ -153,22 +153,32 @@
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.rendered-editor .rendered-math {
-  display: inline-block;
-  font: inherit;
-  color: inherit;
-  border: 0;
-  background: none;
-  padding: 0 2px;
-  cursor: text;
+.rendered-editor .rendered-math-host {
+  display: inline;
+  vertical-align: baseline;
 }
-.rendered-editor .rendered-math-block {
+.rendered-editor .rendered-math-host-block {
+  display: block;
+  margin: 0 0 20px;
+}
+.rendered-editor .rendered-math-source {
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  text-align: left;
+}
+.rendered-editor .rendered-math-render {
+  display: inline-block;
+  cursor: text;
+  pointer-events: auto;
+}
+.rendered-editor .rendered-math-host-block > .rendered-math-render {
   display: block;
   text-align: center;
-  width: 100%;
-  padding: 6px 0;
-  margin: 22px 0;
   overflow: auto;
+}
+.rendered-editor .rendered-math-host > [hidden] {
+  display: none !important;
 }
 .rendered-editor .katex-display {
   margin: 0;
@@ -177,63 +187,6 @@
   font-size: 1.13em;
 }
 
-/* A focused equation reveals its original dollar-delimited source inline. */
-.rendered-editor .rendered-math-host {
-  display: inline;
-  vertical-align: baseline;
-}
-.rendered-editor .rendered-math-host-block {
-  display: block;
-  width: 100%;
-  margin: 22px 0;
-  text-align: center;
-}
-.rendered-editor .rendered-math-host-block .rendered-math-block {
-  margin: 0;
-}
-.rendered-editor .rendered-math-source {
-  display: inline-block;
-  vertical-align: baseline;
-  max-width: 100%;
-  color: inherit;
-  text-align: left;
-}
-.rendered-editor .rendered-math-source .cm-editor {
-  height: auto;
-  min-height: 0;
-  background: transparent;
-  color: inherit;
-  font:
-    0.95em/1.65 ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Consolas,
-    monospace;
-  outline: none;
-}
-.rendered-editor .rendered-math-source .cm-scroller {
-  font: inherit;
-  overflow: visible;
-}
-.rendered-editor .rendered-math-source .cm-content {
-  min-height: 0;
-  padding: 0;
-  caret-color: currentColor;
-}
-.rendered-editor .rendered-math-source .cm-line {
-  padding: 0;
-}
-.rendered-editor .rendered-math-source .cm-cursor {
-  border-left-color: currentColor;
-}
-.rendered-editor .rendered-math-source-block {
-  display: block;
-  width: 100%;
-}
-.rendered-editor .rendered-math:hover {
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
-  border-radius: 4px;
-}
 .rendered-editor .rendered-wikilink {
   font: inherit;
   color: var(--accent);

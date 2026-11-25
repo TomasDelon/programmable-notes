@@ -518,7 +518,10 @@ describe('rendered Markdown source bridge', () => {
     const next = apply(
       initial,
       state.tr.replaceSelectionWith(
-        schema.nodes.math_block!.create({ value: 'x^2' }),
+        schema.nodes.math_block!.create(
+          { value: 'x^2' },
+          schema.text('$$\nx^2\n$$'),
+        ),
       ),
     );
     expect(next.mapping.source).toBe('$$\nx^2\n$$');
@@ -653,12 +656,9 @@ describe('rendered Markdown source bridge', () => {
       'Before',
       'Before plus more',
     );
-    const { node, pos } = findNode(projection.doc, 'inline_math');
+    const { pos } = findNode(projection.doc, 'inline_math');
     const state = EditorState.create({ doc: projection.doc });
-    projection = apply(
-      projection,
-      state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, value: 'x^2' }),
-    );
+    projection = apply(projection, state.tr.insertText('^2', pos + 3));
     expect(projection.mapping.source).toBe('Before plus more\r\n\r\n$x^2$\n');
   });
 

@@ -18,8 +18,9 @@ Open the left navigation panel to see Documents, folders, and Recent. The first
 workspace contains a Welcome note and a React playground. Use the new-document
 or new-folder controls to create your own material. New notes open in Source.
 
-The title above the document is editable in Source and Preview. Document actions
-also offer rename, move, source export, and Move to Trash. Titles and workspace
+The title above the document is normal text, not a permanent form field. Use the
+Rename document command or document actions to rename it. Document actions also
+offer move, source export, and Move to Trash. Titles and workspace
 folders are display metadata; stable source keys and relative module imports
 do not change when a note is renamed or moved. Existing resolved wikilinks are
 updated atomically when necessary to preserve their target. If safe rewriting
@@ -100,29 +101,29 @@ $$
 $$
 ```
 
-In Preview, place the caret in an inline `$...$` or display `$$...$$` equation
-to reveal its original dollar-delimited LaTeX **in place**, including on mobile.
-Clicking or entering with arrow keys opens ordinary editable source, without an
-input box, toolbar or action buttons. Hover alone does not change the formula.
-Move the caret out with arrow keys, Tab, or a click in surrounding text to render
-and apply the edit. `Enter` leaves an inline equation; in display equations it
-inserts a normal source newline. `Ctrl/Cmd + Enter` also leaves an equation.
-Undo/redo while inside operates on the mathematical draft; after leaving, the
-canonical document history restores the whole source patch. `Escape` explicitly
-discards the current draft. Invalid LaTeX inside valid dollar delimiters stays
-visible as raw red source, saves normally and does not block typing elsewhere.
-Correcting it clears red feedback immediately; leaving renders the valid formula.
-There are no notifications for ordinary LaTeX errors. Missing dollar delimiters
-are ordinary literal text, without red styling or an error; leaving commits that
-text normally. Add the missing delimiter to enable rendering again. An unmatched
-block does not consume following paragraphs or React components. Stale source
-revisions or unsafe mappings still retain the draft instead of overwriting source.
-Resolve a genuinely refused draft before
-switching documents, exporting, restoring or changing the surrounding document.
-If validation fails, nearby deletion and formatting cannot discard the equation;
-finish it or cancel explicitly before continuing. Cancelling a stale field shows
-the latest canonical source again. Unapplied drafts are memory-only
-and are not included in saved notes or backups.
+In Preview, place the document caret in an inline `$...$` or display `$$...$$`
+equation to reveal its original dollar-delimited source. It is editable child
+text in the same ProseMirror document, not a nested input or CodeMirror instance.
+There is one document selection and canonical undo/redo history. Mathematical
+source has no extra Tab stop, independent focus ring, Apply button or draft
+history. Hover alone does not change a formula. Moving the selection outside a
+valid equation switches its presentation to KaTeX without editing source or
+creating a history entry.
+
+Invalid LaTeX inside complete dollar delimiters remains visible as red source,
+saves normally and does not block writing elsewhere. Correcting it clears red
+feedback; leaving renders the valid formula. There are no notifications for
+ordinary LaTeX errors. Missing dollar delimiters are ordinary paragraph text,
+without red styling, mathematical controls or focus-dependent spacing. Adding
+the missing delimiter enables mathematical presentation again. Unmatched blocks
+do not consume following paragraphs or React components.
+
+Edits still validate exact source revisions and safe spans before application.
+A genuinely refused source write retains the attempted source for explicit
+recovery instead of overwriting accepted data. This recovery is separate from
+ordinary mathematical syntax errors. Unapplied recovery drafts are memory-only
+and are not included in saved notes or backups. See ADR 017 and its dated
+verification record for the migration and executed browser evidence.
 
 The React playground provides an interactive counter. Editing ordinary Markdown
 in Preview preserves unaffected isolated React islands. **Run full document**

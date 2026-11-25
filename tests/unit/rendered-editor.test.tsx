@@ -33,16 +33,26 @@ vi.mock('../../src/editor/rendered/RenderedRuntime', () => ({
 type Props = ComponentProps<typeof RenderedEditor>;
 const render = (ui: ReactElement) =>
   renderUI(ui, { wrapper: NotificationProvider });
-function changeMath(field: HTMLElement, value: string) {
-  const view = MathView.findFromDOM(field)!;
-  act(() =>
-    view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: value },
-    }),
-  );
+async function changeMath(field: HTMLElement, value: string) {
+  await act(async () => {
+    field.textContent = value;
+    field.dispatchEvent(
+      new InputEvent('input', { bubbles: true, inputType: 'insertText' }),
+    );
+    await Promise.resolve();
+  });
+}
+function mathSource(index = 0): HTMLElement {
+  const host = document.querySelectorAll<HTMLElement>('.rendered-math-host')[
+    index
+  ]!;
+  fireEvent.mouseDown(host.querySelector('.rendered-math-render')!, {
+    button: 0,
+  });
+  return host.querySelector<HTMLElement>('.rendered-math-source')!;
 }
 function mathValue(field: HTMLElement) {
-  return MathView.findFromDOM(field)!.state.doc.toString();
+  return field.textContent;
 }
 function propsFor(source: string): Props {
   return {
@@ -213,55 +223,45 @@ describe('rendered editor host transaction boundary', () => {
     expect(props.apply).not.toHaveBeenCalled();
   });
 
-  it('commits missing delimiters as literal source without an alert or pending guard', () => {
+  it('commits missing delimiters as document text without an alert or pending guard', async () => {
     const props = propsFor('Keep $x$ here.');
     render(<RenderedEditor {...props} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit inline equation: x' }),
-    );
-    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    changeMath(field, '$x');
-    expect(field.closest('.rendered-math-host')).not.toHaveClass(
-      'rendered-math-invalid',
-    );
-    fireEvent.keyDown(field, { key: 'Enter' });
+    await changeMath(mathSource(), '$x');
     expect(props.apply).toHaveBeenCalledWith(
       'Keep $x$ here.',
       'Keep $x here.',
-      false,
+      true,
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('textbox', { name: 'Inline LaTeX source' }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('textbox', { name: 'Editable document' }),
+    ).toHaveTextContent('Keep $x here.');
+    expect(
+      document.querySelector('.rendered-math-source .cm-editor'),
+    ).toBeNull();
     expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
   });
 
-  it('reconciles a deferred source revision after cancelling an equation draft', () => {
+  it('reconciles an external source revision after an immediately accepted equation edit', async () => {
     const props = propsFor('Before $x$.');
     const ui = render(<RenderedEditor {...props} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit inline equation: x' }),
+    await changeMath(mathSource(), '$x^2$');
+    expect(props.apply).toHaveBeenCalledWith(
+      'Before $x$.',
+      'Before $x^2$.',
+      true,
     );
-    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    changeMath(field, '$x^2$');
+    (props.apply as ReturnType<typeof vi.fn>).mockClear();
     ui.rerender(<RenderedEditor {...props} source="After $y$." />);
-    expect(mathValue(field)).toBe('$x^2$');
-    fireEvent.keyDown(field, { key: 'Enter' });
-    expect(mathValue(field)).toBe('$x^2$');
-    expect(screen.getByRole('alert')).toBeVisible();
-    expect(props.apply).not.toHaveBeenCalled();
-    fireEvent.keyDown(field, { key: 'Escape' });
-    expect(
-      screen.getByRole('button', { name: 'Edit inline equation: y' }),
-    ).toBeVisible();
+    expect(mathSource().textContent).toBe('$y$');
     expect(
       screen.getByRole('textbox', { name: 'Editable document' }),
     ).toHaveTextContent('After');
+    expect(props.apply).not.toHaveBeenCalled();
     expect(props.onPendingChange).toHaveBeenLastCalledWith(false);
   });
 
-  it('opens the second identical equation at its current exact offset after preceding text is inserted', () => {
+  it('opens the second identical equation at its current exact offset after preceding text is inserted', async () => {
     const source = 'Original paragraph.\r\n\r\nFirst $x$ and second $x$.\n';
     const props = propsFor(source);
     let accepted = source;
@@ -276,22 +276,16 @@ describe('rendered editor host transaction boundary', () => {
       ).toBe(true),
     );
     ui.rerender(<RenderedEditor {...props} source={accepted} />);
-    const equations = screen.getAllByRole('button', {
-      name: 'Edit inline equation: x',
-    });
-    expect(equations).toHaveLength(2);
-    fireEvent.click(equations[1]!);
-    const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
+    const field = mathSource(1);
     expect(mathValue(field)).toBe('$x$');
     const before = accepted;
-    changeMath(field, '$x^2$');
-    fireEvent.keyDown(field, { key: 'Enter' });
+    await changeMath(field, '$x^2$');
     expect(props.apply).toHaveBeenLastCalledWith(
       before,
       before.slice(0, before.lastIndexOf('$x$')) +
         '$x^2$' +
         before.slice(before.lastIndexOf('$x$') + 3),
-      false,
+      true,
     );
   });
 
@@ -333,39 +327,34 @@ describe('rendered editor host transaction boundary', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-fixture');
   });
 
-  it('retains an existing link URL when a stale equation prevents its application', () => {
+  it('retains an existing link URL when a refused equation edit requires recovery', async () => {
     const props = propsFor('Link target and $x$.');
-    const apply = vi.fn(() => false);
-    props.apply = apply;
+    props.apply = vi.fn(() => false);
     render(<RenderedEditor {...props} />);
     fireEvent.keyDown(
       screen.getByRole('textbox', { name: 'Editable document' }),
       { key: 'K', code: 'KeyK', keyCode: 75, ctrlKey: true, shiftKey: true },
     );
-    const url = screen.getByRole('textbox', { name: 'Link URL' });
-    fireEvent.change(url, {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Link URL' }), {
       target: { value: 'https://example.org/retained' },
     });
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit inline equation: x' }),
+    await changeMath(mathSource(), '$x^2$');
+    expect(props.apply).toHaveBeenCalledWith(
+      'Link target and $x$.',
+      'Link target and $x^2$.',
+      true,
     );
-    const math = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    changeMath(math, '$x');
-    fireEvent.keyDown(math, { key: 'Enter' });
-    fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
     expect(screen.getByRole('textbox', { name: 'Link URL' })).toHaveValue(
       'https://example.org/retained',
     );
-    expect(mathValue(math)).toBe('$x');
-    expect(apply).toHaveBeenCalled();
-    apply.mockClear();
-    apply.mockReturnValue(true);
-    fireEvent.keyDown(math, { key: 'Escape' });
-    fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
-    expect(
-      screen.queryByRole('textbox', { name: 'Link URL' }),
-    ).not.toBeInTheDocument();
-    expect(props.apply).toHaveBeenCalledOnce();
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(mathValue(document.querySelector('.rendered-math-source')!)).toBe(
+      '$x$',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Review draft' }));
+    expect(screen.getByRole('textbox', { name: 'Unapplied text' })).toHaveValue(
+      'Link target and $x^2$.',
+    );
   });
 
   it('retains a link draft and refuses stale selection coordinates after an external source update', () => {
@@ -459,29 +448,22 @@ it('rejects obsolete React echoes without rejecting subsequent current visual ed
   ).not.toBeInTheDocument();
 });
 
-it('keeps an invalid mathematical expression red when its editable source receives focus', () => {
-  const props = propsFor('Keep $\\unknowncommand$ here.');
-  render(<RenderedEditor {...props} />);
-  const equation = screen.getByRole('button', {
-    name: 'Edit inline equation: \\unknowncommand',
-  });
-  expect(equation.closest('.rendered-math-host')).toHaveClass(
+it('keeps invalid mathematical text red while using the document selection', () => {
+  render(<RenderedEditor {...propsFor('Keep $\\unknowncommand$ here.')} />);
+  const source = mathSource();
+  expect(source.closest('.rendered-math-host')).toHaveClass(
     'rendered-math-invalid',
   );
-  fireEvent.click(equation);
-  expect(
-    screen
-      .getByRole('textbox', { name: 'Inline LaTeX source' })
-      .closest('.rendered-math-host'),
-  ).toHaveClass('rendered-math-invalid');
+  expect(source.closest('.ProseMirror')).toBe(
+    screen.getByRole('textbox', { name: 'Editable document' }),
+  );
+  expect(source.querySelector('.cm-editor,input,textarea')).toBeNull();
 });
 
 it('does not detach a mathematical activation target during unrelated runtime updates', () => {
   const props = propsFor('Keep $x$ here.');
   const ui = render(<RenderedEditor {...props} />);
-  const button = screen.getByRole('button', {
-    name: 'Edit inline equation: x',
-  });
+  const button = document.querySelector('.rendered-math-source')!;
   const host = button.closest('.rendered-math-host')!;
   const observer = new MutationObserver(() => {});
   observer.observe(host, { childList: true });
@@ -507,9 +489,7 @@ it('does not detach a mathematical activation target during unrelated runtime up
 it('preserves the math activation target when a source edit only shifts its offsets', () => {
   const props = propsFor('Keep $x$ here.');
   const ui = render(<RenderedEditor {...props} />);
-  const button = screen.getByRole('button', {
-    name: 'Edit inline equation: x',
-  });
+  const button = document.querySelector('.rendered-math-source')!;
   const observer = new MutationObserver(() => {});
   observer.observe(button.closest('.rendered-math-host')!, { childList: true });
   ui.rerender(<RenderedEditor {...props} source="Longer Keep $x$ here." />);

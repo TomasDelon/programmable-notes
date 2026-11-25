@@ -50,9 +50,7 @@ test('Preview renders list markers and tasks and preserves exact source through 
   await expect(
     page.getByRole('checkbox', { name: 'Task: qsdfomqsdf' }),
   ).toBeVisible();
-  const math = page.getByRole('button', {
-    name: 'Edit display equation: \\forall x \\in \\mathbb{R}',
-  });
+  const math = view.locator('.rendered-math-host-block .rendered-math-render');
   await expect(math).toBeVisible();
   const contentBox = await view.boundingBox();
   const mathBox = await math.boundingBox();
