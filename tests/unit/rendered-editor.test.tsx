@@ -6,7 +6,15 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { createRef, type ComponentProps, type ReactElement } from 'react';
+import {
+  createRef,
+  useState,
+  type ComponentProps,
+  type ReactElement,
+} from 'react';
+import { SourceEditor } from '../../src/editor/SourceEditor';
+import { rawSource } from '../../src/editor/live/rawSource';
+import { undo as undoSource, redo as redoSource } from '@codemirror/commands';
 import { NotificationProvider } from '../../src/ui/Notifications';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -553,4 +561,115 @@ it('commits input-only Select All replacement once while preserving hidden setup
   expect(next).toContain('export const preserved = 1');
   expect(next).toContain('Replacement body.');
   expect(next).not.toContain('A visible paragraph.');
+});
+
+it('does not force a stale AllSelection after focus cancels its editing intent', () => {
+  const props = propsFor(
+    'export const preserved = 1\n\nKeep this visible body.\n',
+  );
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  act(() => fireEvent.keyDown(editor, { key: 'a', ctrlKey: true }));
+  act(() => fireEvent.blur(editor));
+  const input = new InputEvent('beforeinput', {
+    bubbles: true,
+    cancelable: true,
+    inputType: 'insertText',
+    data: 'A later edit',
+  });
+  act(() => editor.dispatchEvent(input));
+  expect(input.defaultPrevented).toBe(false);
+  expect(props.apply).not.toHaveBeenCalled();
+});
+
+it('undoes rendered composition replacement as one exact canonical source event', async () => {
+  const original =
+    '\uFEFFexport const setup = 1\r\n\r\n# Original heading\r\n\r\nOriginal paragraph.\r\n';
+  function ControlledEditor() {
+    const [source, setSource] = useState(original);
+    return (
+      <SourceEditor
+        source={source}
+        documentKey="composition.mdx"
+        onChange={setSource}
+        rendered={{
+          active: true,
+          files: { 'composition.mdx': source },
+          entry: 'composition.mdx',
+          theme: 'light',
+          images: [],
+          stopped: true,
+        }}
+      />
+    );
+  }
+  const mounted = render(<ControlledEditor />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  const canonical = MathView.findFromDOM(
+    mounted.container.querySelector('.cm-editor')!,
+  )!;
+  act(() => fireEvent.keyDown(editor, { key: 'a', ctrlKey: true }));
+  act(() => fireEvent.compositionStart(editor));
+  expect(rawSource(canonical.state)).not.toContain('Original heading');
+  await act(async () => {
+    editor.querySelector('p')!.textContent = 'Replacement body.';
+    editor.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        inputType: 'insertCompositionText',
+        data: 'Replacement body.',
+        isComposing: true,
+      }),
+    );
+    fireEvent.compositionEnd(editor, { data: 'Replacement body.' });
+    await Promise.resolve();
+  });
+  await waitFor(() =>
+    expect(rawSource(canonical.state)).toContain('Replacement body.'),
+  );
+  const changed = rawSource(canonical.state);
+  act(() => {
+    undoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(original);
+  act(() => {
+    redoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(changed);
+  // A subsequent composition after Redo must open its own history event.
+  act(() => fireEvent.compositionStart(editor));
+  await act(async () => {
+    editor.querySelector('p')!.textContent =
+      'Replacement body. Second composition.';
+    editor.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        inputType: 'insertCompositionText',
+        data: ' Second composition.',
+        isComposing: true,
+      }),
+    );
+    fireEvent.compositionEnd(editor, { data: ' Second composition.' });
+    await Promise.resolve();
+  });
+  await waitFor(() =>
+    expect(rawSource(canonical.state)).toContain('Second composition.'),
+  );
+  const second = rawSource(canonical.state);
+  act(() => {
+    undoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(changed);
+  act(() => {
+    undoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(original);
+  act(() => {
+    redoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(changed);
+  act(() => {
+    redoSource(canonical);
+  });
+  expect(rawSource(canonical.state)).toBe(second);
 });

@@ -170,3 +170,35 @@ outside-sandbox application test was aborted before execution and is not a pass.
 Do not disable Firefox's sandbox. Hosted Ubuntu is the available full-browser
 validation environment. Raw artifact download was Forbidden in this workspace;
 GitHub artifact links remain the owner-accessible reproduction/evidence route.
+
+## Canonical composition-history correction
+
+Focused [run 45651644305](https://github.com/TomasDelon/programmable-notes/actions/runs/45651644305)
+reported **69 passed, 3 Firefox failures**, zero retries. All WebKit cases passed
+with explicit input ownership. [Actual candidate 45651807415](https://github.com/TomasDelon/programmable-notes/actions/runs/45651807415)
+reported **20 passed, 1 Firefox failure** in the added undo case. Neither checkpoint
+was promoted. Captured canonical source after Undo contained setup plus an empty
+body; metadata showed `insertCompositionText`, a delivered/prevented Ctrl+z and
+successful canonical source change. This ruled out a mere deferred visual refresh.
+
+ProseMirror deletes a non-textblock selection during compositionstart, before
+insertion. Those two source transactions had become separate isolated history
+events. The real controlled SourceEditor/RenderedEditor integration regression
+reproduced exactly the prefix-only result on Undo. Forward host composition
+history metadata to the canonical source: `input.type.compose.start` with public
+`isolateHistory('before')`, then `input.type.compose`. This reuses CodeMirror's
+existing native-composition grouping semantics. Snapshot acceptance, source maps,
+semantic reparse and recovery checks still run for every transaction.
+
+The integration test now passes exact BOM/CRLF Undo/Redo and a second composition
+after Redo. A separate regression reproduced stale AllSelection ownership after
+blur; input handlers now require the still-active host selection intent. Targeted
+rendered/source composition suites passed **22/22**. Independent read-only review
+found no additional concrete history/phase-safety issue.
+
+The complete corrected local `npm run check` exited **0**: **363 unit /45 files,
+14 tooling (zero skips), 116 Chromium and 7 Pages-policy cases** plus format/lint/
+type/build. Pages fingerprint: `a02f5abbd04aa496`, 77 assets. Hosted verification of
+this history correction remains pending. The user additionally clarified that
+missing math delimiters must demote to ordinary text, not a protected math error;
+that follow-up is pending and supersedes the earlier delimiter-refusal UX.

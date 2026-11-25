@@ -64,3 +64,19 @@ editable-preview React islands. Full-document compilation preference changes may
 rebuild the shared context and reset component state. Native GUI runtime and
 physical mobile keyboards require separate validation; web tests do not certify
 them. Community plugins and arbitrary JSX reverse editing remain out of scope.
+
+## Composition-history boundary
+
+Rendered IME replacement can delete a selection before inserting committed text.
+Forward a host-only composition phase to the canonical source history. The first
+changed source transaction uses `input.type.compose.start` and
+`isolateHistory('before')`; subsequent changes use `input.type.compose`, matching
+the existing Source editor composition extension. One Undo/Redo therefore restores
+the complete original/replacement, including BOM and physical breaks. New sessions,
+ordinary keyboard input, accepted source refreshes and deferred completion close
+or reset the phase. This changes grouping only; every patch retains its snapshot,
+validation and authority checks. It adds no document-visible API.
+
+The later user requirement supersedes the earlier missing-delimiter refusal:
+unpaired math delimiters must be editable literal text. Only closed invalid TeX
+gets red feedback. Implementation and verification of that follow-up are pending.

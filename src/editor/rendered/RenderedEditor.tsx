@@ -63,6 +63,8 @@ import {
 } from './RenderedRuntime';
 import './rendered.css';
 
+export type RenderedCompositionPhase = 'start' | 'update';
+
 export interface RenderedCommands {
   insertText: (text: string) => boolean;
   focus: () => void;
@@ -77,7 +79,12 @@ interface Props {
   commandsRef: React.RefObject<RenderedCommands | null>;
   runtime: RenderedRuntimeContext;
   wikilinks: readonly LinkResolution[];
-  apply: (expected: string, next: string, typing: boolean) => boolean;
+  apply: (
+    expected: string,
+    next: string,
+    typing: boolean,
+    composition?: RenderedCompositionPhase,
+  ) => boolean;
   undo: () => void;
   redo: () => void;
   openSource: (offset: number, source: string) => void;
@@ -898,6 +905,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // the user chooses a different caret/range, rather than accepting a partial
     // DOM selection as authorization to replace only part of the document.
     let selectingAll = false;
+    let composingSource = false;
+    let firstComposingChange = true;
+    let compositionFrame: number | null = null;
     const editor = new EditorView(mount.current, {
       state: EditorState.create({
         schema: renderedSchema,
@@ -980,6 +990,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       createSelectionBetween: (current) =>
         selectingAll ? new AllSelection(current.state.doc) : null,
       handleDOMEvents: {
+        compositionstart: () => {
+          if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
+          compositionFrame = null;
+          composingSource = true;
+          firstComposingChange = true;
+          return false;
+        },
         mousedown: () => {
           selectingAll = false;
           return false;
@@ -994,6 +1011,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         },
         input: (current, event) => {
           if (
+            !selectingAll ||
             latest.current.disabled ||
             current.composing ||
             !(event instanceof InputEvent) ||
@@ -1011,6 +1029,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         beforeinput: (current, event) => {
           if (latest.current.disabled || event.isComposing) return false;
           if (
+            selectingAll &&
             current.state.selection instanceof AllSelection &&
             event.inputType === 'insertText' &&
             typeof event.data === 'string'
@@ -1036,12 +1055,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         // Native DOM selection cannot reliably span display:none setup atoms.
         // Honor the editor-owned Select All rather than the browser's collapsed
         // DOM range; the transaction guard below retains invisible setup.
-        if (!(current.state.selection instanceof AllSelection)) return false;
+        if (!selectingAll || !(current.state.selection instanceof AllSelection))
+          return false;
         current.dispatch(current.state.tr.insertText(text));
         return true;
       },
       handleKeyDown: (current, event) => {
         if (event.isComposing || current.composing) return false;
+        composingSource = false;
         if (
           /^(?:Arrow(?:Left|Right|Up|Down)|PageUp|PageDown|Home|End|Escape|Tab)$/.test(
             event.key,
@@ -1260,16 +1281,20 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               nextState.doc,
               next,
             );
-            if (
-              !latest.current.apply(
-                acceptedSource,
-                next,
-                !transaction.getMeta('isolated') &&
-                  transaction.steps.every(
-                    (step) => step.toJSON().stepType === 'replace',
-                  ),
-              )
-            ) {
+            const typing =
+              !transaction.getMeta('isolated') &&
+              transaction.steps.every(
+                (step) => step.toJSON().stepType === 'replace',
+              );
+            const phase: RenderedCompositionPhase | undefined = composingSource
+              ? firstComposingChange
+                ? 'start'
+                : 'update'
+              : undefined;
+            const applied = phase
+              ? latest.current.apply(acceptedSource, next, typing, phase)
+              : latest.current.apply(acceptedSource, next, typing);
+            if (!applied) {
               setError(
                 'The document changed before this edit could be applied. Your saved source is unchanged.',
               );
@@ -1278,6 +1303,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               editor.updateState(editor.state);
               return;
             }
+            if (phase && next !== acceptedSource) firstComposingChange = false;
             acceptedSource = next;
             projection = rebased;
             setError('');
@@ -1310,6 +1336,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       const previousAllSelection =
         selectingAll || editor.state.selection instanceof AllSelection;
       selectingAll = false;
+      composingSource = false;
       const parsed = parseRenderedSource(next, latest.current.path);
       const position = Math.min(
         editor.state.selection.from,
@@ -1331,12 +1358,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     const sourceChanged = () => {
       if (!editor.composing && !activeMath) onSourceChange();
     };
-    let compositionFrame: number | null = null;
     const afterComposition = () => {
       if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
       compositionFrame = requestAnimationFrame(() => {
         compositionFrame = null;
         sourceChanged();
+        if (!editor.composing) composingSource = false;
       });
     };
     editor.dom.addEventListener('pn-source-change', sourceChanged);

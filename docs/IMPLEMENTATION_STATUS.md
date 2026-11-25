@@ -1,5 +1,11 @@
 # Programmable Notes implementation status
 
+## Active follow-up: incomplete mathematical delimiters
+
+The user clarified that unpaired dollars mean ordinary editable text, with no
+math error notice or global write barrier. Closed invalid TeX stays raw/red.
+This supersedes the older missing-delimiter refusal UX; implementation is pending.
+
 ## Core plugins, hidden setup and recoverable LaTeX
 
 The web workspace now has static bundled Mathematics and React core modules with
@@ -25,7 +31,10 @@ not promoted. A later repeat still found Firefox Undo and WebKit input-commit fa
 promotion remains blocked. Explicit beforeinput/input-only ownership has now
 passed a fresh local gate: **361 unit, 14 tooling, 116 Chromium and 7 Pages-policy**;
 Pages fingerprint `2df713071e4a8c04`. Focused hosted diagnostics are pending and
-the deployed app remains `7628521`. Full failed/passed checkpoints are in the verification record.
+the deployed app remains `7628521`. The next focused run isolated Firefox
+composition Undo; forwarding host composition phases now passes **363 unit,
+14 tooling, 116 Chromium and 7 Pages-policy cases** locally (Pages fingerprint
+`a02f5abbd04aa496`). Hosted confirmation of that correction is pending. Full failed/passed checkpoints are in the verification record.
 
 ## Caret-based mathematics
 

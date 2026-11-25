@@ -40,6 +40,7 @@ import './live/live.css';
 import {
   RenderedEditor,
   type RenderedCommands,
+  type RenderedCompositionPhase,
 } from './rendered/RenderedEditor';
 import type { RenderedRuntimeContext } from './rendered/RenderedRuntime';
 
@@ -156,6 +157,7 @@ export function SourceEditor({
     range?: { from: number; to: number; insert: string },
     sourceInput = false,
     typing = false,
+    composition?: RenderedCompositionPhase,
   ): boolean {
     if (
       rawSource(editor.state) !== expected ||
@@ -181,9 +183,19 @@ export function SourceEditor({
       changes,
       annotations: [
         explicitRawSource.of(next),
-        ...(typing ? [] : [isolateHistory.of('full')]),
+        ...(composition === 'start'
+          ? [isolateHistory.of('before')]
+          : composition || typing
+            ? []
+            : [isolateHistory.of('full')]),
       ],
-      userEvent: typing ? 'input.type' : 'input',
+      userEvent: composition
+        ? composition === 'start'
+          ? 'input.type.compose.start'
+          : 'input.type.compose'
+        : typing
+          ? 'input.type'
+          : 'input',
     });
     return rawSource(editor.state) === next;
   }
@@ -513,7 +525,7 @@ export function SourceEditor({
             if (view.current && !draftRef.current) redo(view.current);
           }}
           openSource={(offset, snapshot) => onShowSource?.(offset, snapshot)}
-          apply={(snapshot, next, typing) => {
+          apply={(snapshot, next, typing, composition) => {
             const editor = view.current;
             if (!editor) return false;
             let from = 0;
@@ -555,6 +567,7 @@ export function SourceEditor({
               { from, to: end, insert: next.slice(from, nextEnd) },
               false,
               typing,
+              composition,
             );
           }}
         />
