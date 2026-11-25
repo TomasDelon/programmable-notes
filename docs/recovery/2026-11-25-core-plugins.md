@@ -303,3 +303,36 @@ Its actual-origin report/screenshots are
 [available here](https://github.com/TomasDelon/programmable-notes/actions/runs/45664885675/artifacts/15046793591).
 These are genuine successful prior checkpoints; the final work-bound head still
 requires fresh clean-checkout CI and hosted browser/deployment acceptance.
+
+## Native source-caret focus race caught by strict CI
+
+At `75caf77`, native-check and the real candidate acceptance
+[45667603710](https://github.com/TomasDelon/programmable-notes/actions/runs/45667603710)
+passed. Mandatory [45667414656](https://github.com/TomasDelon/programmable-notes/actions/runs/45667414656)
+correctly **failed**: the source-navigation test had one flaky Chromium result,
+with 117 other browser cases passing. A keyboard-triggered Show in Source jump
+followed immediately by space insertion put byte 32 before the BOM instead of
+before the intended JSX block. A successful retry did not qualify as acceptance;
+the principal origin was not promoted.
+
+SourceEditor previously focused a newly revealed source viewport before its target
+had been measured/drawn. The navigation command now sets the exact guarded canonical
+caret and requests public CodeMirror measurement before focusing. Its write phase
+does not dispatch while CodeMirror is updating. Visibility, editor instance, source
+snapshot, pending draft and unchanged target-selection checks cancel stale focus.
+
+The new real-editor unit was red on immediate focus and passes with deferral and
+stale-source refusal. The source bridge unit suite passed **14/14**. The exact
+browser case then passed **20/20** with matching Playwright Chromium, zero retries.
+Independent static review found no concrete lifecycle, security or regression
+issue. Optional repeated diagnostics now also select this exact test in all three
+browsers. No source assertion, strict flaky policy, permissions or sandbox was
+weakened. Complete final verification remains necessary after this focused fix.
+
+The corrected source-focus head passed the complete fresh local `npm run check`,
+exit **0**: **381 unit /46 files, 14 tooling (zero skips), 118 Chromium and 8 Pages-
+policy cases**, including formatting/lint/typecheck/build. Pages fingerprint:
+`93553634afb01861`, 77 assets. Current hosted/deployment results are maintained in
+[draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9) for the final
+functional head. Older hashes/results above are checkpoints, not claims about
+which application the principal origin currently serves.

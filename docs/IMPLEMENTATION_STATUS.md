@@ -14,10 +14,15 @@ That follow-up bounds repeated unfinished fences and possible JSX-tag lookahead;
 exhaustion retains exact source and the existing Source fallback, with no write or
 sandbox relaxation.
 
-The local full gate passed **379 unit, 14 tooling, 117 Chromium and 8 Pages-policy
-cases** before the final shared-lookahead change. The final code passed **all 380
-unit tests /46 files**, fresh format/lint/typecheck/build, **15 targeted Chromium**
-and **8 Pages-policy cases**, including exact work-limit recovery and undo/redo.
+The final source-focus correction passed the complete fresh local gate:
+**381 unit tests /46 files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy
+cases**, with format/lint/typecheck/build. Pages fingerprint: `93553634afb01861`,
+77 assets. It also passed 20 zero-retry repetitions of the source-navigation case
+with matching Playwright Chromium. Strict CI had caught immediate native input
+landing before the BOM when revealing a previously hidden Source viewport.
+Navigation now publishes focus after CodeMirror measurement, with source/selection/
+instance guards. The exact case is included in repeated three-browser diagnostics.
+
 The final head's clean-checkout, hosted acceptance and deployment state are
 tracked in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)
 and its checks. Promotion requires mandatory CI, repeated browser diagnostics and

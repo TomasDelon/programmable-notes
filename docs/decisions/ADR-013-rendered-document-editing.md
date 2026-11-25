@@ -185,3 +185,15 @@ breaks, while retaining original raw coordinates and writing physical breaks via
 `preserveMathBreaks`. Normalizing only one comparison operand incorrectly refused
 multiline CRLF/CR formulas. This comparison fix neither changes raw source bytes
 nor relaxes quote/list-prefix exclusion or span revalidation.
+
+### Source navigation and measured focus
+
+When revealing a source offset from a previously hidden editor, set the guarded
+canonical selection first, then publish focus from CodeMirror's public measurement
+write phase. Focusing before its target viewport has been drawn can allow immediate
+native input to reconcile against an old DOM caret. Do not dispatch in the measure
+write phase. Keyed requests supersede prior navigation; the focus callback checks
+visibility, editor identity, exact source snapshot, no pending math draft and the
+still-collapsed target selection. A source revision or user selection change cancels
+that deferred focus. Navigation never applies a source patch or grants preview
+messages editing rights.

@@ -338,3 +338,36 @@ describe('multiline math physical line endings', () => {
     },
   );
 });
+
+it('focuses source navigation only after viewport measurement and refuses a stale deferred focus', () => {
+  const original = '\uFEFFBefore\r\n\r\n<section>Target</section>\r\n';
+  const commands = createRef<EditorCommands>();
+  const mounted = render(
+    <SourceEditor
+      source={original}
+      onChange={vi.fn()}
+      commandsRef={commands}
+    />,
+  );
+  const editor = view(mounted.container);
+  const focus = vi.spyOn(editor, 'focus').mockImplementation(() => {});
+  const measure = vi.spyOn(editor, 'requestMeasure');
+  const target = original.indexOf('<section>');
+  act(() => commands.current!.revealSource(target, original));
+  expect(focus).not.toHaveBeenCalled();
+  expect(editor.state.selection.main.head).toBe(
+    new RawSourceMap(original).toDisplay(target),
+  );
+  const request = measure.mock.calls.at(-1)![0]!;
+  act(() => request.write!(true, editor));
+  expect(focus).toHaveBeenCalledOnce();
+  expect(rawSource(editor.state)).toBe(original);
+  focus.mockClear();
+  act(() => commands.current!.revealSource(target, original));
+  const stale = measure.mock.calls.at(-1)![0]!;
+  act(() => editor.dispatch({ changes: { from: 0, insert: 'New ' } }));
+  act(() => stale.write!(true, editor));
+  expect(focus).not.toHaveBeenCalled();
+  focus.mockRestore();
+  measure.mockRestore();
+});
