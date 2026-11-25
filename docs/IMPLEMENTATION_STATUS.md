@@ -1,5 +1,9 @@
 # Programmable Notes implementation status
 
+## Engineering feedback workflow
+
+Repository-local development skills now define a short outcome/invariants/witness/done contract, affected-engine feedback loops, explicit worker/watch ownership and milestone evidence review. [The operating protocols](AGENT_WORKFLOW.md) and [primary-source research/evaluation](research/2026-11-25-agent-feedback.md) record their scope and limits. The dependency-free evidence checker validates record consistency only; actual execution and security still require observed results. No application behavior, native authority or sandbox policy changes are part of this workflow work. CI concurrency/build-reuse improvements remain separate pending tasks.
+
 ## Unified document text and mathematical editing
 
 The current development change replaces Preview's nested math CodeMirror view

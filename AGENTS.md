@@ -28,6 +28,10 @@ private originals and signing material ignored. Run `bash scripts/scan-secrets.s
 before pushing; do not upload its raw reports. Preserve upstream license texts
 and do not invent a project license.
 
+## Agent feedback workflow
+
+For multi-step implementation or debugging, read [.agents/skills/close-feedback-loop/SKILL.md](.agents/skills/close-feedback-loop/SKILL.md). For milestone evidence aggregation, read [.agents/skills/check-delivery-evidence/SKILL.md](.agents/skills/check-delivery-evidence/SKILL.md). Load only the relevant skill and references. [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md) defines the short task contract, targeted-to-final validation, worker/watch ownership and evidence limitations. This supplements the mandatory checks below; it does not relax source fidelity, security or authorization.
+
 ## Development and checks
 
 - `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` starts development. Verify an HTTP response and use a browser smoke test for rendered behavior; a listening process alone is not validation.
