@@ -453,24 +453,71 @@ test('invalid LaTeX stays red and editable without blocking other text or later 
   await expect(view.locator('.katex')).toHaveCount(2);
 });
 
-test('literal mathematics work budget retains exact source and recovers through source editing and undo', async ({
+test('literal mathematics work budget reports its refusal, retains exact source and recovers through source editing and undo', async ({
   page,
 }) => {
   const original = '\uFEFF' + '$$draft\r\n'.repeat(1000);
+  const recovered = '# Recovered\n\n$x^2$';
   await importNote(page, original);
   await command(page, 'Preview document');
   const view = page.getByRole('textbox', { name: 'Editable document' });
   await expect(view.locator('pre code')).toContainText('$$draft');
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  try {
+    const notice = page.getByRole('alert');
+    await expect(notice).toHaveCount(1, { timeout: 20000 });
+    await expect(notice).toHaveAttribute(
+      'data-notification-id',
+      'document-preview',
+    );
+    await expect(notice).toContainText('Preview needs attention');
+    await notice.getByRole('button', { name: 'Details', exact: true }).click();
+    const detail = page.getByRole('dialog', {
+      name: 'Notification details',
+    });
+    await expect(detail.locator('pre')).toContainText(
+      'Mathematical source analysis reached its work limit. Source remains available.',
+    );
+    await detail.getByRole('button', { name: 'Close details' }).click();
+  } catch (failure) {
+    const alerts = await page.getByRole('alert').evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        id: node.getAttribute('data-notification-id'),
+        text: node.textContent,
+      })),
+    );
+    const details = page
+      .getByRole('alert')
+      .getByRole('button', { name: 'Details', exact: true });
+    const dialog = page.getByRole('dialog', { name: 'Notification details' });
+    let detail = '';
+    if (await dialog.isVisible()) {
+      detail = await dialog.innerText();
+    } else if (await details.count()) {
+      await details.first().click();
+      detail = await dialog.innerText();
+    }
+    const diagnostic = JSON.stringify({ alerts, detail }, null, 2);
+    await test.info().attach('literal-math-budget-alerts', {
+      body: diagnostic,
+      contentType: 'application/json',
+    });
+    throw new Error(`Unexpected literal-math budget alert: ${diagnostic}`, {
+      cause: failure,
+    });
+  }
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await command(page, 'Edit source');
   const source = page.getByRole('textbox', { name: 'MDX source' });
   await source.press('Control+a');
-  await page.keyboard.insertText('# Recovered\n\n$x^2$');
+  await page.keyboard.insertText(recovered);
   await source.press('Control+z');
   expect(await exportSource(page)).toEqual(Buffer.from(original));
   await source.press('Control+Shift+z');
   await command(page, 'Preview document');
   await expect(view.getByRole('heading', { name: 'Recovered' })).toBeVisible();
   await expect(view.locator('.katex')).toHaveCount(1);
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(await exportSource(page)).toEqual(
+    Buffer.from(recovered.replaceAll('\n', '\r\n')),
+  );
 });

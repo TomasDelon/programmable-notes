@@ -336,3 +336,76 @@ policy cases**, including formatting/lint/typecheck/build. Pages fingerprint:
 [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9) for the final
 functional head. Older hashes/results above are checkpoints, not claims about
 which application the principal origin currently serves.
+
+## Synchronous source-navigation readiness
+
+Mandatory [45670484334](https://github.com/TomasDelon/programmable-notes/actions/runs/45670484334)
+at `9fefacf` again correctly failed on one flaky browser result. The new asynchronous
+focus fixed the original target-jump repeat but introduced an input-readiness gap
+when a diagnostic selected another file: the Unicode-line-terminator test typed
+immediately after clicking and its comment insertion was lost. Its assertion and
+immediate typing sequence were retained, rather than adding a delay to hide it.
+
+The replacement uses the public CodeMirror geometry API to synchronously flush
+requested measurement before publishing focus. It rechecks the current source,
+selection, editor instance, draft and visibility afterwards. No effect ordering,
+permission or source-coordinate policy was changed, and no private view APIs or
+measurement-write dispatch were introduced. The updated unit was red before this
+change and passed with it; the real-editor suite passed **14/14**. Independent static
+review found no concrete issue. Both the original jump and immediate Unicode
+navigation cases are selected by the zero-retry three-browser diagnostics.
+
+Local direct requests to Pages returned HTTP 403 from this cloud workspace; actual
+hosting validation is performed by the existing GitHub Ubuntu browser jobs. This
+local infrastructure observation is not a claim that the hosted app failed.
+
+## Parallel investigation and corrected resource-test contract
+
+Following the owner's request, independent agents investigated Home/Backspace and
+the WebKit work-budget notice while source-focus work remained with the parent.
+The repeated `9fefacf` workflow
+[45670476172](https://github.com/TomasDelon/programmable-notes/actions/runs/45670476172)
+reported **247 passed, 2 failed, 30 explicit Chromium-only IME skips**. Failures
+were native Home positioning in Chromium and the adversarial work-budget test's
+zero-alert assumption in WebKit. Neither result was promoted.
+
+The original strict Home test reproduced locally before the fix: **11/12 passed,
+1 failed at the identical native heading-start assertion**. Its pre-fix trace is
+retained in ignored local evidence. The fix owns only unmodified collapsed Home/End
+on a text-only block proven to occupy one visual line. The unchanged browser test
+then passed **12/12** with matching Chromium. Wrapped blocks, inline atoms and
+modified selections retain their native behavior. Static review additionally found
+that an equal PM selection dispatch can skip DOM synchronization; the handler now
+explicitly calls public focus, with a new red/green same-selection regression.
+The rendered-editor unit suite passed **23/23** after that addition.
+
+The WebKit alert was reproduced on Chromium by allowing background compilation to
+finish. It is the genuine `document-preview` resource refusal: mathematical source
+analysis reached its work limit and Source remains available. The earlier test had
+incorrectly required zero alerts while deliberately exceeding the security budget.
+The runtime/compiler and the guard were not changed or suppressed. This adversarial
+test now waits for that exact refusal and verifies exact original BOM/CRLF bytes,
+Source correction, undo/redo, rendered recovery and cleared alerts. Normal unmatched
+and invalid closed mathematics tests still require no error notifications. The
+corrected targeted test passed **3/3**, without retries; inserted newlines correctly
+inherit the imported CRLF convention. Failure-only diagnostics expose synthetic
+fixture alert IDs/details when something unexpected occurs.
+
+The synchronous source-navigation implementation also passed **40/40** matching-
+Chromium repetitions across both the original target-jump and immediate Unicode
+file-diagnostic cases, zero retries. The parent full check before the Home change
+independently caught the same Home bug (117 other browser cases passed). A fresh
+combined gate is required for the integrated fixes; current hosted/deployment
+results are tracked in PR #9. All preceding failed checkpoints remain recorded.
+
+## Integrated local acceptance after parallel fixes
+
+The complete fresh local `npm run check` exited **0** with all integrated changes:
+**384 unit tests /46 files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy
+cases**, including format/lint/strict typecheck/production build. Pages fingerprint:
+`c8b59c0dc04e7759`, 77 assets. This run includes synchronous source measurement,
+native Home/End synchronization and the exact work-limit/refusal/recovery contract.
+No application code changed after this gate. Final hosted and principal-origin
+results are maintained in PR #9 for the functional head, rather than inferred from
+older source commits or passing retries. Native GUI and physical Android remain
+separate, unexecuted validations for this web milestone.

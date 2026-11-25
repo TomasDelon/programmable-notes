@@ -14,14 +14,20 @@ That follow-up bounds repeated unfinished fences and possible JSX-tag lookahead;
 exhaustion retains exact source and the existing Source fallback, with no write or
 sandbox relaxation.
 
-The final source-focus correction passed the complete fresh local gate:
-**381 unit tests /46 files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy
-cases**, with format/lint/typecheck/build. Pages fingerprint: `93553634afb01861`,
-77 assets. It also passed 20 zero-retry repetitions of the source-navigation case
-with matching Playwright Chromium. Strict CI had caught immediate native input
-landing before the BOM when revealing a previously hidden Source viewport.
-Navigation now publishes focus after CodeMirror measurement, with source/selection/
-instance guards. The exact case is included in repeated three-browser diagnostics.
+The integrated code passed the complete fresh local gate: **384 unit tests /46
+files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy cases**, including
+format/lint/typecheck/build. Pages fingerprint: `c8b59c0dc04e7759`, 77 assets.
+Synchronous source navigation passed 40 matching-Chromium repetitions, covering
+both target jumps and immediate Unicode file-diagnostic input. The independently
+reproduced Home defect is fixed through narrowly owned single-visual-line Home/End
+selection and explicit native synchronization. Wrapped blocks, modifiers and inline
+JSX/math retain their existing behavior.
+
+The adversarial work-budget regression asserts the actual resource refusal, exact
+BOM/CRLF preservation, Source correction, undo/redo, rendered recovery and cleared
+alerts. Ordinary incomplete dollars and invalid closed TeX still require no error
+notifications. No runtime error or guard was suppressed. Details and genuine prior
+failures are retained in the verification record.
 
 The final head's clean-checkout, hosted acceptance and deployment state are
 tracked in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)
