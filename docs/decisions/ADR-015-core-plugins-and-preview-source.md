@@ -80,3 +80,14 @@ validation and authority checks. It adds no document-visible API.
 The later user requirement supersedes the earlier missing-delimiter refusal:
 unpaired math delimiters must be editable literal text. Only closed invalid TeX
 gets red feedback. Implementation and verification of that follow-up are pending.
+
+## Single-line Home/End ownership
+
+Hidden setup atoms can leave native Home/End selection at a different position
+than the visible text block. The editor owns these keys only for an unmodified,
+collapsed text selection in a text-only block whose public ProseMirror coordinates
+prove it occupies one positive-height visual line. It sets the endpoint selection
+and explicitly synchronizes native selection through the public focus API, even
+when the model selection was already equal. Wrapped blocks, extended/modified
+selections and inline JSX/math retain native navigation. No text or source patch
+is authorized by a caret-only command.

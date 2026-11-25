@@ -1183,6 +1183,46 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           !current.state.selection.empty
         )
           return false;
+        if (
+          (event.key === 'Home' || event.key === 'End') &&
+          current.state.selection instanceof TextSelection
+        ) {
+          const head = current.state.selection.$head;
+          let textOnly = head.parent.isTextblock;
+          head.parent.forEach((child) => {
+            if (!child.isText) textOnly = false;
+          });
+          if (textOnly) {
+            const start = head.start();
+            const end = head.end();
+            const first = current.coordsAtPos(start, 1);
+            const last = current.coordsAtPos(end, -1);
+            if (
+              first.bottom > first.top &&
+              last.bottom > last.top &&
+              Math.abs(first.top - last.top) < 1 &&
+              Math.abs(first.bottom - last.bottom) < 1
+            ) {
+              // Native Home/End can normalize the DOM caret around hidden
+              // setup atoms. Own the unambiguous single-line text selection;
+              // wrapped lines and inline node views keep browser navigation.
+              current.dispatch(
+                current.state.tr
+                  .setSelection(
+                    TextSelection.create(
+                      current.state.doc,
+                      event.key === 'Home' ? start : end,
+                    ),
+                  )
+                  .scrollIntoView(),
+              );
+              // Also repair a native caret when the model selection was already
+              // at this endpoint (an equal-selection dispatch skips DOM sync).
+              current.focus();
+              return true;
+            }
+          }
+        }
         const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
         const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
         if (!forward && !backward) return false;

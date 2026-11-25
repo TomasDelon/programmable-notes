@@ -1,3 +1,5 @@
+import { TextSelection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 import { EditorView as MathView } from '@codemirror/view';
 import {
   act,
@@ -698,4 +700,99 @@ it('does not promote dollars from composing DOM through the ordinary text-input 
   expect(
     screen.queryByRole('textbox', { name: 'Inline LaTeX source' }),
   ).not.toBeInTheDocument();
+});
+
+it('owns unmodified Home and End within a single visible text line after hidden setup', () => {
+  const props = propsFor('export const preserved = 1\n\n# Components\n');
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  // Layout is supplied explicitly: jsdom does not know visual line boundaries.
+  const coordinates = vi
+    .spyOn(EditorView.prototype, 'coordsAtPos')
+    .mockReturnValue({ left: 20, right: 20, top: 10, bottom: 30 });
+  const nativeSync = vi.spyOn(EditorView.prototype, 'focus');
+  const current = () => coordinates.mock.contexts.at(-1) as EditorView;
+  const selection = () => current().state.selection;
+  try {
+    expect(fireEvent.keyDown(editor, { key: 'End' })).toBe(false);
+    expect(selection().$head.parentOffset).toBe('Components'.length);
+    expect(selection().$head.parent.type.name).toBe('heading');
+    expect(fireEvent.keyDown(editor, { key: 'Home' })).toBe(false);
+    expect(selection().$head.parentOffset).toBe(0);
+    const previousSyncs = nativeSync.mock.calls.length;
+    // An equal model selection can still have a drifted native DOM caret.
+    expect(fireEvent.keyDown(editor, { key: 'Home' })).toBe(false);
+    expect(nativeSync).toHaveBeenCalledTimes(previousSyncs + 1);
+    expect(selection().$head.parent.type.name).toBe('heading');
+    act(() => {
+      current().dispatch(
+        current().state.tr.setSelection(
+          TextSelection.create(
+            current().state.doc,
+            selection().from,
+            selection().from + 2,
+          ),
+        ),
+      );
+    });
+    expect(fireEvent.keyDown(editor, { key: 'Home' })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: 'End' })).toBe(true);
+    expect(selection().to - selection().from).toBe(2);
+    expect(props.apply).not.toHaveBeenCalled();
+  } finally {
+    nativeSync.mockRestore();
+    coordinates.mockRestore();
+  }
+});
+
+it('leaves Home and End to the browser for wrapped text and modified keys', () => {
+  const props = propsFor(
+    'export const preserved = 1\n\nA wrapped paragraph.\n',
+  );
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  const coordinates = vi
+    .spyOn(EditorView.prototype, 'coordsAtPos')
+    .mockImplementation(function (this: EditorView, position) {
+      const top = position === this.state.selection.$head.start() ? 10 : 40;
+      return { left: 20, right: 20, top, bottom: top + 20 };
+    });
+  try {
+    expect(fireEvent.keyDown(editor, { key: 'Home' })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: 'End' })).toBe(true);
+    coordinates.mockReturnValue({ left: 20, right: 20, top: 10, bottom: 30 });
+    for (const modifier of ['shiftKey', 'ctrlKey', 'altKey', 'metaKey']) {
+      expect(fireEvent.keyDown(editor, { key: 'Home', [modifier]: true })).toBe(
+        true,
+      );
+      expect(fireEvent.keyDown(editor, { key: 'End', [modifier]: true })).toBe(
+        true,
+      );
+    }
+    expect(props.apply).not.toHaveBeenCalled();
+  } finally {
+    coordinates.mockRestore();
+  }
+});
+
+it('leaves Home and End to the browser beside inline JSX node views', () => {
+  const props = propsFor('Before <Badge /> after.\n');
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  expect(editor.querySelector('.rendered-source-block')).not.toBeNull();
+  const coordinates = vi
+    .spyOn(EditorView.prototype, 'coordsAtPos')
+    .mockReturnValue({
+      left: 20,
+      right: 20,
+      top: 10,
+      bottom: 30,
+    });
+  try {
+    expect(fireEvent.keyDown(editor, { key: 'Home' })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: 'End' })).toBe(true);
+    expect(props.apply).not.toHaveBeenCalled();
+  } finally {
+    coordinates.mockRestore();
+  }
 });
