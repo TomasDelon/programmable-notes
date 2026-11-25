@@ -130,3 +130,43 @@ lint, strict TypeScript and a fresh production build. The Pages fingerprint is
 plugin/lifecycle suite **8/8** with zero retries. The stricter CI flaky-test policy was
 also typechecked; local runs leave `CI` unset, while hosted acceptance exercises
 that policy. Final hosted verification/promotion is still pending here.
+
+## Input ownership and remaining browser diagnostics
+
+At `23aeea9`, mandatory check/native-check passed cleanly in
+[run 45611308853](https://github.com/TomasDelon/programmable-notes/actions/runs/45611308853)
+(**116 Chromium plus 6 Pages-policy**, no flaky result). The immutable candidate
+passed **18/18** in [run 45611521638](https://github.com/TomasDelon/programmable-notes/actions/runs/45611521638).
+However [repeat 45611370970](https://github.com/TomasDelon/programmable-notes/actions/runs/45611370970)
+reported **195 passed, 9 failed, 30 skips for Chromium-only IME fixtures**. Firefox
+replacement now preserved setup and removed selected JSX but Undo failed to restore
+the heading. WebKit showed replacement in DOM without committing canonical source.
+The principal origin was not updated.
+
+Own AllSelection text input in both cancellable `beforeinput` and input-only
+insertion paths, always through the existing source guards. Two unit regressions
+failed before their corresponding handlers and passed afterwards; the rendered
+unit suite passed **17/17**. Failure diagnostics capture only synthetic fixture
+source and event metadata, distinguishing canonical Undo from a deferred visual
+refresh. No document-controlled debug API is added to the production application.
+
+The fresh complete local gate exited **0**: **361 unit /45 files, 14 tooling
+(zero skips), 116 Chromium and 7 Pages-policy cases passed**, plus format/lint/type/
+build. Pages fingerprint: `2df713071e4a8c04`, 77 assets. The new actual-origin
+acceptance case verifies selection replacement, exact hidden setup, undo/redo,
+saving and reopening. Hosted verification of this correction remains pending.
+
+Optional `editing_core_only=true` narrows the existing diagnostics job to the
+core-plugin interaction file; it still repeats three times without retries.
+Default diagnostics and all mandatory PR tests/security/package checks are intact.
+This provides shorter reproducible debugging on standard hosted Ubuntu runners,
+without requiring a new service or weakening acceptance.
+
+Local Firefox investigation found a read-only default configuration directory;
+an isolated writable XDG configuration allowed startup, then content processes
+failed with `Sandbox: writing /proc/self/uid_map: EROFS`. The permitted isolated
+startup outside the command sandbox opened a blank page successfully; the actual
+outside-sandbox application test was aborted before execution and is not a pass.
+Do not disable Firefox's sandbox. Hosted Ubuntu is the available full-browser
+validation environment. Raw artifact download was Forbidden in this workspace;
+GitHub artifact links remain the owner-accessible reproduction/evidence route.

@@ -503,3 +503,54 @@ it('preserves the math activation target when a source edit only shifts its offs
   observer.disconnect();
   expect(removed).not.toContain(button);
 });
+
+it('owns replacement text before a browser can mutate an unrepresentable Select All range', () => {
+  const source = 'export const preserved = 1\n\nA visible paragraph.\n';
+  const props = propsFor(source);
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  act(() => fireEvent.keyDown(editor, { key: 'a', ctrlKey: true }));
+  const input = new InputEvent('beforeinput', {
+    bubbles: true,
+    cancelable: true,
+    inputType: 'insertText',
+    data: 'Replacement body.',
+  });
+  act(() => editor.dispatchEvent(input));
+  expect(input.defaultPrevented).toBe(true);
+  expect(props.apply).toHaveBeenCalledWith(
+    source,
+    expect.stringContaining('Replacement body.'),
+    false,
+  );
+  const next = (props.apply as ReturnType<typeof vi.fn>).mock.calls.at(
+    -1,
+  )![1] as string;
+  expect(next).toContain('export const preserved = 1');
+  expect(next).not.toContain('A visible paragraph.');
+});
+
+it('commits input-only Select All replacement once while preserving hidden setup', () => {
+  const source = 'export const preserved = 1\n\nA visible paragraph.\n';
+  const props = propsFor(source);
+  const mounted = render(<RenderedEditor {...props} />);
+  const editor = mounted.container.querySelector('.ProseMirror')!;
+  act(() => fireEvent.keyDown(editor, { key: 'a', ctrlKey: true }));
+  // OS/browser insertion APIs can emit input without a cancellable beforeinput.
+  act(() => {
+    editor.querySelector('p')!.textContent = 'Replacement body.';
+    editor.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        inputType: 'insertText',
+        data: 'Replacement body.',
+      }),
+    );
+  });
+  expect(props.apply).toHaveBeenCalledTimes(1);
+  const next = (props.apply as ReturnType<typeof vi.fn>).mock
+    .calls[0]![1] as string;
+  expect(next).toContain('export const preserved = 1');
+  expect(next).toContain('Replacement body.');
+  expect(next).not.toContain('A visible paragraph.');
+});

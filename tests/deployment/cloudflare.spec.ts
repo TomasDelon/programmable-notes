@@ -403,3 +403,50 @@ test('core plugins, hidden setup and nonblocking invalid mathematics work in the
   await expect(view.locator('.katex')).toBeVisible();
   expect(await exported(page)).toEqual(Buffer.from(original));
 });
+
+test('hidden setup survives real selection replacement, undo, redo and exact reopening', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const original =
+    '\uFEFFimport {useState} from "react"\r\n\r\nexport function Counter(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Count {n}</button>}\r\n\r\n# Hosted selection\r\n\r\nKeep setup intact.\r\n\r\n<Counter />\r\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Selection.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await expect(
+    page.getByRole('textbox', { name: 'Document title' }),
+  ).toHaveValue('Selection');
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view
+    .getByRole('heading', { name: 'Hosted selection', exact: true })
+    .click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.insertText('Replacement body.');
+  await expect(view).toContainText('Replacement body.');
+  const changed = (await exported(page)).toString();
+  expect(
+    changed.startsWith(
+      original.slice(0, original.indexOf('# Hosted selection')),
+    ),
+  ).toBe(true);
+  expect(changed).toContain('Replacement body.');
+  expect(changed).not.toContain('<Counter />');
+  await view.getByText('Replacement body.', { exact: true }).click();
+  await page.keyboard.press('Control+z');
+  await expect(
+    view.getByRole('heading', { name: 'Hosted selection', exact: true }),
+  ).toBeVisible();
+  expect(await exported(page)).toEqual(Buffer.from(original));
+  await view
+    .getByRole('heading', { name: 'Hosted selection', exact: true })
+    .click();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(view).toContainText('Replacement body.');
+  expect(await exported(page)).toEqual(Buffer.from(changed));
+  await saved(page);
+  await page.reload();
+  expect(await exported(page)).toEqual(Buffer.from(changed));
+});

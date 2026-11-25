@@ -21,8 +21,11 @@ After cross-browser selection corrections, the full local gate passed again
 with the same counts. Pages fingerprint: `2924a01765a41438`, 77 assets. CI now
 refuses flaky acceptance even if a retry passes. The first hosted candidate
 passed 18 actual-origin cases but failed repeated selection diagnostics and was
-not promoted. The corrected hosted validation is pending; the deployed app
-remains `7628521`. Full failed/passed checkpoints are in the verification record.
+not promoted. A later repeat still found Firefox Undo and WebKit input-commit failures, so
+promotion remains blocked. Explicit beforeinput/input-only ownership has now
+passed a fresh local gate: **361 unit, 14 tooling, 116 Chromium and 7 Pages-policy**;
+Pages fingerprint `2df713071e4a8c04`. Focused hosted diagnostics are pending and
+the deployed app remains `7628521`. Full failed/passed checkpoints are in the verification record.
 
 ## Caret-based mathematics
 

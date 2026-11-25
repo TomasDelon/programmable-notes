@@ -215,6 +215,52 @@ test('preview messages cannot change core settings or expose underlying source',
 test('hidden setup survives boundary Backspace and selecting/replacing the visible document', async ({
   page,
 }) => {
+  // Failure diagnostics use only synthetic fixture metadata, never user data.
+  await page.evaluate(() => {
+    const events: unknown[] = [];
+    (
+      window as unknown as { __pnSelectionEvents: unknown[] }
+    ).__pnSelectionEvents = events;
+    for (const type of [
+      'keydown',
+      'beforeinput',
+      'input',
+      'compositionstart',
+      'compositionend',
+      'pn-source-change',
+    ]) {
+      document.addEventListener(
+        type,
+        (event) => {
+          if (event instanceof KeyboardEvent && event.key.toLowerCase() !== 'z')
+            return;
+          const target = event.target instanceof Element ? event.target : null;
+          queueMicrotask(() => {
+            events.push({
+              type,
+              key: event instanceof KeyboardEvent ? event.key : null,
+              ctrl: event instanceof KeyboardEvent ? event.ctrlKey : null,
+              meta: event instanceof KeyboardEvent ? event.metaKey : null,
+              keyCode: event instanceof KeyboardEvent ? event.keyCode : null,
+              active: document.activeElement?.getAttribute('aria-label'),
+              composing:
+                event instanceof InputEvent || event instanceof KeyboardEvent
+                  ? event.isComposing
+                  : null,
+              inputType: event instanceof InputEvent ? event.inputType : null,
+              prevented: event.defaultPrevented,
+              target: target?.getAttribute('aria-label'),
+              sourceHasReplacement: document
+                .querySelector('[aria-label="MDX source"]')
+                ?.textContent?.includes('Replacement body.'),
+            });
+            if (events.length > 40) events.shift();
+          });
+        },
+        true,
+      );
+    }
+  });
   // Keep the source-only declarations as a prefix; selection must refer to the
   // visible body, not to invisible imports/exports preceding it.
   const exact = original.replace('{/* Hidden comment */}\r\n\r\n', '');
@@ -269,9 +315,26 @@ test('hidden setup survives boundary Backspace and selecting/replacing the visib
   expect(next).not.toContain('<Counter />');
   await view.getByText('Replacement body.', { exact: true }).click();
   await page.keyboard.press('Control+z');
-  await expect(
-    view.getByRole('heading', { name: 'Components', exact: true }),
-  ).toBeVisible();
+  try {
+    await expect(
+      view.getByRole('heading', { name: 'Components', exact: true }),
+    ).toBeVisible();
+  } catch {
+    const events = await page.evaluate(() =>
+      (
+        window as unknown as { __pnSelectionEvents: unknown[] }
+      ).__pnSelectionEvents.slice(-20),
+    );
+    download = page.waitForEvent('download');
+    await command(page, 'Export current source');
+    const canonical = readFileSync((await (await download).path())!).toString();
+    throw new Error(
+      'Undo heading was not restored; canonical=' +
+        JSON.stringify(canonical) +
+        '; events=' +
+        JSON.stringify(events),
+    );
+  }
   download = page.waitForEvent('download');
   await command(page, 'Export current source');
   expect(readFileSync((await (await download).path())!)).toEqual(

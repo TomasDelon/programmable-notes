@@ -992,8 +992,35 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           selectingAll = false;
           return false;
         },
-        beforeinput: (_editor, event) => {
+        input: (current, event) => {
+          if (
+            latest.current.disabled ||
+            current.composing ||
+            !(event instanceof InputEvent) ||
+            event.isComposing ||
+            event.inputType !== 'insertText' ||
+            typeof event.data !== 'string' ||
+            !(current.state.selection instanceof AllSelection)
+          )
+            return false;
+          // Some insertion APIs emit only input. Reconcile that native DOM
+          // mutation through the same owned selection and guarded source patch.
+          current.dispatch(current.state.tr.insertText(event.data));
+          return true;
+        },
+        beforeinput: (current, event) => {
           if (latest.current.disabled || event.isComposing) return false;
+          if (
+            current.state.selection instanceof AllSelection &&
+            event.inputType === 'insertText' &&
+            typeof event.data === 'string'
+          ) {
+            // WebKit may not report a useful DOM mutation for its normalized
+            // native range. Apply the host-owned selection before DOM editing.
+            event.preventDefault();
+            current.dispatch(current.state.tr.insertText(event.data));
+            return true;
+          }
           if (
             event.inputType !== 'historyUndo' &&
             event.inputType !== 'historyRedo'
