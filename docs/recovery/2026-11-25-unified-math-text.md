@@ -189,3 +189,55 @@ seven-day artifact lifetime. No new packaged native GUI or physical Android
 keyboard validation was run for this web correction. Native `/engine` keeps its
 existing UI and authority boundaries. Compilation does not establish native
 runtime security or production readiness.
+
+## WebKit internal-caret acceptance failure
+
+At `19698ac`, mandatory clean-checkout CI passed both jobs and the immutable
+Cloudflare candidate passed all 24 cases across Chromium, Firefox and WebKit.
+The broader zero-retry repeated matrix nevertheless failed: **324 passed,
+3 failed, 42 intentional skips**. All three failures were WebKit's first native
+ArrowRight inside already-revealed inline mathematical source: expected raw
+text offset 2, observed offset 1. The main site was not promoted. The failed run
+and downloadable diagnostic report are linked in draft PR #9.
+
+The exact DOM-selection assertion was instrumented with bounded condition-based
+observation, without extra keys, retries or a changed acceptance contract. Actual
+local WebKit remained at offset 1 for five seconds rather than moving to offset 2:
+this is a genuine stationary caret, not delayed test observation. The engine was
+run with verified Debian runtime libraries extracted into the ignored workspace,
+without system installation, browser modification or isolation changes.
+
+A deterministic public-Selection probe confirms the editor writes the caret while
+its mathematical text is still hidden, then reveals it in a later plugin-view
+update. The corrective regression requires source visibility before native caret
+synchronization. Selection-driven node decorations now enforce that normal ProseMirror lifecycle
+order, rather than implementing character-wise caret motion or changing the
+acceptance positions. The same actual WebKit case then passed **3/3 repetitions**,
+zero retries, against an isolated fresh production build. The new collapsed and
+Shift-selection ordering regressions passed, with **55/55 focused editor units**.
+The broader actual WebKit run then passed **21/21 cases** (all seven cases
+repeated three times), zero retries, skips or flaky cases. Native-selection
+attachments show the correct positions immediately on all three fixed arrow
+cases; polling did not hide a delayed movement. Full-suite and broader hosted
+acceptance are still required on the final head.
+
+The separate unchanged system-Chromium 156 security control also passed **20/20
+repetitions**, zero retries. Both it and the matching-browser control passed;
+neither explains the earlier absent result. That failed observation remains
+recorded and is not recategorized as a successful denial or browser-version bug.
+
+## Final WebKit-order correction gate
+
+The fresh complete `npm run check` after the ordering correction exited 0:
+**428 unit tests /48 files, 14 tooling (zero skips), 128 matching-Chromium browser
+cases and 8 Pages-policy cases**, plus formatting, lint, strict TypeScript and
+optimized build. Ordinary fingerprint: `07379478d76c65a7`; Pages-policy
+fingerprint: `ba3b18a42210f424`, 77 assets. The isolated build used for all 21
+actual WebKit cases has the same ordinary fingerprint. Independent read-only
+review found no concrete source/history/CAS/recovery or authority regression.
+
+New-head mandatory CI, full repeated three-browser diagnostics and actual
+candidate/main-origin acceptance are still promotion requirements. Their exact
+results and downloadable reports are recorded in draft PR #9 after execution,
+without substituting earlier-head successes or introducing documentation-only
+build churn. No new native GUI or physical keyboard validation is claimed.

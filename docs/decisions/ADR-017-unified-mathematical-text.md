@@ -43,6 +43,12 @@ movement and movement within or out of source retain native behavior. These
 selection-only bridges repair browser skipping of hidden source without creating
 history events or adding field focus.
 
+Selection-driven node decorations update mathematical NodeViews before the owning
+view synchronizes its native caret. Revealing source only in a later plugin-view
+update lets WebKit report a position inside hidden text while its visual caret
+remains stationary. The visibility change therefore participates in the normal
+ProseMirror DOM update; no character-by-character cursor implementation is added.
+
 The paragraph schema explicitly declares `whitespace: 'pre'`, matching its
 existing LF-preserving text model and `white-space: pre-wrap` presentation.
 Without that declaration ProseMirror's native DOM reconciliation converts LF to

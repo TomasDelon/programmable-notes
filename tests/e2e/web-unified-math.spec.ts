@@ -228,7 +228,7 @@ test('removing a math delimiter does not expose internally encoded spaces as cha
 
 test('arrow keys and extended selection traverse mathematical text in the document', async ({
   page,
-}) => {
+}, testInfo) => {
   const original = '# Keyboard navigation\n\nA $x$ B.\n';
   const editor = await open(page, original);
   const paragraph = editor.locator('p');
@@ -255,38 +255,72 @@ test('arrow keys and extended selection traverse mathematical text in the docume
       };
     });
 
-  await boundary('before');
-  await page.keyboard.press('ArrowRight');
-  await expect(raw).toBeVisible();
-  await expect(editor).toBeFocused();
-  expect(await nativeCaret()).toEqual({ within: true, offset: 1, text: '$x$' });
-  // Each raw character belongs to the same document selection, including dollars.
-  for (let step = 2; step <= 3; step++) {
+  const observations: unknown[] = [];
+  const caretDiagnostic = () =>
+    raw.evaluate((element) => {
+      const selection = window.getSelection()!;
+      return {
+        within: element.contains(selection.anchorNode),
+        offset: selection.anchorOffset,
+        text: selection.anchorNode?.textContent,
+        activeTag: document.activeElement?.tagName,
+        activeClass: document.activeElement?.className,
+        sourceHidden: (element as HTMLElement).hidden,
+      };
+    });
+  const observeCaret = async (expectedOffset: number) => {
+    const immediate = await caretDiagnostic();
+    try {
+      await expect.poll(nativeCaret).toEqual({
+        within: true,
+        offset: expectedOffset,
+        text: '$x$',
+      });
+    } finally {
+      observations.push({
+        expectedOffset,
+        immediate,
+        final: await caretDiagnostic(),
+      });
+    }
+  };
+
+  try {
+    await boundary('before');
     await page.keyboard.press('ArrowRight');
-    expect(await nativeCaret()).toEqual({
-      within: true,
-      offset: step,
-      text: '$x$',
+    await expect(raw).toBeVisible();
+    await expect(editor).toBeFocused();
+    await observeCaret(1);
+    // Each raw character belongs to the same document selection, including dollars.
+    for (let step = 2; step <= 3; step++) {
+      await page.keyboard.press('ArrowRight');
+      await observeCaret(step);
+    }
+    await page.keyboard.press('ArrowRight');
+    await expect(editor.locator('.rendered-math-render')).toBeVisible();
+
+    await boundary('after');
+    await page.keyboard.press('ArrowLeft');
+    await expect(raw).toBeVisible();
+    await observeCaret(2);
+    await expect(editor).toBeFocused();
+
+    await boundary('before');
+    await page.keyboard.down('Shift');
+    for (let step = 0; step < 6; step++)
+      await page.keyboard.press('ArrowRight');
+    await page.keyboard.up('Shift');
+    await expect
+      .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+      .toContain('$x$');
+    await expect(editor).toBeFocused();
+    expect(await exported(page)).toEqual(Buffer.from(original));
+  } finally {
+    await testInfo.attach('mathematical-caret-observations', {
+      body: JSON.stringify(observations),
+      contentType: 'application/json',
     });
   }
-  await page.keyboard.press('ArrowRight');
-  await expect(editor.locator('.rendered-math-render')).toBeVisible();
-
-  await boundary('after');
-  await page.keyboard.press('ArrowLeft');
-  await expect(raw).toBeVisible();
-  expect(await nativeCaret()).toEqual({ within: true, offset: 2, text: '$x$' });
-  await expect(editor).toBeFocused();
-
-  await boundary('before');
-  await page.keyboard.down('Shift');
-  for (let step = 0; step < 6; step++) await page.keyboard.press('ArrowRight');
-  await page.keyboard.up('Shift');
-  await expect
-    .poll(() => page.evaluate(() => window.getSelection()?.toString()))
-    .toContain('$x$');
-  await expect(editor).toBeFocused();
-  expect(await exported(page)).toEqual(Buffer.from(original));
 });
 
 test('arrow navigation enters and leaves displayed mathematics from neighboring paragraphs', async ({

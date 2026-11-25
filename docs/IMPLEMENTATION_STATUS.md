@@ -17,10 +17,10 @@ finishes its provisional DOM read, then its whole attempt is retained without a
 canonical write and the surface becomes read-only. Source revisions, opaque JSX,
 filesystem/IPC grants, disabled history and recovery guards remain mandatory.
 
-The final complete fresh local `npm run check` passed: **426 unit tests /48 files,
+The final complete fresh local `npm run check` passed: **428 unit tests /48 files,
 14 tooling (zero skips), 128 Chromium browser cases and 8 Pages-policy cases**,
 plus formatting, lint, strict TypeScript and production build. Pages fingerprint:
-`fc20e87af304619a`, 77 assets. The seven focused real-browser math/navigation
+`ba3b18a42210f424`, 77 assets. The seven focused real-browser math/navigation
 cases also passed with zero retries. Failed checkpoints and their causes remain
 in the dated verification record.
 
@@ -28,9 +28,20 @@ The final gate used matching Playwright Chromium 1255 (Chrome for Testing
 159.0.8154.6). A separate system-Chromium 156 run produced one absent security
 probe report; it remains recorded, not accepted or silently retried. The unchanged
 probe passed 20/20 matching-browser repetitions and the full matching gate.
+An unchanged system-browser control also passed 20/20; neither control establishes
+the cause of the earlier missing report.
 The hosted candidate also exposed Firefox paragraph LF normalization and a real
 Chromium stale-native-selection write into a heading; both have deterministic
 regressions. The corrected browser scenario passed 20/20 repetitions, zero retries.
+
+The broader repeated matrix caught a real WebKit internal-caret failure even
+after the first candidate passed. Actual local WebKit reproduced the stationary
+caret in all three runs; bounded observation ruled out a merely early assertion.
+Selection-driven node decorations now reveal source before native caret
+synchronization. The exact case then passed three runs with no retries; all seven WebKit cases
+also passed three repetitions (**21/21**). Native diagnostics show immediately
+correct caret positions. Collapsed/Shift ordering regressions pass. Full final-head acceptance remains
+required; earlier successful runs do not substitute for it.
 
 Hosted clean-checkout CI, repeated Chromium/Firefox/WebKit diagnostics and actual
 Cloudflare candidate/principal-origin acceptance remain required before promotion.

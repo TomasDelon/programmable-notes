@@ -18,7 +18,12 @@ import {
   TextSelection,
   type Command,
 } from 'prosemirror-state';
-import { EditorView, type NodeView } from 'prosemirror-view';
+import {
+  Decoration,
+  DecorationSet,
+  EditorView,
+  type NodeView,
+} from 'prosemirror-view';
 import {
   baseKeymap,
   chainCommands,
@@ -735,11 +740,38 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         selection: visibleStart(projection.doc),
         plugins: [
           new Plugin({
-            view: () => ({
-              update: () => {
-                for (const refresh of presentationRefreshers.current) refresh();
+            props: {
+              decorations(state) {
+                const active: Decoration[] = [];
+                const { selection } = state;
+                state.doc.descendants((node, position) => {
+                  if (
+                    node.type !== nodes.inline_math &&
+                    node.type !== nodes.math_block
+                  )
+                    return;
+                  const from = position + 1,
+                    to = from + node.content.size;
+                  const intersects = selection.empty
+                    ? selection.from >= from && selection.from <= to
+                    : selection.from < to && selection.to > from;
+                  if (intersects)
+                    active.push(
+                      Decoration.node(position, position + node.nodeSize, {
+                        'data-math-selection': 'active',
+                      }),
+                    );
+                  return false;
+                });
+                // Selection-driven node decoration updates run NodeView.update
+                // before PM writes the native caret. Revealing in plugin.view
+                // update is too late: WebKit can report a caret inside display:
+                // none text while its real visual caret remains stuck there.
+                return active.length
+                  ? DecorationSet.create(state.doc, active)
+                  : DecorationSet.empty;
               },
-            }),
+            },
           }),
           inputRules({ rules }),
           keymap({

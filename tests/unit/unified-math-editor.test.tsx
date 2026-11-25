@@ -621,6 +621,41 @@ describe('mathematics shares the document text editor', () => {
     expect(editor.querySelector('h1')!.textContent).toBe('Modular note');
   });
 
+  it.each([false, true])(
+    'reveals math source before native caret synchronization with shift=%s',
+    async (shift) => {
+      const { editor, props } = mount('Before $x$ after.');
+      const source = editor.querySelector<HTMLElement>(
+        '.rendered-math-source',
+      )!;
+      const text = editor.querySelector('p')!.firstChild!;
+      await act(async () => {
+        editor.focus();
+        document.getSelection()!.collapse(text, text.textContent!.length);
+        document.dispatchEvent(new Event('selectionchange'));
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      });
+      const selection = document.getSelection()!;
+      const collapse = selection.collapse.bind(selection);
+      const extend = selection.extend.bind(selection);
+      const writes: { hidden: boolean; offset: number | undefined }[] = [];
+      vi.spyOn(selection, 'collapse').mockImplementation((node, offset) => {
+        if (node && source.contains(node))
+          writes.push({ hidden: Boolean(source.hidden), offset });
+        collapse(node, offset);
+      });
+      vi.spyOn(selection, 'extend').mockImplementation((node, offset) => {
+        if (source.contains(node))
+          writes.push({ hidden: Boolean(source.hidden), offset });
+        extend(node, offset);
+      });
+      fireEvent.keyDown(editor, { key: 'ArrowRight', shiftKey: shift });
+      expect(writes.length).toBeGreaterThan(0);
+      expect(writes.every((write) => !write.hidden)).toBe(true);
+      expect(props.apply).not.toHaveBeenCalled();
+    },
+  );
+
   it('removes the final draft dollar without leaving an unsafe stale mark or blocking typing', async () => {
     const original = 'Before $x';
     const { editor, props } = mount(original);
