@@ -1,3 +1,4 @@
+import { EditorView as MathView } from '@codemirror/view';
 import {
   act,
   fireEvent,
@@ -22,6 +23,17 @@ vi.mock('../../src/editor/rendered/RenderedRuntime', () => ({
 type Props = ComponentProps<typeof RenderedEditor>;
 const render = (ui: ReactElement) =>
   renderUI(ui, { wrapper: NotificationProvider });
+function changeMath(field: HTMLElement, value: string) {
+  const view = MathView.findFromDOM(field)!;
+  act(() =>
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: value },
+    }),
+  );
+}
+function mathValue(field: HTMLElement) {
+  return MathView.findFromDOM(field)!.state.doc.toString();
+}
 function propsFor(source: string): Props {
   return {
     source,
@@ -198,13 +210,13 @@ describe('rendered editor host transaction boundary', () => {
       screen.getByRole('button', { name: 'Edit inline equation: x' }),
     );
     const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    fireEvent.change(field, { target: { value: '$\\unknowncommand$' } });
+    changeMath(field, '$\\unknowncommand$');
     fireEvent.keyDown(field, { key: 'Enter' });
     act(() => {
       expect(props.commandsRef.current!.insertText('Replacement.')).toBe(false);
     });
     expect(props.apply).not.toHaveBeenCalled();
-    expect(field).toHaveValue('$\\unknowncommand$');
+    expect(mathValue(field)).toBe('$\\unknowncommand$');
     expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
     fireEvent.keyDown(field, { key: 'Escape' });
     act(() => {
@@ -220,11 +232,11 @@ describe('rendered editor host transaction boundary', () => {
       screen.getByRole('button', { name: 'Edit inline equation: x' }),
     );
     const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    fireEvent.change(field, { target: { value: '$x^2$' } });
+    changeMath(field, '$x^2$');
     ui.rerender(<RenderedEditor {...props} source="After $y$." />);
-    expect(field).toHaveValue('$x^2$');
+    expect(mathValue(field)).toBe('$x^2$');
     fireEvent.keyDown(field, { key: 'Enter' });
-    expect(field).toHaveValue('$x^2$');
+    expect(mathValue(field)).toBe('$x^2$');
     expect(screen.getByRole('alert')).toBeVisible();
     expect(props.apply).not.toHaveBeenCalled();
     fireEvent.keyDown(field, { key: 'Escape' });
@@ -258,9 +270,9 @@ describe('rendered editor host transaction boundary', () => {
     expect(equations).toHaveLength(2);
     fireEvent.click(equations[1]!);
     const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    expect(field).toHaveValue('$x$');
+    expect(mathValue(field)).toBe('$x$');
     const before = accepted;
-    fireEvent.change(field, { target: { value: '$x^2$' } });
+    changeMath(field, '$x^2$');
     fireEvent.keyDown(field, { key: 'Enter' });
     expect(props.apply).toHaveBeenLastCalledWith(
       before,
@@ -324,13 +336,13 @@ describe('rendered editor host transaction boundary', () => {
       screen.getByRole('button', { name: 'Edit inline equation: x' }),
     );
     const math = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    fireEvent.change(math, { target: { value: '$\\unknowncommand$' } });
+    changeMath(math, '$\\unknowncommand$');
     fireEvent.keyDown(math, { key: 'Enter' });
     fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
     expect(screen.getByRole('textbox', { name: 'Link URL' })).toHaveValue(
       'https://example.org/retained',
     );
-    expect(math).toHaveValue('$\\unknowncommand$');
+    expect(mathValue(math)).toBe('$\\unknowncommand$');
     expect(props.apply).not.toHaveBeenCalled();
     fireEvent.keyDown(math, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));

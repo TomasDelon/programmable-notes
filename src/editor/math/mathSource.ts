@@ -100,7 +100,8 @@ export function safeMathSpan(
   // We never present quote/list prefixes as editable LaTeX.
   if (
     kind === 'display' &&
-    originalInner.replace(/\r\n?|\n/g, '\n').trim() !== node.value?.trim()
+    originalInner.replace(/\r\n?|\n/g, '\n').trim() !==
+      node.value?.replace(/\r\n?|\n/g, '\n').trim()
   )
     return null;
   return { kind, from, to, innerFrom, innerTo, originalInner, originalOuter };
@@ -125,7 +126,7 @@ export function collectLiveMath(source: string, path = 'note.mdx'): MathSpan[] {
   return spans;
 }
 
-/** A textarea normalizes breaks; retain existing physical breaks when possible. */
+/** Editable surfaces normalize breaks; retain existing physical breaks when possible. */
 export function preserveMathBreaks(original: string, value: string): string {
   const normalized = value.replace(/\r\n?|\n/g, '\n');
   const originalNormalized = original.replace(/\r\n?|\n/g, '\n');

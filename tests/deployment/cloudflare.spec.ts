@@ -258,3 +258,63 @@ test('ordinary keyboard Markdown authoring remains usable after deployment', asy
   await page.reload();
   expect(await exported(page)).toEqual(after);
 });
+
+test('caret mathematics edits in place without forms and preserves source through undo and reload', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  const original =
+    '\uFEFF# Hosted math\r\n\r\nBefore $x^2$ after.\r\n\r\n$$\r\ny^2\r\n$$\r\n\r\n<span title="unchanged">Opaque</span>\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Caret.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
+  const inline = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await expect(inline).toBeFocused();
+  await expect(
+    view.locator('input, textarea, .rendered-math-controls'),
+  ).toHaveCount(0);
+  await inline.fill('$x^3$');
+  await inline.press('End');
+  await inline.press('ArrowRight');
+  await expect(inline).toHaveCount(0);
+  await view
+    .getByRole('button', { name: 'Edit display equation: y^2' })
+    .click();
+  const display = page.getByRole('textbox', { name: 'Display LaTeX source' });
+  await display.fill('$$\ny^2\n+ z^2\n$$');
+  await expect(display).toHaveText('$$\ny^2\n+ z^2\n$$', {
+    useInnerText: true,
+  });
+  await testInfo.attach('math-caret-source', {
+    body: await view.screenshot(),
+    contentType: 'image/png',
+  });
+  await display.press('Control+End');
+  await display.press('ArrowDown');
+  await expect(display).toHaveCount(0);
+  await expect(view.locator('.katex-display')).toBeVisible();
+  await testInfo.attach('math-caret-rendered', {
+    body: await view.screenshot(),
+    contentType: 'image/png',
+  });
+  const changed = original
+    .replace('x^2', 'x^3')
+    .replace('y^2\r\n', 'y^2\r\n+ z^2\r\n');
+  expect(await exported(page)).toEqual(Buffer.from(changed));
+  await command(page, 'Edit source');
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+z');
+  expect(await exported(page)).toEqual(
+    Buffer.from(original.replace('x^2', 'x^3')),
+  );
+  await source.press('Control+Shift+Z');
+  expect(await exported(page)).toEqual(Buffer.from(changed));
+  await saved(page);
+  await page.reload();
+  expect(await exported(page)).toEqual(Buffer.from(changed));
+});

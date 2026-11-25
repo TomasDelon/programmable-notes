@@ -158,3 +158,29 @@ activation deadline leaves the current workspace open. A late save/event after
 failure cannot reload the page. An activated worker is retained for an explicit
 retry if persistence was not confirmed. No worker, origin, cache or document
 permission is relaxed; document content still never enters the app asset cache.
+
+## 25 November: mathematical source follows the caret
+
+The mathematical NodeView now embeds the existing CodeMirror dependency as an
+unframed contenteditable source surface. It has no input/textarea, separate
+form, Done or Cancel buttons. Rendered equations retain a focusable accessible
+activation target. Pointer activation and arrow entry reveal the exact original
+dollar-delimited source; hover does nothing. Horizontal boundary arrows,
+vertical boundary arrows, Tab or blur attempt the guarded patch and return the
+caret to the surrounding ProseMirror document. Display Enter inserts a newline.
+
+The nested source buffer owns only temporary draft text and local undo/redo.
+Successful exit still applies one canonical CodeMirror source transaction using
+`planMathReplacement` and the exact snapshot guard. The existing pending-draft
+barrier remains until commit or explicit Escape cancellation. Invalid LaTeX,
+changed delimiters and stale revisions remain refused with retained text and
+host notifications. This deliberately does not grant arbitrary math delimiter
+rewrites or make unfinished drafts crash-durable. Document code cannot access
+the nested editor or authorize source writes.
+
+The Markdown parser preserves physical breaks in multiline math node values.
+Compare both parser value and candidate inner span with normalized comparison
+breaks, while retaining original raw coordinates and writing physical breaks via
+`preserveMathBreaks`. Normalizing only one comparison operand incorrectly refused
+multiline CRLF/CR formulas. This comparison fix neither changes raw source bytes
+nor relaxes quote/list-prefix exclusion or span revalidation.

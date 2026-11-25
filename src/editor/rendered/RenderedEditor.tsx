@@ -31,6 +31,9 @@ import {
 } from 'prosemirror-schema-list';
 import { addRowAfter, goToNextCell, tableEditing } from 'prosemirror-tables';
 import katex from 'katex';
+import { EditorState as MathState } from '@codemirror/state';
+import { EditorView as MathView, keymap as mathKeymap } from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { assetBlob } from '../../assets/catalog';
 import type { LinkResolution } from '../../links';
 import {
@@ -249,19 +252,51 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // original Markdown dollars in place; the existing source transaction
     // remains the sole authority for persistence and undo.
     let activeMath: { commit: () => boolean; cancel: () => void } | null = null;
-    function mathView(node: ProseNode): NodeView {
+    const mathEntrances = new WeakMap<Node, (edge: 'start' | 'end') => void>();
+    function mathView(
+      node: ProseNode,
+      _view: EditorView,
+      getPos: () => number | undefined,
+    ): NodeView {
       const display = node.type === nodes.math_block;
       const wrapper = document.createElement(display ? 'div' : 'span');
       wrapper.className = display
         ? 'rendered-math-host rendered-math-host-block'
         : 'rendered-math-host';
       wrapper.contentEditable = 'false';
-      const button = document.createElement('button');
-      button.type = 'button';
+      const button = document.createElement('span');
+      button.setAttribute('role', 'button');
+      button.tabIndex = 0;
       button.className = `rendered-math${display ? ' rendered-math-block' : ''}`;
-      let field: HTMLInputElement | HTMLTextAreaElement | null = null;
+      let field: MathView | null = null;
       let span: MathSpan | null = null;
       let snapshot: string | null = null;
+      let compositionFrame: number | null = null;
+      let editContext: EventTarget | null = null;
+      function cancelCompositionFrame() {
+        if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
+        compositionFrame = null;
+      }
+
+      function afterComposition() {
+        cancelCompositionFrame();
+        // Register after CM's built-in observer/listener, including Android's
+        // deferred DOM read. Never close a composing or unread source buffer.
+        compositionFrame = requestAnimationFrame(() => {
+          compositionFrame = null;
+          if (field && !field.hasFocus) {
+            // Resume CM's skipped blur cleanup only after its final DOM read.
+            // The normal blur handler attempts the guarded commit; a refused
+            // draft remains editable with correctly synchronized focus state.
+            field.contentDOM.dispatchEvent(new FocusEvent('blur'));
+          }
+        });
+      }
+      function detachComposition() {
+        cancelCompositionFrame();
+        editContext?.removeEventListener('compositionend', afterComposition);
+        editContext = null;
+      }
 
       function renderEquation() {
         button.setAttribute(
@@ -280,7 +315,10 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       }
       function close() {
         if (!field) return;
+        detachComposition();
+        const previous = field;
         field = null;
+        previous.destroy();
         span = null;
         snapshot = null;
         dismiss(noticeId + '-math');
@@ -296,18 +334,21 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           detail: reason,
           persistent: true,
         });
-        field?.setAttribute('aria-invalid', 'true');
-        field?.setAttribute('aria-describedby', noticeId + '-math');
+        field?.contentDOM.setAttribute('aria-invalid', 'true');
+        field?.contentDOM.setAttribute('aria-describedby', noticeId + '-math');
         wrapper.classList.add('rendered-math-invalid');
       }
       function commit(): boolean {
         if (!field || !span || snapshot === null) return true;
+        // compositionStarted also covers the phase before the first insertion.
+        // Every commit path must wait for the final composition DOM read.
+        if (field.compositionStarted || compositionFrame !== null) return false;
         if (latest.current.disabled) {
           showError('Editing is unavailable. Your LaTeX text is retained.');
           return false;
         }
         const original = span.originalOuter.replace(/\r\n?|\n/g, '\n');
-        const entered = field.value.replace(/\r\n?|\n/g, '\n');
+        const entered = field.state.doc.toString();
         if (entered === original) {
           close();
           return true;
@@ -372,7 +413,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         close();
       }
       const actions = { commit, cancel };
-      function activate() {
+      function activate(entryEdge?: 'start' | 'end') {
         if (field || latest.current.disabled || activeMath) return;
         const source = latest.current.source;
         const math = collectLiveMath(source, latest.current.path);
@@ -395,98 +436,155 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         if (!match) return;
         span = match;
         snapshot = source;
-        const input = document.createElement(display ? 'textarea' : 'input');
-        if (display) {
-          const textarea = input as HTMLTextAreaElement;
-          textarea.rows = Math.max(
-            3,
-            match.originalOuter.split(/\r\n?|\n/).length,
-          );
-          textarea.spellcheck = false;
-        } else (input as HTMLInputElement).type = 'text';
-        input.className = display
+        const host = document.createElement(display ? 'div' : 'span');
+        host.className = display
           ? 'rendered-math-source rendered-math-source-block'
           : 'rendered-math-source';
-        input.setAttribute(
-          'aria-label',
-          display ? 'Display LaTeX source' : 'Inline LaTeX source',
-        );
-        input.setAttribute(
-          'aria-description',
-          'Edit the dollar-delimited LaTeX in place. Leave the field to render, or press Escape to cancel.',
-        );
-        input.value = match.originalOuter;
-        field = input;
-        const row = document.createElement('span');
-        row.className = 'rendered-math-controls';
-        const applyButton = document.createElement('button');
-        applyButton.type = 'button';
-        applyButton.textContent = 'Done';
-        applyButton.setAttribute('aria-label', 'Apply inline equation');
-        applyButton.addEventListener('pointerdown', (event) =>
-          event.preventDefault(),
-        );
-        applyButton.addEventListener('click', () => {
-          if (commit()) button.focus();
-        });
-        const cancelButton = document.createElement('button');
-        cancelButton.type = 'button';
-        cancelButton.textContent = 'Cancel';
-        cancelButton.setAttribute('aria-label', 'Cancel inline equation');
-        cancelButton.addEventListener('pointerdown', (event) =>
-          event.preventDefault(),
-        );
-        cancelButton.addEventListener('click', () => {
-          cancel();
-          button.focus();
-        });
-        row.append(applyButton, cancelButton);
         wrapper.classList.remove('rendered-math-invalid');
-        wrapper.replaceChildren(input, row);
+        wrapper.replaceChildren(host);
         activeMath = actions;
         setMathEditing(true);
-        input.addEventListener('input', () => {
-          wrapper.classList.remove('rendered-math-invalid');
-          input.removeAttribute('aria-invalid');
-          input.removeAttribute('aria-describedby');
-          dismiss(noticeId + '-math');
+        const leave = (direction: -1 | 1) => {
+          const position = getPos();
+          if (position === undefined || !commit()) return true;
+          editor.dispatch(
+            editor.state.tr.setSelection(
+              TextSelection.near(
+                editor.state.doc.resolve(
+                  direction < 0 ? position : position + node.nodeSize,
+                ),
+                direction,
+              ),
+            ),
+          );
+          editor.focus();
+          return true;
+        };
+        const edge = (direction: -1 | 1, vertical = false) => {
+          if (!field || field.compositionStarted) return false;
+          const selection = field.state.selection.main;
+          if (!selection.empty) return false;
+          const atEdge = vertical
+            ? field.state.doc.lineAt(selection.head).number ===
+              (direction < 0 ? 1 : field.state.doc.lines)
+            : selection.head === (direction < 0 ? 0 : field.state.doc.length);
+          return atEdge && leave(direction);
+        };
+        field = new MathView({
+          parent: host,
+          state: MathState.create({
+            doc: match.originalOuter.replace(/\r\n?|\n/g, '\n'),
+            extensions: [
+              history(),
+              MathView.lineWrapping,
+              mathKeymap.of([
+                { key: 'ArrowLeft', run: () => edge(-1) },
+                { key: 'ArrowRight', run: () => edge(1) },
+                { key: 'ArrowUp', run: () => edge(-1, true) },
+                { key: 'ArrowDown', run: () => edge(1, true) },
+                { key: 'Tab', run: () => leave(1) },
+                { key: 'Shift-Tab', run: () => leave(-1) },
+                {
+                  key: 'Escape',
+                  run: () => {
+                    cancel();
+                    editor.focus();
+                    return true;
+                  },
+                },
+                { key: 'Enter', run: () => !display && leave(1) },
+                { key: 'Mod-Enter', run: () => leave(1) },
+                ...historyKeymap,
+                ...defaultKeymap,
+              ]),
+              MathView.contentAttributes.of({
+                'aria-label': display
+                  ? 'Display LaTeX source'
+                  : 'Inline LaTeX source',
+                'aria-description':
+                  'Dollar-delimited mathematical source. Move the caret outside to render.',
+                spellcheck: 'false',
+              }),
+              MathView.updateListener.of((update) => {
+                if (!update.docChanged) return;
+                wrapper.classList.remove('rendered-math-invalid');
+                update.view.contentDOM.removeAttribute('aria-invalid');
+                update.view.contentDOM.removeAttribute('aria-describedby');
+                dismiss(noticeId + '-math');
+              }),
+              MathView.domEventHandlers({
+                blur: () => {
+                  if (field && !field.compositionStarted) commit();
+                },
+                compositionend: afterComposition,
+              }),
+            ],
+          }),
         });
-        input.addEventListener('keydown', (event) => {
-          const key = event as KeyboardEvent;
-          // IME edits must not be interrupted by Enter or Escape.
-          if (key.isComposing) return;
-          if (key.key === 'Escape') {
-            key.preventDefault();
-            cancel();
-            button.focus();
-          } else if (
-            key.key === 'Enter' &&
-            (!display || key.ctrlKey || key.metaKey)
-          ) {
-            key.preventDefault();
-            if (commit()) button.focus();
-          }
-          key.stopPropagation();
+        // Modern Android composition events target the browser EditContext,
+        // not necessarily contentDOM. CM has already installed its listeners.
+        editContext =
+          (
+            field.contentDOM as HTMLElement & {
+              editContext?: EventTarget | null;
+            }
+          ).editContext ?? null;
+        editContext?.addEventListener('compositionend', afterComposition);
+        field.contentDOM.addEventListener(
+          'blur',
+          (event) => {
+            if (field?.compositionStarted || compositionFrame !== null) {
+              // CM's ordinary blur observer schedules a focus redraw, which can
+              // replace an unread final composition before Android's DOM flush.
+              // Native focus still moves; the completion listener owns closing.
+              event.stopImmediatePropagation();
+            }
+          },
+          true,
+        );
+        field.contentDOM.addEventListener(
+          'keydown',
+          (event) => {
+            if (
+              event.isComposing ||
+              field?.compositionStarted ||
+              compositionFrame !== null
+            ) {
+              // Preserve native IME default behavior, but do not interpret its
+              // Enter/Escape/Tab as an editor commit or cancellation command.
+              event.stopImmediatePropagation();
+            }
+          },
+          true,
+        );
+        field.focus();
+        field.dispatch({
+          selection: {
+            anchor:
+              entryEdge === 'start'
+                ? 0
+                : entryEdge === 'end'
+                  ? field.state.doc.length
+                  : field.state.doc.length - (display ? 2 : 1),
+          },
         });
-        input.addEventListener('blur', (event) => {
-          if (!field) return;
-          const target = (event as FocusEvent).relatedTarget;
-          if (target instanceof Node && wrapper.contains(target)) return;
-          commit();
-        });
-        input.focus();
-        const innerEnd = input.value.length - (display ? 2 : 1);
-        input.setSelectionRange(innerEnd, innerEnd);
       }
-      button.addEventListener('click', activate);
+      mathEntrances.set(wrapper, activate);
+      button.addEventListener('click', () => activate());
+      button.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          activate();
+        }
+      });
       renderEquation();
       return {
         dom: wrapper,
         stopEvent: () => true,
         ignoreMutation: () => true,
-        selectNode: activate,
+        selectNode: () => activate(),
         deselectNode: () => {
-          if (field && document.activeElement !== field) commit();
+          if (field && !field.hasFocus) commit();
         },
         update: (next) => {
           if (next.type !== node.type) return false;
@@ -495,9 +593,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           return true;
         },
         destroy: () => {
-          if (field && activeMath === actions) {
-            activeMath = null;
-            setMathEditing(false);
+          detachComposition();
+          if (field) {
+            field.destroy();
+            field = null;
+            if (activeMath === actions) {
+              activeMath = null;
+              setMathEditing(false);
+            }
           }
         },
       };
@@ -773,6 +876,49 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           else latest.current.redo();
           return true;
         },
+      },
+      handleKeyDown: (current, event) => {
+        if (
+          event.isComposing ||
+          event.shiftKey ||
+          event.ctrlKey ||
+          event.metaKey ||
+          event.altKey ||
+          !current.state.selection.empty
+        )
+          return false;
+        const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+        const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+        if (!forward && !backward) return false;
+        const head = current.state.selection.$head;
+        const vertical = event.key === 'ArrowDown' || event.key === 'ArrowUp';
+        let position = head.pos;
+        let neighbor = forward ? head.nodeAfter : head.nodeBefore;
+        if (!vertical && backward && neighbor) position -= neighbor.nodeSize;
+        if (
+          vertical &&
+          head.depth > 0 &&
+          (forward
+            ? head.parentOffset === head.parent.content.size
+            : head.parentOffset === 0)
+        ) {
+          position = forward ? head.after() : head.before();
+          const boundary = current.state.doc.resolve(position);
+          neighbor = forward ? boundary.nodeAfter : boundary.nodeBefore;
+          if (!forward && neighbor) position -= neighbor.nodeSize;
+        }
+        if (
+          !neighbor ||
+          (vertical
+            ? neighbor.type !== nodes.math_block
+            : neighbor.type !== nodes.inline_math)
+        )
+          return false;
+        const dom = current.nodeDOM(position);
+        const enter = dom && mathEntrances.get(dom);
+        if (!enter) return false;
+        enter(forward ? 'start' : 'end');
+        return true;
       },
       // Drop HTML before ProseMirror creates DOM from clipboard markup. Even
       // detached img elements can issue requests before a node view is created.

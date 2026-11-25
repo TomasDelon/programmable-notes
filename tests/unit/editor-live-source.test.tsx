@@ -309,3 +309,32 @@ describe('math and Live syntax ownership', () => {
     expect(pending).toHaveBeenLastCalledWith(false);
   });
 });
+
+describe('multiline math physical line endings', () => {
+  it.each(['\r\n', '\r', '\n'])(
+    'adds a mathematical source line without changing the document physical breaks (%j)',
+    (ending) => {
+      const source = [
+        '# Original',
+        '',
+        '$$',
+        'x^2',
+        '$$',
+        '',
+        '<span>Opaque</span>',
+        '',
+      ].join(ending);
+      const span = collectLiveMath(source)[0]!;
+      expect(span).toBeDefined();
+      const next = source.replace(`x^2${ending}`, `x^2${ending}+ y^2${ending}`);
+      expect(
+        planMathReplacement(source, source, span, '\nx^2\n+ y^2\n'),
+      ).toEqual({
+        ok: true,
+        source: next,
+        replacement: `${ending}x^2${ending}+ y^2${ending}`,
+      });
+      expect(collectLiveMath(next)).toHaveLength(1);
+    },
+  );
+});

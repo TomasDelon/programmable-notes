@@ -218,7 +218,7 @@ test('table cells and equations can be edited in the rendered document', async (
     .getByRole('button', { name: 'Edit inline equation: x^2' })
     .click();
   const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(latex).toHaveValue('$x^2$');
+  await expect(latex).toHaveText('$x^2$');
   await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
     0,
   );
@@ -276,7 +276,7 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
     }
   });
   expect(refreshReads).toBe(0);
-  await expect(latex).toHaveValue('$x^7 + 1$');
+  await expect(latex).toHaveText('$x^7 + 1$');
   await expect(
     page.getByRole('textbox', { name: 'Document title' }),
   ).toHaveValue('Editing');
@@ -361,7 +361,7 @@ test('an equation opened during a real focus read prevents stale workspace adopt
   // A late open also closes after the storage watchdog fires. That is not a
   // successful refresh: assert its error was not mistaken for race protection.
   await saved(page);
-  await expect(field).toHaveValue('$x^7 + 1$');
+  await expect(field).toHaveText('$x^7 + 1$');
   await expect(editor(page)).toContainText('Local tail.');
   await field.press('Enter');
   await expect(page.locator('.web-shell')).toHaveAttribute(
@@ -598,7 +598,7 @@ test('clicking outside a focused inline equation commits its dollar-delimited so
     .getByRole('button', { name: 'Edit inline equation: x^2' })
     .click();
   const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(latex).toHaveValue('$x^2$');
+  await expect(latex).toHaveText('$x^2$');
   await latex.fill('$x^3$');
   await editor(page).getByRole('heading', { name: 'Math in context' }).click();
   await expect(latex).toHaveCount(0);

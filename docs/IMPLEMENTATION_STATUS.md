@@ -1,5 +1,18 @@
 # Programmable Notes implementation status
 
+## Caret-based mathematics
+
+Web Preview mathematical editing now uses an unframed source surface at the
+caret, with no input/textarea or Done/Cancel controls. Arrow entry/exit, ordinary
+display newlines, local draft undo/redo and canonical source history retain the
+existing revision and lossless-patch guards. Hover does not activate equations.
+The same original source reappears on entry, including dollar delimiters.
+Multiline CRLF/CR comparison and composition completion/focus ordering were
+corrected. Invalid/stale drafts remain protected and memory-only until resolved.
+The native `/engine` interface and all preview authority boundaries are unchanged.
+See the [implementation and verification record](recovery/2026-11-25-caret-math.md)
+for executed checkpoints, hosted status and platform limitations.
+
 ## Preview keyboard authoring repair
 
 The corrected web beta is deployed at https://programmable-notes.pages.dev/

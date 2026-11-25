@@ -100,11 +100,16 @@ $$
 $$
 ```
 
-In Preview, click an inline `$...$` or display `$$...$$` equation to reveal
-its original dollar-delimited LaTeX **in place**, including on mobile. No
-separate equation dialog is used. `Enter` applies inline edits;
-`Ctrl/Cmd + Enter` applies display edits; **Done** or leaving the field also
-attempts to apply. `Escape` or **Cancel** discards the draft. Invalid LaTeX,
+In Preview, place the caret in an inline `$...$` or display `$$...$$` equation
+to reveal its original dollar-delimited LaTeX **in place**, including on mobile.
+Clicking or entering with arrow keys opens ordinary editable source, without an
+input box, toolbar or action buttons. Hover alone does not change the formula.
+Move the caret out with arrow keys, Tab, or a click in surrounding text to render
+and apply the edit. `Enter` leaves an inline equation; in display equations it
+inserts a normal source newline. `Ctrl/Cmd + Enter` also leaves an equation.
+Undo/redo while inside operates on the mathematical draft; after leaving, the
+canonical document history restores the whole source patch. `Escape` explicitly
+discards the current draft. Invalid LaTeX,
 removed delimiters or stale source revisions keep the editable draft and show
 an error instead of overwriting the source. Resolve an unfinished draft before
 switching documents, exporting, restoring or changing the surrounding document.
