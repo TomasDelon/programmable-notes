@@ -379,3 +379,49 @@ it('measures source navigation synchronously before focus and refuses a source c
   coords.mockRestore();
   rects.mockRestore();
 });
+
+it('reveals the native caret when a hidden source editor retains a stale selection cache', () => {
+  const original = '\uFEFFBefore\r\n\r\n<section>Target</section>\r\n';
+  const commands = createRef<EditorCommands>();
+  const mounted = render(
+    <SourceEditor
+      source={original}
+      onChange={vi.fn()}
+      commandsRef={commands}
+    />,
+  );
+  const editor = view(mounted.container);
+  vi.spyOn(editor.dom, 'getClientRects').mockReturnValue([
+    new DOMRect(0, 0, 100, 100),
+  ] as unknown as DOMRectList);
+  // jsdom has no layout; keep real focus and native Selection behavior.
+  vi.spyOn(editor, 'coordsAtPos').mockReturnValue({
+    left: 0,
+    right: 1,
+    top: 0,
+    bottom: 20,
+  });
+  const target = original.indexOf('<section>');
+  const display = new RawSourceMap(original).toDisplay(target)!;
+  act(() => commands.current!.revealSource(target, original));
+  const outside = mounted.container.appendChild(
+    document.createElement('button'),
+  );
+  outside.focus();
+  const previous = editor.domAtPos(display);
+  document.getSelection()!.collapse(previous.node, previous.offset);
+  // A selectionchange can reach CodeMirror while another control is focused.
+  document.dispatchEvent(new Event('selectionchange'));
+  // Revealing/focusing a formerly hidden contenteditable can reset the native
+  // caret before CodeMirror repairs it. Its state still contains the target.
+  const start = editor.domAtPos(0);
+  document.getSelection()!.collapse(start.node, start.offset);
+  act(() => commands.current!.revealSource(target, original));
+  const selection = document.getSelection()!;
+  expect(editor.state.selection.main.anchor).toBe(display);
+  expect(editor.posAtDOM(selection.anchorNode!, selection.anchorOffset)).toBe(
+    display,
+  );
+  expect(rawSource(editor.state)).toBe(original);
+  outside.remove();
+});

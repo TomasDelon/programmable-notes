@@ -197,3 +197,9 @@ collapsed target selection. This avoids both an old native DOM caret and a queue
 focus interval in which immediate typing can be lost. No view dispatch occurs in a
 measurement write callback. Source navigation itself never patches text or grants
 preview messages editing rights.
+
+CodeMirror's cached selection can still report the requested position after native
+focus resets the browser caret. Navigation therefore rechecks the exact target
+after focus and reasserts the collapsed native selection using public `domAtPos`
+and native Selection APIs. An equal model-selection dispatch does not reliably
+repair this cache edge. This does not modify document text or relax authority.

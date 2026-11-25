@@ -1546,7 +1546,26 @@ test('opaque source navigation is explicit, revision-checked and byte preserving
   let failureDiagnostic: string | undefined;
   if (!navigatedBytes.equals(Buffer.from(changed))) {
     const diagnostic = JSON.stringify(await navigationTrace.jsonValue());
-    failureDiagnostic = diagnostic;
+    const recent = (await navigationTrace.jsonValue()) as Array<{
+      event: string;
+      key?: string;
+      time: number;
+      hasFocus: boolean;
+      active?: string;
+      nativeAnchor: number | null;
+      editorSelection: { anchor: number; head: number } | null;
+    }>;
+    failureDiagnostic = JSON.stringify(
+      recent.slice(-12).map((entry) => ({
+        e: entry.event,
+        k: entry.key,
+        t: Math.round(entry.time),
+        active: entry.active,
+        focus: entry.hasFocus,
+        native: entry.nativeAnchor,
+        editor: entry.editorSelection,
+      })),
+    );
     await testInfo.attach('source-navigation-events', {
       body: diagnostic,
       contentType: 'application/json',

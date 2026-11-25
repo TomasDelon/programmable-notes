@@ -426,3 +426,35 @@ waits or repairing the caret in tests. Optional diagnostics have static scopes
 (all/core/math/source). The source scope repeats its two cases 20 times, with zero
 retries, to obtain evidence faster; default full diagnostics, mandatory checks and
 all security assertions remain intact. Scope selection cannot authorize promotion.
+
+## Reproduced CodeMirror native-selection cache defect
+
+The focused old-product source diagnostic
+[45679031325](https://github.com/TomasDelon/programmable-notes/actions/runs/45679031325)
+reproduced **1 failure /40 cases**, 39 passed, zero retries. The first navigation
+showed CodeMirror position 220 while native focus initially selected zero; its
+normal repair succeeded. GitHub truncated the longer timeline before the failing
+second navigation, so failure annotations now retain a compact last-event summary
+while the complete synthetic trace remains an attachment.
+
+The dedicated agent reproduced a narrower library defect using public focus and
+Selection APIs: CodeMirror retained position 8 while native caret remained zero
+after `focus()`. Repeating an equal selection dispatch did not repair it. A real
+SourceEditor regression reproduced model position 9 versus native zero, RED before
+the fix and GREEN afterwards. The command now revalidates the same editor/source/
+target/draft/visibility after focus, then reasserts native position via public DOM
+positions. No private library API or product debug channel was introduced.
+
+The final repair passed **40/40** matching-Chromium production cases (20 original
+jumps and 20 immediate Unicode diagnostics), no retries. Full unit tests passed
+**385/385**; the focused source suite passed **15/15**. Independent static review
+found no concrete safety or source-authority issue. A development-only Unicode
+focus loss was also reproduced on the unchanged baseline and traced to StrictMode
+editor replay. Layout experiments were reverted; App is unchanged. That development
+lifecycle issue remains a separate follow-up, not a claimed production fix.
+
+The complete integrated local `npm run check` then exited **0**: **385 unit /46
+files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy cases**, including
+format/lint/typecheck/build. Pages fingerprint: `48651d19f9e47b91`, 77 assets. Final
+clean-checkout, repeated three-browser and deployed-origin acceptance remain
+tracked by PR #9 for the functional head. No app code changed after this gate.

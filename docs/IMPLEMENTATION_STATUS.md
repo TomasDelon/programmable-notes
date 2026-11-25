@@ -14,25 +14,23 @@ That follow-up bounds repeated unfinished fences and possible JSX-tag lookahead;
 exhaustion retains exact source and the existing Source fallback, with no write or
 sandbox relaxation.
 
-The integrated code passed the complete fresh local gate: **384 unit tests /46
-files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy cases**, including
-format/lint/typecheck/build. Pages fingerprint: `c8b59c0dc04e7759`, 77 assets.
-Synchronous source navigation passed 40 matching-Chromium repetitions, covering
-both target jumps and immediate Unicode file-diagnostic input. The independently
-reproduced Home defect is fixed through narrowly owned single-visual-line Home/End
-selection and explicit native synchronization. Wrapped blocks, modifiers and inline
-JSX/math retain their existing behavior.
+The final native-caret repair passed the complete fresh local gate: **385 unit
+tests /46 files, 14 tooling (zero skips), 118 Chromium and 8 Pages-policy cases**,
+including format/lint/typecheck/build. Pages fingerprint: `48651d19f9e47b91`, 77 assets.
+Its two production source-navigation cases passed 40 matching-Chromium repetitions.
 
-The adversarial work-budget regression asserts the actual resource refusal, exact
-BOM/CRLF preservation, Source correction, undo/redo, rendered recovery and cleared
-alerts. Ordinary incomplete dollars and invalid closed TeX still require no error
-notifications. No runtime error or guard was suppressed. Details and genuine prior
-failures are retained in the verification record.
+A deterministic real-editor regression reproduced CodeMirror holding the requested
+position while the native caret stayed at zero. Source navigation now rechecks the
+owned target after focus and explicitly synchronizes the native selection through
+public DOM APIs. Source snapshots, history and filesystem authority remain intact.
+Home/End similarly synchronizes only a proven single-visual-line text selection.
+The adversarial analysis-budget regression verifies its genuine resource refusal
+and exact recovery; ordinary unmatched/invalid mathematics still requires no notices.
 
-Hosted CI at `d3b8267` still caught the source-jump race despite the local pass.
-The candidate's math acceptance passed, but promotion remains blocked on that
-native-caret issue. Failure-only event diagnostics and a focused 20-repeat source
-scope are being used to capture the real runner's selection ordering.
+The old product failed one of forty hosted source repetitions. Development-only
+StrictMode replay focus loss was separately confirmed on its unchanged baseline;
+layout experiments were reverted and that issue remains a follow-up. Details and
+all genuine failed checkpoints are retained in the verification record.
 
 The final head's clean-checkout, hosted acceptance and deployment state are
 tracked in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)

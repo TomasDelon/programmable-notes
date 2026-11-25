@@ -358,15 +358,24 @@ export function SourceEditor({
           // of leaving a frame where immediate typing can go to the old target.
           editor.requestMeasure();
           editor.coordsAtPos(anchor);
-          if (
+          const isCurrentTarget = () =>
             view.current === editor &&
             rawSource(editor.state) === expectedSource &&
             !draftRef.current &&
             editor.state.selection.main.anchor === anchor &&
             editor.state.selection.main.head === anchor &&
-            editor.dom.getClientRects().length > 0
-          )
+            editor.dom.getClientRects().length > 0;
+          if (isCurrentTarget()) {
             editor.focus();
+            if (!isCurrentTarget()) return;
+            // Focus may reset the browser caret while CodeMirror still caches
+            // the requested selection. Reassert the native position through
+            // public DOM positions so immediate input uses the revealed target.
+            const caret = editor.domAtPos(anchor);
+            editor.contentDOM.ownerDocument
+              .getSelection()
+              ?.collapse(caret.node, caret.offset);
+          }
         },
         insertText: (text) => {
           if (draftRef.current) return false;
