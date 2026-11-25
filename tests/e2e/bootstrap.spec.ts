@@ -1414,11 +1414,81 @@ test('multiline quote text keeps every prefix and physical ending through no-op,
 
 test('opaque source navigation is explicit, revision-checked and byte preserving without preview authority', async ({
   page,
-}) => {
+}, testInfo) => {
   const source =
     '\uFEFFimport React from "react"\r\n\r\nexport function JumpCounter(){const[n,setN]=React.useState(0);return <button onClick={()=>setN(n+1)}>Jump counter {n}</button>}\r\n\r\n<JumpCounter />\r\n\r\nBefore café 😀 \u2028 literal.\nMixed physical LF.\r\n\r\n<section data-target="source-jump"><span>Opaque JSX target</span></section>\r\n';
   await page.goto('/engine');
   await open(page, source, 'source-navigation.mdx');
+  // Capture event ordering without waiting for or repairing the caret. A
+  // failure must retain the difference between native and editor selection.
+  const navigationTrace = await page.evaluateHandle(() => {
+    const events: unknown[] = [];
+    for (const type of [
+      'click',
+      'keydown',
+      'keyup',
+      'focusin',
+      'focusout',
+      'selectionchange',
+      'beforeinput',
+      'input',
+    ]) {
+      document.addEventListener(
+        type,
+        (event) => {
+          const content = document.querySelector(
+            '.source-editor .cm-content',
+          ) as
+            | (HTMLElement & {
+                cmTile?: {
+                  root: {
+                    view: {
+                      state: {
+                        selection: { main: { anchor: number; head: number } };
+                      };
+                      posAtDOM: (node: Node, offset: number) => number;
+                    };
+                  };
+                };
+              })
+            | null;
+          const editor = content?.cmTile?.root.view;
+          const selection = document.getSelection();
+          let nativeAnchor: number | null = null;
+          if (
+            editor &&
+            selection?.anchorNode &&
+            content?.contains(selection.anchorNode)
+          )
+            nativeAnchor = editor.posAtDOM(
+              selection.anchorNode,
+              selection.anchorOffset,
+            );
+          events.push({
+            event: type,
+            key: event instanceof KeyboardEvent ? event.key : undefined,
+            time: performance.now(),
+            hasFocus: document.hasFocus(),
+            active:
+              document.activeElement?.getAttribute('aria-label') ??
+              document.activeElement?.tagName,
+            nativeAnchor,
+            nativeText: selection?.anchorNode?.textContent?.slice(0, 80),
+            nativeOffset: selection?.anchorOffset,
+            editorSelection: editor
+              ? {
+                  anchor: editor.state.selection.main.anchor,
+                  head: editor.state.selection.main.head,
+                }
+              : null,
+          });
+          if (events.length > 80) events.shift();
+        },
+        true,
+      );
+    }
+    return events;
+  });
   const counter = page
     .frameLocator('iframe')
     .getByRole('button', { name: /Jump counter/ });
@@ -1472,7 +1542,19 @@ test('opaque source navigation is explicit, revision-checked and byte preserving
     '<section data-target',
     ' <section data-target',
   );
-  expect(await savedBytes()).toEqual(Buffer.from(changed));
+  const navigatedBytes = await savedBytes();
+  let failureDiagnostic: string | undefined;
+  if (!navigatedBytes.equals(Buffer.from(changed))) {
+    const diagnostic = JSON.stringify(await navigationTrace.jsonValue());
+    failureDiagnostic = diagnostic;
+    await testInfo.attach('source-navigation-events', {
+      body: diagnostic,
+      contentType: 'application/json',
+    });
+    // GitHub annotations remain available even when artifact access fails.
+    console.error(`Source navigation events: ${diagnostic}`);
+  }
+  expect(navigatedBytes, failureDiagnostic).toEqual(Buffer.from(changed));
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   expect(await savedBytes()).toEqual(Buffer.from(source));
   await page.getByRole('button', { name: 'Redo', exact: true }).click();

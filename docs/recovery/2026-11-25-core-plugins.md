@@ -409,3 +409,20 @@ No application code changed after this gate. Final hosted and principal-origin
 results are maintained in PR #9 for the functional head, rather than inferred from
 older source commits or passing retries. Native GUI and physical Android remain
 separate, unexecuted validations for this web milestone.
+
+## Source-navigation event diagnostics
+
+The integrated `d3b8267` candidate passed actual Cloudflare acceptance, and native-
+check passed, but mandatory
+[45676136189](https://github.com/TomasDelon/programmable-notes/actions/runs/45676136189)
+still caught the original source jump as one flaky result: a space before the BOM
+instead of before the intended JSX, with 117 other browser cases passing. It was
+not promoted. Passing local repeats and the local full gate did not establish
+that the native-caret race was fixed on the hosted runner.
+
+A dedicated agent now captures only synthetic fixture event ordering, native and
+CodeMirror selection, active element and window focus on failure, without adding
+waits or repairing the caret in tests. Optional diagnostics have static scopes
+(all/core/math/source). The source scope repeats its two cases 20 times, with zero
+retries, to obtain evidence faster; default full diagnostics, mandatory checks and
+all security assertions remain intact. Scope selection cannot authorize promotion.

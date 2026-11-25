@@ -29,6 +29,11 @@ alerts. Ordinary incomplete dollars and invalid closed TeX still require no erro
 notifications. No runtime error or guard was suppressed. Details and genuine prior
 failures are retained in the verification record.
 
+Hosted CI at `d3b8267` still caught the source-jump race despite the local pass.
+The candidate's math acceptance passed, but promotion remains blocked on that
+native-caret issue. Failure-only event diagnostics and a focused 20-repeat source
+scope are being used to capture the real runner's selection ordering.
+
 The final head's clean-checkout, hosted acceptance and deployment state are
 tracked in [draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)
 and its checks. Promotion requires mandatory CI, repeated browser diagnostics and
