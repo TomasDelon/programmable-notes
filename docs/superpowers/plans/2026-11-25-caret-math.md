@@ -12,7 +12,7 @@
 - [x] Replace math input/textarea and controls, reuse CodeMirror history, forward arrow exits to the surrounding document and arrow entry to math.
 - [x] Adapt existing unit/browser draft, conflict and source-preservation regressions to the contenteditable surface.
 - [x] Run full check and focused real-browser acceptance; record executed results, failures and native limitations.
-- [ ] Update architecture/status and draft PR, scan secrets and push verified changes; deploy existing beta through its established branch only after checks.
+- [x] Update architecture/status and draft PR, scan secrets and push verified changes; deploy existing beta through its established branch only after checks.
 
 ## Review focus
 

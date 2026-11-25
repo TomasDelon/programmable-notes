@@ -10,8 +10,14 @@ The same original source reappears on entry, including dollar delimiters.
 Multiline CRLF/CR comparison and composition completion/focus ordering were
 corrected. Invalid/stale drafts remain protected and memory-only until resolved.
 The native `/engine` interface and all preview authority boundaries are unchanged.
-See the [implementation and verification record](recovery/2026-11-25-caret-math.md)
-for executed checkpoints, hosted status and platform limitations.
+The corrected application commit `7628521` is deployed at
+https://programmable-notes.pages.dev/. Local checks passed 346 unit, 14 tooling,
+107 Chromium and 5 Pages-policy cases. Current check/native-check CI passed;
+zero-retry repeated three-browser diagnostics passed 123 cases (30 explicit
+Chrome-only IME skips), and actual candidate/principal-origin checks each passed
+15/15. Downloadable desktop/mobile and source/rendered screenshots are linked
+in the [verification record](recovery/2026-11-25-caret-math.md).
+Physical Android keyboards and native GUI runtime were not tested here.
 
 ## Preview keyboard authoring repair
 

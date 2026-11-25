@@ -1,5 +1,37 @@
 # Caret-based mathematical editing
 
+## Verified deployed application
+
+Application commit **7628521** passed the current [check/native-check
+CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45592073207).
+The initial complete three-browser run at `ca22bbb` passed **305 editor cases
+and 15 Pages-policy cases**, with ten explicitly Chrome-only IME skips and no
+flaky summary. The CSS flow correction then passed the complete local gate and
+[current repeated zero-retry acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45592326521):
+**123 passed, 30 explicit Chrome-only skips**, three repetitions across Chromium,
+Firefox and WebKit. [Download screenshots and the repeated report](https://github.com/TomasDelon/programmable-notes/actions/runs/45592326521/artifacts/15012426285).
+
+The actual [immutable Pages candidate](https://8c45e2bb.programmable-notes.pages.dev/)
+passed [15/15 actual hosted checks](https://github.com/TomasDelon/programmable-notes/actions/runs/45592475457),
+including math edits, exact undo/reload, React/CSP boundaries and transport policies.
+[Download its source/rendered math screenshots and report](https://github.com/TomasDelon/programmable-notes/actions/runs/45592475457/artifacts/15011104248).
+The deployment branch was fast-forwarded to this verified application commit;
+main, PR readiness and public releases were unchanged. The principal origin
+**https://programmable-notes.pages.dev/** then passed [15/15 actual hosted
+checks](https://github.com/TomasDelon/programmable-notes/actions/runs/45593763619)
+in fresh Chromium, Firefox and WebKit profiles.
+[Download the live deployment screenshots and report](https://github.com/TomasDelon/programmable-notes/actions/runs/45593763619/artifacts/15012655839).
+Artifacts retain the existing seven-day lifetime. Source/rendered math, exact
+save/reload and history are exercised against the actual deployed application.
+An already-open older tab should use the existing **Save and update** action;
+there is no cache/storage-clearing step.
+
+The checkpoint history below is retained to distinguish failed attempts from
+executed passes. Compilation/package and Rust gates are not native GUI security
+acceptance. Mathematical drafts are memory-only until their valid source patch
+commits; invalid syntax, changed delimiters and stale revisions remain refused.
+No physical Android keyboard, GPU, Wayland or native GUI test was executed here.
+
 ## Scope and implementation
 
 The web Preview now reveals mathematical source in place at the editor caret,
@@ -123,3 +155,12 @@ ReferenceError. After correction both final geometry cases passed **2/2, zero
 retries**, and strict TypeScript/lint were rerun. The Pages-prepared fingerprint
 is now `1139cf95c6288890` (77 assets). Hosted verification/promotion of this
 layout correction is still pending at this checkpoint.
+
+## Delivery closure
+
+The verified app commit `7628521` is deployed through `deploy/cloudflare-beta`.
+The documentation-only closure was rebuilt locally and reproduced identical
+Pages bytes: `1139cf95c6288890`, 77 assets. No application or test code changed
+in that closure. The implementation's mandatory check/native-check and all
+hosted candidate/repeated/principal-origin runs above completed successfully.
+PR #9 remains draft; no main merge or public release was performed.
