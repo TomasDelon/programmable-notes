@@ -188,12 +188,12 @@ nor relaxes quote/list-prefix exclusion or span revalidation.
 
 ### Source navigation and measured focus
 
-When revealing a source offset from a previously hidden editor, set the guarded
-canonical selection first, then publish focus from CodeMirror's public measurement
-write phase. Focusing before its target viewport has been drawn can allow immediate
-native input to reconcile against an old DOM caret. Do not dispatch in the measure
-write phase. Keyed requests supersede prior navigation; the focus callback checks
-visibility, editor identity, exact source snapshot, no pending math draft and the
-still-collapsed target selection. A source revision or user selection change cancels
-that deferred focus. Navigation never applies a source patch or grants preview
-messages editing rights.
+Revealing an offset in a previously hidden source viewport must return with native
+input ready. Set the guarded canonical selection, request CodeMirror measurement,
+then read `coordsAtPos(anchor)` through its public API to flush pending measurement
+synchronously while the view is idle. Focus only after revalidating the editor
+instance, exact snapshot, no pending mathematical draft, visible viewport and still-
+collapsed target selection. This avoids both an old native DOM caret and a queued-
+focus interval in which immediate typing can be lost. No view dispatch occurs in a
+measurement write callback. Source navigation itself never patches text or grants
+preview messages editing rights.

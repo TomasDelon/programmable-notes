@@ -334,7 +334,6 @@ export function SourceEditor({
       }),
     });
     view.current = editor;
-    const sourceFocusKey = {};
     if (commandsRef)
       commandsRef.current = {
         undo: () => {
@@ -354,23 +353,20 @@ export function SourceEditor({
           if (anchor === null) return;
           editor.dispatch({ selection: { anchor }, scrollIntoView: true });
           // A formerly hidden source viewport may still contain an old DOM
-          // caret. Publish focus only after CodeMirror measures/draws the target,
-          // so immediate native input cannot reconcile against that stale caret.
-          editor.requestMeasure({
-            key: sourceFocusKey,
-            read: () => editor.dom.getClientRects().length > 0,
-            write: (visible) => {
-              if (
-                visible &&
-                view.current === editor &&
-                rawSource(editor.state) === expectedSource &&
-                !draftRef.current &&
-                editor.state.selection.main.anchor === anchor &&
-                editor.state.selection.main.head === anchor
-              )
-                editor.focus();
-            },
-          });
+          // caret. The public geometry read flushes the requested measurement
+          // synchronously, so navigation returns with native input ready instead
+          // of leaving a frame where immediate typing can go to the old target.
+          editor.requestMeasure();
+          editor.coordsAtPos(anchor);
+          if (
+            view.current === editor &&
+            rawSource(editor.state) === expectedSource &&
+            !draftRef.current &&
+            editor.state.selection.main.anchor === anchor &&
+            editor.state.selection.main.head === anchor &&
+            editor.dom.getClientRects().length > 0
+          )
+            editor.focus();
         },
         insertText: (text) => {
           if (draftRef.current) return false;

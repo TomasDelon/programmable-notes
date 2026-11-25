@@ -339,7 +339,7 @@ describe('multiline math physical line endings', () => {
   );
 });
 
-it('focuses source navigation only after viewport measurement and refuses a stale deferred focus', () => {
+it('measures source navigation synchronously before focus and refuses a source changed during measurement', () => {
   const original = '\uFEFFBefore\r\n\r\n<section>Target</section>\r\n';
   const commands = createRef<EditorCommands>();
   const mounted = render(
@@ -352,22 +352,30 @@ it('focuses source navigation only after viewport measurement and refuses a stal
   const editor = view(mounted.container);
   const focus = vi.spyOn(editor, 'focus').mockImplementation(() => {});
   const measure = vi.spyOn(editor, 'requestMeasure');
+  const rects = vi
+    .spyOn(editor.dom, 'getClientRects')
+    .mockReturnValue([new DOMRect(0, 0, 100, 100)] as unknown as DOMRectList);
+  const coords = vi.spyOn(editor, 'coordsAtPos').mockImplementation(() => {
+    expect(focus).not.toHaveBeenCalled();
+    expect(measure).toHaveBeenCalled();
+    return { left: 0, right: 1, top: 0, bottom: 20 };
+  });
   const target = original.indexOf('<section>');
   act(() => commands.current!.revealSource(target, original));
-  expect(focus).not.toHaveBeenCalled();
-  expect(editor.state.selection.main.head).toBe(
+  expect(coords).toHaveBeenCalledWith(
     new RawSourceMap(original).toDisplay(target),
   );
-  const request = measure.mock.calls.at(-1)![0]!;
-  act(() => request.write!(true, editor));
   expect(focus).toHaveBeenCalledOnce();
   expect(rawSource(editor.state)).toBe(original);
   focus.mockClear();
+  coords.mockImplementation(() => {
+    editor.dispatch({ changes: { from: 0, insert: 'New ' } });
+    return { left: 0, right: 1, top: 0, bottom: 20 };
+  });
   act(() => commands.current!.revealSource(target, original));
-  const stale = measure.mock.calls.at(-1)![0]!;
-  act(() => editor.dispatch({ changes: { from: 0, insert: 'New ' } }));
-  act(() => stale.write!(true, editor));
   expect(focus).not.toHaveBeenCalled();
   focus.mockRestore();
   measure.mockRestore();
+  coords.mockRestore();
+  rects.mockRestore();
 });
