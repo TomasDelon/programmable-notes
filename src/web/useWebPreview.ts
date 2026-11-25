@@ -1,3 +1,4 @@
+import type { CorePluginSettings } from '../plugins/coreRegistry';
 import {
   useCallback,
   useEffect,
@@ -111,12 +112,16 @@ export function useWebPreview({
   theme,
   images = noImages,
   enabled = true,
+  corePlugins,
+  showComponentSource = false,
 }: {
   files: Record<string, string>;
   entry: string;
   theme: 'light' | 'dark';
   images?: readonly StoredAsset[];
   enabled?: boolean;
+  corePlugins?: CorePluginSettings;
+  showComponentSource?: boolean;
 }) {
   const [html, setHtml] = useState('');
   const [error, setError] = useState('');
@@ -293,6 +298,8 @@ export function useWebPreview({
           entry,
           wasmModule,
           webMode: true,
+          mathematics: corePlugins?.mathematics !== false,
+          showComponentSource,
         });
       } catch (failure) {
         fail(failure);
@@ -309,12 +316,21 @@ export function useWebPreview({
       if (initializationRef.current === initialization)
         initializationRef.current = null;
     };
-  }, [files, entry, images, revision, stopped, enabled]);
+  }, [
+    files,
+    entry,
+    images,
+    revision,
+    stopped,
+    enabled,
+    corePlugins?.mathematics,
+    showComponentSource,
+  ]);
 
   return {
-    html,
-    status,
-    error,
+    html: enabled ? html : '',
+    status: enabled ? status : ('Preview stopped' as const),
+    error: enabled ? error : '',
     locations,
     stopped,
     stop,

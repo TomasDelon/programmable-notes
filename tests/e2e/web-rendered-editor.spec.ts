@@ -762,7 +762,7 @@ test('excessive whitespace opens as exact Source and remains editable without sy
   const source = '\uFEFFa' + ' '.repeat(20_000) + 'b\r\n';
   await importNote(page, source);
   await expect(editor(page).locator('.rendered-source-block')).toHaveCount(1);
-  await editor(page).getByRole('button', { name: 'Edit source block' }).click();
+  await command(page, 'Edit source');
   const raw = page.getByRole('textbox', { name: 'MDX source' });
   await expect(raw).toBeVisible();
   expect(await exportedSource(page)).toBe(source);

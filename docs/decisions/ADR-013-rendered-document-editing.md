@@ -172,9 +172,10 @@ caret to the surrounding ProseMirror document. Display Enter inserts a newline.
 The nested source buffer owns only temporary draft text and local undo/redo.
 Successful exit still applies one canonical CodeMirror source transaction using
 `planMathReplacement` and the exact snapshot guard. The existing pending-draft
-barrier remains until commit or explicit Escape cancellation. Invalid LaTeX,
-changed delimiters and stale revisions remain refused with retained text and
-host notifications. This deliberately does not grant arbitrary math delimiter
+barrier remains until commit or explicit Escape cancellation. Changed delimiters
+and stale revisions remain refused with retained text and host notifications.
+ADR 015 supersedes the original invalid-LaTeX refusal: closed malformed TeX now
+saves as raw red source without a global editing lock or notification. This deliberately does not grant arbitrary math delimiter
 rewrites or make unfinished drafts crash-durable. Document code cannot access
 the nested editor or authorize source writes.
 

@@ -338,3 +338,28 @@ describe('workspace navigation across tabs', () => {
     expect((await persistence.readWorkspace())!.state.mode).toBe('live');
   });
 });
+
+describe('core plugin view preferences across tabs', () => {
+  it('rebases toggles on newer saved source without overwriting it or creating a text conflict', async () => {
+    const first = await openSavedTab();
+    const second = await openSavedTab();
+    const key = first.result.current.state!.workspace.selected;
+    const exact = '\uFEFF# Other tab\r\n\r\n$x$\r\n';
+    act(() => first.result.current.updateSource(key, exact));
+    await act(async () => {
+      expect(await first.result.current.saveNow()).toBe(true);
+    });
+    act(() => {
+      second.result.current.setCorePlugin('react', false);
+      second.result.current.setShowComponentSource(true);
+    });
+    await act(async () => {
+      expect(await second.result.current.saveNow()).toBe(true);
+    });
+    const stored = (await persistence.readWorkspace())!.state;
+    expect(stored.workspace.files[key]).toBe(exact);
+    expect(stored.corePlugins?.react).toBe(false);
+    expect(stored.previewPreferences?.showComponentSource).toBe(true);
+    expect(second.result.current.conflict).toBe(false);
+  });
+});

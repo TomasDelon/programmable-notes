@@ -203,20 +203,20 @@ describe('rendered editor host transaction boundary', () => {
     expect(props.apply).not.toHaveBeenCalled();
   });
 
-  it('refuses inserted content while an invalid equation draft is pending', () => {
+  it('refuses inserted content while an unsafe delimiter edit is pending', () => {
     const props = propsFor('Keep $x$ here.');
     render(<RenderedEditor {...props} />);
     fireEvent.click(
       screen.getByRole('button', { name: 'Edit inline equation: x' }),
     );
     const field = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    changeMath(field, '$\\unknowncommand$');
+    changeMath(field, '$x');
     fireEvent.keyDown(field, { key: 'Enter' });
     act(() => {
       expect(props.commandsRef.current!.insertText('Replacement.')).toBe(false);
     });
     expect(props.apply).not.toHaveBeenCalled();
-    expect(mathValue(field)).toBe('$\\unknowncommand$');
+    expect(mathValue(field)).toBe('$x');
     expect(props.onPendingChange).toHaveBeenLastCalledWith(true);
     fireEvent.keyDown(field, { key: 'Escape' });
     act(() => {
@@ -336,13 +336,13 @@ describe('rendered editor host transaction boundary', () => {
       screen.getByRole('button', { name: 'Edit inline equation: x' }),
     );
     const math = screen.getByRole('textbox', { name: 'Inline LaTeX source' });
-    changeMath(math, '$\\unknowncommand$');
+    changeMath(math, '$x');
     fireEvent.keyDown(math, { key: 'Enter' });
     fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
     expect(screen.getByRole('textbox', { name: 'Link URL' })).toHaveValue(
       'https://example.org/retained',
     );
-    expect(mathValue(math)).toBe('$\\unknowncommand$');
+    expect(mathValue(math)).toBe('$x');
     expect(props.apply).not.toHaveBeenCalled();
     fireEvent.keyDown(math, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: 'Apply link' }));
@@ -441,4 +441,65 @@ it('rejects obsolete React echoes without rejecting subsequent current visual ed
   expect(
     screen.queryByRole('button', { name: 'Review draft' }),
   ).not.toBeInTheDocument();
+});
+
+it('keeps an invalid mathematical expression red when its editable source receives focus', () => {
+  const props = propsFor('Keep $\\unknowncommand$ here.');
+  render(<RenderedEditor {...props} />);
+  const equation = screen.getByRole('button', {
+    name: 'Edit inline equation: \\unknowncommand',
+  });
+  expect(equation.closest('.rendered-math-host')).toHaveClass(
+    'rendered-math-invalid',
+  );
+  fireEvent.click(equation);
+  expect(
+    screen
+      .getByRole('textbox', { name: 'Inline LaTeX source' })
+      .closest('.rendered-math-host'),
+  ).toHaveClass('rendered-math-invalid');
+});
+
+it('does not detach a mathematical activation target during unrelated runtime updates', () => {
+  const props = propsFor('Keep $x$ here.');
+  const ui = render(<RenderedEditor {...props} />);
+  const button = screen.getByRole('button', {
+    name: 'Edit inline equation: x',
+  });
+  const host = button.closest('.rendered-math-host')!;
+  const observer = new MutationObserver(() => {});
+  observer.observe(host, { childList: true });
+  ui.rerender(
+    <RenderedEditor
+      {...props}
+      runtime={{
+        ...props.runtime,
+        files: {
+          'note.mdx': props.source,
+          'other.tsx': 'export const value=1',
+        },
+      }}
+    />,
+  );
+  const removed = observer
+    .takeRecords()
+    .flatMap((record) => [...record.removedNodes]);
+  observer.disconnect();
+  expect(removed).not.toContain(button);
+});
+
+it('preserves the math activation target when a source edit only shifts its offsets', () => {
+  const props = propsFor('Keep $x$ here.');
+  const ui = render(<RenderedEditor {...props} />);
+  const button = screen.getByRole('button', {
+    name: 'Edit inline equation: x',
+  });
+  const observer = new MutationObserver(() => {});
+  observer.observe(button.closest('.rendered-math-host')!, { childList: true });
+  ui.rerender(<RenderedEditor {...props} source="Longer Keep $x$ here." />);
+  const removed = observer
+    .takeRecords()
+    .flatMap((record) => [...record.removedNodes]);
+  observer.disconnect();
+  expect(removed).not.toContain(button);
 });

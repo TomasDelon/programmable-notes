@@ -305,3 +305,18 @@
     padding: 7px;
   }
 }
+
+/* Invalid TeX is editable source feedback, independent of other equations. */
+.rendered-editor .rendered-math-invalid {
+  color: var(--danger, #c74343);
+}
+.rendered-editor .rendered-math-raw {
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: left;
+}
+
+.rendered-editor .rendered-source-block[hidden],
+.rendered-editor .rendered-source-block > [hidden] {
+  display: none !important;
+}

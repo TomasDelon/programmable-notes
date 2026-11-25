@@ -25,6 +25,8 @@ self.onmessage = async ({
   files: Record<string, string>;
   entry: string;
   webMode?: boolean;
+  mathematics?: boolean;
+  showComponentSource?: boolean;
 }>) => {
   const { id, files, entry } = data;
   const sourceLocations: { file: string; line: number; offset: number }[] = [];
@@ -73,6 +75,8 @@ self.onmessage = async ({
                       source,
                       args.path,
                       data.webMode === true,
+                      data.mathematics !== false,
+                      data.showComponentSource === true,
                     );
                     return { contents: String(compiled), loader: 'js' };
                   } catch (error) {

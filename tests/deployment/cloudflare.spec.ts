@@ -318,3 +318,88 @@ test('caret mathematics edits in place without forms and preserves source throug
   await page.reload();
   expect(await exported(page)).toEqual(Buffer.from(changed));
 });
+
+test('core plugins, hidden setup and nonblocking invalid mathematics work in the deployed editor', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  const original =
+    'import {useState} from "react"\n\nexport function Counter(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Plugin count {n}</button>}\n\n# Modular note\n\nA result $x \\in \\mathbb{R}$.\n\n<Counter />\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Modular.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await expect(view.locator('pre:visible')).toHaveCount(0);
+  await expect(
+    view.getByRole('button', { name: /Edit (source block|component source)/ }),
+  ).toHaveCount(0);
+  await page
+    .frameLocator('iframe[title="Document preview"]')
+    .getByRole('button', { name: 'Plugin count 0', exact: true })
+    .click();
+  await view
+    .getByRole('button', { name: 'Edit inline equation: x \\in \\mathbb{R}' })
+    .click();
+  const math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await math.fill('$x \\in \\mathbb{R$');
+  await view.getByRole('heading', { name: 'Modular note' }).click();
+  await expect(math).toHaveCount(0);
+  await expect(view.locator('.rendered-math-invalid')).toHaveText(
+    '$x \\in \\mathbb{R$',
+  );
+  await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
+  await testInfo.attach('invalid-latex-independent-source', {
+    body: await view.screenshot(),
+    contentType: 'image/png',
+  });
+  await command(page, 'Settings');
+  let dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await dialog
+    .getByRole('checkbox', { name: 'Show component source in Preview' })
+    .check();
+  await dialog
+    .getByRole('button', { name: 'Core plugins', exact: true })
+    .click();
+  await dialog.getByRole('checkbox', { name: 'React components' }).uncheck();
+  await dialog.getByRole('checkbox', { name: 'Mathematics' }).uncheck();
+  await page
+    .getByRole('button', { name: 'Close Settings', exact: true })
+    .click();
+  await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
+  await expect(view.locator('.katex')).toHaveCount(0);
+  await expect(
+    view.locator('pre').filter({ hasText: 'export function Counter' }),
+  ).toBeVisible();
+  await saved(page);
+  await page.reload();
+  await expect(
+    view.locator('pre').filter({ hasText: 'export function Counter' }),
+  ).toBeVisible();
+  await expect(page.locator('iframe[title="Document preview"]')).toHaveCount(0);
+  await command(page, 'Settings');
+  dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await dialog
+    .getByRole('button', { name: 'Core plugins', exact: true })
+    .click();
+  await expect(
+    dialog.getByRole('checkbox', { name: 'React components' }),
+  ).not.toBeChecked();
+  await dialog.getByRole('checkbox', { name: 'React components' }).check();
+  await dialog.getByRole('checkbox', { name: 'Mathematics' }).check();
+  await testInfo.attach('core-plugin-settings', {
+    body: await dialog.screenshot(),
+    contentType: 'image/png',
+  });
+  await page
+    .getByRole('button', { name: 'Close Settings', exact: true })
+    .click();
+  await view.locator('.rendered-math-invalid').getByRole('button').click();
+  await math.fill('$x \\in \\mathbb{R}$');
+  await view.getByRole('heading', { name: 'Modular note' }).click();
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
+  await expect(view.locator('.katex')).toBeVisible();
+  expect(await exported(page)).toEqual(Buffer.from(original));
+});

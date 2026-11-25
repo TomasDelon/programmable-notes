@@ -1,13 +1,22 @@
+import { corePluginEnabled } from '../../plugins/coreRegistry';
+import { previewSourcePolicy } from '../../plugins/core/react';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useNotifications } from '../../ui/useNotifications';
 import { Modal } from '../../ui/Modal';
 import { createRoot, type Root } from 'react-dom/client';
 import {
   Slice,
+  Fragment,
   type Node as ProseNode,
   type MarkType,
 } from 'prosemirror-model';
-import { EditorState, TextSelection, type Command } from 'prosemirror-state';
+import {
+  AllSelection,
+  EditorState,
+  Selection,
+  TextSelection,
+  type Command,
+} from 'prosemirror-state';
 import { EditorView, type NodeView } from 'prosemirror-view';
 import {
   baseKeymap,
@@ -30,7 +39,7 @@ import {
   wrapInList,
 } from 'prosemirror-schema-list';
 import { addRowAfter, goToNextCell, tableEditing } from 'prosemirror-tables';
-import katex from 'katex';
+import { renderMathematics, validLatex } from '../../plugins/core/math';
 import { EditorState as MathState } from '@codemirror/state';
 import { EditorView as MathView, keymap as mathKeymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -99,6 +108,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   );
   const runtimeCounter = useRef(0);
   const imageRefreshers = useRef(new Set<() => void>());
+  const presentationRefreshers = useRef(new Set<() => void>());
   const [error, setError] = useState('');
   const [unappliedText, setUnappliedText] = useState<string | null>(null);
   const retainedDraft = useRef<string | null>(null);
@@ -153,6 +163,63 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     let acceptedSource = latest.current.source;
     const nodes = renderedSchema.nodes;
     const marks = renderedSchema.marks;
+    function hiddenSource(node: ProseNode): boolean {
+      if (node.type !== nodes.source_block && node.type !== nodes.source_inline)
+        return false;
+      return previewSourcePolicy(
+        String(node.attrs.kind),
+        String(node.attrs.raw ?? node.attrs.value ?? ''),
+        corePluginEnabled(latest.current.runtime.corePlugins, 'react'),
+        latest.current.runtime.showComponentSource === true,
+      ).hidden;
+    }
+    function hiddenSourcePreserved(
+      before: ProseNode,
+      after: ProseNode,
+    ): boolean {
+      const protectedNodes: ProseNode[] = [];
+      before.descendants((node) => {
+        if (hiddenSource(node)) protectedNodes.push(node);
+      });
+      if (!protectedNodes.length) return true;
+      let matched = 0;
+      after.descendants((node) => {
+        const expected = protectedNodes[matched];
+        if (
+          expected &&
+          node.type === expected.type &&
+          node.attrs.kind === expected.attrs.kind &&
+          node.attrs.raw === expected.attrs.raw &&
+          node.attrs.value === expected.attrs.value
+        )
+          matched++;
+      });
+      return matched === protectedNodes.length;
+    }
+    function visibleStart(doc: ProseNode) {
+      let from = 0;
+      for (
+        let index = 0;
+        index < doc.childCount && hiddenSource(doc.child(index));
+        index++
+      )
+        from += doc.child(index).nodeSize;
+      return from < doc.content.size
+        ? (Selection.findFrom(doc.resolve(from), 1, true) ?? undefined)
+        : undefined;
+    }
+    function hiddenEdges(doc: ProseNode) {
+      const prefix: ProseNode[] = [],
+        suffix: ProseNode[] = [];
+      let left = 0,
+        right = doc.childCount - 1;
+      while (left <= right && hiddenSource(doc.child(left)))
+        prefix.push(doc.child(left++));
+      while (right >= left && hiddenSource(doc.child(right)))
+        suffix.unshift(doc.child(right--));
+      return { prefix, suffix };
+    }
+
     const taskList: Command = (state, dispatch) => {
       for (let depth = state.selection.$from.depth; depth > 0; depth--) {
         const node = state.selection.$from.node(depth);
@@ -303,14 +370,19 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           'aria-label',
           `Edit ${display ? 'display' : 'inline'} equation: ${String(node.attrs.value).trim()}`,
         );
-        katex.render(String(node.attrs.value), button, {
-          displayMode: display,
-          throwOnError: false,
-          trust: false,
-          maxExpand: 1000,
-          maxSize: 30,
-          strict: 'ignore',
-        });
+        const valid = renderMathematics(
+          button,
+          String(node.attrs.value),
+          String(
+            node.attrs.raw ||
+              (display
+                ? `$$\n${node.attrs.value}\n$$`
+                : `$${node.attrs.value}$`),
+          ),
+          display,
+          corePluginEnabled(latest.current.runtime.corePlugins, 'mathematics'),
+        );
+        wrapper.classList.toggle('rendered-math-invalid', !valid);
         wrapper.replaceChildren(button);
       }
       function close() {
@@ -366,23 +438,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           return false;
         }
         const inner = entered.slice(delimiters.length, -delimiters.length);
-        try {
-          katex.renderToString(inner, {
-            displayMode: display,
-            throwOnError: true,
-            trust: false,
-            strict: 'ignore',
-            maxExpand: 1000,
-            maxSize: 30,
-          });
-        } catch (reason) {
-          showError(
-            reason instanceof Error
-              ? reason.message
-              : 'Invalid LaTeX expression.',
-          );
-          return false;
-        }
         const planned = planMathReplacement(
           latest.current.source,
           snapshot,
@@ -405,7 +460,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         }
         // The canonical CodeMirror transaction will refresh this NodeView.
         // In the meantime keep the equation visually current.
-        node = node.type.create({ ...node.attrs, value: inner });
+        node = node.type.create({ ...node.attrs, value: inner, raw: entered });
         close();
         return true;
       }
@@ -440,7 +495,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         host.className = display
           ? 'rendered-math-source rendered-math-source-block'
           : 'rendered-math-source';
-        wrapper.classList.remove('rendered-math-invalid');
+        wrapper.classList.toggle(
+          'rendered-math-invalid',
+          corePluginEnabled(
+            latest.current.runtime.corePlugins,
+            'mathematics',
+          ) && !validLatex(String(node.attrs.value), display),
+        );
         wrapper.replaceChildren(host);
         activeMath = actions;
         setMathEditing(true);
@@ -507,8 +568,24 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               }),
               MathView.updateListener.of((update) => {
                 if (!update.docChanged) return;
-                wrapper.classList.remove('rendered-math-invalid');
-                update.view.contentDOM.removeAttribute('aria-invalid');
+                const raw = update.state.doc.toString();
+                const delimiters = display ? '$$' : '$';
+                const valid =
+                  !corePluginEnabled(
+                    latest.current.runtime.corePlugins,
+                    'mathematics',
+                  ) ||
+                  (raw.startsWith(delimiters) &&
+                    raw.endsWith(delimiters) &&
+                    validLatex(
+                      raw.slice(delimiters.length, -delimiters.length),
+                      display,
+                    ));
+                wrapper.classList.toggle('rendered-math-invalid', !valid);
+                if (valid)
+                  update.view.contentDOM.removeAttribute('aria-invalid');
+                else
+                  update.view.contentDOM.setAttribute('aria-invalid', 'true');
                 update.view.contentDOM.removeAttribute('aria-describedby');
                 dismiss(noticeId + '-math');
               }),
@@ -569,6 +646,20 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           },
         });
       }
+      let mathematicsEnabled = corePluginEnabled(
+        latest.current.runtime.corePlugins,
+        'mathematics',
+      );
+      const refresh = () => {
+        const enabled = corePluginEnabled(
+          latest.current.runtime.corePlugins,
+          'mathematics',
+        );
+        if (enabled === mathematicsEnabled) return;
+        mathematicsEnabled = enabled;
+        if (!field) renderEquation();
+      };
+      presentationRefreshers.current.add(refresh);
       mathEntrances.set(wrapper, activate);
       button.addEventListener('click', () => activate());
       button.addEventListener('keydown', (event) => {
@@ -588,11 +679,15 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         },
         update: (next) => {
           if (next.type !== node.type) return false;
+          const sameRepresentation =
+            next.attrs.value === node.attrs.value &&
+            next.attrs.raw === node.attrs.raw;
           node = next;
-          if (!field) renderEquation();
+          if (!field && !sameRepresentation) renderEquation();
           return true;
         },
         destroy: () => {
+          presentationRefreshers.current.delete(refresh);
           detachComposition();
           if (field) {
             field.destroy();
@@ -695,56 +790,68 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       dom.className = 'rendered-source-block';
       const raw = String(node.attrs.raw ?? node.attrs.value ?? '');
       const kind = String(node.attrs.kind);
+
+      const code = document.createElement('pre');
+      const literal = document.createElement('code');
+      literal.textContent = raw;
+      code.append(literal);
+      const target = document.createElement('div');
+      dom.append(code, target);
       let runtime: {
         root: Root;
         raw: string;
         report: (message: string) => void;
       } | null = null;
-      const executable = kind.startsWith('mdx') && kind !== 'mdxjsEsm';
-      if (executable) {
-        const target = document.createElement('div');
-        dom.append(target);
-        const id = noticeId + '-runtime-' + ++runtimeCounter.current;
-        const report = (message: string) => {
-          if (message)
-            notify({
-              id,
-              tone: 'error',
-              persistent: true,
-              message: 'Preview needs attention',
-              detail: message,
-            });
-          else dismiss(id);
-        };
-        runtime = { root: createRoot(target), raw, report };
-        runtimeRoots.current.add(runtime);
-        runtime.root.render(
-          <RenderedRuntime
-            context={latest.current.runtime}
-            raw={raw}
-            onError={report}
-          />,
+      const release = () => {
+        if (!runtime) return;
+        runtime.report('');
+        runtimeRoots.current.delete(runtime);
+        const root = runtime.root;
+        runtime = null;
+        queueMicrotask(() => root.unmount());
+      };
+      const refresh = () => {
+        const policy = previewSourcePolicy(
+          kind,
+          raw,
+          corePluginEnabled(latest.current.runtime.corePlugins, 'react'),
+          latest.current.runtime.showComponentSource === true,
         );
-      } else {
-        const details = document.createElement('details');
-        const summary = document.createElement('summary');
-        summary.textContent =
-          kind === 'mdxjsEsm' ? 'Component setup' : 'Source block';
-        const pre = document.createElement('pre');
-        pre.textContent = raw;
-        details.append(summary, pre);
-        dom.append(details);
-      }
-      const edit = document.createElement('button');
-      edit.type = 'button';
-      edit.className = 'rendered-source-action';
-      edit.textContent = executable
-        ? 'Edit component source'
-        : 'Edit source block';
-      edit.addEventListener('click', () =>
-        latest.current.openSource(sourceOffset(node), latest.current.source),
-      );
-      dom.append(edit);
+        const showSource = policy.source;
+        const run = policy.render;
+        code.hidden = !showSource;
+        target.hidden = !run;
+        dom.hidden = !showSource && !run;
+        if (!run) release();
+        else if (!runtime) {
+          const id = noticeId + '-runtime-' + ++runtimeCounter.current;
+          const report = (message: string) => {
+            if (message)
+              notify({
+                id,
+                tone: 'error',
+                persistent: true,
+                message: 'Preview needs attention',
+                detail: message,
+              });
+            else dismiss(id);
+          };
+          // A new DOM target avoids reusing a root still awaiting safe unmount.
+          const host = document.createElement('div');
+          target.replaceChildren(host);
+          runtime = { root: createRoot(host), raw, report };
+          runtimeRoots.current.add(runtime);
+          runtime.root.render(
+            <RenderedRuntime
+              context={latest.current.runtime}
+              raw={raw}
+              onError={report}
+            />,
+          );
+        }
+      };
+      refresh();
+      presentationRefreshers.current.add(refresh);
       return {
         dom,
         update: (next) => {
@@ -760,12 +867,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         stopEvent: () => true,
         ignoreMutation: () => true,
         destroy: () => {
-          if (runtime) {
-            runtime.report('');
-            runtimeRoots.current.delete(runtime);
-            const root = runtime.root;
-            queueMicrotask(() => root.unmount());
-          }
+          presentationRefreshers.current.delete(refresh);
+          release();
         },
       };
     }
@@ -794,9 +897,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       state: EditorState.create({
         schema: renderedSchema,
         doc: projection.doc,
+        selection: visibleStart(projection.doc),
         plugins: [
           inputRules({ rules }),
           keymap({
+            'Mod-a': (state, dispatch) => {
+              dispatch?.(state.tr.setSelection(new AllSelection(state.doc)));
+              return true;
+            },
             'Mod-z': () => {
               latest.current.undo();
               return true;
@@ -876,6 +984,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           else latest.current.redo();
           return true;
         },
+      },
+      handleTextInput: (current, _from, _to, text) => {
+        // Native DOM selection cannot reliably span display:none setup atoms.
+        // Honor the editor-owned Select All rather than the browser's collapsed
+        // DOM range; the transaction guard below retains invisible setup.
+        if (!(current.state.selection instanceof AllSelection)) return false;
+        current.dispatch(current.state.tr.insertText(text));
+        return true;
       },
       handleKeyDown: (current, event) => {
         if (
@@ -961,6 +1077,87 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           // edit (including Select All / Delete or a browser DOM mutation)
           // must not destroy its NodeView and silently discard that text.
           editor.updateState(editor.state);
+          return;
+        }
+        if (
+          transaction.docChanged &&
+          editor.state.selection instanceof AllSelection &&
+          !hiddenSourcePreserved(editor.state.doc, transaction.doc)
+        ) {
+          // Select All refers to the visible body. Prefix/suffix setup remains
+          // byte-for-byte source; interleaved hidden code still fails closed.
+          const { prefix, suffix } = hiddenEdges(editor.state.doc);
+          const body = transaction.doc;
+          const content = Fragment.fromArray([
+            ...prefix,
+            ...Array.from({ length: body.childCount }, (_, index) =>
+              body.child(index),
+            ),
+            ...suffix,
+          ]);
+          if (editor.state.doc.type.validContent(content)) {
+            const restored = editor.state.doc.copy(content);
+            if (hiddenSourcePreserved(editor.state.doc, restored)) {
+              const end =
+                prefix.reduce((size, node) => size + node.nodeSize, 0) +
+                body.content.size;
+              const replacement = editor.state.tr
+                .replaceWith(0, editor.state.doc.content.size, content)
+                .setMeta('isolated', true);
+              replacement.setSelection(
+                TextSelection.near(replacement.doc.resolve(end), -1),
+              );
+              transaction = replacement;
+            }
+          }
+        }
+        if (
+          transaction.docChanged &&
+          !hiddenSourcePreserved(editor.state.doc, transaction.doc)
+        ) {
+          // A boundary Backspace/Delete must never erase invisible setup. Treat
+          // this as a source-neutral no-op; subsequent ordinary typing is free.
+          const onlyInvisibleChange =
+            editor.state.doc.textBetween(
+              0,
+              editor.state.doc.content.size,
+              '\n\n',
+            ) ===
+            transaction.doc.textBetween(
+              0,
+              transaction.doc.content.size,
+              '\n\n',
+            );
+          if (!editor.state.selection.empty && !onlyInvisibleChange) {
+            let attempted = transaction.doc.textBetween(
+              0,
+              transaction.doc.content.size,
+              '\n\n',
+            );
+            try {
+              attempted = serializeRenderedChange(
+                projection,
+                transaction.doc,
+                transaction,
+              );
+            } catch {
+              /* Preserve at least the exact attempted visible text. */
+            }
+            retainedDraft.current = attempted;
+            setUnappliedText(attempted);
+            setError(
+              'This selection includes hidden component source. The source is unchanged and your attempted edit was retained. Use Source to change that code.',
+            );
+          }
+          const visible = !editor.state.selection.$head.parent.inlineContent
+            ? (Selection.findFrom(editor.state.selection.$from, 1, true) ??
+              Selection.findFrom(editor.state.selection.$from, -1, true))
+            : null;
+          editor.updateState(
+            visible
+              ? editor.state.apply(editor.state.tr.setSelection(visible))
+              : editor.state,
+          );
           return;
         }
         const nextState = editor.state.apply(transaction);
@@ -1193,6 +1390,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   useEffect(() => {
     view.current?.setProps({ editable: () => !latest.current.disabled });
     for (const refresh of imageRefreshers.current) refresh();
+    for (const refresh of presentationRefreshers.current) refresh();
     for (const runtime of runtimeRoots.current)
       runtime.root.render(
         <RenderedRuntime

@@ -89,7 +89,7 @@ test('Preview reveals dollar delimiters at the caret and preserves exact LaTeX u
   expect(await exportSource(page)).toEqual(Buffer.from(original));
 });
 
-test('invalid or cancelled inline display math retains the original and mobile has no popup', async ({
+test('unsafe display math delimiters retain the original and mobile has no popup', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -106,7 +106,7 @@ test('invalid or cancelled inline display math retains the original and mobile h
   await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
     0,
   );
-  await latex.fill('$$\n\\unknowncommand\n$$');
+  await latex.fill('$$\n\\unknowncommand\n$');
   await latex.press('Control+Enter');
   await expect(
     page.getByRole('alert').filter({ hasText: 'Check the equation' }),
@@ -124,7 +124,7 @@ test('invalid or cancelled inline display math retains the original and mobile h
   );
 });
 
-test('unfinished invalid math survives document-wide deletion until explicitly cancelled', async ({
+test('unfinished unsafe math delimiters survive document-wide deletion until explicitly cancelled', async ({
   page,
 }) => {
   const original =
@@ -133,7 +133,7 @@ test('unfinished invalid math survives document-wide deletion until explicitly c
   await command(page, 'Preview document');
   await page.getByRole('button', { name: 'Edit inline equation: x^2' }).click();
   const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await field.fill('$\\unknowncommand$');
+  await field.fill('$x');
   await field.press('Enter');
   await expect(
     page.getByRole('alert').filter({ hasText: 'Check the equation' }),
@@ -143,7 +143,7 @@ test('unfinished invalid math survives document-wide deletion until explicitly c
   await view.getByRole('heading', { name: 'Keep this' }).click();
   await page.keyboard.press('Control+a');
   await page.keyboard.press('Backspace');
-  await expect(field).toHaveText('$\\unknowncommand$');
+  await expect(field).toHaveText('$x');
   await expect(view.getByRole('heading', { name: 'Keep this' })).toBeVisible();
 
   await field.press('Escape');
@@ -363,3 +363,66 @@ for (const width of [1440, 390]) {
     ).toBeLessThan(120);
   });
 }
+
+test('invalid LaTeX stays red and editable without blocking other text or later corrections', async ({
+  page,
+}) => {
+  const original =
+    '\uFEFF# Forgiving math\r\n\r\nFirst $x \\in \\mathbb{R}$ and second $y$.\r\n\r\nContinue here.\r\n';
+  await importNote(page, original);
+  await command(page, 'Preview document');
+  const view = page.locator('.rendered-editor .ProseMirror');
+  await view
+    .getByRole('button', { name: 'Edit inline equation: x \\in \\mathbb{R}' })
+    .click();
+  let math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await math.fill('$x \\in \\mathbb{R$');
+  await view.getByText('Continue here.', { exact: true }).click();
+  await expect(math).toHaveCount(0);
+  const invalid = view.locator('.rendered-math-invalid');
+  await expect(invalid).toHaveText('$x \\in \\mathbb{R$');
+  await expect(invalid.locator('.katex')).toHaveCount(0);
+  await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' Still writing.');
+  await expect(view).toContainText('Continue here. Still writing.');
+  await view
+    .getByRole('button', { name: 'Edit inline equation: y', exact: true })
+    .click();
+  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await math.fill('$\\frac{a}{b$');
+  await view.getByRole('heading', { name: 'Forgiving math' }).click();
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(2);
+  const badSource = await exportSource(page);
+  expect(badSource.toString()).toContain('$x \\in \\mathbb{R$');
+  expect(badSource.toString()).toContain('$\\frac{a}{b$');
+  await page.reload();
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(2);
+  await view
+    .getByRole('button', {
+      name: 'Edit inline equation: x \\in \\mathbb{R',
+      exact: true,
+    })
+    .click();
+  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await math.press('End');
+  await math.press('ArrowLeft');
+  await page.keyboard.insertText('}');
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(1);
+  await view.getByRole('heading', { name: 'Forgiving math' }).click();
+  await expect(math).toHaveCount(0);
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(1);
+  await view.locator('.rendered-math-invalid').getByRole('button').click();
+  math = page.getByRole('textbox', { name: 'Inline LaTeX source' });
+  await math.fill('$\\frac{a}{b}$');
+  await view.getByRole('heading', { name: 'Forgiving math' }).click();
+  await expect(view.locator('.rendered-math-invalid')).toHaveCount(0);
+  await expect(view.locator('.katex')).toHaveCount(2);
+  const after = await exportSource(page);
+  expect(after.toString()).toContain(
+    '$x \\in \\mathbb{R}$ and second $\\frac{a}{b}$',
+  );
+  expect(after.toString()).toContain('Still');
+  await page.reload();
+  await expect(view.locator('.katex')).toHaveCount(2);
+});

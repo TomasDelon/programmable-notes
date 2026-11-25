@@ -3766,6 +3766,7 @@ body {
     border-radius: 13px;
   }
   .web-settings-tabs {
+    flex-wrap: wrap;
     padding-inline: 12px;
     gap: 3px;
   }
@@ -4275,4 +4276,22 @@ body {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.web-plugin-setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px 0;
+  cursor: pointer;
+}
+.web-plugin-setting input {
+  margin-top: 5px;
+  accent-color: var(--accent);
+}
+.web-plugin-setting small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
 }

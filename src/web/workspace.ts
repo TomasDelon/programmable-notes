@@ -1,3 +1,9 @@
+import {
+  validCorePluginSettings,
+  validPreviewPreferences,
+  type CorePluginSettings,
+  type PreviewPreferences,
+} from '../plugins/coreRegistry';
 import type { Workspace } from '../documents/workspace';
 import {
   MAX_FILE_BYTES,
@@ -24,6 +30,8 @@ export interface DocumentMetadata {
 
 export interface WebState {
   version: 1;
+  corePlugins?: CorePluginSettings;
+  previewPreferences?: PreviewPreferences;
   workspace: Workspace;
   documents: Record<string, DocumentMetadata>;
   folders: string[];
@@ -436,6 +444,16 @@ export function validateWebState(value: unknown): WebState {
       value.mode === 'live' ||
       value.mode === 'preview',
     'Invalid editor mode.',
+  );
+  assert(
+    value.corePlugins === undefined ||
+      validCorePluginSettings(value.corePlugins),
+    'Invalid core plugin settings.',
+  );
+  assert(
+    value.previewPreferences === undefined ||
+      validPreviewPreferences(value.previewPreferences),
+    'Invalid preview preferences.',
   );
   if (value.assets !== undefined) validateAssetCatalog(value.assets);
   assert(

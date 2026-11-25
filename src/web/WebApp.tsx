@@ -1,3 +1,4 @@
+import { CORE_PLUGINS, corePluginEnabled } from '../plugins/coreRegistry';
 import {
   useEffect,
   useLayoutEffect,
@@ -77,7 +78,7 @@ import './web.css';
 import { useNotifications } from '../ui/useNotifications';
 
 type WorkspaceModel = ReturnType<typeof useWebWorkspace>;
-type SettingsTab = 'storage' | 'recovery' | 'trash' | 'help';
+type SettingsTab = 'storage' | 'plugins' | 'recovery' | 'trash' | 'help';
 type NewItem = {
   kind: 'note' | 'folder';
   parent: string;
@@ -348,6 +349,7 @@ function WorkspaceApp({
 }) {
   const { notify, dismiss } = useNotifications();
   const { workspace } = state;
+  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
   const offline = useOffline();
   const selected = workspace.selected;
   const metadata = state.documents[selected]!;
@@ -383,6 +385,9 @@ function WorkspaceApp({
     entry: workspace.entry,
     theme: state.theme,
     images: previewImages,
+    corePlugins: state.corePlugins,
+    showComponentSource: state.previewPreferences?.showComponentSource,
+    enabled: reactEnabled,
   });
   const histories = useRef<EditorHistory>(new Map());
   const commands = useRef<EditorCommands>(null);
@@ -401,6 +406,7 @@ function WorkspaceApp({
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
+  const fullDocument = reactEnabled && runtimeDocument === selected;
   const [islandOpen, setIslandOpen] = useState(false);
   const [peekSide, setPeekSide] = useState<'left' | 'right' | null>(null);
   const [sidebarView, setSidebarView] = useState<'documents' | 'connections'>(
@@ -2042,7 +2048,7 @@ function WorkspaceApp({
               <div
                 ref={sourcePanel}
                 className="web-source-panel"
-                hidden={mode === 'preview' && runtimeDocument === selected}
+                hidden={mode === 'preview' && fullDocument}
               >
                 <SourceEditor
                   key={selected}
@@ -2053,14 +2059,15 @@ function WorkspaceApp({
                   rendered={
                     selectedIsNote
                       ? {
-                          active:
-                            mode === 'preview' && runtimeDocument !== selected,
+                          active: mode === 'preview' && !fullDocument,
                           files,
                           entry: workspace.entry,
                           theme: state.theme,
                           images: previewImages,
-                          stopped:
-                            preview.stopped || runtimeDocument === selected,
+                          corePlugins: state.corePlugins,
+                          showComponentSource:
+                            state.previewPreferences?.showComponentSource,
+                          stopped: preview.stopped || fullDocument,
                         }
                       : undefined
                   }
@@ -2088,37 +2095,36 @@ function WorkspaceApp({
                 />
               </div>
               <div className="web-preview-panel" hidden={mode !== 'preview'}>
-                {preview.html && runtimeDocument === selected && (
+                {reactEnabled && preview.html && fullDocument && (
                   <WebPreview
                     html={preview.html}
                     theme={state.theme}
                     onError={preview.reportRuntimeError}
                   />
                 )}
-                {!preview.html &&
-                  !preview.error &&
-                  runtimeDocument === selected && (
-                    <div className="web-preview-placeholder" role="status">
-                      {preview.stopped ? (
-                        <>
-                          <Pause size={20} />
-                          <p>Preview is paused.</p>
-                          <button
-                            type="button"
-                            className="web-button"
-                            onClick={preview.rebuild}
-                          >
-                            <Play size={14} /> Resume preview
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <LoaderCircle className="web-spin" size={20} />
-                          <span>Preparing preview…</span>
-                        </>
-                      )}
-                    </div>
-                  )}
+                {!preview.html && !preview.error && fullDocument && (
+                  <div className="web-preview-placeholder" role="status">
+                    {preview.stopped ? (
+                      <>
+                        <Pause size={20} />
+                        <p>Preview is paused.</p>
+                        <button
+                          type="button"
+                          className="web-button"
+                          disabled={!reactEnabled}
+                          onClick={preview.rebuild}
+                        >
+                          <Play size={14} /> Resume preview
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <LoaderCircle className="web-spin" size={20} />
+                        <span>Preparing preview…</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2208,6 +2214,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2216,6 +2223,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild
@@ -2223,7 +2231,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={pendingEdit}
+                  disabled={pendingEdit || !reactEnabled}
                   onClick={() => {
                     setRuntimeDocument(
                       runtimeDocument === selected ? null : selected,
@@ -2392,6 +2400,7 @@ function WorkspaceApp({
             {(
               [
                 ['storage', 'Workspace', HardDrive],
+                ['plugins', 'Core plugins', Settings2],
                 ['recovery', 'Recovery', RotateCcw],
                 ['trash', 'Trash', Trash2],
                 ['help', 'Guide', CircleHelp],
@@ -2413,10 +2422,58 @@ function WorkspaceApp({
             ))}
           </nav>
           <div className="web-settings-content">
+            {settingsTab === 'plugins' && (
+              <section>
+                <h3>Core plugins</h3>
+                <p>
+                  Built into the application. Disabling a plugin changes
+                  presentation and execution, never your original note source.
+                </p>
+                {CORE_PLUGINS.map((plugin) => (
+                  <label key={plugin.id} className="web-plugin-setting">
+                    <input
+                      type="checkbox"
+                      checked={corePluginEnabled(state.corePlugins, plugin.id)}
+                      onChange={(event) => {
+                        if (plugin.id === 'react' && !event.target.checked)
+                          setRuntimeDocument(null);
+                        model.setCorePlugin(plugin.id, event.target.checked);
+                      }}
+                    />
+                    <span>
+                      <strong>{plugin.name}</strong>
+                      <small>{plugin.description}</small>
+                    </span>
+                  </label>
+                ))}
+                <p>
+                  Source editing, persistence and sandbox restrictions are
+                  always enforced. Only built-in core plugins are supported.
+                </p>
+              </section>
+            )}
             {settingsTab === 'storage' && (
               <>
                 <section>
                   <h3>Appearance</h3>
+                  <label className="web-plugin-setting">
+                    <input
+                      type="checkbox"
+                      checked={
+                        state.previewPreferences?.showComponentSource === true
+                      }
+                      onChange={(event) =>
+                        model.setShowComponentSource(event.target.checked)
+                      }
+                    />
+                    <span>
+                      Show component source in Preview
+                      <small>
+                        Show declarations and JSX as ordinary code blocks
+                        alongside rendered components.
+                      </small>
+                    </span>
+                  </label>
                   <div className="left-panel-theme-buttons">
                     <button
                       type="button"
@@ -2752,6 +2809,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2760,6 +2818,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild

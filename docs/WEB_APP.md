@@ -109,9 +109,12 @@ and apply the edit. `Enter` leaves an inline equation; in display equations it
 inserts a normal source newline. `Ctrl/Cmd + Enter` also leaves an equation.
 Undo/redo while inside operates on the mathematical draft; after leaving, the
 canonical document history restores the whole source patch. `Escape` explicitly
-discards the current draft. Invalid LaTeX,
-removed delimiters or stale source revisions keep the editable draft and show
-an error instead of overwriting the source. Resolve an unfinished draft before
+discards the current draft. Invalid LaTeX inside valid dollar delimiters stays
+visible as raw red source, saves normally and does not block typing elsewhere.
+Correcting it clears red feedback immediately; leaving renders the valid formula.
+There are no notifications for ordinary LaTeX errors. Removed delimiters or stale
+source revisions keep the editable draft and show an error instead of overwriting
+the source. Resolve an unfinished draft before
 switching documents, exporting, restoring or changing the surrounding document.
 If validation fails, nearby deletion and formatting cannot discard the equation;
 finish it or cancel explicitly before continuing. Cancelling a stale field shows
@@ -123,6 +126,19 @@ in Preview preserves unaffected isolated React islands. **Run full document**
 starts a separate shared-module execution context; returning to **Edit rendered
 document** or changing executable source may restart that context. Component
 state is temporary and is not part of a note backup.
+
+Settings → **Core plugins** independently enables Mathematics and React
+components. These are bundled trusted modules; community plugins are unsupported.
+Disabling Mathematics displays literal dollar-delimited source. Disabling React
+stops execution and removes its frames. Neither toggle changes your note bytes.
+
+Imports, exports, declarations and comment-only expressions are hidden in Preview.
+There are no component setup labels or source-action buttons. Settings →
+**Workspace** → **Show component source in Preview** displays ordinary escaped
+code alongside rendered JSX. Hidden setup is protected against visual deletion;
+edit it explicitly in Source. Select All replacement preserves hidden setup at
+the document edges. Ranges crossing interleaved hidden code require Source editing
+and retain attempted text rather than silently removing invisible code.
 
 The compiler uses the pinned React runtime and its import allowlist. Related
 local `.md`, `.mdx`, `.js`, `.jsx`, `.ts`, and `.tsx` sources can be imported

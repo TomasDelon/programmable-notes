@@ -1,5 +1,25 @@
 # Programmable Notes implementation status
 
+## Core plugins, hidden setup and recoverable LaTeX
+
+The web workspace now has static bundled Mathematics and React core modules with
+validated, persistent Settings toggles. No community loader or optional security
+kernel is introduced. Imports/exports/comments are invisible by default; the
+Workspace setting can show escaped ordinary code alongside live JSX. Setup labels
+and source-edit buttons are removed. Hidden code is protected against visual
+Backspace and selection replacement, including canonical undo/redo.
+
+Invalid TeX within valid math delimiters saves as red raw source without notices
+or blocking other text. Correction clears feedback and renders on exit. Unsafe
+boundaries/stale revisions still retain explicit recovery. This supersedes the
+older invalid-LaTeX refusal described below. The actual native `/engine` interface
+is unchanged. See [ADR 015](decisions/ADR-015-core-plugins-and-preview-source.md)
+and the [verification record](recovery/2026-11-25-core-plugins.md).
+The final local full gate passed **359 unit /45 files, 14 tooling (zero skips),
+116 Chromium and 6 Pages-policy cases**, including format/lint/type/build.
+Pages fingerprint: `f5c1e68720ba977f`, 77 assets. Hosted validation/promotion is
+pending at this checkpoint; the previous deployed app remains `7628521`.
+
 ## Caret-based mathematics
 
 Web Preview mathematical editing now uses an unframed source surface at the
@@ -8,7 +28,8 @@ display newlines, local draft undo/redo and canonical source history retain the
 existing revision and lossless-patch guards. Hover does not activate equations.
 The same original source reappears on entry, including dollar delimiters.
 Multiline CRLF/CR comparison and composition completion/focus ordering were
-corrected. Invalid/stale drafts remain protected and memory-only until resolved.
+corrected. Unsafe-delimiter/stale drafts remain protected and memory-only until resolved;
+ordinary TeX errors now follow ADR 015.
 The native `/engine` interface and all preview authority boundaries are unchanged.
 The corrected application commit `7628521` is deployed at
 https://programmable-notes.pages.dev/. Local checks passed 346 unit, 14 tooling,

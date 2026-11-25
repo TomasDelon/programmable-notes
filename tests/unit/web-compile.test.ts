@@ -52,3 +52,60 @@ describe('web document compilation', () => {
     expect(output).not.toContain('katex');
   });
 });
+
+describe('disabled core mathematics compilation', () => {
+  it('keeps dollar-delimited math as literal text without interpreting TeX braces as MDX expressions', async () => {
+    const output = String(
+      await compileDocumentSource(
+        'Literal $x^2$ and $\\mathbb{R}$.',
+        'note.mdx',
+        true,
+        false,
+      ),
+    );
+    expect(output).not.toContain('katex');
+    expect(output).toContain('$x^2$');
+    expect(output).toContain('mathbb{R}');
+  });
+});
+
+it.each(['note.md', 'note.mdx'])(
+  'preserves math delimiters when disabled in a BOM-prefixed %s document',
+  async (path) => {
+    const output = String(
+      await compileDocumentSource(
+        '\uFEFF# Header\r\n\r\nText $\\mathbb{R}$.\r\n',
+        path,
+        true,
+        false,
+      ),
+    );
+    expect(output).toContain('mathbb{R}$');
+    expect(output).not.toContain('katex');
+  },
+);
+
+it('shows optional component source as ordinary code while keeping executable JSX and exports', async () => {
+  const source = 'export const label = "example"\n\n<button>Live</button>\n';
+  const output = String(
+    await compileDocumentSource(source, 'note.mdx', true, true, true),
+  );
+  expect(output).toContain('pre: "pre"');
+  expect(output).toContain('language-js');
+  expect(output).toContain('export const label');
+  expect(output).toContain('button');
+});
+
+it('keeps malformed TeX as literal dollar-delimited red source in full-document compilation', async () => {
+  const output = String(
+    await compileDocumentSource(
+      '\uFEFFAn error $x \\in \\mathbb{R$.\r\n\r\n$$\r\n\\frac{a}{\r\n$$\r\n\r\nValid $y^2$.',
+      'note.mdx',
+      true,
+    ),
+  );
+  expect(output).toContain('mathbb{R$');
+  expect(output).toContain('color:');
+  expect(output).toContain('katex');
+  expect(output).not.toContain('ParseError');
+});

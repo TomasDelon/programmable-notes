@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import type { StoredAsset } from '../../assets/catalog';
-import { parseLiveSource } from '../math/mathSource';
+import { runtimeIslandSource } from '../../plugins/core/react';
+import type { CorePluginSettings } from '../../plugins/coreRegistry';
 import { useWebPreview } from '../../web/useWebPreview';
 import { WebPreview } from '../../web/WebPreview';
 
@@ -10,17 +11,8 @@ export interface RenderedRuntimeContext {
   theme: 'light' | 'dark';
   images: readonly StoredAsset[];
   stopped: boolean;
-}
-
-/** The host chooses code from its own source AST. A frame never receives edit authority. */
-function runtimeIslandSource(source: string, path: string, raw: string) {
-  const tree = parseLiveSource(source, path);
-  const setup = (tree?.children ?? [])
-    .filter((node) => node.type === 'mdxjsEsm')
-    .map((node) =>
-      source.slice(node.position!.start.offset, node.position!.end.offset),
-    );
-  return [...setup, raw].join('\n\n');
+  corePlugins?: CorePluginSettings;
+  showComponentSource?: boolean;
 }
 
 export function RenderedRuntime({
@@ -58,6 +50,9 @@ export function RenderedRuntime({
     files,
     images,
     enabled: !context.stopped,
+    corePlugins: context.corePlugins,
+    // The trusted host already presents this island's source when requested.
+    showComponentSource: false,
   });
   useEffect(() => {
     onError(context.stopped ? '' : preview.error);

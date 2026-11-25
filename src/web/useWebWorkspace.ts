@@ -1,3 +1,4 @@
+import { CORE_PLUGINS, type CorePluginId } from '../plugins/coreRegistry';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MAX_FILE_BYTES,
@@ -53,6 +54,8 @@ function documentContent(state: WebState): string {
   return JSON.stringify({
     ...state,
     theme: null,
+    corePlugins: null,
+    previewPreferences: null,
     mode: null,
     recentIds: null,
     workspace: { ...state.workspace, selected: null, entry: null },
@@ -66,6 +69,8 @@ function retainView(content: WebState, view: WebState): WebState {
   return {
     ...content,
     theme: view.theme,
+    corePlugins: view.corePlugins,
+    previewPreferences: view.previewPreferences,
     mode: view.mode,
     recentIds: view.recentIds.filter(available),
     workspace: {
@@ -713,6 +718,26 @@ export function useWebWorkspace() {
       mutate((previous) =>
         previous.mode === mode ? previous : { ...previous, mode },
       ),
+    setCorePlugin: (id: CorePluginId, enabled: boolean) =>
+      mutate((previous) => {
+        if (
+          !CORE_PLUGINS.some((plugin) => plugin.id === id) ||
+          typeof enabled !== 'boolean'
+        )
+          throw new Error('Unknown core plugin setting.');
+        return {
+          ...previous,
+          corePlugins: { ...previous.corePlugins, [id]: enabled },
+        };
+      }),
+    setShowComponentSource: (showComponentSource: boolean) =>
+      mutate((previous) => ({
+        ...previous,
+        previewPreferences: {
+          ...previous.previewPreferences,
+          showComponentSource,
+        },
+      })),
     setTheme: (theme: WebState['theme']) =>
       mutate((previous) =>
         previous.theme === theme ? previous : { ...previous, theme },
