@@ -185,6 +185,20 @@ class KvmProbe(unittest.TestCase):
         self.ioctl.side_effect = RuntimeError("private exception details")
         self.check(3, "::error::NATIVE_KVM_API_OBSERVER_FAILED observer-runtime", "open inspect ioctl close")
 
+    def test_role_baseline_never_queries_an_opened_device(self):
+        self.assertEqual(probe.observe_device(version=False), (2, "baseline-opened"))
+        self.ioctl.assert_not_called()
+        self.close.assert_called_once_with(23)
+
+    def test_role_refuses_replaced_descriptor_before_ioctl(self):
+        self.assertEqual(probe.observe_device(expected_node=self.node), (2, "device-changed"))
+        self.ioctl.assert_not_called()
+        self.close.assert_called_once_with(23)
+        self.inspect.return_value = self.node
+        self.assertEqual(probe.observe_device(expected_node=self.node), (0, "version=12"))
+        self.ioctl.assert_called_once_with(23, 0xAE00, 0)
+        self.assertEqual(self.close.call_count, 2)
+
     def test_version_probe_only(self):
         self.check(0, "::notice::NATIVE_KVM_API_ACCESSIBLE version=12", "open inspect ioctl close")
 

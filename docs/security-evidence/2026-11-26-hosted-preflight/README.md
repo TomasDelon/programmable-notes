@@ -158,4 +158,41 @@ establish absent group membership or provider permission to delegate access.
 The refined observer distinguishes those stages and reports only yes/no/unknown
 for device type, root ownership, stock group/mode, sysfs match, ACL absence and
 caller membership. Unknown or inconsistent metadata cannot justify a new role.
-No account, group, device permission, policy or VM was changed for these probes.
+The KVM observation itself changed no account, group, device permission or policy
+and created no VM. The subsequent strict namespace preflight creates its
+separate isolated validation user, as documented above.
+
+## Default-off dedicated-role API experiment
+
+The refined ordinary-account observation
+[45747710175](https://github.com/TomasDelon/programmable-notes/actions/runs/45747710175)
+at `82253e5` reported a stable root-owned character device matching the existing
+`kvm` group, stock0660 mode, matching sysfs identity and no access ACL. The
+ordinary caller was outside that group and was denied at device open, before
+any API query. The original namespace gate still refused author payload. These
+facts support a narrowly scoped DAC experiment, not bypassing a provider policy.
+
+A separate default-off `kvm_role_probe` input requires `native_preflight=true`
+and all unrelated inputs at their defaults. It rechecks eligibility, then
+creates one locked nologin account and private primary group for a fixed
+API-only observer. Only that process receives the existing kvm supplementary
+group; existing memberships, device ownership/mode/ACL, AppArmor and namespace
+policy remain unchanged. There is no VM, mmap, vCPU or guest execution.
+
+The root-staged script/reference are immutable to the role. Captured numeric
+identities bind launch, credentials and cleanup. The child drops capabilities,
+sets NoNewPrivileges, closes inherited descriptors and uses an isolated Python
+invocation with a clean environment and fixed working directory. Before device
+access, its provider context must match the original namespaces, cgroup, device,
+LSM labels/stack and seccomp mode/filter count. Unreadable, unknown or changed
+evidence refuses the API. Root never queries the device. Runtime/output are
+bounded; cleanup verifies acquired identities and resource absence, reporting
+unverified cleanup separately without deleting changed records.
+
+The opt-in step propagates nonzero outcomes directly; unavailable role access or
+a cleanup error cannot become a passing step. Invalid/mixed requests fail before
+checkout and cannot cancel a valid native group. Routing controls cover3,072
+dispatch combinations and automatic PR/main gates. Mocked lifecycle/credential
+controls and independent code review precede any hosted role action. Actual role
+results belong to their own receipts. API12 would prove only that query for that
+role, not guest feasibility, Ubuntu support or application security readiness.
