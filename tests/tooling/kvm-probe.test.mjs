@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 for (const [name, file, count] of [
   [
-    'hosted KVM observer checks only the device API and always closes an opened descriptor',
+    'hosted observer sanitizes cgroup metadata and closes descriptors without creating a VM',
     'kvm-probe-tests.py',
-    19,
+    23,
   ],
   [
     'hosted KVM role verifies credentials and cgroup identity and cleans up after failures',

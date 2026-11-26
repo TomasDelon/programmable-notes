@@ -139,8 +139,8 @@ The optional hosted probe also reports whether its ordinary x64 Linux account
 can open `/dev/kvm`, verify the opened descriptor is a character device and query
 KVM API version 12. It does not create a VM, execute a guest, change permissions,
 use sudo, alter groups or relax policy. Every opened descriptor is closed;
-unavailable access is separate from an unexpected observer failure. Seventeen mocked
-cases verify the exact single ioctl, cleanup and sanitized metadata. No device was opened locally.
+unavailable access is separate from an unexpected observer failure. The earlier observer’s seventeen mocked
+cases verified the exact single ioctl, cleanup and sanitized metadata. No device was opened locally.
 
 This observation can inform whether a new disposable hosted Linux guest is
 feasible. GitHub treats nested virtualization as experimental, so device API
@@ -219,3 +219,29 @@ A guest phase requires a separate bounded and reviewed configuration, including
 provider restrictions, exact signed media, device/cgroup isolation, no host shares
 or credentials, and complete process/storage cleanup. The canceled retained
 managed-host VM remains untouched.
+
+## Original-job cgroup snapshot observer
+
+The ordinary hosted observer additionally emits `NATIVE_JOB_CGROUP_METADATA`
+with fixed yes/no/unknown fields. It reads bounded proc/mount information and
+pinned read-only cgroup files, checks direct membership and stable namespace,
+location and directory identity, and refuses symlinks or ambiguous mount views.
+Empty controller lists are valid negative observations. A visible namespace root,
+unreadable/truncated data, unsupported domain or changing context remains unknown.
+No raw paths, process IDs, counts, labels or errors are printed.
+
+Controller availability and subtree enablement are a snapshot. An occupied
+non-root domain without memory subtree delegation cannot supply that controller
+to an immediate descendant without changing occupancy/delegation. This does not
+establish persistent runner identity, write permission or a future supported
+configuration. `device_policy_verified` always remains unknown: cgroup-v2 device
+filtering uses BPF independently of the controller lists. The observation never
+authorizes a guest, creates/moves a cgroup, changes permissions or loads policy.
+Role modes and the independent device API query/exit statuses are unchanged.
+
+All 23 observer and 11 role mocked Python cases passed through the counted Node
+harness; the new cases cover topology, stale/migrated context, mount ambiguity,
+sanitized output and descriptor closure. No local host observation was performed.
+Actual hosted output belongs to its own subsequent run receipt, not these mocks.
+The unchanged Ubuntu namespace gate and exact-package application acceptance
+remain required and separate.

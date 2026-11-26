@@ -126,6 +126,137 @@ def bounded_read(path, limit=4096):
     return value
 
 
+JOB_CGROUP_FIELDS = ("cpu_available", "memory_available", "pids_available", "cpu_enabled",
+                     "memory_enabled", "pids_enabled", "domain_nonroot", "observer_direct",
+                     "other_direct_visible", "root_coordinate_ambiguous", "device_policy_verified")
+
+
+def job_cgroup_location():
+    """Accept only the unambiguous canonical unified mount on the hosted image."""
+    namespace = os.stat("/proc/self/ns/cgroup")
+    membership = bounded_read("/proc/self/cgroup")
+    if (not membership.startswith(b"0::/") or not membership.endswith(b"\n")
+            or len(membership.splitlines()) != 1):
+        raise ValueError
+    coordinate = membership[4:-1]
+    parts = coordinate.split(b"/") if coordinate else []
+    if len(parts) > 64 or any(p in (b"", b".", b"..") or b"\0" in p for p in parts):
+        raise ValueError
+    mounts = []
+    table = bounded_read("/proc/self/mountinfo", 262144)
+    if not table.endswith(b"\n"):
+        raise ValueError
+    for line in table.splitlines():
+        left, right = line.split(b" - ", 1)
+        fields = left.split()
+        filesystem = right.split()
+        if len(fields) < 6 or len(filesystem) != 3:
+            raise ValueError
+        point = fields[4]
+        kind = filesystem[0]
+        if point.startswith(b"/sys/fs/cgroup/"):
+            raise ValueError
+        if point == b"/sys/fs/cgroup" or kind == b"cgroup2":
+            if (kind, fields[3], point) != (b"cgroup2", b"/", b"/sys/fs/cgroup"):
+                raise ValueError
+            mounts.append((fields[0], fields[2]))
+    if len(mounts) != 1:
+        raise ValueError
+    mount_id, device = mounts[0]
+    major, minor = device.split(b":")
+    return parts, os.makedev(int(major), int(minor)), mount_id, namespace.st_dev, namespace.st_ino
+
+
+def open_job_cgroup(parts, device, stack):
+    flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_DIRECTORY
+    directory = os.open("/", flags)
+    stack.callback(os.close, directory)
+    for name in (b"sys", b"fs", b"cgroup", *parts):
+        directory = os.open(name, flags, dir_fd=directory)
+        stack.callback(os.close, directory)
+    if os.fstat(directory).st_dev != device:
+        raise ValueError
+    return directory
+
+
+def job_cgroup_file(directory, name, device, limit=4096):
+    flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
+    fd = os.open(name, flags, dir_fd=directory)
+    try:
+        source = os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+    with source:
+        node = os.fstat(fd)
+        if node.st_dev != device or not stat.S_ISREG(node.st_mode):
+            raise ValueError
+        data = source.read(limit + 1)
+    if len(data) > limit or (data and not data.endswith(b"\n")):
+        raise ValueError
+    return data
+
+
+def job_domain_sample(directory, device):
+    import re
+
+    # cgroup.type is CFTYPE_NOT_ON_ROOT. Threaded domains have different
+    # cgroup.procs semantics and cannot support this ordinary domain inference.
+    if job_cgroup_file(directory, b"cgroup.type", device) != b"domain\n":
+        raise ValueError
+    controllers = []
+    for file in (b"cgroup.controllers", b"cgroup.subtree_control"):
+        tokens = job_cgroup_file(directory, file, device).split()
+        if any(not re.fullmatch(rb"[a-z][a-z0-9_]*", token) for token in tokens):
+            raise ValueError
+        controllers.append(set(tokens))
+    available, enabled = controllers
+    # An occupied non-root domain cannot distribute memory to its children.
+    # Seeing both conditions in this sample would mean the snapshot is stale.
+    if not enabled <= available or b"memory" in enabled:
+        raise ValueError
+    pids = job_cgroup_file(directory, b"cgroup.procs", device, 65536).splitlines()
+    own_pid = str(os.getpid()).encode("ascii")
+    if own_pid not in pids or any(not re.fullmatch(rb"[1-9][0-9]*", pid) for pid in pids):
+        raise ValueError
+    fields = dict.fromkeys(JOB_CGROUP_FIELDS)
+    for name in ("cpu", "memory", "pids"):
+        fields[name + "_available"] = name.encode("ascii") in available
+        fields[name + "_enabled"] = name.encode("ascii") in enabled
+    fields.update(domain_nonroot=True, observer_direct=True,
+                  other_direct_visible=any(pid != own_pid for pid in pids),
+                  root_coordinate_ambiguous=False)
+    return fields
+
+
+def job_cgroup_metadata():
+    """Advisory topology only. Device BPF authorization is never inferred."""
+    from contextlib import ExitStack
+
+    unknown = dict.fromkeys(JOB_CGROUP_FIELDS)
+    try:
+        with ExitStack() as stack:
+            location = job_cgroup_location()
+            parts, device = location[:2]
+            directory = open_job_cgroup(parts, device, stack)
+            if parts:
+                fields = job_domain_sample(directory, device)
+                if job_domain_sample(directory, device) != fields:
+                    return unknown
+            else:
+                # A visible / is relative to the caller's cgroup namespace.
+                fields = unknown | {"root_coordinate_ambiguous": True}
+            if job_cgroup_location() != location:
+                return unknown
+            current = open_job_cgroup(parts, device, stack)
+            if os.fstat(current).st_ino != os.fstat(directory).st_ino:
+                return unknown
+            return fields
+    except Exception:
+        # An optional observation cannot change the independent device API result.
+        return unknown
+
+
 def security_context():
     # This experiment is specific to the Ubuntu AppArmor image. Refuse a
     # different LSM stack until its per-task label interfaces are accounted for.
@@ -287,6 +418,9 @@ def main():
     else:
         try:
             states = {True: "yes", False: "no", None: "unknown"}
+            cgroup = job_cgroup_metadata()
+            print("::notice::NATIVE_JOB_CGROUP_METADATA",
+                  *(f"{key}={states[value]}" for key, value in cgroup.items()))
             metadata = device_metadata()
             print("::notice::NATIVE_KVM_DEVICE_METADATA",
                   *(f"{key}={states[value]}" for key, value in metadata.items()))
