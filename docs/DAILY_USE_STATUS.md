@@ -144,3 +144,26 @@ small experiment. Physical-device and cross-engine performance remain separate.
 
 [The first actual hosted native probe](security-evidence/2026-11-26-hosted-preflight/README.md)
 records its failed observer and correction independently of browser acceptance.
+
+## Hosted interaction verification follow-up
+
+The full three-browser run at `8c36580`
+([45730772678](https://github.com/TomasDelon/programmable-notes/actions/runs/45730772678))
+ended with 379 passed, 18 skipped, one failed Chromium authoring case and one
+flaky Firefox case. It was not accepted, and beta promotion remained on hold.
+
+A deterministic probe reproduced the Chromium failure without changing the
+application: the test's DOM Range selected a paragraph while ProseMirror still
+held the preceding selection; the immediately dispatched synthetic paste used
+that older state. The test now selects through native keyboard controls and uses
+actual Copy/Paste. Its visible text and complete byte-exact export assertions are
+unchanged. Chromium passed five consecutive runs and WebKit passed the complete
+journey with zero retries on the frozen build.
+
+The legacy long-paragraph test sampled browser scrolling immediately after
+Ctrl+End. It now polls the same positive-scroll predicate with the default
+deadline, retaining geometry, exact tail export, undo and redo checks. Actual
+WebKit observation placed scroll delivery after the first post-key sample; local
+Chromium/WebKit checks passed, while hosted Firefox repetition remains required.
+The optional `editing_scope=authoring` diagnostic selects these four journeys for
+five repetitions without retries. It does not replace complete CI or acceptance.

@@ -38,7 +38,7 @@ on:
         description: Optional diagnostic scope; final acceptance still requires all
         type: choice
         default: all
-        options: [all, core, math, source]
+        options: [all, core, math, source, authoring]
       editing_browser:
         description: Browser for the optional Preview input diagnostics
         type: choice
@@ -278,6 +278,11 @@ jobs:
           test_files=(tests/e2e/bootstrap.spec.ts tests/e2e/web-rendered-editor.spec.ts tests/e2e/web-update.spec.ts tests/e2e/web-live.spec.ts tests/e2e/web-math-composition.spec.ts tests/e2e/web-core-plugins.spec.ts tests/e2e/web-unified-math.spec.ts)
           grep_args=(--grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update|caret math is same-document|display math reveals|moving between equations|normal document flow|math composition|document mathematics composition|final Unicode composition|blurred composition|invalid LaTeX stays red|setup is invisible|core plugins can be disabled|disabled mathematics stays literal|preview messages cannot change|hidden setup survives|core plugin settings remain usable|unfinished display dollars|removing a dollar|typing a first dollar|literal mathematics work budget|unfinished dollars are ordinary|mathematics uses the document caret|invalid closed mathematics|document selection crosses|arrow keys and extended selection|arrow navigation enters and leaves|removing a math delimiter|opaque source navigation is explicit|JavaScript Unicode line terminators navigate')
           case "$PN_EDITING_SCOPE" in
+            authoring)
+              repeat_count=5
+              test_files=(tests/e2e/web-authoring-acceptance.spec.ts tests/e2e/bootstrap.spec.ts)
+              grep_args=(--grep 'keyboard authoring in mixed MDX|the same document caret|Rebuild restarts the live Counter|long visual paragraphs')
+              ;;
             source)
               repeat_count=20
               test_files=(tests/e2e/bootstrap.spec.ts)

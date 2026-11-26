@@ -1257,7 +1257,9 @@ test('long visual paragraphs keep a bounded scrollable input and exact source hi
   expect(geometry.height).toBeLessThanOrEqual(geometry.viewport * 0.75);
   expect(geometry.scroll).toBeGreaterThan(geometry.client + 1000);
   await field.press('Control+End');
-  expect(await field.evaluate((e) => e.scrollTop)).toBeGreaterThan(0);
+  await expect
+    .poll(() => field.evaluate((e) => e.scrollTop))
+    .toBeGreaterThan(0);
   await page.keyboard.insertText(' Tail saved.');
   await field.press('Enter');
   const exported = async () => {

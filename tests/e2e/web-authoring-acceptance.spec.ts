@@ -208,22 +208,30 @@ test('keyboard authoring in mixed MDX survives undo, note switching and reload',
     const paragraph = view
       .locator('p')
       .filter({ hasText: 'Readings begin here.' });
-    await selectDocumentText(paragraph);
-    await paragraph.evaluate((element) => {
-      const data = new DataTransfer();
-      data.setData(
-        'text/plain',
-        'Readings begin here.\nCheck the temperature.',
-      );
-      const event = new ClipboardEvent('paste', {
-        bubbles: true,
-        cancelable: true,
-        clipboardData: data,
-      });
-      // Firefox gives synthetic paste an empty transfer unless it is set explicitly.
-      Object.defineProperty(event, 'clipboardData', { value: data });
-      element.dispatchEvent(event);
-    });
+    // Seed a plain-text clipboard through native Copy, then use the same
+    // selection and Paste gestures as a user in the document.
+    const clipboardSource = await page.evaluateHandle((text) => {
+      const field = document.createElement('textarea');
+      field.style.cssText = 'position: fixed; top: 0; left: 0; opacity: 0';
+      field.value = text;
+      document.body.append(field);
+      field.focus();
+      field.select();
+      return field;
+    }, 'Readings begin here.\nCheck the temperature.');
+    try {
+      await keys.press('Control+c');
+    } finally {
+      await clipboardSource.evaluate((field) => field.remove());
+      await clipboardSource.dispose();
+    }
+    await paragraph.click();
+    await keys.press('Home');
+    await keys.press('Shift+End');
+    await expect
+      .poll(() => page.evaluate(() => window.getSelection()?.toString()))
+      .toBe('Readings begin here.');
+    await keys.press('Control+v');
     await expect(paragraph).toContainText('Check the temperature.');
     expect(await paragraph.textContent()).toBe(
       'Readings begin here.\nCheck the temperature.',
