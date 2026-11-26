@@ -10,6 +10,11 @@ import {
 import CompilerWorker from '../compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 import { validateFiles } from '../documents/workspace';
+import {
+  verifiedDependencies,
+  workspaceDependenciesMatch,
+  type WorkspaceDependencies,
+} from '../compiler/workspaceDependencies';
 import { isMdxSource } from '../sourceTypes';
 import { webPreviewDocument } from './previewDocument';
 import type { StoredAsset } from '../assets/catalog';
@@ -115,6 +120,7 @@ export function useWebPreview({
   enabled = true,
   corePlugins,
   showComponentSource = false,
+  trackWorkspaceDependencies = false,
 }: {
   files: Record<string, string>;
   entry: string;
@@ -123,17 +129,25 @@ export function useWebPreview({
   enabled?: boolean;
   corePlugins?: CorePluginSettings;
   showComponentSource?: boolean;
+  trackWorkspaceDependencies?: boolean;
 }) {
   const [stopped, setStopped] = useState(false);
   const [revision, setRevision] = useState(0);
   const mathematics = corePlugins?.mathematics !== false;
-  const request = useMemo(
+  const options = useMemo(
     () =>
       enabled && !stopped
-        ? { files, entry, images, mathematics, showComponentSource, revision }
+        ? {
+            entry,
+            images,
+            mathematics,
+            showComponentSource,
+            revision,
+            trackWorkspaceDependencies,
+          }
         : null,
     [
-      files,
+      trackWorkspaceDependencies,
       entry,
       images,
       mathematics,
@@ -143,13 +157,40 @@ export function useWebPreview({
       enabled,
     ],
   );
+  const input = useMemo(() => options && { options, files }, [options, files]);
+  const islandInput = trackWorkspaceDependencies ? input : null;
+  const [island, setIsland] = useState({
+    observed: islandInput,
+    request: islandInput,
+  });
   const [publication, setPublication] = useState<{
-    request: NonNullable<typeof request>;
+    request: NonNullable<typeof input>;
+    ticket: number;
+    dependencies?: WorkspaceDependencies;
     status: WebPreviewStatus;
     html?: string;
     error?: string;
     locations?: WebSourceLocation[];
   } | null>(null);
+  // Retiring a request for even one commit unmounts its iframe.
+  let islandRequest = island.request;
+  if (island.observed !== islandInput) {
+    const keepFrame =
+      islandInput &&
+      islandRequest &&
+      islandInput.options === islandRequest.options &&
+      publication?.request === islandRequest &&
+      publication.status === 'Preview ready' &&
+      publication.dependencies &&
+      workspaceDependenciesMatch(
+        publication.dependencies,
+        islandRequest.files,
+        islandInput.files,
+      );
+    if (!keepFrame) islandRequest = islandInput;
+    setIsland({ observed: islandInput, request: islandRequest });
+  }
+  const request = trackWorkspaceDependencies ? islandRequest : input;
   const generation = useRef(0);
   const readyGeneration = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -181,9 +222,10 @@ export function useWebPreview({
 
   const reportRuntimeError = useCallback(
     (message: string) => {
-      if (readyGeneration.current !== generation.current) return;
+      const ticket = readyGeneration.current;
+      if (ticket !== generation.current) return;
       setPublication((previous) =>
-        previous && previous.request === request
+        previous && previous.ticket === ticket && previous.request === request
           ? {
               ...previous,
               error: message.slice(0, 2000),
@@ -197,7 +239,14 @@ export function useWebPreview({
 
   useEffect(() => {
     if (!request) return;
-    const { files, entry, images, mathematics, showComponentSource } = request;
+    const { files, options } = request;
+    const {
+      entry,
+      images,
+      mathematics,
+      showComponentSource,
+      trackWorkspaceDependencies,
+    } = options;
     const ticket = ++generation.current;
     readyGeneration.current = null;
     let active = true;
@@ -229,6 +278,7 @@ export function useWebPreview({
       cancelInitialization(initialization);
       setPublication({
         request,
+        ticket,
         status,
         error: String(failure).slice(0, 2000),
         locations,
@@ -264,6 +314,7 @@ export function useWebPreview({
           event: MessageEvent<{
             id: number;
             code?: string;
+            dependencies?: WorkspaceDependencies;
             error?: string;
             locations?: { file: string; line: number; offset: number }[];
           }>,
@@ -294,7 +345,7 @@ export function useWebPreview({
                 })),
             );
           } else if (typeof result.code === 'string') {
-            setPublication({ request, status: 'Preparing preview' });
+            setPublication({ request, ticket, status: 'Preparing preview' });
             void webPreviewDocument(
               result.code,
               currentTheme.current,
@@ -308,8 +359,12 @@ export function useWebPreview({
                 readyGeneration.current = ticket;
                 setPublication({
                   request,
+                  ticket,
                   status: 'Preview ready',
                   html: document,
+                  dependencies: trackWorkspaceDependencies
+                    ? verifiedDependencies(result.dependencies, entry, files)
+                    : undefined,
                 });
               },
               (failure: unknown) => fail(failure),
@@ -324,6 +379,7 @@ export function useWebPreview({
           entry,
           wasmModule,
           webMode: true,
+          trackWorkspaceDependencies,
           mathematics,
           showComponentSource,
         });
@@ -334,6 +390,12 @@ export function useWebPreview({
     return () => {
       active = false;
       readyGeneration.current = null;
+      // React can disconnect effects while retaining component state. A reconnected
+      // island must not reuse a receipt from the retired compiler generation.
+      if (trackWorkspaceDependencies)
+        setPublication((previous) =>
+          previous?.ticket === ticket ? null : previous,
+        );
       clearTimeout(timer);
       clearTimeout(deadline);
       terminateWorker();

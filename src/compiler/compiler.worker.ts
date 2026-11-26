@@ -2,6 +2,7 @@ import { isMdxSource, javascriptLoader } from '../sourceTypes';
 import { compileDocumentSource } from './compileDocumentSource';
 import * as esbuild from 'esbuild-wasm';
 import { resolveFile } from './resolve';
+import { WorkspaceDependencyTracker } from './workspaceDependencies';
 import { sourceLineOffset } from './sourceLocation';
 import * as React from 'react';
 import * as jsx from 'react/jsx-runtime';
@@ -25,10 +26,15 @@ self.onmessage = async ({
   files: Record<string, string>;
   entry: string;
   webMode?: boolean;
+  trackWorkspaceDependencies?: boolean;
   mathematics?: boolean;
   showComponentSource?: boolean;
 }>) => {
   const { id, files, entry } = data;
+  const tracker =
+    data.webMode === true && data.trackWorkspaceDependencies === true
+      ? new WorkspaceDependencyTracker()
+      : undefined;
   const sourceLocations: { file: string; line: number; offset: number }[] = [];
   try {
     await esbuild.initialize({ wasmModule: data.wasmModule, worker: false });
@@ -52,14 +58,10 @@ self.onmessage = async ({
             build.onResolve({ filter: /.*/ }, (args) => {
               if (Object.hasOwn(packages, args.path))
                 return { path: args.path, namespace: 'package' };
-              return {
-                path: resolveFile(
-                  args.path,
-                  args.importer || 'entry.js',
-                  files,
-                ),
-                namespace: 'workspace',
-              };
+              const importer = args.importer || 'entry.js';
+              const path = resolveFile(args.path, importer, files);
+              tracker?.resolved(args.path, importer, path);
+              return { path, namespace: 'workspace' };
             });
             build.onLoad({ filter: /.*/, namespace: 'package' }, (args) => ({
               contents: packages[args.path],
@@ -69,6 +71,7 @@ self.onmessage = async ({
               { filter: /.*/, namespace: 'workspace' },
               async (args) => {
                 const source = files[args.path]!;
+                tracker?.read(args.path);
                 if (isMdxSource(args.path)) {
                   try {
                     const compiled = await compileDocumentSource(
@@ -123,7 +126,11 @@ self.onmessage = async ({
         },
       ],
     });
-    self.postMessage({ id, code: result.outputFiles[0]!.text });
+    self.postMessage({
+      id,
+      code: result.outputFiles[0]!.text,
+      ...(tracker?.dependencies && { dependencies: tracker.dependencies }),
+    });
   } catch (error) {
     const failure = error as Partial<esbuild.BuildFailure>;
     // MDX compilation reports original locations above. Esbuild locations in

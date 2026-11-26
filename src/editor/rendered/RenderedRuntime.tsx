@@ -51,6 +51,7 @@ export function RenderedRuntime({
     files,
     images,
     enabled: !context.stopped,
+    trackWorkspaceDependencies: true,
     corePlugins: context.corePlugins,
     // The trusted host already presents this island's source when requested.
     showComponentSource: false,
