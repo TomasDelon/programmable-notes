@@ -140,6 +140,19 @@ async function mount() {
   return result;
 }
 
+it('keeps canonical undo and redo when focus leaves the native editing surface', async () => {
+  const { container } = await mount();
+  const view = EditorView.findFromDOM(container.querySelector('.cm-content')!)!;
+  const before = view.state.doc.toString();
+  act(() => view.dispatch({ changes: { from: 0, insert: 'Extra text\n\n' } }));
+  const after = view.state.doc.toString();
+  const save = screen.getByRole('button', { name: 'Save source' });
+  fireEvent.keyDown(save, { ctrlKey: true, key: 'z' });
+  expect(view.state.doc.toString()).toBe(before);
+  fireEvent.keyDown(save, { ctrlKey: true, shiftKey: true, key: 'z' });
+  expect(view.state.doc.toString()).toBe(after);
+});
+
 it('reports a disabled signed channel through a read-only Settings check', async () => {
   invoke.mockImplementation((command: string) =>
     Promise.resolve(

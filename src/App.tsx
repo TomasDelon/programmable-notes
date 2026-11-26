@@ -413,6 +413,20 @@ export function App() {
             event.preventDefault();
             if (event.nativeEvent.isTrusted && !documentActionsBlocked)
               void documents.save(event.shiftKey);
+            return;
+          }
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            !event.altKey &&
+            event.key.toLowerCase() === 'z' &&
+            !documentActionsBlocked &&
+            !(event.target as HTMLElement).closest(
+              'input,textarea,[contenteditable="true"]',
+            )
+          ) {
+            event.preventDefault();
+            if (event.shiftKey) editorCommands.current?.redo();
+            else editorCommands.current?.undo();
           }
         }}
       >

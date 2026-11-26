@@ -13,7 +13,8 @@ workers and iframe execution are not used as a native shortcut.
 the canonical-undo/render freshness correction found by the new adapter tests.
 The replacement package is version 0.1.2. The complete local check passed:
 637 unit tests, 84 tooling controls, 150 Chromium cases, 9 local Pages cases and
-4 inactive-cloud cases. The [dated correction receipt](security-evidence/2026-11-26-native-presentation/README.md)
+4 inactive-cloud cases. The keyboard follow-up also passed all 638 unit tests
+and the three native-entry cases in Chromium and WebKit/WPE. The [dated correction receipt](security-evidence/2026-11-26-native-presentation/README.md)
 distinguishes native-entry browser interaction from unexecuted installed WebKitGTK
 acceptance. The draft PR records the verified replacement artifact and hosted
 results; the previous package's results do not certify this UI.

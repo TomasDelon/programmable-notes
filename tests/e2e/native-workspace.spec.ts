@@ -215,6 +215,13 @@ test('native entry uses the document workspace and opaque native saves without b
   await expect(editor.locator('h1')).toHaveText('First title');
   await page.getByRole('button', { name: 'Redo', exact: true }).click();
   await expect(editor.locator('h1')).toHaveText('First title revised');
+  // Focus remains on the inspector button: history shortcuts must still own
+  // canonical document history outside either editing surface.
+  await page.getByRole('button', { name: 'Redo', exact: true }).focus();
+  await page.keyboard.press('Control+z');
+  await expect(editor.locator('h1')).toHaveText('First title');
+  await page.keyboard.press('Control+Shift+z');
+  await expect(editor.locator('h1')).toHaveText('First title revised');
   await page
     .getByRole('button', { name: 'Open other.mdx', exact: true })
     .click();

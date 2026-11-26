@@ -58,6 +58,11 @@ architectures are not certified by this artifact.
 
 After extracting this artifact, verify and install through the system package manager:
 
+If replacing an older testing build, save your sources and close its editor and
+preview windows first. An already running process keeps the previous interface
+until it is closed. Keep your notes and recovery files; do not delete application
+data as an upgrade step.
+
 \x60\x60\x60sh
 sha256sum --check SHA256SUMS
 sudo apt install './${filename}'

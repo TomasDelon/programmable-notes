@@ -21,6 +21,10 @@ acceptance remains separate from compilation and package inspection.
 
 Verify and install from the extracted directory:
 
+When upgrading, save and close the previous editor and preview windows first.
+Installing a new package does not replace the interface of an already running
+process. Do not delete notes or recovery data.
+
 ```sh
 sha256sum --check SHA256SUMS
 sudo apt install './Programmable Notes_0.1.2_amd64.deb'

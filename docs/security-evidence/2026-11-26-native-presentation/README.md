@@ -16,7 +16,7 @@ See [ADR024](../../decisions/ADR-024-native-product-presentation.md).
 
 ## Executed local validation
 
-`npm run check` completed successfully with the pinned Node/npm and Chromium:
+`npm run check` completed successfully at `3b9cf7d` with the pinned Node/npm and Chromium:
 
 | Gate                                                    | Observed result          |
 | ------------------------------------------------------- | ------------------------ |
@@ -26,6 +26,16 @@ See [ADR024](../../decisions/ADR-024-native-product-presentation.md).
 | Production Chromium interaction/security cases          | 150 passed; zero retries |
 | Built local Pages policy/browser cases                  | 9 passed                 |
 | Inactive-cloud local workerd/D1 acceptance              | 4 passed                 |
+
+The keyboard follow-up restores canonical undo/redo when focus is on a native
+control outside the editor. Its new unit regression failed before the correction.
+On the corrected inputs, formatting/lint/TypeScript/build and **all 638 unit tests**
+passed. The three updated native-entry interaction cases passed again in pinned
+Chromium (10.3 seconds) and pinned WebKit/WPE (13.5 seconds), with zero retries or
+skips. The remaining browser/storage paths have unchanged relevant behavior; their
+earlier results are retained rather than represented as a second full local run.
+WebKit/WPE uses the retained library-path wrapper for the pinned browser, with no
+sandbox workaround. It is not an installed Tauri/WebKitGTK observation.
 
 The three new browser cases enter through the actual native routing decision with
 synthetic IPC, then exercise Preview and Source typing, keyboard/toolbar undo/redo,
