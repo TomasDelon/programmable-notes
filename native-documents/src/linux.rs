@@ -95,6 +95,21 @@ fn read(file: &mut File) -> Result<(Snapshot, String), Error> {
     ))
 }
 impl AuthorizedFile {
+    /// A validated parent capability and absent-target intent; never reads the destination.
+    /// Existing/racing entries are rejected by write's RENAME_NOREPLACE publication.
+    pub(crate) fn missing_anchored(
+        directory: File,
+        name: &OsStr,
+        path: PathBuf,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            directory,
+            name: c_name(name)?,
+            path,
+            snapshot: None,
+        })
+    }
+
     pub fn select(path: &Path, allow_missing: bool) -> Result<(Self, String), Error> {
         if !path.is_absolute() {
             return Err(Error::Rejected(

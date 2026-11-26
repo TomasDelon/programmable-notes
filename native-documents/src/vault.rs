@@ -22,7 +22,7 @@ const MAX_ENTRIES: usize = 4096;
 const MAX_RELATIVE_BYTES: usize = 4096;
 const EXCLUDED_DIRECTORIES: [&str; 3] = [".git", "node_modules", ".programmable-notes"];
 
-fn validate_source_path(path: &str) -> Result<(), Error> {
+pub(crate) fn validate_source_path(path: &str) -> Result<(), Error> {
     if path.is_empty()
         || path.len() > MAX_RELATIVE_BYTES
         || path.contains(['\0', '\\'])
@@ -250,39 +250,42 @@ impl Vault {
     }
 
     pub(crate) fn select_source(&self, path: &str) -> Result<(AuthorizedFile, String), Error> {
+        let (directory, name) = self.resolve_parent(path)?;
+        let pinned = open_at(&directory, name, libc::O_PATH)?;
+        let metadata = pinned.metadata()?;
+        if !metadata.is_file() {
+            return Err(Error::Rejected("Vault source must be a regular file"));
+        }
+        if metadata.len() > MAX_SOURCE_BYTES as u64 {
+            return Err(Error::Rejected("File exceeds 500 KB limit"));
+        }
+        AuthorizedFile::select_anchored(directory, name, self.display_root.join(path), pinned)
+    }
+
+    pub(crate) fn prepare_create(&self, path: &str) -> Result<AuthorizedFile, Error> {
+        let (directory, name) = self.resolve_parent(path)?;
+        AuthorizedFile::missing_anchored(directory, name, self.display_root.join(path))
+    }
+
+    fn resolve_parent<'a>(&self, path: &'a str) -> Result<(File, &'a OsStr), Error> {
         validate_source_path(path)?;
         let mut directory = self.directory.try_clone()?;
-        let mut components = path.split('/').peekable();
-        while let Some(name) = components.next() {
-            let name = OsStr::new(name);
-            let pinned = open_at(&directory, name, libc::O_PATH)?;
+        let mut components = path.split('/');
+        let name = components.next_back().unwrap(); // Nonempty, validated source path.
+        for parent in components {
+            let pinned = open_at(&directory, OsStr::new(parent), libc::O_PATH)?;
             let metadata = pinned.metadata()?;
-            if components.peek().is_some() {
-                if !metadata.is_dir() {
-                    return Err(Error::Rejected(
-                        "Vault source parent must be a real directory",
-                    ));
-                }
-                directory = OpenOptions::new()
-                    .read(true)
-                    .custom_flags(libc::O_DIRECTORY | libc::O_CLOEXEC)
-                    .open(format!("/proc/self/fd/{}", pinned.as_raw_fd()))?;
-            } else {
-                if !metadata.is_file() {
-                    return Err(Error::Rejected("Vault source must be a regular file"));
-                }
-                if metadata.len() > MAX_SOURCE_BYTES as u64 {
-                    return Err(Error::Rejected("File exceeds 500 KB limit"));
-                }
-                return AuthorizedFile::select_anchored(
-                    directory,
-                    name,
-                    self.display_root.join(path),
-                    pinned,
-                );
+            if !metadata.is_dir() {
+                return Err(Error::Rejected(
+                    "Vault source parent must be a real directory",
+                ));
             }
+            directory = OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_CLOEXEC)
+                .open(format!("/proc/self/fd/{}", pinned.as_raw_fd()))?;
         }
-        Err(Error::Rejected("Unsupported vault source path"))
+        Ok((directory, OsStr::new(name)))
     }
 
     fn visit(
@@ -318,4 +321,41 @@ pub(crate) fn collect(root: &Path) -> Result<Vec<(AuthorizedFile, String)>, Erro
         Ok(())
     })?;
     Ok(files)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Vault;
+    use crate::{random_id, Error};
+    use std::{fs, path::PathBuf};
+
+    struct Fixture(PathBuf);
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn prepared_missing_target_cannot_replace_an_intervening_creator() {
+        let fixture = Fixture(
+            PathBuf::from("/tmp")
+                .join(format!("pn-vault-create-prepared-{}", random_id().unwrap())),
+        );
+        fs::create_dir(&fixture.0).unwrap();
+        let vault = Vault::select_authorized(&fixture.0).unwrap();
+        // This is the same private production preparation used by Store::create_vault.
+        let mut prepared = vault.prepare_create("note.mdx").unwrap();
+        let winner = fixture.0.join("note.mdx");
+        fs::write(&winner, "intervening creator\r\n😀").unwrap();
+        assert!(matches!(
+            prepared.write("must not replace"),
+            Err(Error::Conflict)
+        ));
+        assert_eq!(
+            fs::read(winner).unwrap(),
+            "intervening creator\r\n😀".as_bytes()
+        );
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 1);
+    }
 }

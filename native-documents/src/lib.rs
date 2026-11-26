@@ -269,8 +269,33 @@ impl Store {
     }
     pub fn commit_save_as(
         &mut self,
-        mut pending: PendingSave,
+        pending: PendingSave,
         source: &str,
+    ) -> Result<Document, Error> {
+        self.commit_authorized(pending.file, source, None)
+    }
+
+    /// Create only: an existing/racing destination is never replaced or read.
+    pub fn create_vault(
+        &mut self,
+        vault: &Vault,
+        path: &str,
+        source: &str,
+    ) -> Result<Document, Error> {
+        vault::validate_source_path(path)?;
+        if source.len() > MAX_SOURCE_BYTES {
+            return Err(Error::Rejected("File exceeds 500 KB limit"));
+        }
+        self.capacity(1, source.len(), 0)?;
+        let file = vault.prepare_create(path)?;
+        self.commit_authorized(file, source, Some(path))
+    }
+
+    fn commit_authorized(
+        &mut self,
+        mut file: AuthorizedFile,
+        source: &str,
+        logical_path: Option<&str>,
     ) -> Result<Document, Error> {
         if source.len() > MAX_SOURCE_BYTES {
             return Err(Error::Rejected("File exceeds 500 KB limit"));
@@ -278,20 +303,19 @@ impl Store {
         self.capacity(1, source.len(), 0)?;
         let id = random_id()?;
         let revision = random_id()?;
-        let name = pending
-            .file
+        let name = file
             .path
             .file_name()
             .unwrap()
             .to_str()
             .ok_or(Error::Rejected("Selected file name must be UTF-8"))?
             .to_string();
-        let durable = pending.file.write(source)?;
+        let durable = file.write(source)?;
         let d = Document {
             id: id.clone(),
             revision: revision.clone(),
-            logical_path: name.clone(),
-            display_path: pending.file.path.to_string_lossy().into_owned(),
+            logical_path: logical_path.unwrap_or(&name).to_owned(),
+            display_path: file.path.to_string_lossy().into_owned(),
             name,
             source: source.into(),
             durability_warning: !durable,
@@ -299,7 +323,7 @@ impl Store {
         self.grants.insert(
             id,
             Grant {
-                file: pending.file,
+                file,
                 revision,
                 size: source.len(),
                 logical_path: d.logical_path.clone(),

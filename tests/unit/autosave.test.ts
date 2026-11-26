@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import {
   AutosaveCoordinator,
   type DocumentWriter,
@@ -426,5 +427,241 @@ describe('shared accepted-source autosave (DATA-01 / A04)', () => {
     await queue.flush();
     expect(queue.state('new-session').latest.source).toBe('new opening');
     expect(write).not.toHaveBeenCalled();
+  });
+});
+
+async function observeMicrotasks() {
+  for (let turn = 0; turn < 8; turn++) await Promise.resolve();
+}
+
+describe('trusted autosave observations (DATA-01 / A04)', () => {
+  it.each(['listener', 'diagnostic'])(
+    'consumes rejected async %s callbacks without unhandled rejections or waiting for them',
+    (callback) => {
+      // Isolate the RED unhandled-rejection witness from Vitest's own process.
+      // The child counts failures without printing their potentially private contents.
+      const script = `
+        import { readFileSync } from 'node:fs';
+        import ts from 'typescript';
+        const source = readFileSync('src/application/autosave.ts', 'utf8');
+        const { outputText } = ts.transpileModule(source, {
+          compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 }
+        });
+        const { AutosaveCoordinator } = await import(
+          'data:text/javascript;base64,' + Buffer.from(outputText).toString('base64')
+        );
+        let unhandled = 0, diagnostics = 0, saved = false, writes = 0;
+        process.on('unhandledRejection', () => { unhandled++; });
+        const queue = new AutosaveCoordinator(
+          async () => { writes++; return { diskRevision: '1', durable: true }; },
+          async () => {
+            diagnostics++;
+            if (${JSON.stringify(callback)} === 'diagnostic') throw Error('synthetic sink failure');
+          }
+        );
+        queue.attach({ documentId: 'a', editorRevision: 0, source: 'old', diskRevision: '0' });
+        queue.subscribe('a', ${JSON.stringify(callback)} === 'listener'
+          ? async () => { throw Error('synthetic listener failure'); }
+          : () => { throw Error('synthetic listener failure'); });
+        queue.subscribe('a', state => { saved = state.status === 'saved'; });
+        // A pending observer must not delay persistence or notification of others.
+        queue.subscribe('a', () => new Promise(() => {}));
+        queue.accept({ documentId: 'a', editorRevision: 1, source: 'new' });
+        await queue.flush();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise(resolve => setTimeout(resolve, 0));
+        process.stdout.write(JSON.stringify({ unhandled, diagnosed: diagnostics > 0, saved, writes }));
+      `;
+      const child = spawnSync(
+        process.execPath,
+        ['--input-type=module', '-e', script],
+        {
+          encoding: 'utf8',
+          timeout: 10_000,
+        },
+      );
+      expect(child.error).toBeUndefined();
+      expect(child.status).toBe(0);
+      expect(child.stderr).toBe('');
+      expect(JSON.parse(child.stdout)).toEqual({
+        unhandled: 0,
+        diagnosed: true,
+        saved: true,
+        writes: 1,
+      });
+    },
+  );
+
+  it('defers and coalesces initial/current copied state, then reports saved without more typing', async () => {
+    const { queue, attempts } = setup();
+    const observed: ReturnType<typeof queue.state>[] = [];
+    queue.subscribe('grant-a', (state) => observed.push(state));
+    expect(observed).toEqual([]);
+    await observeMicrotasks();
+    expect(observed.map((state) => state.status)).toEqual(['saved']);
+    (observed[0]!.latest as { source: string }).source = 'outside mutation';
+    expect(queue.state('grant-a').latest.source).toBe('original');
+    queue.accept({ documentId: 'grant-a', editorRevision: 1, source: 'one' });
+    queue.accept({ documentId: 'grant-a', editorRevision: 2, source: 'two' });
+    await observeMicrotasks();
+    expect(
+      observed.slice(1).map((state) => state.latest.editorRevision),
+    ).toEqual([2]);
+    expect(observed.at(-1)!.status).toBe('writing');
+    attempts[0]!.resolve({ diskRevision: 'disk-1', durable: true });
+    await queue.flush();
+    await observeMicrotasks();
+    expect(observed.at(-1)).toMatchObject({
+      status: 'saved',
+      persisted: { editorRevision: 2, source: 'two' },
+    });
+  });
+
+  it('observes an old acknowledgement with newer text still writing, and a blocked failure', async () => {
+    const { queue, attempts } = setup();
+    const observed: ReturnType<typeof queue.state>[] = [];
+    queue.subscribe('grant-a', (state) => observed.push(state));
+    queue.accept({ documentId: 'grant-a', editorRevision: 1, source: 'one' });
+    await observeMicrotasks();
+    queue.accept({ documentId: 'grant-a', editorRevision: 2, source: 'two' });
+    attempts[0]!.resolve({ diskRevision: 'disk-1', durable: true });
+    await observeMicrotasks();
+    expect(observed.at(-1)).toMatchObject({
+      status: 'writing',
+      latest: { editorRevision: 2 },
+      persisted: { editorRevision: 1 },
+    });
+    attempts[1]!.reject(Error('write failed'));
+    await expect(queue.flush()).rejects.toThrow();
+    await observeMicrotasks();
+    expect(observed.at(-1)).toMatchObject({
+      status: 'blocked',
+      latest: { source: 'two' },
+      persisted: { source: 'one' },
+    });
+  });
+
+  it('unsubscribes idempotently and drops queued callbacks on release', async () => {
+    const { queue } = setup();
+    const listener = vi.fn();
+    const unsubscribe = queue.subscribe('grant-a', listener);
+    unsubscribe();
+    unsubscribe();
+    await observeMicrotasks();
+    expect(listener).not.toHaveBeenCalled();
+    queue.subscribe('grant-a', listener);
+    queue.release('grant-a');
+    await observeMicrotasks();
+    expect(listener).not.toHaveBeenCalled();
+    expect(() => queue.subscribe('grant-a', listener)).toThrow();
+    expect(() => queue.subscribe('unknown', listener)).toThrow();
+  });
+
+  it('isolates throwing listeners and a throwing diagnostic sink from writes and other listeners', async () => {
+    const failure = Error('subscriber private content');
+    const diagnostic = vi.fn(() => {
+      throw Error('sink failed');
+    });
+    const write = vi.fn<DocumentWriter>(async () => ({
+      diskRevision: '1',
+      durable: true,
+    }));
+    const queue = new AutosaveCoordinator(write, diagnostic);
+    queue.attach({
+      documentId: 'a',
+      editorRevision: 0,
+      source: 'old',
+      diskRevision: '0',
+    });
+    queue.subscribe('a', () => {
+      throw failure;
+    });
+    const listener = vi.fn();
+    queue.subscribe('a', listener);
+    queue.accept({ documentId: 'a', editorRevision: 1, source: 'new' });
+    await queue.flush();
+    await observeMicrotasks();
+    expect(diagnostic).toHaveBeenCalledWith(failure);
+    expect(listener.mock.calls.at(-1)![0].status).toBe('saved');
+    expect(write).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not log observer contents by default', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { queue } = setup();
+      queue.subscribe('grant-a', () => {
+        throw Error('private source');
+      });
+      await observeMicrotasks();
+      expect(log).not.toHaveBeenCalled();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('reads current state for each observer through reentrant edits and subscriptions without parallel writes', async () => {
+    const { queue, attempts, write } = setup();
+    const seen: number[] = [];
+    const added = vi.fn();
+    // Start dispatch before notification so the reentrant edit arrives in flight.
+    queue.accept({ documentId: 'grant-a', editorRevision: 1, source: 'one' });
+    queue.subscribe('grant-a', (state) => {
+      if (state.latest.editorRevision === 1) {
+        queue.accept({
+          documentId: 'grant-a',
+          editorRevision: 2,
+          source: 'two',
+        });
+        queue.subscribe('grant-a', added);
+      }
+    });
+    queue.subscribe('grant-a', (state) =>
+      seen.push(state.latest.editorRevision),
+    );
+    await observeMicrotasks();
+    expect(seen.every((revision) => revision === 2)).toBe(true);
+    expect(added.mock.calls[0]![0].latest.editorRevision).toBe(2);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(write.mock.calls[0]![0].source).toBe('one');
+    attempts[0]!.resolve({ diskRevision: '1', durable: true });
+    await observeMicrotasks();
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(write.mock.calls[1]![0]).toMatchObject({
+      expectedDiskRevision: '1',
+      source: 'two',
+    });
+    attempts[1]!.resolve({ diskRevision: '2', durable: true });
+    await queue.flush();
+    await observeMicrotasks();
+    expect(queue.state('grant-a').persisted.editorRevision).toBe(2);
+    expect(seen).toEqual([...seen].sort((a, b) => a - b));
+  });
+
+  it('gives each listener its own source copy and honors reentrant release', async () => {
+    const { queue } = setup();
+    const last = vi.fn();
+    queue.subscribe('grant-a', (state) => {
+      (state.latest as { source: string }).source = 'mutated observation';
+    });
+    queue.subscribe('grant-a', (state) => {
+      expect(state.latest.source).toBe('original');
+      queue.release('grant-a');
+    });
+    queue.subscribe('grant-a', last);
+    await observeMicrotasks();
+    expect(last).not.toHaveBeenCalled();
+    expect(() => queue.state('grant-a')).toThrow();
+  });
+
+  it('delivers a reentrant initial subscription without rebroadcasting unchanged state', async () => {
+    const { queue } = setup();
+    const added = vi.fn();
+    const initial = vi.fn(() => queue.subscribe('grant-a', added));
+    queue.subscribe('grant-a', initial);
+    await observeMicrotasks();
+    expect(initial).toHaveBeenCalledTimes(1);
+    expect(added).toHaveBeenCalledTimes(1);
+    expect(added.mock.calls[0]![0].status).toBe('saved');
   });
 });

@@ -36,6 +36,8 @@ export interface AutosaveState {
   readonly error: unknown;
 }
 
+export type AutosaveListener = (state: AutosaveState) => void;
+
 interface Entry {
   documentId: string;
   latest: Snapshot;
@@ -44,6 +46,9 @@ interface Entry {
   durable: boolean;
   error: unknown;
   running?: Promise<void>;
+  listeners: Set<{ listener: AutosaveListener }>;
+  pendingListeners: Set<{ listener: AutosaveListener }>;
+  notificationPending: boolean;
 }
 
 export class UnsavedDocumentsError extends Error {
@@ -70,7 +75,10 @@ export class AutosaveCoordinator {
   // Keep lifecycle tombstones: a stale view must never target a later opening.
   private readonly retired = new Set<string>();
 
-  constructor(private readonly write: DocumentWriter) {}
+  constructor(
+    private readonly write: DocumentWriter,
+    private readonly observerError?: (error: unknown) => void,
+  ) {}
 
   attach(input: AcceptedSource & { diskRevision: string; durable?: boolean }) {
     if (
@@ -95,6 +103,9 @@ export class AutosaveCoordinator {
         input.durable === false
           ? Error('File durability has not been confirmed.')
           : null,
+      listeners: new Set(),
+      pendingListeners: new Set(),
+      notificationPending: false,
     });
   }
 
@@ -110,6 +121,7 @@ export class AutosaveCoordinator {
       source: input.source,
     };
     this.start(entry);
+    this.notify(entry);
   }
 
   state(documentId: string): AutosaveState {
@@ -131,11 +143,24 @@ export class AutosaveCoordinator {
     };
   }
 
+  /** Trusted status observations only; copied current state, not an event journal. */
+  subscribe(documentId: string, listener: AutosaveListener): () => void {
+    const entry = this.get(documentId);
+    const subscription = { listener };
+    entry.listeners.add(subscription);
+    this.notify(entry, subscription);
+    return () => {
+      entry.listeners.delete(subscription);
+      entry.pendingListeners.delete(subscription);
+    };
+  }
+
   /** Explicit recovery attempt, still using CAS; never replaces an external version. */
   retry(documentId: string) {
     const entry = this.get(documentId);
     entry.error = null;
     this.start(entry);
+    this.notify(entry);
   }
 
   /** A caller must handle rejection before closing/upgrading or claiming durability. */
@@ -169,6 +194,8 @@ export class AutosaveCoordinator {
     if (entry.running || entry.error || this.pending(entry))
       throw new UnsavedDocumentsError([documentId]);
     this.entries.delete(documentId);
+    entry.listeners.clear();
+    entry.pendingListeners.clear();
     this.retired.add(documentId);
   }
 
@@ -185,6 +212,40 @@ export class AutosaveCoordinator {
     );
   }
 
+  private notify(entry: Entry, initial?: { listener: AutosaveListener }) {
+    for (const subscription of initial ? [initial] : entry.listeners)
+      entry.pendingListeners.add(subscription);
+    if (entry.notificationPending || !entry.listeners.size) return;
+    entry.notificationPending = true;
+    queueMicrotask(() => {
+      entry.notificationPending = false;
+      const subscriptions = [...entry.pendingListeners];
+      entry.pendingListeners.clear();
+      for (const subscription of subscriptions) {
+        if (!entry.listeners.has(subscription)) continue;
+        try {
+          // An earlier listener may accept new text or release this session.
+          // Read afresh for each delivery, never replay a captured old snapshot.
+          void Promise.resolve(
+            subscription.listener(this.state(entry.documentId)),
+          ).catch((error: unknown) => this.reportObserverError(error));
+        } catch (error) {
+          this.reportObserverError(error);
+        }
+      }
+    });
+  }
+
+  private reportObserverError(error: unknown) {
+    try {
+      // A void callback can still return a promise. Consume failures without
+      // awaiting observers or letting diagnostic failures expose their contents.
+      void Promise.resolve(this.observerError?.(error)).catch(() => {});
+    } catch {
+      // Diagnostics must not affect persistence or expose contents by default.
+    }
+  }
+
   private start(entry: Entry) {
     if (entry.running || entry.error || !this.pending(entry)) return;
     // Same-turn accepted revisions can coalesce before IPC begins. Writes already
@@ -194,7 +255,9 @@ export class AutosaveCoordinator {
       .finally(() => {
         entry.running = undefined;
         this.start(entry);
+        this.notify(entry);
       });
+    this.notify(entry);
   }
 
   private async persist(entry: Entry) {
@@ -203,6 +266,7 @@ export class AutosaveCoordinator {
         const snapshot = entry.latest;
         if (entry.durable && snapshot.source === entry.persisted.source) {
           entry.persisted = snapshot;
+          this.notify(entry);
           continue;
         }
         const result = await this.write({
@@ -219,6 +283,7 @@ export class AutosaveCoordinator {
         entry.diskRevision = result.diskRevision;
         entry.persisted = snapshot;
         entry.durable = result.durable;
+        this.notify(entry);
         if (!result.durable)
           throw Error('File was published, but durability was not confirmed.');
       }
@@ -229,6 +294,7 @@ export class AutosaveCoordinator {
       // may hide a successful publication, so old matching bytes prove nothing.
       entry.durable = false;
       entry.error = error || Error('Persistence failed.');
+      this.notify(entry);
     }
   }
 }
