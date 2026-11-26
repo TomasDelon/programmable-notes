@@ -54,3 +54,38 @@ mode/group and native-only job before interpreting its outcome. Keep nonzero
 unsupported results. The [full native acceptance procedure](../../plans/2026-11-24-native-hosted-acceptance.md)
 requires an actual optimized installed package and the unchanged security matrix;
 a successful preflight does not replace it.
+
+## Corrected stock Ubuntu 24 observation
+
+At `e54423ff843ffaa09ee0ed17d5f00c0d863d1394`,
+[run 45732366199](https://github.com/TomasDelon/programmable-notes/actions/runs/45732366199)
+(job 139617244338) failed with controller exit 2 and the fixed annotation
+`private-network-unavailable` after 1m38s. The corrected owner-context observer
+passed. Reaching this result requires the actual CPU/memory/swap/task values,
+NoNewPrivileges, trusted user-manager journal and equal-network-namespace checks,
+followed by the supervisor's specific pre-delivery refusal, no payload sentinel
+and no live preview unit.
+
+This verifies stock refusal on that runner. It does not verify CPU throttling
+under authored JavaScript, memory pressure, Stop, expiry, the installed application
+or graphical/IPC behavior. The unchanged supervisor correctly withheld payload
+delivery when actual PrivateNetwork enforcement was unavailable.
+
+A simulated executor-policy transaction was investigated but not promoted or run.
+Selecting a named unconfined AppArmor profile on one manager does not make its
+kernel-wide permission exclusive to that UID. No such policy was loaded, no
+restriction was disabled and no production application permission changed.
+
+## Stock Ubuntu 26 alternative
+
+The manually selected infrastructure job now probes standard x64 `ubuntu-26.04`;
+mandatory compilation/backend/browser jobs retain `ubuntu-24.04`. The script
+accepts either Ubuntu release and keeps the same strict AppArmor restriction,
+actual namespace, limits, privilege and cleanup assertions. This is an OS-target
+change, not a relaxed isolation path.
+
+The [official runner image manifest](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2604-Readme.md)
+lists Ubuntu 26.04 image `20261116.202.1`, kernel `7.0.0-1020-azure` and systemd
+`259.9-0ubuntu0.1` (observed Git blob `58bb856f8f026db66e6f5080cc8c8b4c5502c4cc`).
+It establishes availability of the standard runner, not effective namespace
+isolation. Subsequent actual run outcomes belong to their own source identity.

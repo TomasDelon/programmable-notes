@@ -9,7 +9,8 @@ attribution case. Keep the latter failure: sampling plus Stop then overlaps the
 60s service lifetime. Physical GPU testing is a separate compatibility task.
 
 Investigate a manually dispatched native-runtime job on a standard public-repo
-Ubuntu 24.04 GitHub-hosted VM, without nested QEMU. Do not assume it supports the
+Ubuntu GitHub-hosted VM, without nested QEMU. The manual infrastructure probe
+now targets standard x64 Ubuntu 26.04; mandatory package CI remains on Ubuntu 24.04. Do not assume it supports the
 required backend until its real preflight and application assertions pass.
 No larger runner, paid service, token-scope change or billing change is needed.
 
@@ -65,7 +66,7 @@ Leave every other dispatch input at its default. Mixed requests fail before
 checkout and use an isolated concurrency group, so they cannot cancel a valid
 preflight. Ordinary PR checks, package inspection, fault injection and browser
 gates remain required and retain their existing routes. This manual mode runs
-only the standard `ubuntu-24.04` infrastructure probe; it does not build or certify
+only the standard `ubuntu-26.04` infrastructure probe; it does not build or certify
 the application package.
 
 The probe requires stock restricted Ubuntu AppArmor, creates one disposable
@@ -85,3 +86,9 @@ failure. Public output contains fixed diagnostics, not raw environments, journal
 records or credentials. No installer or evidence artifact is uploaded by this
 preflight. The cloud shell refuses this runner-only command before privileged
 operations; local mocked routing/cleanup tests are separate from hosted execution.
+
+The [26 November hosted record](../security-evidence/2026-11-26-hosted-preflight/README.md)
+retains both the invalid cross-UID socket observation and the corrected stock
+Ubuntu 24 supervisor refusal. The Ubuntu 26 probe preserves every isolation check
+and does not load an unconfined executor profile. A supported image label or
+successful package build cannot satisfy installed-runtime acceptance.

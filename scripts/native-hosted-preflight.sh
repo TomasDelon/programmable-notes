@@ -81,7 +81,7 @@ check_denial_exit() {
 [[ ${GITHUB_ACTIONS:-} == true && ${RUNNER_ENVIRONMENT:-} == github-hosted ]] || block runner-type
 [[ $(cat /proc/1/comm) == systemd ]] || block pid1
 . /etc/os-release
-[[ $ID == ubuntu && $VERSION_ID == 24.04 ]] || block os
+[[ $ID == ubuntu && ( $VERSION_ID == 24.04 || $VERSION_ID == 26.04 ) ]] || block os
 [[ $(stat -fc %T /sys/fs/cgroup) == cgroup2fs ]] || block cgroup-version
 [[ $(cat /sys/module/apparmor/parameters/enabled) == Y ]] || block apparmor-disabled
 pn_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
