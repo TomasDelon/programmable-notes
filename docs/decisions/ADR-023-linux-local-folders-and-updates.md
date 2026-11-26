@@ -1,5 +1,12 @@
 # ADR023: Local Linux folders and signed Debian updates
 
+Historical implementation note, 26 November 2026: the owner's later setup answers
+require automatic writes to real local-vault files and a coherent shared product.
+The manual-save workflow and separate native product described here do not define
+the current UX target. Security/file-integrity mechanisms and signed-update policy
+remain evidence to assess for reuse. See [PRODUCT_CONTRACT](../PRODUCT_CONTRACT.md)
+and [ARCHITECTURE_TARGET](../ARCHITECTURE_TARGET.md).
+
 Status: implementation/testing; installed GUI and live update delivery require
 their own evidence. Cloud storage activation is paused by the owner.
 

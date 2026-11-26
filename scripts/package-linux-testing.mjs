@@ -1,9 +1,10 @@
 // Prepare an owner testing download; this never publishes a release/update feed.
 import assert from 'node:assert/strict';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, basename } from 'node:path';
+import { resolve, basename, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { auditEntry } from './audit-product-entry.mjs';
 
 const config = JSON.parse(await readFile('src-tauri/tauri.conf.json', 'utf8'));
 const filename = `${config.productName}_${config.version}_amd64.deb`;
@@ -21,6 +22,16 @@ const directory = resolve('.cache/linux-testing');
 await mkdir(directory, { recursive: true });
 await copyFile(packagePath, resolve(directory, filename));
 await writeFile(resolve(directory, 'SHA256SUMS'), `${digest}  ${filename}\n`);
+const entryPath = resolve('src/web/EditorEntry.tsx');
+const entryAudit = auditEntry(await readFile(entryPath, 'utf8'), entryPath);
+// Package only repository-relative diagnostic paths, never note content or grants.
+entryAudit.entry = relative(process.cwd(), entryAudit.entry);
+for (const route of Object.values(entryAudit.routes))
+  route.module = relative(process.cwd(), route.module);
+await writeFile(
+  resolve(directory, 'product-entry-audit.json'),
+  JSON.stringify(entryAudit, null, 2) + '\n',
+);
 const revision =
   process.env.GITHUB_SHA ||
   execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -36,6 +47,9 @@ await writeFile(
       sha256: digest,
       installedRuntimeVerified: false,
       productionSecurityReadiness: false,
+      productAcceptance: 'unverified',
+      deliveryClass: 'engineering-test',
+      directProductEntryStatus: entryAudit.status,
       updateChannelConfigured: Boolean(
         process.env.PN_UPDATE_PUBLIC_KEY?.trim(),
       ),
@@ -46,11 +60,18 @@ await writeFile(
 );
 await writeFile(
   resolve(directory, 'README.md'),
-  `# Programmable Notes ${config.version}: Linux testing build
+  `# Programmable Notes ${config.version}: Linux engineering test build
 
 This is an owner testing download, not a production security certification or a
 published release. The source revision and exact package digest are in build.json.
 An installer/build inspection is not evidence of a successful installed GUI run.
+
+Product acceptance is unverified. Read product-entry-audit.json for the direct
+browser/native route finding. Different direct entries need architecture review;
+a matching entry alone still proves neither behavior nor native isolation. A green
+build is not acceptance of the owner's unified local-vault product contract.
+Do not present this artifact as an accepted product delivery without separate
+contract acceptance and actual target-platform evidence.
 
 Target: Linux amd64 Debian/Ubuntu desktop with AppArmor 4+, systemd 252+, WebKitGTK
 4.1, DBus user session and a graphical Polkit agent. Other distributions and

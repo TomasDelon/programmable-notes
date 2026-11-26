@@ -6,12 +6,33 @@ The repository skills are [close-feedback-loop](../.agents/skills/close-feedback
 
 ## 1. Task and feedback contract
 
+Read [the current product contract](PRODUCT_CONTRACT.md) first. Requirements,
+implementation decisions and observed results are different kinds of information.
+Keep the original handoff as provenance; later explicit owner corrections govern.
+An agent-authored plan or an ADR marked "implemented" does not establish product
+approval. Update the relevant contract entry when a requirement changes, including
+its reason and whether implementation is deferred.
+
 Start a meaningful change with four short lines:
 
 - **Outcome:** the observable user result, including the intended interaction.
 - **Invariants:** source fidelity, revision checks, recovery, isolation and scope restrictions that must survive.
 - **Witness:** the smallest real action and observation that distinguish success from failure.
 - **Done:** the required gates and deliverable, excluding unrelated optional work.
+
+Reference the applicable requirement IDs and the existing implementation in these
+four lines. Before a platform port or UI change, inspect the actual baseline's
+controls and interaction, not just its source/style files. Define acceptance from
+the owner requirement before choosing implementation. For example, a copied dark
+stylesheet with an extra Split/X and missing hover fails parity even if its new
+buttons pass their own tests. Use a shared product UI with explicit platform
+adapters; a parallel replacement interface is not the approved product.
+
+Architecture quality governs reuse. Existing behavior/code is a reference and
+asset to assess, not a requirement to retain incompatible coupling. Follow the
+owner-confirmed requirements and the engineering [target](ARCHITECTURE_TARGET.md) and [acceptance gates](PRODUCT_ACCEPTANCE.md):
+local files autosave, React is inline in the same window, and Linux is first.
+Keep the [living plan](plans/unified-local-vault.md) current at each handoff.
 
 For example: typing an unmatched dollar remains ordinary document text; the witness is real caret typing and unchanged focus geometry in the affected browser, not an input component or a successful compile. Preserve existing MDX fixtures byte-for-byte outside the authorized patch.
 
@@ -28,6 +49,42 @@ One owner controls each writable file set, browser server/port and status watche
 Use one completion watcher per job and consume its final conclusion/artifacts. Record the process/run ID, input identity, last verified outcome and next action in the ignored task log. Keep user updates concise and compatible with the harness's communication requirements. Persist a short durable handoff at a milestone, not a full transcript.
 
 Independent CI gates may overlap only when their concurrency groups and resource ownership permit it. The stabilization workflow separates same-ref editing, deployment, browser-QA and ordinary-build groups, with editing taking precedence for mixed requests. Run titles expose the actual event/ref/group. Automatic PR refs may already differ from dispatch refs; source inspection alone does not establish historical cancellation or measured savings. At `ab0e426`, [browser QA 45727904655](https://github.com/TomasDelon/programmable-notes/actions/runs/45727904655) overlapped same-ref editing run 45727942632. GitHub explicitly canceled that editing run for a newer request in its editing group; [replacement 45728111799](https://github.com/TomasDelon/programmable-notes/actions/runs/45728111799) passed while browser QA continued. This verifies scoped overlap/supersession, not a quantified speedup. The manual native infrastructure mode uses a separate group and rejects mixed inputs before checkout; invalid requests cannot cancel a valid probe. Shared build reuse and cache optimization remain deferred.
+
+### Product review, delivery and cost controls
+
+- Run `npm run product:audit` to record direct browser/native entry identity.
+  This read-only AST report is informational: exit zero is not parity acceptance.
+  `npm run product:verify-entry` checks only direct identity and currently fails.
+  Thin bootstraps can legitimately wrap one product; follow the actual dependency
+  and interaction graph before making an architecture judgment. Never force the
+  architecture to satisfy this limited heuristic or waive the behavioral gates.
+- Give an independent product reviewer the owner contract and baseline before the
+  proposed implementation. Ask what the candidate gets wrong, not whether the
+  implementer's design is internally consistent. For meaningful UX work, inspect
+  real actions and before/after screens alongside functional assertions.
+- Deliver the tested artifact from the actual platform entry point. Compilation,
+  browser IPC mocks, native backend tests, installed GUI and native security runtime
+  prove different things. Report blocked product acceptance as blocked, rather
+  than substituting an easier test or a different application.
+- Keep one active task/handoff record: requirement IDs, current revision, latest
+  observed evidence, unresolved risks, next action and process/run ownership.
+  Update it before handoff/context loss; do not reread the full history by default.
+- Parallelize independent work when useful. Do not require a fixed number of
+  agents or give all reviewers the same untested architectural premise. Prefer
+  concise task briefs with exact files/requirements over duplicating an entire
+  conversation; preserve full context when the task actually needs it.
+- Use the smallest relevant reproducer, then required final checks after input
+  stabilization. Preserve unchanged-input evidence. Avoid speculative fixes,
+  duplicate builds/watchers and unnecessary skill loading. A failed correction
+  requires revisiting its hypothesis; repeated failure requires reviewing the
+  approach before adding another patch.
+- At completion, review the diff for unrequested controls, lost behaviors and
+  divergence from the product. Update specification/status/evidence together. A
+  green CI result is necessary where required; it is not the product acceptance.
+- Measure escaped requirement failures, time to a valid reproducer, duplicate
+  work, rework and observed token/time usage when available. Do not invent cost
+  figures or promise that written rules eliminate errors. Revise rules that add
+  effort without preventing an observed failure.
 
 ## 3. Evidence record
 

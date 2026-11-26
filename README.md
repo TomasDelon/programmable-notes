@@ -2,7 +2,22 @@
 
 Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed for writing and rendering real interactive React components directly in documents.
 
-## Web workspace
+## Current architecture and product target
+
+The owner has confirmed a **fully local file vault with automatic writes**, real
+file operations/recoverable Trash, and interactive React **inside the same document
+and window**, Linux first. Architecture quality governs what existing code is
+reused. Obsidian is a persistence analogy, not a product/interface to clone.
+
+Read the [current product contract](docs/PRODUCT_CONTRACT.md),
+[architecture target](docs/ARCHITECTURE_TARGET.md),
+[acceptance gates](docs/PRODUCT_ACCEPTANCE.md) and
+[living plan](docs/plans/unified-local-vault.md) before implementation.
+The separate native shell was rejected. The implementations described below are
+existing references with known gaps, not acceptance of that target. Cloud
+activation is paused. A green build is not product readiness.
+
+## Existing web workspace reference
 
 The browser app at `/` combines the approved UI Lab interface with the existing
 MDX/React engine. It provides Source and editable Preview modes, notes and
@@ -29,12 +44,13 @@ and recovery. It has local runtime/browser tests; account provisioning, real
 Access login and hosted Free-quota acceptance are still pending. The existing
 website is not switched to cloud storage automatically.
 
-## Original engine and native status
+## Original engine and native implementation status
 
 The [Linux local-editor candidate](docs/LINUX_LOCAL_EDITOR.md) adds an authorized
 notes-folder picker, native Settings and signed-update handling. Successful native
 CI produces a checksummed `linux-amd64-testing` download with redistribution
-notices. Installed GUI/update acceptance and signing-channel activation remain
+notices and a limited product-entry audit. These testing artifacts are not the
+accepted unified application. Installed GUI/update acceptance and signing-channel activation remain
 separate gates; no public release or production security claim is made.
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile

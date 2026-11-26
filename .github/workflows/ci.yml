@@ -100,6 +100,8 @@ jobs:
           fi
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
+      - name: Report product entry architecture (informational, not acceptance)
+        run: npm run product:audit
       - name: Check editor, storage and local Cloudflare runtime
         # Includes real local workerd/D1 and authenticated browser acceptance.
         # Synthetic identity verifies the JWT path; no account secrets or paid services.

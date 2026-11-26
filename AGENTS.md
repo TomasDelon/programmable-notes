@@ -2,6 +2,16 @@
 
 ## Current scope
 
+Read [docs/PRODUCT_CONTRACT.md](docs/PRODUCT_CONTRACT.md) before planning or changing
+product behavior. It records current owner requirements and their reasons; older
+handoffs, implementation plans and ADRs do not override later owner corrections.
+The separate native lookalike shell was rejected. Architecture quality comes
+first: reuse existing parts if they fit; refactor or replace incompatible parts
+with evidence, without inventing parallel products or cloning Obsidian. The
+confirmed target is a local vault with automatic writes to real files and inline
+unprivileged React in the same document/window, Linux first. No application changes are authorized
+merely by a request to remember a bug or research operating methods.
+
 The technical handoff is preserved in `docs/handoff`; current implementation and limits are in `docs/IMPLEMENTATION_STATUS.md` and `docs/decisions`. MDX/React source authoring is the priority. Keep visual editing gated on the runtime and full security matrix. Treat the original research as supporting evidence, not validated decisions.
 
 Preserve the README's local-first and document-isolation principles. Build-time repository MDX is trusted source code; never treat the MDX compiler as a sandbox for untrusted documents.
@@ -30,6 +40,14 @@ and do not invent a project license.
 
 ## Agent feedback workflow
 
+Before implementation, map the task to product-contract IDs, inspect the existing
+user interaction and define an acceptance case that would reject a lookalike with
+different behavior. Update the contract/plan/status when requirements or decisions
+change. An implementation ADR is not user approval. For product/platform work,
+independent review must compare against owner requirements and the existing app,
+not only the implementer's proposed design. Follow the product and delivery gates
+in [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md).
+
 For multi-step implementation or debugging, read [.agents/skills/close-feedback-loop/SKILL.md](.agents/skills/close-feedback-loop/SKILL.md). For milestone evidence aggregation, read [.agents/skills/check-delivery-evidence/SKILL.md](.agents/skills/check-delivery-evidence/SKILL.md). Load only the relevant skill and references. [docs/AGENT_WORKFLOW.md](docs/AGENT_WORKFLOW.md) defines the short task contract, targeted-to-final validation, worker/watch ownership and evidence limitations. This supplements the mandatory checks below; it does not relax source fidelity, security or authorization.
 
 ## Development and checks
@@ -43,7 +61,7 @@ For multi-step implementation or debugging, read [.agents/skills/close-feedback-
 
 ## Native Linux work
 
-Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before changing native authority or packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native document paths come only from editor-side OS dialogs; renderer commands use opaque grants/revisions. Never add a generic filesystem permission for preview code.
+Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before changing native authority or packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native filesystem authority starts with editor-side OS authorization of a vault or file. Subsequent operations use opaque grants/revisions and validated relative paths inside that scope, never arbitrary absolute paths or authority from document code. New vault operations need negative permission/path tests before activation. Never add a generic filesystem permission for preview code.
 
 Actual native validation requires a disposable full-system Linux desktop/VM with systemd, cgroup delegation, working namespaces and WebKitGTK. Compilation and package inspection do not prove runtime behavior. Keep production child automation/inspector disabled, resource limits fixed and failed observations in the dated evidence. WebDriver changes WebKit's networking configuration; verify normal production namespace/seccomp behavior separately from automated ACL probes. No public release or PR readiness change is implied by a passing local suite.
 

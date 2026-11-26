@@ -11,6 +11,12 @@ Make the next action produce the cheapest trustworthy observation that advances 
 
 Write four short lines in the task log: **Outcome**, **Invariants**, **Witness**, **Done**. Use the user's request and repository instructions; ordinary implementation choices stay autonomous. Only consequential missing decisions require clarification.
 
+For product/platform changes, read `docs/PRODUCT_CONTRACT.md` and reference its
+requirement IDs plus `docs/PRODUCT_ACCEPTANCE.md` gates. Inspect the baseline and
+target architecture before choosing implementation. Reuse code only when it fits;
+do not create a parallel interface or treat an agent ADR as owner approval. Derive
+the witness from the desired behavior, not from the design just implemented.
+
 1. Inspect the relevant implementation and existing evidence. Read only references needed for this task.
 2. Reproduce the failing interaction in the affected engine/configuration. Record expected versus actual behavior. A successful build is not a rendered-interaction witness.
 3. Choose one hypothesis, one discriminating probe, and the smallest correction. Rerun that same probe. If it still fails, update the hypothesis before adding changes.

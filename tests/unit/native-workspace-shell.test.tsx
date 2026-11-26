@@ -1,3 +1,5 @@
+// Historical rejected-shell implementation coverage, not the product contract.
+// Migrate useful scenarios to the shared product; Split/X are not target UX.
 import {
   cleanup,
   fireEvent,

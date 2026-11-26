@@ -1,6 +1,10 @@
 # ADR024: Product presentation for the native editor
 
-Status: implemented; installed-package interaction acceptance remains separate.
+Status: implemented approach rejected by the owner on 26 November 2026. The
+separate native shell was not the same application as the working web product.
+This ADR is retained as historical implementation rationale, not owner approval.
+The current target is recorded in [PRODUCT_CONTRACT](../PRODUCT_CONTRACT.md),
+especially PRODUCT-01 and UX-01. The body below describes the rejected approach.
 
 ## Problem
 

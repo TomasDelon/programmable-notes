@@ -19,6 +19,8 @@
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:tooling && npm run test:e2e && npm run test:cloudflare:built && npm run test:cloud:local",
+    "product:audit": "node scripts/audit-product-entry.mjs",
+    "product:verify-entry": "node scripts/audit-product-entry.mjs --require-shared-entry",
     "prepare:runtime": "node scripts/runtime.mjs && node scripts/web-assets.mjs",
     "predev": "npm run prepare:runtime",
     "prebuild": "npm run prepare:runtime && npm run prepare:notices",

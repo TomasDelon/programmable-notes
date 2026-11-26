@@ -7,6 +7,13 @@ description: Use when aggregating test results for a milestone, reviewing comple
 
 Tie each claim to an executed observation of the relevant inputs. Define required gates and permitted skips before running them.
 
+For a product delivery, derive those gates from `docs/PRODUCT_CONTRACT.md` and
+`docs/PRODUCT_ACCEPTANCE.md`, not only from tests selected by the implementer.
+Do not omit a blocked requirement to make the consistency checker pass. A setup
+or internal engineering milestone can complete without completing the application;
+label that scope explicitly and keep product acceptance pending. Agent ADRs and
+green builds do not establish owner acceptance.
+
 For a milestone, create an ignored JSON evidence record using the [schema and example](../../../docs/AGENT_WORKFLOW.md#evidence-record). From the repository root run:
 
 ```sh

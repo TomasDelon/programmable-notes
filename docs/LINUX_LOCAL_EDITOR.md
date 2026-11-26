@@ -1,5 +1,12 @@
 # Try the local Linux editor
 
+Historical testing-build guide: the owner rejected the separate 0.1.2 native UI.
+The current target is a shared architecture with local-vault autosave and inline
+React; see [PRODUCT_CONTRACT](PRODUCT_CONTRACT.md). Manual Save and separate-window
+instructions below describe existing behavior for reproduction, not acceptance of
+the target product. Do not promote a fresh CI build as the corrected application
+merely because packaging passes.
+
 The native testing application stores selected notes as real source files on your
 computer. It does not use the browser workspace database. Cloud storage is paused.
 Target packages are Debian/Ubuntu **amd64** desktops satisfying the existing

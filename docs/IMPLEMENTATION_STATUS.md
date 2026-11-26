@@ -1,5 +1,45 @@
 # Programmable Notes implementation status
 
+## Owner acceptance correction — 26 November 2026
+
+The owner rejected the separate native interface delivered in 0.1.2 as different
+from the existing web application. Its passing tests and screenshots establish
+the behavior implemented, not acceptance of that product change. ADR024 is now
+marked rejected. [PRODUCT_CONTRACT](PRODUCT_CONTRACT.md) records the current
+requirements and the deferred Split/X/hover report. Setup answers subsequently
+confirmed architecture quality first, conditional code reuse, a fully local vault
+with automatic writes to real files, real rename/move/Trash, Linux first and
+unprivileged React inline in the same document/window. Existing web code is a
+reference to assess, not something to preserve unchanged at all costs. Current
+manual-save/separate-window native behavior does not satisfy that target.
+
+The [target architecture](ARCHITECTURE_TARGET.md),
+[acceptance gates](PRODUCT_ACCEPTANCE.md) and
+[living migration plan](plans/unified-local-vault.md) govern subsequent work.
+The read-only `npm run product:audit` reports current direct-entry divergence;
+its informational exit zero is not product readiness. Setup changes documentation,
+agent instructions and audit/packaging diagnostics, not application behavior.
+
+## Autonomous-development setup validation
+
+The owner answered all six product questions; the current contract, architecture
+boundaries, acceptance matrix and living plan are reconciled. Independent review
+corrected vault-authorization wording and separated restart byte persistence from
+unrequested persistent undo history. Routine engineering choices remain autonomous.
+
+Local `npm run check` passed: **638 unit tests, 92 tooling tests with zero skips,
+150 Chromium cases, 9 local Pages cases and 4 inactive-cloud cases**, plus all
+format/lint/TypeScript/build checks. The new AST audit has eight fixture controls;
+its informational run reports different direct native/browser entries, and strict
+mode exits 1 as expected. Neither entry identity nor green CI establishes product
+acceptance. Testing packages now carry an unverified product classification and
+the limited route report instead of implying a completed unified product.
+
+No production application, native authority or security policy changed during
+setup. Current manual-save/separate-window behavior remains a known gap. Actual
+local-vault autosave, inline native rendering and installed security acceptance
+are future implementation gates. Final publication/run evidence is in draft PR #9.
+
 ## Native presentation correction — 26 November 2026
 
 Owner installation feedback showed that the first local-folder testing package

@@ -1,7 +1,8 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-// Browser interaction evidence for the actual native entry and IPC adapter.
-// This deliberately does not claim WebKitGTK, native dialogs or disk I/O.
+// Historical rejected-native-entry coverage with a simulated IPC adapter.
+// This does not establish target product acceptance, WebKitGTK, dialogs or disk I/O.
+// Migrate the fidelity/security scenarios to the shared app; do not preserve Split/X.
 const original =
   '\uFEFFimport Counter from "./Counter"\r\n\r\n# First title\r\n\r\nA **bold** paragraph and $x^2$.\r\n\r\n<Counter />\r\n\r\n{/* preserve comment */}\r\n';
 type NativeFixture = {
