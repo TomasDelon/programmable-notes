@@ -77,8 +77,10 @@ MDX/React document in a separate sandboxed runtime, including shared module
 state. **Edit rendered document** returns to editable Preview. These execution
 modes are distinct from the two-way document mode selector.
 
-A source change triggers a preview rebuild after a short debounce. Compile
-errors retain the source and can provide locations to reveal in the editor.
+In editable Preview, ordinary text changes preserve unchanged React components;
+executable-source and dependency changes rebuild the affected runtime. Run full
+document rebuilds its whole runtime after source changes. Compile errors retain
+the source and can provide locations to reveal in the editor.
 Stop invalidates pending work and removes the current preview; Rebuild starts a
 fresh one. Results from an obsolete source revision cannot replace a newer
 preview. The build deadline includes worker initialization and preview-document
@@ -126,7 +128,9 @@ checksummed recovery copy when possible. **Recovery copy saved** acknowledges th
 copy; **Keep recovery copy and continue** verifies it before releasing the live
 attempt. Storage failure leaves the live text available for copying/downloading.
 Settings → Recovery → **Retained edits** can download the exact retained text,
-restore it as a new Source-mode note, or explicitly discard it. Original notes
+restore `.md` or `.mdx` source as a new Source-mode note, or explicitly discard it.
+Retained JavaScript/TypeScript modules remain downloadable in their original
+format; they are not restored as notes. Original notes
 are not overwritten and recovery never restores filesystem grants. These
 unapplied attempts are separate from saved notes and workspace backups. See
 [the current acceptance receipt](DAILY_USE_STATUS.md) for executed scope and

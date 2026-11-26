@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { isMdxSource } from '../sourceTypes';
 import type { RetainedAttempt } from './persistence';
 
 interface Props {
@@ -112,7 +113,7 @@ export function RetainedEdits({
               >
                 Download retained source
               </button>
-              {onRestore && (
+              {onRestore && isMdxSource(attempt.documentKey) && (
                 <button
                   type="button"
                   className="web-button"

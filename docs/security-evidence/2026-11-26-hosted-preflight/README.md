@@ -107,3 +107,28 @@ Fixed annotations distinguish index, base-package and GUI-package failures;
 missing-candidate annotations use only fixed prerequisite names. APT diagnostics
 remain on the disposable runner. Six package-stage simulations join the existing
 session and controller regressions. These controls are not a native runtime pass.
+
+## Corrected stock Ubuntu 26 observation
+
+[Run 45738904101](https://github.com/TomasDelon/programmable-notes/actions/runs/45738904101)
+at `5a1594306a400c33c8041c4e079ffd45b3c7bb37` reached the actual constrained
+service and failed with `private-network-unavailable`, exit 2 (job 139638775794).
+The prerequisite correction cleared package setup. As on the corrected stock
+Ubuntu 24 run, this path requires the actual fixed cgroup values, NoNewPrivs,
+trusted user-manager journal, equal namespace observation, supervisor-specific
+pre-delivery denial, no payload sentinel and no surviving preview unit. Graphical
+prerequisites are deliberately deferred until namespace enforcement succeeds.
+No WebKitGTK or installed application run occurred on this runner.
+
+Inspection of Ubuntu's checksum-verified systemd `259.9-0ubuntu0.1` source and
+packaging found that user-unit PrivateNetwork creation still follows the local
+executor's user/network namespace setup. `systemd-nsresourced` is not called by
+that path, and `DelegateNamespaces=` does not itself create capabilities.
+Installing that service is not a demonstrated remedy. No AppArmor restriction,
+profile or namespace permission was relaxed, and no such service was enabled.
+
+The tested standard hosted Ubuntu 24/26 runners and this managed shell cannot
+satisfy the positive native-runtime acceptance contract. Use the linked
+full-system disposable desktop procedure with effective private namespaces; do
+not count fail-closed refusal as CPU-under-load, OOM, Stop, expiry, persistence or
+GUI validation. The previously canceled VM launch remains canceled.

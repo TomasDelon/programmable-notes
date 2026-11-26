@@ -2,17 +2,24 @@
 
 ## Current acceptance and stabilization
 
-[The daily-use receipt](DAILY_USE_STATUS.md) records the current stabilization
-work and distinguishes web delivery from native gates. Application revision
-`0c56878` passed 381 hosted browser cases across Chromium, Firefox and WebKit
-(18 intentional skips, zero retries), 24 local Pages-policy cases and 20 repeated
-Firefox authoring cases. Its verified downloadable walkthrough is linked there.
-The tested revision has been fast-forwarded to the beta branch; principal-origin
-acceptance must independently verify exact build identity and actual interaction.
-Current-head CI and deployment receipts are maintained in draft PR #9.
-Native UI parity, startup/Stop attribution and installed-package security remain
-separate open gates. Older checkpoint results below remain historical evidence,
-not claims about a later package or a reason to repeat unchanged passing tests.
+[The daily-use receipt](DAILY_USE_STATUS.md) separates web delivery from native
+gates. The `0c56878` checkpoint passed 381 hosted browser cases across Chromium,
+Firefox and WebKit (18 intentional skips, zero retries), 24 local Pages-policy
+cases, 20 repeated Firefox authoring cases and 27 exact-build principal-origin
+checks. Its verified downloadable walkthrough is linked there.
+
+The follow-up corrects unused grouped files resetting React state through trusted
+compiler dependency witnesses, and removes unsupported module-to-note recovery
+actions. Its complete local gate passed 515 unit tests, 58 tooling controls,
+134 Chromium cases and 9 Pages-policy cases. The production WebKit two-tab
+regression passed independently. Current source-head hosted/deployment receipts
+and downloadable artifacts are maintained in draft PR #9. See
+[ADR 019](decisions/ADR-019-island-dependency-witnesses.md) for the reuse boundary.
+
+Both tested stock Ubuntu 24/26 runners refused execution before payload delivery
+because effective private network isolation was unavailable. Native UI parity,
+startup/Stop attribution and installed-package security remain separate open
+gates. Older results below are historical evidence, not later-package claims.
 
 ## Engineering feedback workflow
 

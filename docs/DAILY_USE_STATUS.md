@@ -202,3 +202,46 @@ build. Independent review additionally tightened partial APT-index failure
 handling and sanitized navigation-origin failures; the affected final static and
 58-control tooling checks were repeated successfully. Application build identities
 remain unchanged. Hosted principal-origin and native results remain separate.
+
+Principal-origin verification subsequently passed at `5a15943`:
+[27 deployment cases](https://github.com/TomasDelon/programmable-notes/actions/runs/45738903565)
+across Chromium, Firefox and WebKit, zero retries. The actual worker matched
+release `3f6b19e0f9f49046` and SHA-256
+`0221191054443494e174dca3f2a1284666c5a13b06d0008ff67f02110611221c`;
+interaction navigations, online reloads and offline reopening matched expected
+entry HTML. That deployment receipt identifies `0c56878`; delivery-infrastructure changes
+did not alter its build inputs. Later application changes require their own
+acceptance; current source-head and deployment receipts are maintained in draft
+PR #9.
+
+## Follow-up dependency and recovery usability correction
+
+A two-tab browser regression on the accepted web build showed that saving an
+unused Markdown sibling in the same import group reset a live Counter. The
+active note and its actual TSX dependency remained byte-identical. The same test
+verified that an actual dependency change correctly rebuilt and stayed
+interactive. This is a newly reproduced lifecycle issue, not source loss.
+
+The follow-up candidate uses bounded trusted compiler dependency witnesses for
+editable islands. It validates all workspace budgets, exact loaded sources and
+current import resolutions before preserving a frame. Transitive edits,
+extension shadowing, missing modules, uncertain evidence and explicit lifecycle
+changes retain conservative rebuilds. See [ADR 019](decisions/ADR-019-island-dependency-witnesses.md).
+
+Recovery now offers new-note restoration only for supported Markdown/MDX drafts;
+module drafts remain downloadable and discardable. Thirteen focused UI tests
+passed, including exact BOM/Unicode/CRLF downloads for retained TSX. Help and new
+workspace examples distinguish editable Preview from full-document execution.
+Existing notes are not migrated or rewritten. The preceding principal-origin
+receipt covers `0c56878` only; current-head deployment evidence is maintained in
+draft PR #9.
+
+The follow-up complete local gate passed **515 unit tests /56 files, 58 tooling
+controls, 134 Chromium cases and 9 Pages-policy cases**, zero retries, plus
+formatting, lint, strict TypeScript and a fresh production build. Pinned WebKit
+27.2 passed the new two-tab production regression independently: unused sibling
+kept the same Counter at 5; the changed TSX import replaced it at 9, then a click
+acknowledged 10. All exact source checks passed. The immutable ordinary build
+fingerprint is `afc89d287b038a18`; hosted all-engine and deployment acceptance
+remain distinct evidence, linked from the draft PR. This does not certify a
+native binary or physical keyboard/device.

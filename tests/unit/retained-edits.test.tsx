@@ -20,48 +20,51 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('downloads exact retained bytes in a damaged workspace with no restore authority', async () => {
-  vi.useFakeTimers();
-  const create = vi.fn<(blob: Blob) => string>(() => 'blob:retained');
-  const revoke = vi.fn();
-  vi.stubGlobal('Blob', NodeBlob);
-  vi.stubGlobal(
-    'URL',
-    class extends URL {
-      static createObjectURL = create;
-      static revokeObjectURL = revoke;
-    },
-  );
-  const names: string[] = [];
-  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
-    this: HTMLAnchorElement,
-  ) {
-    names.push(this.download);
-  });
-  render(
-    <RetainedEdits
-      {...props}
-      disabled
-      error="Another retained edit is damaged."
-    />,
-  );
-  expect(screen.getByRole('alert')).toHaveTextContent(
-    'Another retained edit is damaged.',
-  );
-  expect(
-    screen.queryByRole('button', { name: 'Restore as new note' }),
-  ).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Not an action' })).toBeNull();
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Download retained source' }),
-  );
-  expect(names).toEqual(['recovered-Unicode.mdx']);
-  expect(
-    Array.from(new Uint8Array(await create.mock.calls[0]![0].arrayBuffer())),
-  ).toEqual(Array.from(new TextEncoder().encode(attempt.text)));
-  act(() => vi.runAllTimers());
-  expect(revoke).toHaveBeenCalledWith('blob:retained');
-});
+it.each(['Unicode.mdx', 'Unicode.TSX'])(
+  'downloads exact retained bytes for %s in a damaged workspace with no restore authority',
+  async (fileName) => {
+    vi.useFakeTimers();
+    const create = vi.fn<(blob: Blob) => string>(() => 'blob:retained');
+    const revoke = vi.fn();
+    vi.stubGlobal('Blob', NodeBlob);
+    vi.stubGlobal(
+      'URL',
+      class extends URL {
+        static createObjectURL = create;
+        static revokeObjectURL = revoke;
+      },
+    );
+    const names: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      names.push(this.download);
+    });
+    render(
+      <RetainedEdits
+        attempts={[{ ...attempt, documentKey: 'notes/' + fileName }]}
+        disabled
+        error="Another retained edit is damaged."
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Another retained edit is damaged.',
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Restore as new note' }),
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Not an action' })).toBeNull();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Download retained source' }),
+    );
+    expect(names).toEqual(['recovered-' + fileName]);
+    expect(
+      Array.from(new Uint8Array(await create.mock.calls[0]![0].arrayBuffer())),
+    ).toEqual(Array.from(new TextEncoder().encode(attempt.text)));
+    act(() => vi.runAllTimers());
+    expect(revoke).toHaveBeenCalledWith('blob:retained');
+  },
+);
 
 it('keeps the recovery list on refusal and runs onRestored only after successful publication', async () => {
   const restore = vi
@@ -135,3 +138,50 @@ it('preserves a cancelled discard and keeps the entry available after a rejected
   expect(screen.getByRole('alert')).toHaveTextContent('Storage unavailable.');
   expect(button).toBeEnabled();
 });
+
+it.each([
+  ['notes/guide.md', true],
+  ['notes/guide.mdx', true],
+  ['notes/guide.MD', true],
+  ['notes/guide.MDX', true],
+  ['lib/guide.md.ts', false],
+  ['lib/guide.TSX', false],
+  ['lib/guide.js', false],
+  ['lib/guide.jsx', false],
+] as const)(
+  'offers the applicable recovery actions for %s',
+  async (documentKey, canRestore) => {
+    const restore = vi.fn(async () => true);
+    const discard = vi.fn(async () => {});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(
+      <RetainedEdits
+        attempts={[{ ...attempt, documentKey }]}
+        error=""
+        onRestore={restore}
+        onDiscard={discard}
+      />,
+    );
+    const restoreButton = screen.queryByRole('button', {
+      name: 'Restore as new note',
+    });
+    if (canRestore) {
+      expect(restoreButton).toBeEnabled();
+      await act(async () => {
+        fireEvent.click(restoreButton!);
+      });
+      expect(restore).toHaveBeenCalledExactlyOnceWith(attempt.id);
+    } else {
+      expect(restoreButton).toBeNull();
+    }
+    expect(
+      screen.getByRole('button', { name: 'Download retained source' }),
+    ).toBeEnabled();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Discard retained edit' }),
+      );
+    });
+    expect(discard).toHaveBeenCalledExactlyOnceWith(attempt.id);
+  },
+);

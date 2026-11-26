@@ -2719,9 +2719,9 @@ function WorkspaceApp({
                 <section>
                   <h3>Write, preview, experiment</h3>
                   <p>
-                    Use Source for Markdown, LaTeX mathematics, and MDX with
-                    React components. Preview runs the current note in an
-                    isolated frame.
+                    Write Markdown and mathematics directly in Preview, or use
+                    Source for the original text and React code. Interactive
+                    React components run in isolated frames.
                   </p>
                   <p>
                     Inline mathematics uses <code>$...$</code>. Display
@@ -2730,10 +2730,12 @@ function WorkspaceApp({
                     together.
                   </p>
                   <p>
-                    Preview cannot access your workspace storage or the network.
-                    Remote images and arbitrary npm imports are unavailable.
-                    Changing source rebuilds the preview and resets its
-                    component state.
+                    Document React cannot access your workspace storage or the
+                    network. Remote images and arbitrary npm imports are
+                    unavailable. Ordinary text edits preserve unchanged
+                    components; changing executable code or using Rebuild resets
+                    their temporary state. Run full document rebuilds the whole
+                    runtime after source changes.
                   </p>
                 </section>
                 <section>
@@ -2861,8 +2863,9 @@ function WorkspaceApp({
                 </button>
               </div>
               <p className="web-hint">
-                Source changes rebuild the preview and reset interactive
-                component state.
+                Rebuild resets interactive state. Ordinary text edits preserve
+                unchanged components in editable Preview; Run full document
+                rebuilds after source changes.
               </p>
             </section>
             <section className="web-detail-section">
