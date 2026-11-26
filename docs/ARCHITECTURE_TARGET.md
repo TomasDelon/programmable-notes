@@ -111,6 +111,14 @@ for the owner. An isolated feasibility harness is not a deliverable application.
 If evidence is unavailable or the requirement cannot be met, mark that milestone
 blocked and continue safe independent work without declaring native parity.
 
+The dated [actual-Wry diagnostic](security-evidence/2026-11-26-wry-inline-spike/README.md)
+provides partial X11 presentation evidence: GTK Socket/Plug with Wry's GTK builder
+painted a fixed fixture under the unchanged Supervisor. Raw `build_as_child`
+remained black. Interaction, React and full geometry/lifecycle/security are not
+proved; do not repeat the raw-window hypothesis as if no investigation occurred.
+The next narrow proof must observe script readiness and input after paint, then
+actual React and valid pre-expiry Stop, without changing the resource contract.
+
 Browser iframe containment is not proof of native CPU/memory control. Actual
 installed Linux/WebKitGTK or the selected replacement host must pass real runtime
 acceptance in a disposable environment. Browser IPC mocks remain separate evidence.

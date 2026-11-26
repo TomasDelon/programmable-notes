@@ -1,0 +1,436 @@
+{
+  "status": "PARTIAL_PRESENTATION_ONLY_INTERACTION_UNPROVEN",
+  "repository_head_at_start": "73fa3a0e9319281ad6a6a4f41bde4d80073fbf97",
+  "repository_head_at_observation": "24a9eea5bdddf3f7b31efb98f949957b83a56713",
+  "toolchain": "rustc 1.100.0 (0ef1bc386 2026-11-09)\nbinary: rustc\ncommit-hash: 0ef1bc386059596dada8fb65b50425aab2ea637a\ncommit-date: 2026-11-09\nhost: x86_64-unknown-linux-gnu\nrelease: 1.100.0\nLLVM version: 23.1.5",
+  "source_sha256": {
+    "repro/Cargo.lock": "d58ed3cf445cfb00cf31e5a4d7f9bb9b5c1b86fbf8023677af4a1eb7eabd0b1a",
+    "repro/Cargo.toml": "2b9225c00eb436e978de2f7f69419295f41c780478f4101a293233bc43b6e7c9",
+    "repro/inspect.py": "d340273c73e59da2b499c8fc2d435d2e412edd122219c6aeefcdaf61a8e1e9fe",
+    "repro/observe.py": "18be63269648136a102b48a609630adc4b43b275026200e7cc4a04588d11a654",
+    "repro/plug-main.rs": "12b084fed0a167f103fb85816de4838e23567afdaf322c389c942224462c90b5",
+    "repro/raw-main.rs": "a1e0370671d335e3cbce422488041879b4f281803a9185a1423b2f967539a1bc",
+    "repro/stop-check-failed.py": "82d4726c289caa9b53a858d11a7bb9ae29aa032225608417cae5651ab4719598"
+  },
+  "artifacts": {
+    "raw_sha256": "c2ac870aea45d8e01a12e3638b7499fd79888c56a519a2e63f9180f1f88da554",
+    "plug_sha256": "592e69650d533a8dba82c4da06b4c5da4315f7df316935188a6c621ee46dcc21"
+  },
+  "raw_cold": {
+    "unit": "programmable-notes-preview-539-1795715411500308530.service",
+    "host_pid": 539,
+    "sample_utc": "2026-11-26 17:50:58",
+    "host_netns": "net:[4026531840]",
+    "controllers": {
+      "cpu.max": "25000 100000",
+      "memory.max": "536870912",
+      "memory.swap.max": "0",
+      "pids.max": "128",
+      "memory.peak": "119951360",
+      "cpu.stat": "usage_usec 10624318\nuser_usec 7827650\nsystem_usec 2796668\ncore_sched.force_idle_usec 0\nnr_periods 434\nnr_throttled 423\nthrottled_usec 68188037\nnr_bursts 0\nburst_usec 0"
+    },
+    "processes": [
+      {
+        "pid": 550,
+        "comm": "pn-wry-inline-s",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 567,
+        "comm": "WebKitNetworkPr",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 575,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 578,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 581,
+        "comm": "xdg-dbus-proxy",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 584,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 585,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 586,
+        "comm": "WebKitWebProces",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-539-1795715411500308530.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      }
+    ]
+  },
+  "raw_warm": {
+    "unit": "programmable-notes-preview-643-1795715502146752010.service",
+    "host_pid": 643,
+    "sample_utc": "2026-11-26 17:52:19",
+    "host_netns": "net:[4026531840]",
+    "controllers": {
+      "cpu.max": "25000 100000",
+      "memory.max": "536870912",
+      "memory.swap.max": "0",
+      "pids.max": "128",
+      "memory.peak": "53764096",
+      "cpu.stat": "usage_usec 9378522\nuser_usec 7275492\nsystem_usec 2103030\ncore_sched.force_idle_usec 0\nnr_periods 376\nnr_throttled 372\nthrottled_usec 63207832\nnr_bursts 0\nburst_usec 0"
+    },
+    "processes": [
+      {
+        "pid": 652,
+        "comm": "pn-wry-inline-s",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 669,
+        "comm": "WebKitNetworkPr",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 676,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 677,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 679,
+        "comm": "xdg-dbus-proxy",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 685,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 687,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 688,
+        "comm": "WebKitWebProces",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-643-1795715502146752010.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      }
+    ]
+  },
+  "plug": {
+    "unit": "programmable-notes-preview-531-1795715729419771740.service",
+    "host_pid": 531,
+    "sample_utc": "2026-11-26 17:56:04",
+    "host_netns": "net:[4026531840]",
+    "controllers": {
+      "cpu.max": "25000 100000",
+      "memory.max": "536870912",
+      "memory.swap.max": "0",
+      "pids.max": "128",
+      "memory.peak": "107991040",
+      "cpu.stat": "usage_usec 8636991\nuser_usec 6338516\nsystem_usec 2298475\ncore_sched.force_idle_usec 0\nnr_periods 345\nnr_throttled 344\nthrottled_usec 61141084\nnr_bursts 0\nburst_usec 0"
+    },
+    "processes": [
+      {
+        "pid": 542,
+        "comm": "pn-wry-inline-s",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 558,
+        "comm": "WebKitNetworkPr",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 566,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 567,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 571,
+        "comm": "xdg-dbus-proxy",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 575,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532254]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 576,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 577,
+        "comm": "WebKitWebProces",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-531-1795715729419771740.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      }
+    ]
+  },
+  "runtime_limit_records": {
+    "raw_cold": [
+      {
+        "__REALTIME_TIMESTAMP": "1795715472565468",
+        "MESSAGE": "programmable-notes-preview-539-1795715411500308530.service: Service reached runtime time limit. Stopping.",
+        "USER_UNIT": "programmable-notes-preview-539-1795715411500308530.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:51:12.565468+00:00"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795715472893462",
+        "MESSAGE": "programmable-notes-preview-539-1795715411500308530.service: Failed with result 'timeout'.",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-539-1795715411500308530.service",
+        "UNIT_RESULT": "timeout",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:51:12.893462+00:00"
+      }
+    ],
+    "raw_warm": [
+      {
+        "__REALTIME_TIMESTAMP": "1795715564064991",
+        "MESSAGE": "programmable-notes-preview-643-1795715502146752010.service: Service reached runtime time limit. Stopping.",
+        "USER_UNIT": "programmable-notes-preview-643-1795715502146752010.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:52:44.064991+00:00"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795715564473480",
+        "MESSAGE": "programmable-notes-preview-643-1795715502146752010.service: Failed with result 'timeout'.",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-643-1795715502146752010.service",
+        "UNIT_RESULT": "timeout",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:52:44.473480+00:00"
+      }
+    ],
+    "plug": [
+      {
+        "__REALTIME_TIMESTAMP": "1795715790424943",
+        "MESSAGE": "programmable-notes-preview-531-1795715729419771740.service: Service reached runtime time limit. Stopping.",
+        "USER_UNIT": "programmable-notes-preview-531-1795715729419771740.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:56:30.424943+00:00"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795715790838482",
+        "MESSAGE": "programmable-notes-preview-531-1795715729419771740.service: Failed with result 'timeout'.",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-531-1795715729419771740.service",
+        "UNIT_RESULT": "timeout",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal",
+        "utc": "2026-11-26T17:56:30.838482+00:00"
+      }
+    ]
+  },
+  "observations": {
+    "raw_cold": "Black rectangle through55.495s observer window; child XID10485762 underparent4194318.",
+    "raw_warm": "Black rectangle through55.007s observer window; child XID12582914 underparent6291470.",
+    "plug": "Green fixed HTML fixture first observed at42.015s; child XID10485763 under GtkSocket4194315. Input sent afterpaint;0.5s later screenshot Count0/empty field. Interaction UNPROVEN.",
+    "stop": "INVALID observer: unit already collected; empty ControlGroup mapped to root cgroup. Failed5s deadline is not runtime cleanup failure or proof. Native UI Stop callback happened afterexpiry.",
+    "react": "NOT RUN",
+    "security_acceptance": "NOT RUN"
+  },
+  "dependency_source_sha256": {
+    "src-tauri/vendor/wry/src/webkitgtk/mod.rs": "eff5a44ea76b8840494e78cc4795b7d4990f55fc2aa32d9bd1bc865976bb7907",
+    "src-tauri/vendor/wry/src/webkitgtk/web_context.rs": "423bc918f4421f79f9bcca6e5bfd3530b39a3100536f7a6e83140d26dd40ac65",
+    "native-policy/src/lib.rs": "cbfaf63fb4879b063a5ed557149a10134c3a841ba73350b808420e1d9417e061"
+  }
+}

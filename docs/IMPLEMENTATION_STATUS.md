@@ -20,6 +20,35 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Scoped vault opening and inline diagnostic — 26 November 2026
+
+`Store::open_vault` now opens chosen notes/modules from the retained root descriptor
+without reading sibling contents or trusting cached absolute paths. The complete
+batch is validated before source I/O; existing size/count/encoding/CAS and atomic
+grant publication remain. Root/ancestor replacement and Vault drop cannot redirect
+already granted file access. Display paths are labels and can become stale.
+
+Validation: **9 new lazy-open tests; 71 native crate tests passed, 7 existing ignored
+slots**, with original tests unchanged. Independent review ran 30 relevant native
+tests and found no blocking issue. Actual Store/autosave including lost-reply CAS
+passed again. Frontend inputs are unchanged from inventory's full successful check
+(663 unit, 92 tooling/zero skips, 150 Chromium, 9 Pages, 4 inactive-cloud); its
+relevant evidence is retained rather than repeating identical browser runs.
+See [ADR027](decisions/ADR-027-scoped-vault-opening.md) and
+[scoped-opening evidence](security-evidence/2026-11-26-vault-lazy-open/README.md).
+No IPC or application controller was activated.
+
+A separate disposable VM tested the actual vendored Wry with unchanged Supervisor.
+Raw X11 child variants stayed black; GTK Socket/Plug plus Wry's GTK builder rendered
+the fixed HTML fixture inside the trusted host at 42 seconds. **Input, React,
+scroll/clipping integration, Stop and full security remain unproven.** A late Stop
+observer was invalid after expiry and is not counted. Exact sources, artifact
+hashes, screenshots and failed observations are in
+[the Wry receipt](security-evidence/2026-11-26-wry-inline-spike/README.md).
+All new VMs/containers/heavy scratch/keys were removed after evidence retention;
+original retained infrastructure was untouched. This is not another application
+interface or a corrected installer. The visible application is still unaccepted.
+
 ## Native vault inventory foundation — 26 November 2026
 
 The Rust host now has a retained-directory `Vault` capability and metadata-only

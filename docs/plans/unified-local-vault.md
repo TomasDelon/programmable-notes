@@ -181,3 +181,9 @@ Inventory subpacket now implements the Rust retained-root metadata boundary with
 11 filesystem tests and independent review; source loading keeps its old budgets.
 See [its packet plan](vault-inventory.md) and ADR026. This completes an indexing
 substep, not the whole vault lifecycle or any installed application gate.
+
+Scoped lazy opening is implemented as another Rust-only substep (ADR027): 9 new
+filesystem tests/71 native crate tests passed; independent review found no blocker.
+No IPC/UI activation. The actual-Wry follow-up establishes partial same-window
+GtkSocket/Plug painting, while input/React/Stop remain unproven. Next runtime probe
+needs explicit readiness/input receipts, not another assumed-success screenshot.
