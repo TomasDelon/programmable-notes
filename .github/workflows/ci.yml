@@ -174,7 +174,11 @@ jobs:
           echo '::remove-matcher owner=programmable-notes-apt::'
       - run: npm ci
       - run: npm run native:wry:verify
-      - run: npm run native:package
+      - name: Build the production Linux package
+        shell: bash
+        run: |
+          echo '::add-matcher::.github/native-problem-matcher.json'
+          npm run native:package
       - name: Inspect production package (does not claim runtime validation)
         run: node scripts/verify-linux-package.mjs
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check

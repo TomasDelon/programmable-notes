@@ -13,8 +13,11 @@ signed feed. No key, public release, account or deployment was created. Native
 package upload is gated on verified Cargo/Wry/frontend/Rust-runtime notices.
 See [local use](LINUX_LOCAL_EDITOR.md),
 [ADR023](decisions/ADR-023-linux-local-folders-and-updates.md) and
-[native notices](NATIVE_NOTICES.md). Current candidate receipts will follow the
-executed gates; earlier results below do not certify this package or PackageKit.
+[native notices](NATIVE_NOTICES.md). The corrected native CI job passed and
+produced an [installable testing download](LINUX_LOCAL_EDITOR.md#download-and-install).
+The [dated receipt](security-evidence/2026-11-26-linux-local/README.md) separates
+package inspection, executed recovery controls and unexecuted installed GUI /
+PackageKit acceptance. Earlier results below do not certify this package.
 
 Literal-dollar corrections preserve neighboring formatting, deliberate escapes
 and canonical undo. [ADR022](decisions/ADR-022-typed-dollar-provenance.md) records
@@ -48,8 +51,9 @@ networking was unavailable. Its read-only metadata additionally observed disable
 child controllers in the occupied original job cgroup; device policy is unverified.
 No VM or weaker policy was used.
 
-Native exact-package GUI/security/startup/Stop, editor parity and installer notice
-inventory remain open. Hidden-prefix boundaries and unsupported structural/IME
+Native exact-package GUI/security/startup/Stop and installed editor parity remain
+open. Native redistribution notices are now verified for the candidate above.
+Hidden-prefix boundaries and unsupported structural/IME
 rewrites stay conservative in Visual editing; Source remains available. Physical
 GPU/Wayland/IME and browser CPU/memory quotas are not certified. Older results
 below are historical, not later-package claims.

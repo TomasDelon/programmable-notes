@@ -10,7 +10,13 @@ AppArmor4/systemd252+/WebKitGTK4.1 requirements; other platforms are not certifi
 Successful native CI produces a **linux-amd64-testing** artifact after package,
 notice and Rust checks. Download it from the draft PR's Actions run and extract
 the ZIP. It includes the `.deb`, SHA256SUMS, build identity and instructions.
-Verify and install from that directory:
+
+[Initial verified testing download](https://github.com/TomasDelon/programmable-notes/actions/runs/45829899133/artifacts/15121738182)
+(seven-day retention, GitHub sign-in required). The native build/inspection and
+Rust/recovery gates passed; installed GUI acceptance remains unexecuted. See the
+[dated receipt](security-evidence/2026-11-26-linux-local/README.md).
+
+Verify and install from the extracted directory:
 
 ```sh
 sha256sum --check SHA256SUMS
