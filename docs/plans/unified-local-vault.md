@@ -233,3 +233,12 @@ No UI or registered Tauri GUI/ACL activation is implied. Next shared-product wor
 can use this tested seam; native inline keyboard/geometry/full security remains
 an independent release gate. A separate bounded actual-React pointer question
 is being investigated without weakening the failed keyboard/startup results.
+
+The one actual React pointer diagnostic reached Count 2, but its infrastructure
+violated the explicit no-host-share invariant by including a task-generated guest
+transport key in a writable synthetic share. All new runtime/key resources were
+removed; no owner credentials/notes were involved. The observation is excluded
+from VM/full security acceptance. Stop cleanup also remains unproven after ESRCH.
+Before more native tests, correct/version/review share-free provisioning with
+negative preflight controls. Shared UI/data work can remain independent; do not
+promote another installer or treat these partial observations as product readiness.

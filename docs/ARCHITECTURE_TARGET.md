@@ -130,6 +130,15 @@ repeatable readiness. CPU/journal and post-case load data do not establish a cau
 Do not extend the lifetime or replay cold boots without a new discriminating
 hypothesis. Shared editor/controller work can proceed while this gate stays open.
 
+The [actual MDX/React pointer case](security-evidence/2026-11-26-wry-react-pointer/README.md)
+subsequently mounted hooks/state and reached Count 2 through OS clicks. It is
+functional evidence only: the guest's writable synthetic share contained its
+task-local SSH transport key, contrary to the no-share plan. The fixture/key was
+removed; no owner credentials or notes were involved. VM/security acceptance is
+excluded. Its Stop observer also aborted with ESRCH, so bounded cleanup was not
+proved. Do not infer integrated application, keyboard or full sandbox readiness.
+Correct and review provisioning before further native runtime work.
+
 Browser iframe containment is not proof of native CPU/memory control. Actual
 installed Linux/WebKitGTK or the selected replacement host must pass real runtime
 acceptance in a disposable environment. Browser IPC mocks remain separate evidence.

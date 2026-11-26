@@ -61,7 +61,15 @@ For multi-step implementation or debugging, read [.agents/skills/close-feedback-
 
 ## Native Linux work
 
-Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before changing native authority or packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native filesystem authority starts with editor-side OS authorization of a vault or file. Subsequent operations use opaque grants/revisions and validated relative paths inside that scope, never arbitrary absolute paths or authority from document code. New vault operations need negative permission/path tests before activation. Never add a generic filesystem permission for preview code.
+Read `docs/NATIVE_SECURITY.md`, `docs/LINUX_DESKTOP_TESTING.md` and ADR-004 before native runtime/VM experiments or changes to native authority/packaging. `npm run native:package` builds an optimized Debian testing artifact without `security-test`. Native filesystem authority starts with editor-side OS authorization of a vault or file. Subsequent operations use opaque grants/revisions and validated relative paths inside that scope, never arbitrary absolute paths or authority from document code. New vault operations need negative permission/path tests before activation. Never add a generic filesystem permission for preview code.
+
+The 26 November React diagnostic violated its no-host-share plan by sharing a
+task-local transport key in a writable synthetic tree. Do not reuse that private
+provisioner or run another native guest until share-free provisioning has a
+versioned preflight, negative controls and independent review. Private transport
+keys stay outside all guest-visible images/payload/evidence paths; record actual
+mounts and credential scope before payload execution. Read the native contract's
+fixture-deviation gate. Functional screenshots are not security acceptance.
 
 Actual native validation requires a disposable full-system Linux desktop/VM with systemd, cgroup delegation, working namespaces and WebKitGTK. Compilation and package inspection do not prove runtime behavior. Keep production child automation/inspector disabled, resource limits fixed and failed observations in the dated evidence. WebDriver changes WebKit's networking configuration; verify normal production namespace/seccomp behavior separately from automated ACL probes. No public release or PR readiness change is implied by a passing local suite.
 

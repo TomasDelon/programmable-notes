@@ -1,0 +1,28 @@
+{
+  "kind": "trusted_compile_only_no_generated_code_evaluation",
+  "sourceSha256": "2340992e400c7e1c00565d84fc44e13360a4d1f070c2bed5e0529546dad9317b",
+  "compiledMdxSha256": "48341f8834b2ce189c4d38ce2ea49eb3ca7f7d7aac9a88b5c206da1f5b86f277",
+  "javascriptSha256": "f39ffd636956894ded948c78ff038afa33fa7df0070bbaa1de8c885d4e21ac0e",
+  "htmlSha256": "108e3e7723c46d600d509be8a4eec6e5e0db233032fc725c77e271f2ed166245",
+  "javascriptBytes": 224322,
+  "htmlBytes": 224650,
+  "packageLockSha256": "f12f2332857855a121ccacb1f1a684b81bd8e1e46bbde19b9d0ec0d239d34a86",
+  "dependencies": {
+    "@mdx-js/mdx": {
+      "version": "3.1.1",
+      "packageJsonSha256": "802e17412059976878225fb25c1a04660f8df0d581f35aefc6da8e204e2db0a8"
+    },
+    "esbuild": {
+      "version": "0.28.2",
+      "packageJsonSha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490"
+    },
+    "react": {
+      "version": "19.3.1",
+      "packageJsonSha256": "9cc9c3de5441a2eea7f41f52f3f2a15a4fc51f90c0b72741f0d7638643a85e67"
+    },
+    "react-dom": {
+      "version": "19.3.1",
+      "packageJsonSha256": "89d54f11575c9b0f7819962d9d72a31970dfb4d103f07e8b1d1b37e6d1fc3258"
+    }
+  }
+}

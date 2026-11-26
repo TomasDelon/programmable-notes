@@ -37,6 +37,31 @@ relative opening/creation, collisions, outside-path/symlink refusal and exact di
 bytes. No generic filesystem permission or document-supplied root path is allowed.
 Production namespace/seccomp and full containment validation remain required.
 
+## Standalone React fixture is not isolation acceptance
+
+The [26 November React pointer diagnostic](security-evidence/2026-11-26-wry-react-pointer/README.md)
+observed a fixed actual MDX/React counter, but violated its no-host-share plan:
+a writable 9p mount contained the disposable guest transport key. No owner
+credential/vault/home copy or key access by author JS was established. The guest,
+endpoint, backing share and generated keys were removed. This is functional
+pointer evidence only; it cannot satisfy VM or full security acceptance. Its
+bounded Stop observer also aborted with ESRCH and remains unproven.
+
+Before any successor native runtime test, review the actual provisioning/launch
+implementation and enforce absence of host filesystem shares. Keep private
+transport keys outside guest images, payload/evidence trees and mounted paths;
+only the public authorization key belongs in the guest. Stage fixed inputs and
+collect guest-local evidence through authenticated transfer instead of 9p/virtiofs.
+Use a versioned preflight that rejects host-share arguments and credential-path
+overlap before launching QEMU; include negative controls. **This corrected
+provisioning has not been executed or accepted yet.** Do not waive this gate or
+retroactively promote the deviating fixture.
+
+Reuse established process-identity/cleanup semantics for observer corrections.
+Normalize only known absence races on process-bound reads; arbitrary cgroup,
+permission or control errors remain failures. A successor observer requires its
+own reviewed tests/evidence; the recorded ESRCH abort stays a failed observation.
+
 ## Milestone 3 production configuration
 
 The historical debug/test-feature procedure below remains useful, but does not establish production package behavior. New production work, actual results and limitations are recorded in the [2026-11-18 evidence](security-evidence/2026-11-18/README.md). Read [ADR-004](decisions/ADR-004-linux-persistence-and-production.md) for the authorized file store, actual namespace enforcement, WebKit process sandbox and residual native risks.

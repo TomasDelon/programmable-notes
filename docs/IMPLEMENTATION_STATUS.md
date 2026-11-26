@@ -20,6 +20,36 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Native React pointer result and infrastructure deviation — 26 November 2026
+
+One fixed, actually compiled MDX/React component mounted inside the GtkSocket/Plug
+host and reached Count 0→1→2 from real OS clicks. Hooks, state and the event handler
+executed in the child, not in the privileged compiler. Mounted readiness was
+observed at 39.39 seconds and Count 2 at 41.72. This is standalone functional
+pointer evidence, not an integrated application or general keyboard/geometry pass.
+
+**The diagnostic violated its no-host-share plan.** A writable 9p share included
+a newly generated transport private key for this disposable guest. No owner
+credentials, vault or home directory were copied; no key-read/access by authored
+JS was established. The guest, endpoint, key copies and backing share were removed.
+The key had no owner/host/other-service enrollment. This result is explicitly
+excluded from VM isolation and full security acceptance. Future provisioning must
+be corrected and reviewed before another native run; the existing production
+application/security configuration was not changed by this diagnostic.
+
+Trusted Stop was requested while the exact unit was live, but the cleanup observer
+aborted with ESRCH before completing the bounded identity/group predicate. Stop
+cleanup and host-input acceptance remain unproven for this artifact. Later empty
+cgroup/PID observations and systemd stopped messages do not repair that failure.
+The exact failing read was not recorded. Existing production observer semantics
+already handle process-bound ESRCH; no source was changed or retry performed.
+
+[Evidence, scope deviation and reproducible inputs](security-evidence/2026-11-26-wry-react-pointer/README.md)
+preserve exact sources, errors, live counters and screenshots. Normal child
+keyboard, source-document geometry/multiple islands, full containment and actual
+registered-command/filesystem GUI acceptance remain open. The shared product
+and corrected installer are still not delivered.
+
 ## Private native binding and real controller I/O — 26 November 2026
 
 The shared controller now has a small injected native save/close binding. It
