@@ -60,12 +60,14 @@ import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
 import { useWebPreview } from './useWebPreview';
+import { shouldCompileWholeDocument } from './previewExecution';
 import { WebPreview } from './WebPreview';
 import { useOffline, activateUpdate } from './offline';
 import { createHoverIntentController } from './hoverIntent';
 import { indexWorkspaceLinks } from '../links';
 import { NoteConnections } from './NoteConnections';
 import { AttachmentGallery } from './AttachmentGallery';
+import { RetainedEdits } from './RetainedEdits';
 import { attachmentReferences, referencedPreviewAssets } from './previewAssets';
 import {
   normalizeFolder,
@@ -214,6 +216,7 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
         Retry, restore a workspace backup, or check recovery history. Use a
         regular browser window with site storage enabled.
       </p>
+      <RetainedEdits attempts={model.attempts} error={model.attemptError} />
       <div className="web-inline-actions">
         <button
           className="web-button"
@@ -319,6 +322,16 @@ function WorkspaceApp({
   const selected = workspace.selected;
   const metadata = state.documents[selected]!;
   const source = workspace.files[selected] ?? '';
+  const selectedIsNote = isMdxSource(selected);
+  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
+  const fullDocument = reactEnabled && runtimeDocument === selected;
+  const [analysisDiagnostic, setAnalysisDiagnostic] = useState<{
+    path: string;
+    source: string;
+    message: string | null;
+  } | null>(null);
+  const [islandRebuildVersion, setIslandRebuildVersion] = useState(0);
   const attachmentRefs = useMemo(
     () => attachmentReferences(source, selected),
     [source, selected],
@@ -345,15 +358,31 @@ function WorkspaceApp({
       }),
     [workspace.files, workspace.groups, workspace.entry],
   );
-  const preview = useWebPreview({
+  const documentPreview = useWebPreview({
     files,
     entry: workspace.entry,
     theme: state.theme,
     images: previewImages,
     corePlugins: state.corePlugins,
     showComponentSource: state.previewPreferences?.showComponentSource,
-    enabled: reactEnabled,
+    enabled: shouldCompileWholeDocument(reactEnabled, mode, fullDocument),
   });
+  const preview = {
+    ...documentPreview,
+    error:
+      documentPreview.error ||
+      (mode === 'preview' &&
+      !fullDocument &&
+      analysisDiagnostic?.path === selected &&
+      analysisDiagnostic.source === source
+        ? (analysisDiagnostic.message ?? '')
+        : ''),
+    rebuild: () => {
+      documentPreview.rebuild();
+      if (mode === 'preview' && !fullDocument)
+        setIslandRebuildVersion((value) => value + 1);
+    },
+  };
   const histories = useRef<EditorHistory>(new Map());
   const commands = useRef<EditorCommands>(null);
   const documentScroll = useRef<HTMLDivElement>(null);
@@ -370,8 +399,7 @@ function WorkspaceApp({
   } | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
-  const fullDocument = reactEnabled && runtimeDocument === selected;
+
   const [islandOpen, setIslandOpen] = useState(false);
   const [peekSide, setPeekSide] = useState<'left' | 'right' | null>(null);
   const [sidebarView, setSidebarView] = useState<'documents' | 'connections'>(
@@ -403,8 +431,16 @@ function WorkspaceApp({
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [persistentStatus, setPersistentStatus] = useState('');
   const [operationPending, setOperationPending] = useState(false);
+
   const [pendingEdit, setPendingEdit] = useState(false);
   const [toast, setToast] = useState('');
+  const recoveryNoticeShown = useRef(false);
+  useEffect(() => {
+    if (model.attempts.length && !pendingEdit && !recoveryNoticeShown.current) {
+      recoveryNoticeShown.current = true;
+      setToast('A retained edit is available in Settings → Recovery.');
+    }
+  }, [model.attempts.length, pendingEdit]);
   const [visitHistory, setVisitHistory] = useState({
     entries: [selected],
     cursor: 0,
@@ -438,8 +474,7 @@ function WorkspaceApp({
   const visibleRecent = recentShowAll
     ? recentKeys
     : recentKeys.slice(0, RECENT_VISIBLE);
-  const selectedIsNote = isMdxSource(selected);
-  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+
   useEffect(() => {
     if (state.mode === 'live') model.setMode('preview');
   }, [state.mode, model]); // Migrate legacy stored view preference.
@@ -545,7 +580,8 @@ function WorkspaceApp({
     return false;
   };
   const importAttachments = async (files: File[]) => {
-    if (!files.length || !selectedIsNote || !canLeaveDraft()) return;
+    if (!files.length || !selectedIsNote || model.conflict || !canLeaveDraft())
+      return;
     const target = selected;
     setOperationPending(true);
     try {
@@ -729,7 +765,11 @@ function WorkspaceApp({
     setRecoveryLoading(true);
     setRecoveryError('');
     try {
-      setRecoveryPoints(await model.listRecovery());
+      const [points] = await Promise.all([
+        model.listRecovery(),
+        model.reloadAttempts(),
+      ]);
+      setRecoveryPoints(points);
     } catch (error) {
       setRecoveryError(
         error instanceof Error
@@ -2025,12 +2065,29 @@ function WorkspaceApp({
                           showComponentSource:
                             state.previewPreferences?.showComponentSource,
                           stopped: preview.stopped || fullDocument,
+                          rebuildVersion: islandRebuildVersion,
                         }
                       : undefined
                   }
                   wikilinks={linkIndex.outgoing[selected] ?? []}
                   onOpenNote={openDocument}
                   busy={operationPending}
+                  readOnly={model.conflict}
+                  onRetainAttempt={(base, text) =>
+                    model.retainAttempt(selected, base, text)
+                  }
+                  onDiscardAttempt={model.discardLiveAttempt}
+                  onKeepAttempt={model.keepLiveAttempt}
+                  onAnalysisDiagnostic={(path, snapshot, message) => {
+                    if (!model.isCurrentSource(path, snapshot)) return;
+                    setAnalysisDiagnostic((current) =>
+                      current?.path === path &&
+                      current.source === snapshot &&
+                      current.message === message
+                        ? current
+                        : { path, source: snapshot, message },
+                    );
+                  }}
                   onPendingChange={(value) => {
                     model.setPendingEditorDraft(value);
                     setPendingEdit(value);
@@ -2157,7 +2214,7 @@ function WorkspaceApp({
               assets={state.assets}
               onAdd={() => attachmentInput.current?.click()}
               onDownload={model.downloadAttachment}
-              disabled={operationPending || pendingEdit}
+              disabled={operationPending || pendingEdit || model.conflict}
             />
           )}
           {selectedIsNote && (
@@ -2166,7 +2223,14 @@ function WorkspaceApp({
               aria-label="Preview controls"
             >
               <h3>Preview</h3>
-              <p className="web-inspector-subtitle">{preview.status}</p>
+              <p className="web-inspector-subtitle">
+                {mode === 'preview' &&
+                !fullDocument &&
+                reactEnabled &&
+                !preview.stopped
+                  ? 'Editable preview'
+                  : preview.status}
+              </p>
               <div className="web-inline-actions">
                 <button
                   type="button"
@@ -2575,6 +2639,14 @@ function WorkspaceApp({
             )}
             {settingsTab === 'recovery' && (
               <section>
+                <RetainedEdits
+                  attempts={model.attempts}
+                  error={model.attemptError}
+                  disabled={operationPending}
+                  onRestore={model.restoreAttempt}
+                  onDiscard={model.discardAttempt}
+                  onRestored={() => setModal(null)}
+                />
                 <h3>Recovery history</h3>
                 <p>
                   Recovery points contain the whole workspace. Restoring a point
@@ -2761,7 +2833,14 @@ function WorkspaceApp({
             </div>
             <section className="web-detail-section">
               <h4>Preview</h4>
-              <p>{preview.status}</p>
+              <p>
+                {mode === 'preview' &&
+                !fullDocument &&
+                reactEnabled &&
+                !preview.stopped
+                  ? 'Editable preview'
+                  : preview.status}
+              </p>
               <div className="web-inline-actions">
                 <button
                   type="button"

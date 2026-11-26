@@ -11,6 +11,7 @@ export interface RenderedRuntimeContext {
   theme: 'light' | 'dark';
   images: readonly StoredAsset[];
   stopped: boolean;
+  rebuildVersion?: number;
   corePlugins?: CorePluginSettings;
   showComponentSource?: boolean;
 }

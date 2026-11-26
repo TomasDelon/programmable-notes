@@ -61,6 +61,7 @@ import {
   renderedPositionFromSourceOffset,
   serializeRenderedChange,
   rebaseRenderedProjection,
+  reparseRenderedMathEdit,
 } from './sourceBridge';
 import {
   RenderedRuntime,
@@ -95,6 +96,14 @@ interface Props {
   openSource: (offset: number, source: string) => void;
   openNote?: (id: string) => void;
   onPendingChange?: (pending: boolean) => void;
+  onAnalysisDiagnostic?: (
+    path: string,
+    source: string,
+    message: string | null,
+  ) => void;
+  onRetainAttempt?: (baseSource: string, text: string) => Promise<void>;
+  onDiscardAttempt?: () => Promise<void>;
+  onKeepAttempt?: () => Promise<void>;
 }
 
 function markRule(expression: RegExp, mark: MarkType) {
@@ -124,9 +133,15 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   const [error, setError] = useState('');
   const [unappliedText, setUnappliedText] = useState<string | null>(null);
   const retainedDraft = useRef<string | null>(null);
+  const recoveryGeneration = useRef(0);
+  const recoveryAction = useRef(false);
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [recoveryCopy, setRecoveryCopy] = useState<
+    'memory' | 'saving' | 'saved' | 'failed'
+  >('memory');
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
-  const [mathComposing, setMathComposing] = useState(false);
+  const [documentComposing, setDocumentComposing] = useState(false);
   useEffect(() => {
     if (error || unappliedText !== null)
       notify({
@@ -160,11 +175,43 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     latest.current = props;
   });
   const hasPendingDraft =
-    linkDraft !== null || unappliedText !== null || mathComposing;
+    linkDraft !== null || unappliedText !== null || documentComposing;
   useLayoutEffect(() => {
     latest.current.onPendingChange?.(hasPendingDraft);
   }, [hasPendingDraft]);
   useLayoutEffect(() => () => latest.current.onPendingChange?.(false), []);
+
+  async function releaseRecovery(discard: boolean) {
+    if (recoveryAction.current) return;
+    const generation = recoveryGeneration.current;
+    recoveryAction.current = true;
+    setRecoveryBusy(true);
+    try {
+      const action = discard
+        ? latest.current.onDiscardAttempt
+        : latest.current.onKeepAttempt;
+      if (action) await action();
+      if (recoveryGeneration.current !== generation) return;
+      recoveryGeneration.current++;
+      retainedDraft.current = null;
+      setUnappliedText(null);
+      setError('');
+      setRecoveryOpen(false);
+      setRecoveryCopy('memory');
+    } catch (reason) {
+      if (recoveryGeneration.current === generation) {
+        if (!discard) setRecoveryCopy('failed');
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : 'The recovery copy could not be verified.',
+        );
+      }
+    } finally {
+      recoveryAction.current = false;
+      setRecoveryBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!mount.current) return;
@@ -172,7 +219,47 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       latest.current.source,
       latest.current.path,
     );
-    let acceptedSource = latest.current.source;
+    let acceptedSource = projection.mapping.source;
+    function publishAnalysisDiagnostic() {
+      if (latest.current.sourceIsCurrent?.(acceptedSource) === false) return;
+      latest.current.onAnalysisDiagnostic?.(
+        projection.mapping.path,
+        acceptedSource,
+        projection.analysisDiagnostic,
+      );
+    }
+    function acceptProjection(next: typeof projection) {
+      const report =
+        projection.analysisDiagnostic !== null ||
+        next.analysisDiagnostic !== null;
+      projection = next;
+      acceptedSource = next.mapping.source;
+      if (report) publishAnalysisDiagnostic();
+    }
+    const retainAttempt = (attempted: string) => {
+      const generation = ++recoveryGeneration.current;
+      retainedDraft.current = attempted;
+      setUnappliedText(attempted);
+      const persist = latest.current.onRetainAttempt;
+      if (!persist) {
+        setRecoveryCopy('memory');
+        return;
+      }
+      const base = acceptedSource;
+      setRecoveryCopy('saving');
+      void Promise.resolve()
+        .then(() => persist(base, attempted))
+        .then(
+          () => {
+            if (recoveryGeneration.current === generation)
+              setRecoveryCopy('saved');
+          },
+          () => {
+            if (recoveryGeneration.current === generation)
+              setRecoveryCopy('failed');
+          },
+        );
+    };
     const nodes = renderedSchema.nodes;
     const marks = renderedSchema.marks;
     function hiddenSource(node: ProseNode): boolean {
@@ -560,6 +647,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           runtimeRoots.current.add(runtime);
           runtime.root.render(
             <RenderedRuntime
+              key={latest.current.runtime.rebuildVersion ?? 0}
               context={latest.current.runtime}
               raw={raw}
               onError={report}
@@ -615,9 +703,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // the user chooses a different caret/range, rather than accepting a partial
     // DOM selection as authorization to replace only part of the document.
     let selectingAll = false;
-    let composingSource = false;
-    let mathCompositionBase: EditorState | null = null;
-    let firstComposingChange = true;
+    let compositionBase: EditorState | null = null;
     let compositionFrame: number | null = null;
     function ownedNativeInputRange(
       current: EditorView,
@@ -655,7 +741,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       if (
         !text.includes('$') ||
         current.composing ||
-        composingSource ||
+        compositionBase ||
         latest.current.disabled ||
         retainedDraft.current !== null
       )
@@ -705,7 +791,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         )
       )
         return false;
-      const parsed = parseRenderedSource(next, latest.current.path);
+      const parsed = reparseRenderedMathEdit(
+        projection,
+        next,
+        offset,
+        end,
+        offset + replacement.length,
+      );
       const target = collectLiveMath(next, latest.current.path, true).find(
         (span) => span.from <= offset && span.to >= offset + replacement.length,
       );
@@ -720,8 +812,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       )
         return false;
       selectingAll = false;
-      projection = parsed;
-      acceptedSource = next;
+      acceptProjection(parsed);
       const transaction = current.state.tr.replaceWith(
         0,
         current.state.doc.content.size,
@@ -781,29 +872,17 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               return true;
             },
             'Mod-z': () => {
-              if (
-                !latest.current.disabled &&
-                !mathCompositionBase &&
-                !composingSource
-              )
+              if (!latest.current.disabled && !compositionBase)
                 latest.current.undo();
               return true;
             },
             'Mod-y': () => {
-              if (
-                !latest.current.disabled &&
-                !mathCompositionBase &&
-                !composingSource
-              )
+              if (!latest.current.disabled && !compositionBase)
                 latest.current.redo();
               return true;
             },
             'Mod-Shift-z': () => {
-              if (
-                !latest.current.disabled &&
-                !mathCompositionBase &&
-                !composingSource
-              )
+              if (!latest.current.disabled && !compositionBase)
                 latest.current.redo();
               return true;
             },
@@ -862,50 +941,43 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       },
       // Let an already-owned IME finish its atomic DOM read before making
       // the surface read-only. Source writes still obey latest.disabled.
-      editable: () => !latest.current.disabled || mathCompositionBase !== null,
+      editable: () => !latest.current.disabled || compositionBase !== null,
       createSelectionBetween: (current) =>
         selectingAll ? new AllSelection(current.state.doc) : null,
       handleDOMEvents: {
         compositionstart: (current) => {
-          if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
-          compositionFrame = null;
-          if (latest.current.disabled && !mathCompositionBase) return false;
-          const { selection } = current.state;
-          const ownsMath = (node: ProseNode | null) =>
-            !!node &&
-            (node.type === nodes.inline_math ||
-              node.type === nodes.math_block ||
-              node.marks.some((mark) => mark.type === marks.math_source));
-          let touchesMath = [
-            selection.$head.parent,
-            selection.$anchor.parent,
-            selection.$head.nodeBefore,
-            selection.$head.nodeAfter,
-            selection.$anchor.nodeBefore,
-            selection.$anchor.nodeAfter,
-          ].some(ownsMath);
-          if (!touchesMath && !selection.empty)
-            current.state.doc.nodesBetween(
-              selection.from,
-              selection.to,
-              (node) => {
-                if (ownsMath(node)) touchesMath = true;
-                return !touchesMath;
-              },
-            );
-          if (touchesMath) {
-            if (!mathCompositionBase) mathCompositionBase = current.state;
-            current.setProps({});
-            // The source model reads this ref synchronously for navigation.
-            latest.current.onPendingChange?.(true);
-            setMathComposing(true);
+          if (compositionFrame !== null) {
+            // The next IME session can begin before the previous end's frame.
+            // Publish its observed final state before acquiring a new base.
+            cancelAnimationFrame(compositionFrame);
+            finishComposition();
           }
-          composingSource = true;
-          firstComposingChange = true;
+          if (latest.current.disabled || retainedDraft.current !== null)
+            return true;
+          if (!compositionBase) compositionBase = current.state;
+          current.setProps({});
+          // Own the whole IME from its first DOM mutation until its final
+          // native read, including when a competing revision locks the editor.
+          latest.current.onPendingChange?.(true);
+          setDocumentComposing(true);
           return false;
         },
-        mousedown: () => {
+        mousedown: (current, event) => {
           selectingAll = false;
+          if (
+            current.editable &&
+            !current.composing &&
+            event.button === 0 &&
+            event.target instanceof HTMLElement &&
+            event.target.isContentEditable &&
+            current.state.selection.empty &&
+            !current.hasFocus()
+          ) {
+            // WebKit can reset the DOM caret to the first block on refocus.
+            // A click at the existing model position skips PM's selection
+            // write, so sync the caret before PM handles the pointer normally.
+            current.focus();
+          }
           return false;
         },
         touchstart: () => {
@@ -934,6 +1006,21 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           return true;
         },
         beforeinput: (current, event) => {
+          if (
+            event.inputType === 'historyUndo' ||
+            event.inputType === 'historyRedo'
+          ) {
+            event.preventDefault();
+            if (
+              !compositionBase &&
+              !event.isComposing &&
+              !latest.current.disabled
+            ) {
+              if (event.inputType === 'historyUndo') latest.current.undo();
+              else latest.current.redo();
+            }
+            return true;
+          }
           if (latest.current.disabled || event.isComposing) return false;
           if (
             event.inputType === 'insertText' &&
@@ -968,17 +1055,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             current.dispatch(current.state.tr.insertText(event.data));
             return true;
           }
-          if (
-            event.inputType !== 'historyUndo' &&
-            event.inputType !== 'historyRedo'
-          )
-            return false;
-          event.preventDefault();
-          if (mathCompositionBase || composingSource || latest.current.disabled)
-            return true;
-          if (event.inputType === 'historyUndo') latest.current.undo();
-          else latest.current.redo();
-          return true;
+          return false;
         },
       },
       handleTextInput: (current, from, to, text) => {
@@ -993,7 +1070,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       },
       handleKeyDown: (current, event) => {
         if (event.isComposing || current.composing) return false;
-        composingSource = false;
         if (
           /^(?:Arrow(?:Left|Right|Up|Down)|PageUp|PageDown|Home|End|Escape|Tab)$/.test(
             event.key,
@@ -1195,9 +1271,16 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         }
         if (!/[\n\r]|^#{1,6}\s|\*\*|^[-*+] |\[\[/.test(text)) return false;
         const parsed = parseRenderedSource(text, 'paste.md');
+        // A single paragraph supplies inline content. Closing its wrapper
+        // leaves the insertion endpoint between blocks, beyond the pasted text.
+        const open =
+          parsed.doc.childCount === 1 &&
+          parsed.doc.firstChild?.type === nodes.paragraph
+            ? 1
+            : 0;
         current.dispatch(
           current.state.tr
-            .replaceSelection(new Slice(parsed.doc.content, 0, 0))
+            .replaceSelection(new Slice(parsed.doc.content, open, open))
             .setMeta('isolated', true),
         );
         return true;
@@ -1205,7 +1288,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       dispatchTransaction: (transaction) => {
         if (
           transaction.docChanged &&
-          ((latest.current.disabled && mathCompositionBase === null) ||
+          ((latest.current.disabled && compositionBase === null) ||
             retainedDraft.current !== null)
         ) {
           // Only an already-owned IME may finish a provisional DOM read while
@@ -1279,8 +1362,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             } catch {
               /* Preserve at least the exact attempted visible text. */
             }
-            retainedDraft.current = attempted;
-            setUnappliedText(attempted);
+            retainAttempt(attempted);
             setError(
               'This selection includes hidden component source. The source is unchanged and your attempted edit was retained. Use Source to change that code.',
             );
@@ -1298,7 +1380,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         }
         if (transaction.docChanged) selectingAll = false;
         let nextState = editor.state.apply(transaction);
-        if (transaction.docChanged && mathCompositionBase) {
+        if (transaction.docChanged && compositionBase) {
           // An IME can temporarily remove dollars, then continue mutating the
           // same source text. Keep that owned DOM alive until its final read;
           // commit one source transaction after composition ends.
@@ -1371,7 +1453,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
                 )
               )
                 throw reason;
-              const parsed = parseRenderedSource(next, latest.current.path);
               let changedFrom = 0;
               while (
                 changedFrom < acceptedSource.length &&
@@ -1389,6 +1470,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
                 oldEnd--;
                 newEnd--;
               }
+              const parsed = reparseRenderedMathEdit(
+                projection,
+                next,
+                changedFrom,
+                oldEnd,
+                newEnd,
+              );
               const caret = renderedPositionFromSourceOffset(parsed, newEnd);
               if (caret === null) throw reason;
               const canonical = nextState.tr.replaceWith(
@@ -1407,26 +1495,18 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               transaction.steps.every(
                 (step) => step.toJSON().stepType === 'replace',
               );
-            const phase: RenderedCompositionPhase | undefined = composingSource
-              ? firstComposingChange
-                ? 'start'
-                : 'update'
-              : undefined;
-            const applied = phase
-              ? latest.current.apply(acceptedSource, next, typing, phase)
+            const applied = transaction.getMeta('renderedCompositionCommit')
+              ? latest.current.apply(acceptedSource, next, typing, 'start')
               : latest.current.apply(acceptedSource, next, typing);
             if (!applied) {
               setError(
                 'The document changed before this edit could be applied. Your saved source is unchanged.',
               );
-              retainedDraft.current = attempted;
-              setUnappliedText(attempted);
+              retainAttempt(attempted);
               editor.updateState(editor.state);
               return;
             }
-            if (phase && next !== acceptedSource) firstComposingChange = false;
-            acceptedSource = next;
-            projection = rebased;
+            acceptProjection(rebased);
             setError('');
           } catch (reason) {
             setError(
@@ -1434,8 +1514,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
                 ? reason.message
                 : 'This edit could not be applied.',
             );
-            retainedDraft.current = attempted;
-            setUnappliedText(attempted);
+            retainAttempt(attempted);
             editor.updateState(editor.state);
             return;
           }
@@ -1444,6 +1523,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       },
     });
     view.current = editor;
+    publishAnalysisDiagnostic();
     // Runtime-backed atoms never submit messages or transforms to this editor.
     const onSourceChange = () => {
       const next = latest.current.source;
@@ -1457,7 +1537,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       const previousAllSelection =
         selectingAll || editor.state.selection instanceof AllSelection;
       selectingAll = false;
-      composingSource = false;
       const parsed = parseRenderedSource(next, latest.current.path);
       const position = Math.min(
         editor.state.selection.from,
@@ -1473,59 +1552,67 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           TextSelection.near(transaction.doc.resolve(position)),
       );
       editor.updateState(editor.state.apply(transaction));
-      projection = parsed;
-      acceptedSource = next;
+      acceptProjection(parsed);
     };
+    let deferredSourceChange = false;
     const sourceChanged = () => {
-      if (!editor.composing && !mathCompositionBase) onSourceChange();
+      if (editor.composing || compositionBase) {
+        deferredSourceChange = latest.current.source !== acceptedSource;
+      } else {
+        deferredSourceChange = false;
+        onSourceChange();
+      }
     };
+    function finishComposition() {
+      compositionFrame = null;
+      if (compositionBase) {
+        const base = compositionBase;
+        compositionBase = null;
+        const final = editor.state;
+        if (latest.current.disabled && !final.doc.eq(base.doc)) {
+          let attempted = final.doc.textBetween(
+            0,
+            final.doc.content.size,
+            '\n\n',
+          );
+          try {
+            attempted = serializeRenderedChange(projection, final.doc);
+          } catch {
+            /* Retain the complete visible attempt when source mapping refuses. */
+          }
+          retainAttempt(attempted);
+          setError(
+            'Editing became unavailable during composition. Your text was retained for recovery.',
+          );
+          editor.updateState(base);
+        } else if (!final.doc.eq(base.doc)) {
+          // The canonical apply still compares the original source revision;
+          // a concurrent external update refuses this patch and retains it.
+          editor.updateState(base);
+          const transaction = base.tr.replaceWith(
+            0,
+            base.doc.content.size,
+            final.doc.content,
+          );
+          transaction.setSelection(
+            Selection.fromJSON(transaction.doc, final.selection.toJSON()),
+          );
+          editor.dispatch(
+            transaction.setMeta('renderedCompositionCommit', true),
+          );
+        }
+        setDocumentComposing(false);
+        // Refresh EditorView's cached editable flag even if the composition
+        // made no document change and props did not change again.
+        editor.setProps({});
+      }
+      // A successful apply can precede its React source echo. Replay only
+      // an actual external update that arrived during this composition.
+      if (deferredSourceChange) sourceChanged();
+    }
     const afterComposition = () => {
       if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
-      compositionFrame = requestAnimationFrame(() => {
-        compositionFrame = null;
-        if (mathCompositionBase) {
-          const base = mathCompositionBase;
-          mathCompositionBase = null;
-          const final = editor.state;
-          if (latest.current.disabled && !final.doc.eq(base.doc)) {
-            let attempted = final.doc.textBetween(
-              0,
-              final.doc.content.size,
-              '\n\n',
-            );
-            try {
-              attempted = serializeRenderedChange(projection, final.doc);
-            } catch {
-              /* Retain the complete visible attempt when source mapping refuses. */
-            }
-            retainedDraft.current = attempted;
-            setUnappliedText(attempted);
-            setError(
-              'Editing became unavailable during composition. Your text was retained for recovery.',
-            );
-            editor.updateState(base);
-          } else if (!final.doc.eq(base.doc)) {
-            // The canonical apply still compares the original source revision;
-            // a concurrent external update refuses this patch and retains it.
-            editor.updateState(base);
-            const transaction = base.tr.replaceWith(
-              0,
-              base.doc.content.size,
-              final.doc.content,
-            );
-            transaction.setSelection(
-              Selection.fromJSON(transaction.doc, final.selection.toJSON()),
-            );
-            editor.dispatch(transaction);
-          }
-          setMathComposing(false);
-          // Refresh EditorView's cached editable flag even if the composition
-          // made no document change and props did not change again.
-          editor.setProps({});
-        }
-        sourceChanged();
-        if (!editor.composing) composingSource = false;
-      });
+      compositionFrame = requestAnimationFrame(finishComposition);
     };
     editor.dom.addEventListener('pn-source-change', sourceChanged);
     editor.dom.addEventListener('compositionend', afterComposition);
@@ -1654,7 +1741,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   } | null>(null);
   useLayoutEffect(() => {
     view.current?.dom.dispatchEvent(new Event('pn-source-change'));
-  }, [props.source, props.sourceIsCurrent, mathComposing]);
+  }, [props.source, props.sourceIsCurrent]);
   useEffect(() => {
     // Preserve the editor-owned atomic-IME editable predicate.
     view.current?.setProps({});
@@ -1663,6 +1750,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     for (const runtime of runtimeRoots.current)
       runtime.root.render(
         <RenderedRuntime
+          key={props.runtime.rebuildVersion ?? 0}
           context={props.runtime}
           raw={runtime.raw}
           onError={runtime.report}
@@ -1693,11 +1781,29 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         </form>
       )}
       {recoveryOpen && unappliedText !== null && (
-        <Modal title="Retained edit" onClose={() => setRecoveryOpen(false)}>
+        <Modal
+          title="Retained edit"
+          onClose={() => {
+            if (!recoveryAction.current) setRecoveryOpen(false);
+          }}
+        >
           <p>
-            This text was not saved. Download or copy it before discarding it;
-            your accepted source is unchanged.
+            This edit was not applied to your note. Your accepted source is
+            unchanged; download or copy the retained text whenever you need an
+            independent copy.
           </p>
+          {recoveryCopy === 'saving' && (
+            <p role="status">Saving recovery copy…</p>
+          )}
+          {recoveryCopy === 'saved' && (
+            <p role="status">Recovery copy saved.</p>
+          )}
+          {recoveryCopy === 'failed' && (
+            <p role="alert">
+              Recovery copy could not be saved. Download or copy this text
+              before leaving.
+            </p>
+          )}
           <textarea
             aria-label="Unapplied text"
             readOnly
@@ -1722,17 +1828,28 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           >
             Download retained source
           </button>
-          <button type="button" onClick={() => setRecoveryOpen(false)}>
-            Keep draft
-          </button>
           <button
             type="button"
-            onClick={() => {
-              setUnappliedText(null);
-              retainedDraft.current = null;
-              setError('');
-              setRecoveryOpen(false);
-            }}
+            disabled={recoveryBusy}
+            onClick={() => setRecoveryOpen(false)}
+          >
+            Keep draft
+          </button>
+          {props.onKeepAttempt && recoveryCopy !== 'saving' && (
+            <button
+              type="button"
+              disabled={recoveryBusy}
+              onClick={() => void releaseRecovery(false)}
+            >
+              {recoveryCopy === 'saved'
+                ? 'Keep recovery copy and continue'
+                : 'Retry recovery copy and continue'}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={recoveryBusy}
+            onClick={() => void releaseRecovery(true)}
           >
             Discard retained draft
           </button>

@@ -1,4 +1,8 @@
 name: CI
+run-name: >-
+  CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
+  group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
+  (inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' || inputs.browser_qa && 'browser-qa') || 'build' }}
 
 on:
   push:
@@ -41,7 +45,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.deployment_url && 'deployment' || 'build' }}
+  # Keep the group shown in run-name aligned with the scheduler's group.
+  group: >-
+    ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
+    (inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' || inputs.browser_qa && 'browser-qa') || 'build' }}
   cancel-in-progress: true
 
 jobs:
@@ -85,15 +92,15 @@ jobs:
           server=$!
           trap 'kill "$server" || true' EXIT
           curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4188/ -o /dev/null
-          node scripts/demo-editor.mjs
-          python3 scripts/package-review-demo.py
-          python3 scripts/verify-review-demo.py --browser
-          python3 -m zipfile -e .cache/review-demo.zip .cache/review-demo-unpacked
+          node scripts/demo-web-editor.mjs
+          python3 scripts/package-review-demo.py --profile web-editor
+          python3 scripts/verify-review-demo.py --profile web-editor --browser
+          python3 -m zipfile -e .cache/web-review-demo.zip .cache/web-review-demo-unpacked
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
         with:
           name: playable-editor-demo
-          path: .cache/review-demo-unpacked/**
+          path: .cache/web-review-demo-unpacked/**
           if-no-files-found: error
           retention-days: 7
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

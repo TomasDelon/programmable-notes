@@ -8,10 +8,16 @@ import subprocess
 import zipfile
 
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--profile', choices=('legacy', 'web-editor'), default='legacy')
 parser.add_argument('--dist', type=Path, default=Path('dist'))
-parser.add_argument('--capture', type=Path, default=Path('.cache/editor-demo'))
-parser.add_argument('--output', type=Path, default=Path('.cache/review-demo.zip'))
+parser.add_argument('--capture', type=Path)
+parser.add_argument('--output', type=Path)
 args = parser.parse_args()
+web_editor = args.profile == 'web-editor'
+if args.capture is None:
+    args.capture = Path('.cache/web-editor-demo' if web_editor else '.cache/editor-demo')
+if args.output is None:
+    args.output = Path('.cache/web-review-demo.zip' if web_editor else '.cache/review-demo.zip')
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
@@ -36,11 +42,14 @@ def read_inside(root, name):
 
 receipt_bytes = read_inside(args.capture, 'capture.json')
 receipt = json.loads(receipt_bytes)
-if receipt.get('verified') is not True or receipt.get('schema') != 1:
+if (receipt.get('verified') is not True or
+        receipt.get('schema') != (2 if web_editor else 1) or
+        (web_editor and receipt.get('profile') != args.profile)):
     raise ValueError('Recording did not complete successfully')
 if sha(read_inside(args.dist, 'index.html')) != receipt['buildIndexSha256']:
     raise ValueError('Build changed since the verified capture')
-if sha(Path('scripts/demo-editor.mjs').read_bytes()) != receipt['captureScriptSha256']:
+capture_script = 'scripts/demo-web-editor.mjs' if web_editor else 'scripts/demo-editor.mjs'
+if sha(Path(capture_script).read_bytes()) != receipt['captureScriptSha256']:
     raise ValueError('Capture script changed since recording')
 
 notice_path = args.dist / 'THIRD_PARTY_NOTICES.txt'
@@ -64,6 +73,11 @@ allowed = {'01-preview.png', '02-inline-edit.png', '03-updated.png', '04-new-not
 for device in ('desktop', 'tablet', 'mobile'):
     allowed.add(f'before/{device}.png')
     allowed.update(f'{device}-{mode}.png' for mode in ('source', 'split', 'visual'))
+if web_editor:
+    allowed = {'01-math-source.png', '02-math-corrected.png', 'lesson.mdx',
+               'walkthrough.html', 'walkthrough.webm'}
+    for device in ('desktop', 'tablet', 'mobile'):
+        allowed.update(f'{device}-{mode}.png' for mode in ('source', 'preview'))
 if set(receipt['files']) != allowed:
     raise ValueError('Capture allowlist mismatch')
 for name, digest in receipt['files'].items():
@@ -82,6 +96,13 @@ for path in sorted(args.dist.rglob('*')):
         build_files[name] = sha(data)
 if build_files != receipt['buildFiles']:
     raise ValueError('Build files changed since verified capture')
+if web_editor:
+    served = receipt['servedFiles']
+    if (not isinstance(served, dict) or
+            served.get('index.html') != build_files['index.html'] or
+            any(name not in build_files or build_files[name] != digest
+                for name, digest in served.items())):
+        raise ValueError('Served build checksums differ from the capture build')
 
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 entries['README.txt'] = b'''Programmable Notes review demo (not a public release).
@@ -97,6 +118,20 @@ Unapplied visual text stays in memory until applied.
 This is a local browser demo. Native filesystem permissions, WebKitGTK, cgroups,
 and Linux recovery require separate native tests. Browser CPU/memory quotas are
 not claimed. No production security readiness or public release is implied.
+'''
+if web_editor:
+    entries['README.txt'] = b'''Programmable Notes web editor review demo
+
+Open walkthrough/walkthrough.html for the recording, screenshots and exact MDX export.
+To run the web editor, open a terminal in browser-build and run:
+  python3 -m http.server 8000 --bind 127.0.0.1
+Then open http://127.0.0.1:8000 in Chromium.
+Use Ctrl/Cmd+K to open the command palette and switch between Preview and Source.
+Save workspace persists edits in the browser. Export current source downloads the MDX.
+
+This artifact is limited to local browser workflow review. Native runtime,
+browser CPU and memory quotas, production security certification and public
+release require separate evidence.
 '''
 entries['MANIFEST.json'] = (json.dumps({
     'sourceCommitAtAssembly': commit,

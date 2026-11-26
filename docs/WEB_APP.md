@@ -121,9 +121,16 @@ do not consume following paragraphs or React components.
 Edits still validate exact source revisions and safe spans before application.
 A genuinely refused source write retains the attempted source for explicit
 recovery instead of overwriting accepted data. This recovery is separate from
-ordinary mathematical syntax errors. Unapplied recovery drafts are memory-only
-and are not included in saved notes or backups. See ADR 017 and its dated
-verification record for the migration and executed browser evidence.
+ordinary mathematical syntax errors. The web workspace saves a separate bounded,
+checksummed recovery copy when possible. **Recovery copy saved** acknowledges that
+copy; **Keep recovery copy and continue** verifies it before releasing the live
+attempt. Storage failure leaves the live text available for copying/downloading.
+Settings → Recovery → **Retained edits** can download the exact retained text,
+restore it as a new Source-mode note, or explicitly discard it. Original notes
+are not overwritten and recovery never restores filesystem grants. These
+unapplied attempts are separate from saved notes and workspace backups. See
+[the current acceptance receipt](DAILY_USE_STATUS.md) for executed scope and
+remaining validation.
 
 The React playground provides an interactive counter. Editing ordinary Markdown
 in Preview preserves unaffected isolated React islands. **Run full document**
@@ -417,6 +424,23 @@ engine regressions. Unit storage simulations do not replace actual browser
 reload, offline, multitab, and deployment checks. Report results with their
 exact source revision and runner. Native GUI and process-security acceptance
 require the separate native environment and evidence.
+
+### Download a verified browser walkthrough
+
+The optional CI dispatch with `browser_qa=true` and `review_artifacts=true`
+captures the current web workspace after its browser gate. Its
+**playable-editor-demo** artifact contains `walkthrough/walkthrough.html`, a
+recording, desktop/tablet/mobile screenshots, the exact exported example and a
+portable `browser-build`. Download the artifact from the run linked in the draft
+PR, unzip it, and follow its README. Serve the portable build over loopback HTTP;
+opening its application files directly with `file://` is not supported.
+
+Capture and packaging verify the production build and media checksums, fixed
+file allowlists and dependency notices. The verifier also checks eleven rejected
+artifact mutations and actual offline editing, React interaction, exact export
+and reload from a clean extraction. Artifacts expire after seven days. They are
+review evidence, not a release or native security certification. The original
+`legacy` capture profile remains available for historical engine evidence.
 
 ### Writing in Preview
 

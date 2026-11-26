@@ -182,6 +182,99 @@ describe('mathematics shares the document text editor', () => {
     expect(mounted.editor.textContent).toContain(external);
   });
 
+  it('keeps the accepted final prose visible while awaiting the host source echo', async () => {
+    const { editor, props } = mount('Original prose.');
+    const paragraph = editor.querySelector('p')!;
+    editor.focus();
+    fireEvent.compositionStart(editor);
+    await replaceNative(paragraph, 'Original中 prose.', 9);
+    expect(props.apply).not.toHaveBeenCalled();
+    await replaceNative(paragraph, 'Original中文 prose.', 10);
+    fireEvent.compositionEnd(editor, { data: '中文' });
+    await waitFor(() =>
+      expect(props.onPendingChange).toHaveBeenLastCalledWith(false),
+    );
+    expect(props.apply).toHaveBeenCalledExactlyOnceWith(
+      'Original prose.',
+      'Original中文 prose.',
+      true,
+      'start',
+    );
+    expect(editor.querySelector('p')).toHaveTextContent('Original中文 prose.');
+  });
+
+  it('retains the complete final prose composition when a conflict locks its original revision', async () => {
+    const original =
+      '\uFEFFexport const preserved = 1\r\n\r\nOrdinary prose.\r\n\r\n<Counter />\n';
+    const mounted = mount(original);
+    const retain = vi.fn(async () => {});
+    const paragraph = mounted.editor.querySelector('p')!;
+    act(() => {
+      mounted.editor.focus();
+      document.getSelection()!.collapse(paragraph.firstChild!, 8);
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+    fireEvent.compositionStart(mounted.editor);
+    await replaceNative(paragraph, 'Ordinary中 prose.', 9);
+    mounted.rerender(
+      <NotificationProvider>
+        <RenderedEditor {...mounted.props} disabled onRetainAttempt={retain} />
+      </NotificationProvider>,
+    );
+    const historyInputs = ['historyUndo', 'historyRedo'].map((inputType) => {
+      const history = new InputEvent('beforeinput', {
+        bubbles: true,
+        cancelable: true,
+        inputType,
+      });
+      fireEvent(mounted.editor, history);
+      return history;
+    });
+    await replaceNative(paragraph, 'Ordinary中文 prose.', 10);
+    fireEvent.compositionEnd(mounted.editor, { data: '中文' });
+    await waitFor(() =>
+      expect(retain).toHaveBeenCalledWith(
+        original,
+        original.replace('Ordinary', 'Ordinary中文'),
+      ),
+    );
+    expect(mounted.props.apply).not.toHaveBeenCalled();
+    expect(mounted.props.undo).not.toHaveBeenCalled();
+    expect(mounted.props.redo).not.toHaveBeenCalled();
+    expect(historyInputs.every((event) => event.defaultPrevented)).toBe(true);
+    expect(mounted.editor.querySelector('p')).toHaveTextContent(
+      'Ordinary prose.',
+    );
+    expect(mounted.props.onPendingChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('retains only the ended composition when a lock arrives before the next composition starts', async () => {
+    const original =
+      '\uFEFFexport const keep = 1\r\n\r\nRecord.\r\n\r\n<Counter />\n';
+    const mounted = mount(original);
+    const retain = vi.fn(async () => {});
+    mounted.editor.focus();
+    fireEvent.compositionStart(mounted.editor);
+    await replaceNative(mounted.editor.querySelector('p')!, 'Record中.');
+    fireEvent.compositionEnd(mounted.editor, { data: '中' });
+    mounted.rerender(
+      <NotificationProvider>
+        <RenderedEditor {...mounted.props} disabled onRetainAttempt={retain} />
+      </NotificationProvider>,
+    );
+    fireEvent.compositionStart(mounted.editor);
+    await replaceNative(mounted.editor.querySelector('p')!, 'Record中文.');
+    fireEvent.compositionEnd(mounted.editor, { data: '文' });
+    await waitFor(() =>
+      expect(retain).toHaveBeenCalledExactlyOnceWith(
+        original,
+        original.replace('Record.', 'Record中.'),
+      ),
+    );
+    expect(mounted.props.apply).not.toHaveBeenCalled();
+    expect(mounted.editor).toHaveAttribute('contenteditable', 'false');
+  });
+
   it('retains final IME Unicode when editing is disabled before the final native read', async () => {
     const original = '\uFEFFBefore $x$ after.\r\n';
     const mounted = mount(original);
@@ -674,5 +767,113 @@ describe('mathematics shares the document text editor', () => {
     );
     expect(editor.querySelector('[data-math-source]')).toBeNull();
     expect(document.querySelector('[role="alert"]')).toBeNull();
+  });
+  it('persists a refused editor attempt and keeps it until durable discard succeeds', async () => {
+    const original = 'Before $x$ after.';
+    const mounted = mount(original);
+    const retain = vi.fn(async () => {});
+    const discard = vi.fn(async () => {
+      throw new Error('Deletion unavailable');
+    });
+    Object.assign(mounted.props, {
+      onRetainAttempt: retain,
+      onDiscardAttempt: discard,
+    });
+    vi.mocked(mounted.props.apply).mockReturnValue(false);
+    mounted.rerender(
+      <NotificationProvider>
+        <RenderedEditor {...mounted.props} />
+      </NotificationProvider>,
+    );
+    await replaceNative(reveal(mounted.editor), '$y$');
+    await waitFor(() =>
+      expect(retain).toHaveBeenCalledWith(original, 'Before $y$ after.'),
+    );
+    fireEvent.click(mounted.getByRole('button', { name: 'Review draft' }));
+    await waitFor(() =>
+      expect(mounted.getByText('Recovery copy saved.')).toBeTruthy(),
+    );
+    fireEvent.click(
+      mounted.getByRole('button', { name: 'Discard retained draft' }),
+    );
+    await waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(
+      mounted.getByRole('textbox', { name: 'Unapplied text' }),
+    ).toHaveValue('Before $y$ after.');
+    expect(mounted.editor.textContent).toContain('Before');
+  });
+
+  it('retains an exact downloadable attempt if its recovery copy cannot be saved', async () => {
+    const original = 'Before $x$ after.';
+    const mounted = mount(original);
+    const retain = vi.fn(async () => {
+      throw new Error('Storage full');
+    });
+    Object.assign(mounted.props, { onRetainAttempt: retain });
+    vi.mocked(mounted.props.apply).mockReturnValue(false);
+    mounted.rerender(
+      <NotificationProvider>
+        <RenderedEditor {...mounted.props} />
+      </NotificationProvider>,
+    );
+    await replaceNative(reveal(mounted.editor), '$y$');
+    await waitFor(() => expect(retain).toHaveBeenCalledTimes(1));
+    fireEvent.click(mounted.getByRole('button', { name: 'Review draft' }));
+    await waitFor(() =>
+      expect(
+        mounted.getByText(
+          'Recovery copy could not be saved. Download or copy this text before leaving.',
+        ),
+      ).toBeTruthy(),
+    );
+    expect(
+      mounted.getByRole('textbox', { name: 'Unapplied text' }),
+    ).toHaveValue('Before $y$ after.');
+    expect(
+      mounted.getByRole('button', { name: 'Download retained source' }),
+    ).toBeTruthy();
+  });
+  it('serializes live recovery actions and retains text when the stored-copy handoff fails', async () => {
+    const mounted = mount('Before $x$ after.');
+    let rejectKeep!: (reason: Error) => void;
+    const keep = vi.fn(
+      () =>
+        new Promise<void>((_, reject) => {
+          rejectKeep = reject;
+        }),
+    );
+    const discard = vi.fn(async () => {});
+    Object.assign(mounted.props, {
+      onRetainAttempt: vi.fn(async () => {}),
+      onKeepAttempt: keep,
+      onDiscardAttempt: discard,
+    });
+    vi.mocked(mounted.props.apply).mockReturnValue(false);
+    mounted.rerender(
+      <NotificationProvider>
+        <RenderedEditor {...mounted.props} />
+      </NotificationProvider>,
+    );
+    await replaceNative(reveal(mounted.editor), '$y$');
+    fireEvent.click(mounted.getByRole('button', { name: 'Review draft' }));
+    const keepButton = await mounted.findByRole('button', {
+      name: 'Keep recovery copy and continue',
+    });
+    fireEvent.click(keepButton);
+    await waitFor(() => expect(keep).toHaveBeenCalledTimes(1));
+    expect(
+      mounted.getByRole('button', { name: 'Discard retained draft' }),
+    ).toBeDisabled();
+    fireEvent.click(
+      mounted.getByRole('button', { name: 'Discard retained draft' }),
+    );
+    expect(discard).not.toHaveBeenCalled();
+    await act(async () => rejectKeep(new Error('Stored copy is unavailable')));
+    expect(
+      mounted.getByRole('textbox', { name: 'Unapplied text' }),
+    ).toHaveValue('Before $y$ after.');
+    expect(
+      mounted.getByRole('button', { name: 'Discard retained draft' }),
+    ).not.toBeDisabled();
   });
 });

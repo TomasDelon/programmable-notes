@@ -1,8 +1,12 @@
 # Programmable Notes implementation status
 
+## Current acceptance and stabilization
+
+[The daily-use receipt](DAILY_USE_STATUS.md) distinguishes the verified starting deployment, current development corrections and remaining native gates. The `d2838be` application passed principal-origin three-browser acceptance; `3c36ae2` protocol/tooling CI passed. Older pending statements below describe their original checkpoints, not a request to repeat completed runs. The corrected stabilization candidate passed 478 unit, 44 tooling, 133 Chromium and 8 local Pages-policy cases, plus the mandatory static/build checks. Exact final-head hosted/deployment receipts are maintained in draft PR #9; local results do not certify the deployment. Native UI parity, startup/Stop attribution and browser evidence are separate claims.
+
 ## Engineering feedback workflow
 
-Repository-local development skills now define a short outcome/invariants/witness/done contract, affected-engine feedback loops, explicit worker/watch ownership and milestone evidence review. [The operating protocols](AGENT_WORKFLOW.md) and [primary-source research/evaluation](research/2026-11-25-agent-feedback.md) record their scope and limits. The dependency-free evidence checker validates record consistency only; actual execution and security still require observed results. No application behavior, native authority or sandbox policy changes are part of this workflow work. CI concurrency/build-reuse improvements remain separate pending tasks.
+Repository-local development skills now define a short outcome/invariants/witness/done contract, affected-engine feedback loops, explicit worker/watch ownership and milestone evidence review. [The operating protocols](AGENT_WORKFLOW.md) and [primary-source research/evaluation](research/2026-11-25-agent-feedback.md) record their scope and limits. The dependency-free evidence checker validates record consistency only; actual execution and security still require observed results. No application behavior, native authority or sandbox policy changes are part of this workflow work. Same-ref CI mode separation is implemented; hosted overlap/supersession evidence is tracked separately. Shared build reuse remains deferred.
 
 ## Unified document text and mathematical editing
 

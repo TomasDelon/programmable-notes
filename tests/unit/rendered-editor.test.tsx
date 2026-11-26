@@ -570,9 +570,8 @@ it('does not force a stale AllSelection after focus cancels its editing intent',
   expect(props.apply).not.toHaveBeenCalled();
 });
 
-it('undoes rendered composition replacement as one exact canonical source event', async () => {
-  const original =
-    '\uFEFFexport const setup = 1\r\n\r\n# Original heading\r\n\r\nOriginal paragraph.\r\n';
+function mountCompositionEditor(original: string) {
+  const pending = vi.fn();
   function ControlledEditor() {
     const [source, setSource] = useState(original);
     return (
@@ -580,6 +579,7 @@ it('undoes rendered composition replacement as one exact canonical source event'
         source={source}
         documentKey="composition.mdx"
         onChange={setSource}
+        onPendingChange={pending}
         rendered={{
           active: true,
           files: { 'composition.mdx': source },
@@ -592,13 +592,21 @@ it('undoes rendered composition replacement as one exact canonical source event'
     );
   }
   const mounted = render(<ControlledEditor />);
-  const editor = mounted.container.querySelector('.ProseMirror')!;
+  const editor = mounted.container.querySelector<HTMLElement>('.ProseMirror')!;
   const canonical = MathView.findFromDOM(
     mounted.container.querySelector('.cm-editor')!,
   )!;
+  return { editor, canonical, pending };
+}
+
+it('undoes rendered composition replacement as one exact canonical source event', async () => {
+  const original =
+    '\uFEFFexport const setup = 1\r\n\r\n# Original heading\r\n\r\nOriginal paragraph.\r\n';
+  const { editor, canonical, pending } = mountCompositionEditor(original);
   act(() => fireEvent.keyDown(editor, { key: 'a', ctrlKey: true }));
   act(() => fireEvent.compositionStart(editor));
-  expect(rawSource(canonical.state)).not.toContain('Original heading');
+  expect(editor.textContent).not.toContain('Original heading');
+  expect(rawSource(canonical.state)).toBe(original);
   await act(async () => {
     editor.querySelector('p')!.textContent = 'Replacement body.';
     editor.dispatchEvent(
@@ -615,6 +623,7 @@ it('undoes rendered composition replacement as one exact canonical source event'
   await waitFor(() =>
     expect(rawSource(canonical.state)).toContain('Replacement body.'),
   );
+  await waitFor(() => expect(pending).toHaveBeenLastCalledWith(false));
   const changed = rawSource(canonical.state);
   act(() => {
     undoSource(canonical);
@@ -643,6 +652,7 @@ it('undoes rendered composition replacement as one exact canonical source event'
   await waitFor(() =>
     expect(rawSource(canonical.state)).toContain('Second composition.'),
   );
+  await waitFor(() => expect(pending).toHaveBeenLastCalledWith(false));
   const second = rawSource(canonical.state);
   act(() => {
     undoSource(canonical);
@@ -661,6 +671,50 @@ it('undoes rendered composition replacement as one exact canonical source event'
   });
   expect(rawSource(canonical.state)).toBe(second);
 });
+
+it.each([false, true])(
+  'keeps consecutive compositions in separate undo events when the first ends before its last input: %s',
+  async (endFirst) => {
+    const original =
+      '\uFEFFexport const setup = 1\r\n\r\nRecord.\r\n\r\n<Counter />\n';
+    const { editor, canonical, pending } = mountCompositionEditor(original);
+    const first = original.replace('Record.', 'Record中.');
+    const second = original.replace('Record.', 'Record中文.');
+    editor.focus();
+    const input = (value: string) => {
+      editor.querySelector('p')!.textContent = value;
+      editor.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          inputType: 'insertCompositionText',
+        }),
+      );
+    };
+    await act(async () => {
+      fireEvent.compositionStart(editor);
+      if (endFirst) fireEvent.compositionEnd(editor, { data: '中' });
+      input('Record中.');
+      await Promise.resolve();
+      if (!endFirst) fireEvent.compositionEnd(editor, { data: '中' });
+      // Microtasks can publish the native read before the next animation frame.
+      fireEvent.compositionStart(editor);
+      expect(rawSource(canonical.state)).toBe(first);
+      input('Record中文.');
+      await Promise.resolve();
+      fireEvent.compositionEnd(editor, { data: '文' });
+    });
+    await waitFor(() => expect(rawSource(canonical.state)).toBe(second));
+    await waitFor(() => expect(pending).toHaveBeenLastCalledWith(false));
+    act(() => {
+      undoSource(canonical);
+    });
+    expect(rawSource(canonical.state)).toBe(first);
+    act(() => {
+      undoSource(canonical);
+    });
+    expect(rawSource(canonical.state)).toBe(original);
+  },
+);
 
 it('does not promote dollars from composing DOM through the ordinary text-input shortcut', () => {
   const props = propsFor('Before text.');
@@ -775,4 +829,71 @@ it('leaves Home and End to the browser beside inline JSX node views', () => {
   } finally {
     coordinates.mockRestore();
   }
+});
+
+it('reports an exhausted math parser budget for the installed source and clears it when that source recovers', () => {
+  const refused = '\uFEFF' + '$$draft\r\n'.repeat(1000);
+  const recovered = 'An invalid $\\frac{a}{b$ stays editable.';
+  const diagnostic = vi.fn();
+  const props = propsFor(refused);
+  const mounted = render(
+    <RenderedEditor {...props} onAnalysisDiagnostic={diagnostic} />,
+  );
+  expect(diagnostic).toHaveBeenCalledExactlyOnceWith(
+    'note.mdx',
+    refused,
+    expect.stringContaining(
+      'Mathematical source analysis reached its work limit. Source remains available.',
+    ),
+  );
+  expect(mounted.container.querySelector('pre code')!.textContent).toBe(
+    refused,
+  );
+  mounted.rerender(
+    <RenderedEditor
+      {...props}
+      source={recovered}
+      onAnalysisDiagnostic={diagnostic}
+    />,
+  );
+  expect(diagnostic).toHaveBeenLastCalledWith('note.mdx', recovered, null);
+  expect(
+    mounted.container.querySelector('.rendered-math-invalid'),
+  ).not.toBeNull();
+  diagnostic.mockClear();
+  mounted.rerender(
+    <RenderedEditor
+      {...props}
+      sourceIsCurrent={(source) => source === recovered}
+      onAnalysisDiagnostic={diagnostic}
+    />,
+  );
+  expect(diagnostic).not.toHaveBeenCalled();
+});
+
+it('reports a malformed MDX tag as a source diagnostic until the corrected note parses', () => {
+  const broken = '# Broken\n\n<Unclosed';
+  const fixed = '# Recovered\n\nMy source survived.';
+  const diagnostic = vi.fn();
+  const props = propsFor(broken);
+  const mounted = render(
+    <RenderedEditor {...props} onAnalysisDiagnostic={diagnostic} />,
+  );
+  expect(diagnostic).toHaveBeenCalledExactlyOnceWith(
+    'note.mdx',
+    broken,
+    expect.stringContaining('Unexpected end of file'),
+  );
+  expect(mounted.container.querySelector('pre code')).toHaveTextContent(
+    '<Unclosed',
+  );
+  mounted.rerender(
+    <RenderedEditor
+      {...props}
+      source={fixed}
+      onAnalysisDiagnostic={diagnostic}
+    />,
+  );
+  expect(diagnostic).toHaveBeenLastCalledWith('note.mdx', fixed, null);
+  expect(screen.getByRole('heading', { name: 'Recovered' })).toBeVisible();
 });

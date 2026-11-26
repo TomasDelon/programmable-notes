@@ -5,7 +5,7 @@ import {
   MAX_FILES,
   MAX_TOTAL_BYTES,
 } from '../documents/workspace';
-import { isSupportedSource } from '../sourceTypes';
+import { isMdxSource, isSupportedSource } from '../sourceTypes';
 import {
   attachmentMarkdown,
   downloadAttachment,
@@ -37,6 +37,10 @@ import {
   type WebState,
 } from './workspace';
 import {
+  deleteRetainedAttempt,
+  readRetainedAttempts,
+  type RetainedAttempt,
+  writeRetainedAttempt,
   listRecoveryVersions,
   readRecoveryVersion,
   readRecoverySnapshots,
@@ -129,6 +133,16 @@ export function useWebWorkspace() {
   const [error, setError] = useState('');
   const [backupNotice, setBackupNotice] = useState('');
   const [conflict, setConflict] = useState(false);
+  const [attempts, setAttempts] = useState<RetainedAttempt[]>([]);
+  const [attemptError, setAttemptError] = useState('');
+  const attemptRead = useRef(0);
+  const liveAttempt = useRef<{
+    key: string;
+    baseRevision: number;
+    text: string;
+    base: string;
+    writing: Promise<RetainedAttempt>;
+  } | null>(null);
   const [persistentStorage, setPersistentStorage] = useState<boolean | null>(
     null,
   );
@@ -152,6 +166,94 @@ export function useWebWorkspace() {
   const setPendingEditorDraft = useCallback((pending: boolean) => {
     pendingEditorDraft.current = pending;
   }, []);
+
+  const reloadAttempts = useCallback(async () => {
+    const token = ++attemptRead.current;
+    try {
+      const inventory = await readRetainedAttempts();
+      if (!mounted.current || token !== attemptRead.current) return;
+      setAttempts(inventory.attempts);
+      setAttemptError(inventory.error);
+    } catch (reason) {
+      if (mounted.current && token === attemptRead.current)
+        setAttemptError(errorMessage(reason));
+    }
+  }, []);
+
+  async function retainAttempt(
+    key: string,
+    base: string,
+    text: string,
+  ): Promise<void> {
+    if (!current.current || !Object.hasOwn(current.current.documents, key))
+      throw new Error(
+        'This note is unavailable. Download the live draft to keep it.',
+      );
+    const baseRevision = revision.current;
+    const writing = writeRetainedAttempt(key, baseRevision, base, text);
+    const live = { key, baseRevision, base, text, writing };
+    liveAttempt.current = live;
+    try {
+      await writing;
+    } catch (reason) {
+      const error = new Error(
+        `Could not save the retained edit. Download the live draft before closing this tab. ${reason instanceof Error ? reason.message : ''}`,
+      );
+      if (mounted.current) setAttemptError(error.message);
+      throw error;
+    }
+    await reloadAttempts();
+  }
+
+  async function discardStoredAttempt(attempt: RetainedAttempt): Promise<void> {
+    try {
+      await deleteRetainedAttempt(attempt);
+      await reloadAttempts();
+    } catch (reason) {
+      await reloadAttempts();
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      throw reason;
+    }
+  }
+
+  async function keepLiveAttempt(): Promise<void> {
+    const live = liveAttempt.current;
+    if (!live)
+      throw new Error(
+        'The retained edit is available only in this editor. Download its text before leaving.',
+      );
+    const previous = await live.writing.catch(() => undefined);
+    try {
+      // The transaction checks only this live entry or republishes its original
+      // text and provenance after a failed first write or a competing discard.
+      await writeRetainedAttempt(
+        live.key,
+        live.baseRevision,
+        live.base,
+        live.text,
+        previous,
+      );
+      if (liveAttempt.current === live) liveAttempt.current = null;
+      void reloadAttempts();
+    } catch (reason) {
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      throw reason;
+    }
+  }
+
+  async function discardAttempt(id: string): Promise<void> {
+    const attempt = attempts.find((item) => item.id === id);
+    if (attempt) await discardStoredAttempt(attempt);
+  }
+
+  async function discardLiveAttempt(): Promise<void> {
+    const live = liveAttempt.current;
+    if (!live) return;
+    // When the original insertion failed, only the editor's in-memory copy exists.
+    const attempt = await live.writing.catch(() => null);
+    if (attempt) await discardStoredAttempt(attempt);
+    if (liveAttempt.current === live) liveAttempt.current = null;
+  }
 
   const report = useCallback((reason: unknown) => {
     if (!mounted.current) return;
@@ -272,13 +374,16 @@ export function useWebWorkspace() {
     mounted.current = true;
     let active = true;
     queueMicrotask(() => {
-      if (active) void load();
+      if (active) {
+        void load();
+        void reloadAttempts();
+      }
     });
     return () => {
       active = false;
       mounted.current = false;
     };
-  }, [load]);
+  }, [load, reloadAttempts]);
 
   useEffect(() => {
     async function refreshCleanTab() {
@@ -366,8 +471,16 @@ export function useWebWorkspace() {
   }, [persist]);
 
   const mutate = useCallback(
-    (update: (previous: WebState) => WebState): void => {
-      if (!current.current || operationBusy.current) return;
+    (
+      update: (previous: WebState) => WebState,
+      kind: 'content' | 'view' = 'content',
+    ): void => {
+      if (
+        !current.current ||
+        operationBusy.current ||
+        (conflicting.current && kind === 'content')
+      )
+        return;
       try {
         const next = update(current.current);
         if (next === current.current) return;
@@ -534,6 +647,68 @@ export function useWebWorkspace() {
     }
   }
 
+  async function restoreAttempt(id: string): Promise<boolean> {
+    const attempt = attempts.find((item) => item.id === id);
+    if (!attempt) return false;
+    try {
+      if (!isMdxSource(attempt.documentKey))
+        throw new Error(
+          'Download the retained source to preserve this file type. Recovered notes support Markdown and MDX.',
+        );
+      await persist();
+      if (
+        !current.current ||
+        operationBusy.current ||
+        pendingEditorDraft.current ||
+        conflicting.current ||
+        savedGeneration.current < generation.current
+      )
+        throw new Error(
+          'Finish the current draft and open the saved workspace before restoring a recovered copy.',
+        );
+      operationBusy.current = true;
+      try {
+        const title =
+          current.current.documents[attempt.documentKey]?.title ??
+          attempt.documentKey.split('/').pop();
+        const copy = createDocument(
+          current.current,
+          ('Recovered ' + title).slice(0, 200),
+          '',
+          Date.now(),
+          /\.md$/i.test(attempt.documentKey) ? 'md' : 'mdx',
+        );
+        const next = updateDocumentSource(copy.state, copy.key, attempt.text);
+        const stored = await writeWorkspace(
+          next,
+          revision.current,
+          true,
+          [],
+          attempt,
+        );
+        workspaceEpoch.current++;
+        current.current = next;
+        savedState.current = stored.state;
+        revision.current = stored.revision;
+        savedGeneration.current = ++generation.current;
+        if (mounted.current) {
+          setState(next);
+          setSaveStatus('saved');
+          setError('');
+        }
+      } finally {
+        operationBusy.current = false;
+      }
+      await reloadAttempts();
+      return true;
+    } catch (reason) {
+      if (reason instanceof WorkspaceConflictError) report(reason);
+      await reloadAttempts();
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      return false;
+    }
+  }
+
   async function restoreBackup(file: File): Promise<void> {
     try {
       if (file.size > MAX_BACKUP_BYTES)
@@ -659,12 +834,21 @@ export function useWebWorkspace() {
     backupNotice,
     conflict,
     setPendingEditorDraft,
+    attempts,
+    attemptError,
+    reloadAttempts,
+    retainAttempt,
+    restoreAttempt,
+    discardAttempt,
+    discardLiveAttempt,
+    keepLiveAttempt,
     persistentStorage,
     // Read-only freshness witness. It grants no mutation or storage authority.
     isCurrentSource: (key: string, source: string): boolean =>
       current.current?.workspace.files[key] === source,
     canUpdateSource: (key: string, source: string): boolean => {
-      if (!current.current || operationBusy.current) return false;
+      if (!current.current || conflicting.current || operationBusy.current)
+        return false;
       try {
         updateDocumentSource(current.current, key, source);
         return true;
@@ -679,10 +863,11 @@ export function useWebWorkspace() {
         return false;
       }
     },
-    updateSource: (key: string, source: string) =>
-      mutate((previous) => updateDocumentSource(previous, key, source)),
+    updateSource: (key: string, source: string) => {
+      mutate((previous) => updateDocumentSource(previous, key, source));
+    },
     select: (key: string) =>
-      mutate((previous) => selectDocument(previous, key)),
+      mutate((previous) => selectDocument(previous, key), 'view'),
     createNote: (title?: string, folder?: string): string | null => {
       let key: string | null = null;
       mutate((previous) => {
@@ -710,13 +895,18 @@ export function useWebWorkspace() {
     restore: (key: string) =>
       mutate((previous) => restoreDocument(previous, key)),
     removeRecent: (key: string) =>
-      mutate((previous) => ({
-        ...previous,
-        recentIds: previous.recentIds.filter((id) => id !== key),
-      })),
+      mutate(
+        (previous) => ({
+          ...previous,
+          recentIds: previous.recentIds.filter((id) => id !== key),
+        }),
+        'view',
+      ),
     setMode: (mode: WebState['mode']) =>
-      mutate((previous) =>
-        previous.mode === mode ? previous : { ...previous, mode },
+      mutate(
+        (previous) =>
+          previous.mode === mode ? previous : { ...previous, mode },
+        'view',
       ),
     setCorePlugin: (id: CorePluginId, enabled: boolean) =>
       mutate((previous) => {
@@ -729,18 +919,23 @@ export function useWebWorkspace() {
           ...previous,
           corePlugins: { ...previous.corePlugins, [id]: enabled },
         };
-      }),
+      }, 'view'),
     setShowComponentSource: (showComponentSource: boolean) =>
-      mutate((previous) => ({
-        ...previous,
-        previewPreferences: {
-          ...previous.previewPreferences,
-          showComponentSource,
-        },
-      })),
+      mutate(
+        (previous) => ({
+          ...previous,
+          previewPreferences: {
+            ...previous.previewPreferences,
+            showComponentSource,
+          },
+        }),
+        'view',
+      ),
     setTheme: (theme: WebState['theme']) =>
-      mutate((previous) =>
-        previous.theme === theme ? previous : { ...previous, theme },
+      mutate(
+        (previous) =>
+          previous.theme === theme ? previous : { ...previous, theme },
+        'view',
       ),
     importFiles,
     importAttachments,

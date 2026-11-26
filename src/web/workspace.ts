@@ -518,13 +518,14 @@ export function createDocument(
   title = 'Untitled',
   folder = '',
   now = Date.now(),
+  format: 'md' | 'mdx' = 'mdx',
 ): { state: WebState; key: string } {
   const normalized = normalizeFolder(folder);
   let sequence = state.workspace.sequence;
   let group: string;
   do group = `web-${++sequence}`;
   while (Object.values(state.workspace.groups).includes(group));
-  const key = `${group}/note.mdx`;
+  const key = `${group}/note.${format}`;
   const next: WebState = {
     ...state,
     workspace: {

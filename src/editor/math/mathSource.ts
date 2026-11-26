@@ -53,17 +53,33 @@ function parserSource(source: string): string {
   return value.replace(/^\uFEFF/, '\n');
 }
 
+export function analyzeLiveSource(
+  source: string,
+  path = 'note.mdx',
+): { tree: SyntaxNode | null; diagnostic: string | null } {
+  if (visualAnalysisLimited(source)) return { tree: null, diagnostic: null };
+  try {
+    const processor = /\.md$/i.test(path) ? markdownProcessor : mdxProcessor;
+    return {
+      tree: processor.parse(parserSource(source)) as SyntaxNode,
+      diagnostic: null,
+    };
+  } catch (reason) {
+    return {
+      tree: null,
+      diagnostic:
+        reason instanceof Error
+          ? 'Source analysis failed. ' + reason.message.slice(0, 2000)
+          : 'Source analysis failed.',
+    };
+  }
+}
+
 export function parseLiveSource(
   source: string,
   path = 'note.mdx',
 ): SyntaxNode | null {
-  if (visualAnalysisLimited(source)) return null;
-  try {
-    const processor = /\.md$/i.test(path) ? markdownProcessor : mdxProcessor;
-    return processor.parse(parserSource(source)) as SyntaxNode;
-  } catch {
-    return null;
-  }
+  return analyzeLiveSource(source, path).tree;
 }
 
 export function safeMathSpan(

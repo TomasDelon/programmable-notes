@@ -71,7 +71,12 @@ export function SourceEditor({
   histories,
   commandsRef,
   busy,
+  readOnly = false,
   onPendingChange,
+  onRetainAttempt,
+  onKeepAttempt,
+  onDiscardAttempt,
+  onAnalysisDiagnostic,
   onShowSource,
   acceptChange,
   wikilinks = EMPTY_WIKILINKS,
@@ -88,7 +93,16 @@ export function SourceEditor({
   histories?: React.RefObject<EditorHistory>;
   onChange: (value: string) => void;
   busy?: boolean;
+  readOnly?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onRetainAttempt?: (baseSource: string, text: string) => Promise<void>;
+  onKeepAttempt?: () => Promise<void>;
+  onDiscardAttempt?: () => Promise<void>;
+  onAnalysisDiagnostic?: (
+    path: string,
+    source: string,
+    message: string | null,
+  ) => void;
   onShowSource?: (offset: number, snapshot: string) => void;
   acceptChange?: (source: string) => boolean;
   wikilinks?: readonly LinkResolution[];
@@ -104,6 +118,7 @@ export function SourceEditor({
   const latestLinks = useRef(wikilinks);
   const navigate = useRef(onOpenNote);
   const isBusy = useRef(busy);
+  const locked = useRef(readOnly);
   const pending = useRef(onPendingChange);
   const draftRef = useRef<MathDraft | null>(null);
   const legacyPending = useRef(false);
@@ -160,6 +175,7 @@ export function SourceEditor({
     composition?: RenderedCompositionPhase,
   ): boolean {
     if (
+      locked.current ||
       rawSource(editor.state) !== expected ||
       (isBusy.current && !sourceInput)
     )
@@ -231,7 +247,10 @@ export function SourceEditor({
       // Pending file/save I/O does not lock raw source. The document model
       // retains edits made during that operation; only unapplied editor drafts
       // temporarily protect the source surface from concurrent editing.
-      editable.current.of(EditorState.readOnly.of(false)),
+      editable.current.of([
+        EditorState.readOnly.of(readOnly),
+        EditorView.editable.of(!readOnly),
+      ]),
       EditorState.transactionFilter.of((transaction) => {
         if (
           !transaction.docChanged &&
@@ -279,6 +298,7 @@ export function SourceEditor({
         cut: (event, editor) => {
           if (
             !event.clipboardData ||
+            locked.current ||
             draftRef.current ||
             editor.state.selection.ranges.every((selection) => selection.empty)
           )
@@ -301,6 +321,7 @@ export function SourceEditor({
           if (
             !event.clipboardData ||
             event.clipboardData.files.length ||
+            locked.current ||
             draftRef.current
           )
             return false;
@@ -327,6 +348,24 @@ export function SourceEditor({
       extensions.push(historyField.init(() => cached.history));
     const editor = new EditorView({
       parent: element.current!,
+      // History uses filter:false. Guard publication itself, including selection
+      // history shortcuts that can pop a source change in a read-only state.
+      dispatchTransactions(transactions, editor) {
+        if (
+          locked.current &&
+          transactions.some(
+            (tr) =>
+              !tr.annotation(external) &&
+              (tr.docChanged ||
+                tr.annotation(explicitRawSource) !== undefined ||
+                /^(select\.)?(undo|redo)$/.test(
+                  tr.annotation(Transaction.userEvent) ?? '',
+                )),
+          )
+        )
+          return;
+        editor.update(transactions);
+      },
       state: EditorState.create({
         doc: initial.display,
         extensions,
@@ -337,13 +376,13 @@ export function SourceEditor({
     if (commandsRef)
       commandsRef.current = {
         undo: () => {
-          if (!draftRef.current) undo(editor);
+          if (!locked.current && !draftRef.current) undo(editor);
         },
         redo: () => {
-          if (!draftRef.current) redo(editor);
+          if (!locked.current && !draftRef.current) redo(editor);
         },
         formatRendered: (action) => {
-          if (!draftRef.current && renderedActive.current)
+          if (!locked.current && !draftRef.current && renderedActive.current)
             renderedCommands.current?.format(action);
         },
         revealSource: (offset, expectedSource) => {
@@ -378,7 +417,7 @@ export function SourceEditor({
           }
         },
         insertText: (text) => {
-          if (draftRef.current) return false;
+          if (locked.current || draftRef.current) return false;
           if (renderedActive.current && renderedCommands.current)
             return renderedCommands.current.insertText(text);
           const raw = rawSource(editor.state),
@@ -445,6 +484,7 @@ export function SourceEditor({
                 if (
                   rawSource(editor.state) !== snapshot ||
                   isBusy.current ||
+                  locked.current ||
                   draftRef.current ||
                   legacyPending.current ||
                   renderedPending.current
@@ -461,6 +501,7 @@ export function SourceEditor({
                 if (
                   rawSource(editor.state) !== snapshot ||
                   isBusy.current ||
+                  locked.current ||
                   draftRef.current ||
                   legacyPending.current ||
                   renderedPending.current ||
@@ -513,14 +554,16 @@ export function SourceEditor({
       editor.contentDOM.removeEventListener('compositionend', schedule);
     };
   }, [wikilinks, live]);
-  useEffect(() => {
+  useLayoutEffect(() => {
+    locked.current = readOnly;
     view.current?.dispatch({
-      effects: editable.current.reconfigure(
-        EditorState.readOnly.of(Boolean(draft)),
-      ),
+      effects: editable.current.reconfigure([
+        EditorState.readOnly.of(readOnly || Boolean(draft)),
+        EditorView.editable.of(!readOnly),
+      ]),
       annotations: Transaction.addToHistory.of(false),
     });
-  }, [draft]);
+  }, [readOnly, draft]);
 
   return (
     <div className="editor-pane">
@@ -530,9 +573,13 @@ export function SourceEditor({
           sourceIsCurrent={sourceIsCurrent}
           path={path}
           active={rendered.active}
-          disabled={Boolean(busy || draft)}
+          disabled={Boolean(readOnly || busy || draft)}
           commandsRef={renderedCommands}
           runtime={rendered}
+          onRetainAttempt={onRetainAttempt}
+          onKeepAttempt={onKeepAttempt}
+          onDiscardAttempt={onDiscardAttempt}
+          onAnalysisDiagnostic={onAnalysisDiagnostic}
           wikilinks={wikilinks}
           onPendingChange={(value) => {
             renderedPending.current = value;
@@ -542,10 +589,12 @@ export function SourceEditor({
           }}
           openNote={onOpenNote}
           undo={() => {
-            if (view.current && !draftRef.current) undo(view.current);
+            if (view.current && !locked.current && !draftRef.current)
+              undo(view.current);
           }}
           redo={() => {
-            if (view.current && !draftRef.current) redo(view.current);
+            if (view.current && !locked.current && !draftRef.current)
+              redo(view.current);
           }}
           openSource={(offset, snapshot) => onShowSource?.(offset, snapshot)}
           apply={(snapshot, next, typing, composition) => {
@@ -597,7 +646,7 @@ export function SourceEditor({
       )}
       <div hidden={!visual}>
         <MarkdownEditor
-          busy={busy || Boolean(draft)}
+          busy={readOnly || busy || Boolean(draft)}
           onPendingChange={(value) => {
             legacyPending.current = value;
             pending.current?.(

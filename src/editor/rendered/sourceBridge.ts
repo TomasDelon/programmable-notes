@@ -1,11 +1,15 @@
-import { type Mark, type Node as ProseMirrorNode } from 'prosemirror-model';
+import {
+  Fragment,
+  type Mark,
+  type Node as ProseMirrorNode,
+} from 'prosemirror-model';
 import {
   MarkdownSerializer,
   defaultMarkdownSerializer,
 } from 'prosemirror-markdown';
 import { parseWikilinks, type LinkSourceSpan } from '../../links';
 import {
-  parseLiveSource,
+  analyzeLiveSource,
   safeMathSpan,
   type SyntaxNode,
 } from '../math/mathSource';
@@ -44,6 +48,7 @@ export interface RenderedBlockMapping extends RenderedSourceRange {
 }
 export interface RenderedProjection {
   doc: ProseMirrorNode;
+  analysisDiagnostic: string | null;
   mapping: {
     source: string;
     path: string;
@@ -118,7 +123,8 @@ export function parseRenderedSource(
   source: string,
   path = 'note.mdx',
 ): RenderedProjection {
-  const tree = parseLiveSource(source, path) as AstNode | null;
+  const analysis = analyzeLiveSource(source, path);
+  const tree = analysis.tree as AstNode | null;
   const ranges = new Map<ProseMirrorNode, RenderedSourceRange>();
   const texts = new Map<ProseMirrorNode, TextRange[]>();
   const tasks = new Map<ProseMirrorNode, RenderedSourceRange>();
@@ -572,6 +578,7 @@ export function parseRenderedSource(
   );
   return {
     doc,
+    analysisDiagnostic: analysis.diagnostic,
     mapping: {
       source,
       path,
@@ -1106,6 +1113,55 @@ export function rebaseRenderedProjection(
       'This change exceeds the visual editing work budget. Your accepted source is unchanged. Review the retained draft before continuing in Source.',
     );
   const parsed = parseRenderedSource(source, previous.mapping.path);
+  return mapRenderedDocument(previous, newDoc, parsed);
+}
+
+/** A math delimiter can change the node type at the edit. Preserve exact
+ * surrounding blocks so their mounted node views survive that reparse. */
+export function reparseRenderedMathEdit(
+  previous: RenderedProjection,
+  source: string,
+  from: number,
+  oldEnd: number,
+  newEnd: number,
+): RenderedProjection {
+  const parsed = parseRenderedSource(source, previous.mapping.path);
+  const oldBlocks = new Map(
+    previous.mapping.blocks.map((block) => [block.from, block]),
+  );
+  const parsedIds = new Set(parsed.mapping.blocks.map((block) => block.id));
+  const nodes = parsed.mapping.blocks.map((block) => {
+    const delta =
+      block.to <= from ? 0 : block.from >= newEnd ? newEnd - oldEnd : null;
+    if (delta === null) return block.node;
+    const old = oldBlocks.get(block.from - delta);
+    if (
+      !old ||
+      old.to !== block.to - delta ||
+      (old.id !== block.id && parsedIds.has(old.id)) ||
+      previous.mapping.source.slice(old.from, old.to) !==
+        source.slice(block.from, block.to) ||
+      old.node.nodeSize !== block.node.nodeSize ||
+      !semanticEqual(old.node, block.node)
+    )
+      return block.node;
+    return old.node;
+  });
+  if (nodes.every((node, index) => node === parsed.doc.child(index)))
+    return parsed;
+  return mapRenderedDocument(
+    previous,
+    parsed.doc.copy(Fragment.fromArray(nodes)),
+    parsed,
+  );
+}
+
+function mapRenderedDocument(
+  previous: RenderedProjection,
+  newDoc: ProseMirrorNode,
+  parsed: RenderedProjection,
+): RenderedProjection {
+  const { source } = parsed.mapping;
   const ranges = new Map<ProseMirrorNode, RenderedSourceRange>();
   const texts = new Map<ProseMirrorNode, TextRange[]>();
   const tasks = new Map<ProseMirrorNode, RenderedSourceRange>();
@@ -1158,6 +1214,7 @@ export function rebaseRenderedProjection(
     );
   return {
     doc: newDoc,
+    analysisDiagnostic: parsed.analysisDiagnostic,
     mapping: {
       ...parsed.mapping,
       prefix: blocks.length ? source.slice(0, blocks[0]!.from) : source,

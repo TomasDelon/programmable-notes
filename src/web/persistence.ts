@@ -1,5 +1,6 @@
 import { validateWebState, type WebState } from './workspace';
 import { verifyAssetCatalog } from '../assets/catalog';
+import { recoveryDigest } from '../documents/recovery';
 import type { BackupRecovery } from '../backup/portable';
 
 export const WEB_DATABASE_NAME = 'programmable-notes-web-v1';
@@ -166,14 +167,234 @@ function recoveryContent(state: WebState): string {
   });
 }
 
+/** Refused rendered edits have their own bounded inventory, outside the canonical
+ * workspace record and its portable history. The document key is only a label.
+ */
+const ATTEMPTS_KEY = 'retained-edits-v1';
+
+export interface RetainedAttempt {
+  id: string;
+  documentKey: string;
+  baseRevision: number;
+  baseChecksum: string;
+  text: string;
+  updated: number;
+  checksum: string;
+}
+
+function attemptPayload(attempt: RetainedAttempt) {
+  const { id, documentKey, baseRevision, baseChecksum, text, updated } =
+    attempt;
+  return JSON.stringify([
+    id,
+    documentKey,
+    baseRevision,
+    baseChecksum,
+    text,
+    updated,
+  ]);
+}
+
+function attemptRows(value: unknown): RetainedAttempt[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > MAX_RECOVERY)
+    throw new Error(
+      'The retained-edit inventory is damaged. It has been preserved.',
+    );
+  return value as RetainedAttempt[];
+}
+
+async function verifyAttempt(attempt: RetainedAttempt): Promise<void> {
+  if (
+    !attempt ||
+    typeof attempt !== 'object' ||
+    typeof attempt.id !== 'string' ||
+    !/^[0-9a-f-]{36}$/i.test(attempt.id) ||
+    typeof attempt.documentKey !== 'string' ||
+    !attempt.documentKey ||
+    attempt.documentKey.length > 512 ||
+    !Number.isSafeInteger(attempt.baseRevision) ||
+    attempt.baseRevision < 0 ||
+    typeof attempt.baseChecksum !== 'string' ||
+    !/^[a-f0-9]{64}$/.test(attempt.baseChecksum) ||
+    typeof attempt.text !== 'string' ||
+    attempt.text.length > MAX_RECOVERY_BYTES ||
+    !Number.isSafeInteger(attempt.updated) ||
+    attempt.updated < 0 ||
+    (await recoveryDigest(attemptPayload(attempt))) !== attempt.checksum
+  )
+    throw new Error(
+      'A retained edit failed its integrity check. Its data has been preserved.',
+    );
+}
+
+export async function readRetainedAttempts() {
+  const database = await openDatabase();
+  let rows: RetainedAttempt[];
+  try {
+    rows = attemptRows(
+      await requestValue(
+        database
+          .transaction('workspace', 'readonly')
+          .objectStore('workspace')
+          .get(ATTEMPTS_KEY),
+      ),
+    );
+  } finally {
+    database.close();
+  }
+  const attempts: RetainedAttempt[] = [];
+  let error = '';
+  for (const row of rows) {
+    try {
+      await verifyAttempt(row);
+      if (rows.filter((item) => item?.id === row.id).length !== 1)
+        throw new Error(
+          'A retained edit has a duplicate identifier. Its data has been preserved.',
+        );
+      attempts.push(row);
+    } catch (reason) {
+      error =
+        reason instanceof Error
+          ? reason.message
+          : 'The retained edit is unreadable.';
+    }
+  }
+  return { attempts: attempts.sort((a, b) => b.updated - a.updated), error };
+}
+
+function strictWrite(database: IDBDatabase, stores: string | string[]) {
+  try {
+    return database.transaction(stores, 'readwrite', { durability: 'strict' });
+  } catch {
+    return database.transaction(stores, 'readwrite');
+  }
+}
+
+function updateAttemptsInStore(
+  store: IDBObjectStore,
+  change: (rows: RetainedAttempt[]) => RetainedAttempt[],
+  abort: (reason: unknown) => void,
+) {
+  const read = store.get(ATTEMPTS_KEY);
+  read.onsuccess = () => {
+    try {
+      const rows = attemptRows(read.result);
+      const next = change(rows);
+      if (next !== rows) store.put(next, ATTEMPTS_KEY);
+    } catch (reason) {
+      abort(reason);
+    }
+  };
+}
+
+async function changeRetainedAttempts(
+  change: (rows: RetainedAttempt[]) => RetainedAttempt[],
+) {
+  const database = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = strictWrite(database, 'workspace');
+      let failure: unknown;
+      transaction.oncomplete = () => resolve();
+      transaction.onabort = () =>
+        reject(
+          failure ??
+            transaction.error ??
+            new Error('The retained edit could not be saved.'),
+        );
+      updateAttemptsInStore(
+        transaction.objectStore('workspace'),
+        change,
+        (reason) => {
+          failure = reason;
+          transaction.abort();
+        },
+      );
+    });
+  } finally {
+    database.close();
+  }
+}
+
+export async function writeRetainedAttempt(
+  documentKey: string,
+  baseRevision: number,
+  baseSource: string,
+  text: string,
+  previous?: RetainedAttempt,
+): Promise<RetainedAttempt> {
+  const attempt: RetainedAttempt = {
+    id: crypto.randomUUID(),
+    documentKey,
+    baseRevision,
+    baseChecksum: await recoveryDigest(baseSource),
+    text,
+    updated: Date.now(),
+    checksum: '',
+  };
+  if (text.length > MAX_RECOVERY_BYTES)
+    throw new Error('The retained edit exceeds the 32 MiB recovery budget.');
+  attempt.checksum = await recoveryDigest(attemptPayload(attempt));
+  await verifyAttempt(attempt);
+  let result = attempt;
+  await changeRetainedAttempts((rows) => {
+    if (previous && rows.some((row) => row?.id === previous.id)) {
+      // The handoff and any competing discard are ordered by this transaction.
+      // Reuse the reviewed entry only when its exact stored payload still matches.
+      matchingAttempt(rows, previous);
+      result = previous;
+      return rows;
+    }
+    const next = [...rows, attempt];
+    if (
+      next.length > MAX_RECOVERY ||
+      new TextEncoder().encode(JSON.stringify(next)).byteLength >
+        MAX_RECOVERY_BYTES
+    )
+      throw new Error(
+        'Retained-edit storage is full. Download the live draft or review the other retained edits.',
+      );
+    return next;
+  });
+  return result;
+}
+
+function matchingAttempt(rows: RetainedAttempt[], attempt: RetainedAttempt) {
+  const matches = rows.filter((row) => row?.id === attempt.id);
+  if (
+    matches.length !== 1 ||
+    matches[0]!.checksum !== attempt.checksum ||
+    attemptPayload(matches[0]!) !== attemptPayload(attempt)
+  )
+    throw new Error(
+      'The retained edit changed in storage. Refresh recovery history and try again.',
+    );
+}
+
+function withoutAttempt(rows: RetainedAttempt[], attempt: RetainedAttempt) {
+  matchingAttempt(rows, attempt);
+  return rows.filter((row) => row?.id !== attempt.id);
+}
+
+export async function deleteRetainedAttempt(attempt: RetainedAttempt) {
+  await changeRetainedAttempts((rows) =>
+    rows.some((row) => row?.id === attempt.id)
+      ? withoutAttempt(rows, attempt)
+      : rows,
+  );
+}
+
 /** Comparison and publication share one read/write transaction, including cross-tab writers. */
 export async function writeWorkspace(
   state: WebState,
   expectedRevision: number,
   forceRecovery = false,
   importedRecovery: readonly BackupRecovery[] = [],
+  consumeAttempt?: RetainedAttempt,
 ): Promise<StoredWorkspace> {
   validateWebState(state);
+  if (consumeAttempt) await verifyAttempt(consumeAttempt);
   if (importedRecovery.length > MAX_RECOVERY)
     throw new Error('Too many recovery checkpoints in the restored backup.');
   await verifyAssetCatalog(state.assets);
@@ -202,19 +423,7 @@ export async function writeWorkspace(
   const database = await openDatabase();
   try {
     return await new Promise<StoredWorkspace>((resolve, reject) => {
-      let transaction: IDBTransaction;
-      try {
-        transaction = database.transaction(
-          ['workspace', 'recovery'],
-          'readwrite',
-          { durability: 'strict' },
-        );
-      } catch {
-        transaction = database.transaction(
-          ['workspace', 'recovery'],
-          'readwrite',
-        );
-      }
+      const transaction = strictWrite(database, ['workspace', 'recovery']);
       const workspace = transaction.objectStore('workspace');
       const recovery = transaction.objectStore('recovery');
       const read = workspace.get('current');
@@ -292,6 +501,18 @@ export async function writeWorkspace(
                 if (index >= MAX_RECOVERY || retainedBytes > MAX_RECOVERY_BYTES)
                   recovery.delete(item.revision);
               }
+              if (consumeAttempt)
+                updateAttemptsInStore(
+                  workspace,
+                  (rows) => withoutAttempt(rows, consumeAttempt),
+                  (reason) => {
+                    failure =
+                      reason instanceof Error
+                        ? reason
+                        : new Error('The retained edit could not be restored.');
+                    transaction.abort();
+                  },
+                );
               workspace.put(record, 'current');
             } catch (reason) {
               failure =

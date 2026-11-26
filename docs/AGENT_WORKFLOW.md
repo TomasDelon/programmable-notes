@@ -27,7 +27,7 @@ One owner controls each writable file set, browser server/port and status watche
 
 Use one completion watcher per job and consume its final conclusion/artifacts. Record the process/run ID, input identity, last verified outcome and next action in the ignored task log. Keep user updates concise and compatible with the harness's communication requirements. Persist a short durable handoff at a milestone, not a full transcript.
 
-Independent CI gates may overlap only when their concurrency groups and resource ownership permit it. The current optional editing matrix still shares the ordinary build group; a future workflow change is required before running those together. This document does not claim that CI concurrency, build reuse or cache optimization has already been implemented.
+Independent CI gates may overlap only when their concurrency groups and resource ownership permit it. The stabilization workflow separates same-ref editing, deployment, browser-QA and ordinary-build groups, with editing taking precedence for mixed requests. Run titles expose the actual event/ref/group. Automatic PR refs may already differ from dispatch refs; source inspection alone does not establish historical cancellation or measured savings. Hosted overlap/supersession evidence is required before calling this operationally verified. Shared build reuse and cache optimization remain separate pending work.
 
 ## 3. Evidence record
 
