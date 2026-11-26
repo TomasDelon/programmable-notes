@@ -24,8 +24,10 @@ it is not a UI/product to clone.
 - [x] Initial target architecture, acceptance gates and ordered work defined.
 - [x] Read-only AST entry audit and fixture tests implemented; informational
       divergence cannot be presented as product readiness.
-- [ ] Finish setup validation, commit/push the process/specification changes and
-      verify the draft PR state and CI results. No replacement app download is implied.
+- [x] Local setup checks passed: 638 unit tests, 92 tooling controls, 150
+      Chromium cases, 9 local Pages cases and 4 inactive-cloud cases. Current
+      publication/head-CI evidence is tracked in draft PR #9; this is not
+      application acceptance or a replacement app download.
 - [ ] Assess existing modules against the target and record concrete interfaces.
 - [ ] Prove isolated native inline presentation and resource/lifecycle ownership.
 - [ ] Extract shared product/use cases and platform ports without a second UI.
