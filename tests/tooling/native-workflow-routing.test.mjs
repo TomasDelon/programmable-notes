@@ -29,6 +29,7 @@ const names = [
   'deployment-check',
   'preview-input-regression',
   'native-preflight',
+  'native-vm',
 ];
 const jobs = Object.fromEntries(
   names.map((name) => {
@@ -43,6 +44,10 @@ const nativeSection = workflow.slice(workflow.indexOf('\n  native-preflight:'));
 const guardLine = nativeSection.match(/ {8}if: (.+)\n {8}run: \|/);
 assert.ok(guardLine, 'Expected a pre-checkout native input guard');
 const rejectNative = expression(guardLine[1]);
+const vmSection = workflow.slice(workflow.indexOf('\n  native-vm:'));
+const vmGuard = vmSection.match(/ {8}if: (.+)\n {8}run: \|/);
+assert.ok(vmGuard, 'Expected a pre-checkout VM input guard');
+const rejectVm = expression(vmGuard[1]);
 const scopes = ['all', 'core', 'math', 'source', 'authoring', 'pages'];
 const browsers = ['all', 'firefox', 'webkit', 'chromium'];
 const flags = [
@@ -122,6 +127,7 @@ test('native and role requests reject mixed modes without canceling a valid nati
             'deployment-check': !native && Boolean(inputs.deployment_url),
             'preview-input-regression': !native && inputs.editing_qa,
             'native-preflight': native,
+            'native-vm': false,
           },
         );
         if (native)
@@ -142,6 +148,7 @@ test('automatic PR and main events keep both mandatory gates and cannot invoke a
         flags.map((flag, bit) => [flag, Boolean(mask & (1 << bit))]),
       );
       Object.assign(inputs, {
+        native_vm: true,
         editing_scope: 'all',
         editing_browser: 'all',
         deployment_url: '',
@@ -154,6 +161,48 @@ test('automatic PR and main events keep both mandatory gates and cannot invoke a
         assert.equal(Boolean(evaluate(jobs[name], sandbox)), false);
     }
   }
+});
+test('VM admission is isolated from every other dispatch mode and never duplicates ordinary builds', () => {
+  for (let mask = 0; mask < 128; mask++) {
+    for (const editing_scope of scopes) {
+      for (const editing_browser of browsers) {
+        const inputs = Object.fromEntries(
+          flags.map((flag, bit) => [flag, Boolean(mask & (1 << bit))]),
+        );
+        Object.assign(inputs, {
+          native_vm: true,
+          editing_scope,
+          editing_browser,
+          deployment_url: mask & 64 ? 'https://fixture.example/' : '',
+        });
+        const sandbox = context(inputs);
+        assert.equal(evaluate(group, sandbox), 'native-vm-47');
+        for (const name of names)
+          assert.equal(
+            Boolean(evaluate(jobs[name], sandbox)),
+            name === 'native-vm',
+          );
+        assert.equal(
+          Boolean(evaluate(rejectVm, sandbox)),
+          flags.some((flag) => inputs[flag]) ||
+            Boolean(inputs.deployment_url) ||
+            editing_scope !== 'all' ||
+            editing_browser !== 'all',
+        );
+      }
+    }
+  }
+  assert.ok(
+    vmSection.indexOf('Reject combined VM') <
+      vmSection.indexOf('uses: actions/checkout@'),
+  );
+  assert.match(vmSection, /runs-on: ubuntu-24\.04/);
+  assert.match(vmSection, /persist-credentials: false/);
+  assert.match(vmSection, /path: \.cache\/native-vm-evidence\/smoke\.json\n/);
+  assert.doesNotMatch(
+    vmSection,
+    /path: .*\*|runs-on:.*self-hosted|permissions:.*write/,
+  );
 });
 test('role opt-in is guarded before checkout and remains a fixed optional command', () => {
   assert.ok(

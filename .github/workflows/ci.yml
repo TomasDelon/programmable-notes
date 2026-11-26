@@ -2,7 +2,7 @@ name: CI
 run-name: >-
   CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
   group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-  ((inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+  (inputs.native_vm && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
   inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
   inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
   'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -14,6 +14,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      native_vm:
+        description: Disposable share-free Ubuntu VM OS admission only; leave all other inputs at defaults.
+        type: boolean
+        default: false
       native_preflight:
         description: Check stock Linux native capabilities only. Leave all other inputs at their defaults.
         type: boolean
@@ -60,7 +64,7 @@ concurrency:
   # Keep the group shown in run-name aligned with the scheduler's group.
   group: >-
     ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-    ((inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+    (inputs.native_vm && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
     inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
     inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
     'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -69,7 +73,7 @@ concurrency:
 
 jobs:
   check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -136,7 +140,7 @@ jobs:
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -242,7 +246,7 @@ jobs:
           retention-days: 7
 
   deployment-check:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -286,7 +290,7 @@ jobs:
   # Optional, explicitly named diagnostics. Pull requests still run the complete
   # check/native-check gates above; success here is never a substitute for them.
   preview-input-regression:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -367,7 +371,7 @@ jobs:
           retention-days: 7
 
   native-preflight:
-    if: github.event_name == 'workflow_dispatch' && (inputs.native_preflight || inputs.kvm_role_probe)
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && (inputs.native_preflight || inputs.kvm_role_probe)
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
@@ -392,3 +396,49 @@ jobs:
         run: bash scripts/native-kvm-role-probe.sh --api-only
       - name: Check restricted Ubuntu Linux capabilities
         run: bash scripts/native-hosted-preflight.sh
+
+  native-vm:
+    if: github.event_name == 'workflow_dispatch' && inputs.native_vm
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Reject combined VM and other dispatch modes
+        if: ${{ inputs.native_preflight || inputs.kvm_role_probe || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all' }}
+        run: |
+          echo 'VM admission requires every unrelated dispatch input to use its default.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install host QEMU on the disposable standard runner
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends qemu-system-x86 qemu-utils openssh-client
+      - name: Allocate a private fixture parent
+        id: fixture
+        run: |
+          pn_vm_parent=$(mktemp -d "${RUNNER_TEMP}/pn-native-vm-XXXXXX")
+          printf 'PN_VM_ROOT=%s/fixture\n' "$pn_vm_parent" >> "$GITHUB_ENV"
+          printf 'created=true\n' >> "$GITHUB_OUTPUT"
+      - name: Prepare host-only authentication and public context
+        run: python3 -I -B scripts/native-vm-provision.py --prepare "$PN_VM_ROOT"
+      - name: Assemble the guest without host mounts
+        run: python3 -I -B scripts/native-vm-pack.py --pack "$PN_VM_ROOT"
+      - name: Check the exact share-free launch layout
+        run: python3 -I -B scripts/native-vm-launch.py --check "$PN_VM_ROOT/launch.json"
+      - name: Verify boot, SSH identity and OS admission (not native application acceptance)
+        run: python3 -I -B scripts/native-vm-smoke.py --smoke "$PN_VM_ROOT"
+      - name: Retain only the sanitized admission receipt
+        if: always() && steps.fixture.outputs.created == 'true'
+        run: |
+          mkdir -p .cache/native-vm-evidence
+          if test -f "$PN_VM_ROOT/smoke-receipt.json"; then
+            install -m 0600 "$PN_VM_ROOT/smoke-receipt.json" .cache/native-vm-evidence/smoke.json
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.fixture.outputs.created == 'true' && hashFiles('.cache/native-vm-evidence/smoke.json') != ''
+        with:
+          name: native-vm-os-admission
+          path: .cache/native-vm-evidence/smoke.json
+          if-no-files-found: error
+          retention-days: 3

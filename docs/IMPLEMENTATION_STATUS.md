@@ -20,6 +20,35 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Share-free image preparation and OS admission pipeline — 27 November 2026
+
+New permanent development commands create a public-only Docker context, assemble
+a private guest image without host mounts, pin a fresh guest identity and perform
+fixed SSH OS admission through the existing owned launcher. No arbitrary command
+or payload API is added. Independent review corrected incomplete probe reads,
+source identity filtering, process cleanup, unsafe metadata and inherited proxy
+handling before any guest run. [ADR036](decisions/ADR-036-private-guest-preparation-and-os-admission.md).
+
+Root has executed **real Docker image preparation and launch-layout validation**.
+Copied kernel/initrd/image/public host-key hashes are retained; the 6 GiB image
+occupies about 1.64 GiB through lossless sparse extraction. Separate daemon queries
+found zero remaining labelled containers or images. Host client location and
+read-only BuildX state failures were reproduced and fixed without replacing HOME,
+Docker trust settings or any sandbox restriction.
+
+The new manual-only standard Ubuntu CI mode performs boot/identity/share-free OS
+admission without duplicate application builds. Its source-review gate has passed;
+actual guest execution is still a distinct required observation. It uploads only
+a sanitized JSON receipt. **No guest boot, native application run or full security
+acceptance is claimed here.** The managed host still lacks host QEMU; no unchecked
+container launch was substituted. [Evidence and reproduction](security-evidence/2026-11-27-vm-provisioning/README.md).
+
+Local complete-check exit 0: **739 unit, 101 tooling/zero skips, 152 Chromium,
+9 Pages and 4 inactive-cloud browser tests passed**, plus format/lint/types/build.
+New preparation/packing/admission wrappers count 29/31/28 Python controls. Staged
+source scanning found zero secrets. These local and image-preparation results do
+not stand in for the pending actual Ubuntu guest run.
+
 ## Explicit inline runtime and share-free fixture guard — 26 November 2026
 
 The shared inline editor now receives an explicit trusted renderer. WebApp supplies

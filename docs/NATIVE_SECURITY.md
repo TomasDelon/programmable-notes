@@ -53,17 +53,26 @@ transport keys outside guest images, payload/evidence trees and mounted paths;
 only the public authorization key belongs in the guest. Stage fixed inputs and
 collect guest-local evidence through authenticated transfer instead of 9p/virtiofs.
 Use a versioned preflight that rejects host-share arguments and credential-path
-overlap before launching QEMU; include negative controls. **This corrected
-provisioning has not been executed or accepted yet.** Do not waive this gate or
+overlap before launching QEMU; include negative controls. **End-to-end guest OS
+admission and native application execution still need their own verified results.** Do not waive this gate or
 retroactively promote the deviating fixture.
 
 A [versioned launch boundary](decisions/ADR-035-share-free-native-fixture-launch.md)
 now rejects share arguments and unsafe layouts, pins boot descriptors, keeps the
 transport key out of inherited descriptors and bounds serial output/process
 lifetime. Its CLI/layout and mocked-launch controls are not a guest run. The
-end-to-end image preparation, pinned SSH transfer and actual mount/cleanup review
-are still pending; the gate above remains in force. See the
+end-to-end guest OS admission and native acceptance remain separately gated. See the
 [boundary evidence](security-evidence/2026-11-26-runtime-boundaries/README.md).
+
+The [private preparation/packing/admission pipeline](decisions/ADR-036-private-guest-preparation-and-os-admission.md)
+has versioned negative controls and independent source review. Root has executed
+real mount-free Docker assembly, verified the copied boot artifacts and checked
+the launcher layout. This satisfies the source-review prerequisite for the fixed
+disposable OS-admission run; it does not establish that a guest booted or authorize
+unverified authored payloads. That run must record authenticated identity,
+complete mount/key checks and normal owned shutdown before native payload work.
+Only its sanitized JSON receipt may be uploaded, never fixture roots or images.
+[Actual preparation evidence and remaining execution gates](security-evidence/2026-11-27-vm-provisioning/README.md).
 
 Reuse established process-identity/cleanup semantics for observer corrections.
 Normalize only known absence races on process-bound reads; arbitrary cgroup,

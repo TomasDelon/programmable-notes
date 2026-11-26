@@ -16,6 +16,9 @@ it is not a UI/product to clone.
 
 ## Progress
 
+- [x] Implement/review share-free preparation and fixed OS-admission tooling;
+      real image assembly and layout checks passed. Actual guest admission,
+      authored native runtime and full application acceptance remain pending.
 - [x] Isolate inline editor execution behind an explicit trusted runtime renderer;
       web supplies its adapter and the shared default is unavailable. This does
       not complete the whole-document runtime or native shared workspace.
