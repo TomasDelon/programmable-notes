@@ -157,19 +157,17 @@ pub async fn desktop_update_check(
     {
         return Err("Update metadata has inconsistent package identity.".into());
     }
-    let id = uuid::Uuid::new_v4().to_string();
     status.state = "available";
     status.available_version = Some(release.version.clone());
-    status.id = Some(id.clone());
-    *updates
-        .pending
-        .lock()
-        .map_err(|_| "Desktop update state is unavailable.")? = Some(Pending {
-        id,
-        created: Instant::now(),
+    let ticket = native_updates::Ticket::issue(Pending {
         release,
         verified_update: update,
     });
+    status.id = Some(ticket.id().to_owned());
+    *updates
+        .pending
+        .lock()
+        .map_err(|_| "Desktop update state is unavailable.")? = Some(ticket);
     Ok(status)
 }
 #[tauri::command]
@@ -194,14 +192,7 @@ pub async fn desktop_update_install(
             .pending
             .lock()
             .map_err(|_| "Desktop update state is unavailable.")?;
-        if !ticket.as_ref().is_some_and(|pending| {
-            pending.id == id && pending.created.elapsed() < Duration::from_secs(600)
-        }) {
-            return Err(
-                "The pending update is unavailable or expired. Check for updates again.".into(),
-            );
-        }
-        ticket.take().expect("matched ticket")
+        native_updates::consume_ticket(&mut *ticket, &id)?
     };
     let bytes = native_updates::download(&pending.release).await?;
     pending

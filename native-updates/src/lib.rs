@@ -263,7 +263,9 @@ pub async fn install_with_packagekit(
     )
     .await
     .map_err(|_| "Update package staging was interrupted.")??;
-    let connection=tokio::time::timeout(Duration::from_secs(30),zbus::Connection::system()).await
+    let connection=tokio::time::timeout(Duration::from_secs(30),zbus::connection::Builder::system()
+        .map_err(|_| "The system package installer is unavailable.")?
+        .method_timeout(TRANSACTION_TIMING.method).build()).await
         .map_err(|_| "The system package installer did not respond.")?.map_err(|_| "The system package installer is unavailable. Install PackageKit and a graphical Polkit agent.")?;
     let manager = zbus::Proxy::new(
         &connection,
@@ -288,46 +290,12 @@ pub async fn install_with_packagekit(
     )
     .await
     .map_err(|_| "The system installation transaction is unavailable.")?;
-    let mut finished = transaction
-        .receive_signal("Finished")
-        .await
-        .map_err(|_| "The system installation status is unavailable.")?;
-    // Background=false requests interactive authorization through the desktop agent.
-    let _: () = transaction
-        .call("SetHints", &vec!["interactive=true", "background=false"])
-        .await
-        .map_err(|_| "The system installer cannot provide graphical authorization.")?;
     let filenames = vec![file
         .path()
         .to_str()
         .ok_or("The staged update path is invalid.")?
         .to_owned()];
-    let accepted: Result<(), _> = transaction.call("InstallFiles", &(0u64, filenames)).await;
-    // A missing method reply does not establish whether the privileged transaction
-    // started. Await its authoritative terminal signal even after an RPC error.
-    let wait = if accepted.is_ok() { 600 } else { 15 };
-    let mut terminal = tokio::time::timeout(Duration::from_secs(wait), finished.next())
-        .await
-        .ok()
-        .flatten();
-    if terminal.is_none() {
-        let _ = tokio::time::timeout(
-            Duration::from_secs(5),
-            transaction.call::<_, _, ()>("Cancel", &()),
-        )
-        .await;
-        terminal = tokio::time::timeout(Duration::from_secs(15), finished.next())
-            .await
-            .ok()
-            .flatten();
-    }
-    let mut outcome = match terminal {
-        Some(message) => match message.body().deserialize::<(u32, u32)>() {
-            Ok((code, _runtime)) => installation_outcome(code),
-            Err(_) => Ok(Installation::Unconfirmed),
-        },
-        None => Ok(Installation::Unconfirmed),
-    };
+    let mut outcome = run_transaction(&transaction, filenames, TRANSACTION_TIMING).await;
     // dpkg can fail after partial changes. A terminal failure/cancellation is not
     // proof that the installed package stayed intact; do not unlock blindly.
     let observed = tokio::task::spawn_blocking(installed_version)
@@ -350,6 +318,71 @@ pub async fn install_with_packagekit(
         drop(file);
     }
     outcome
+}
+
+#[derive(Clone, Copy)]
+struct TransactionTiming {
+    method: Duration,
+    finished: Duration,
+    uncertain: Duration,
+    cancel: Duration,
+}
+const TRANSACTION_TIMING: TransactionTiming = TransactionTiming {
+    method: Duration::from_secs(30),
+    finished: Duration::from_secs(600),
+    uncertain: Duration::from_secs(15),
+    cancel: Duration::from_secs(5),
+};
+async fn run_transaction(
+    transaction: &zbus::Proxy<'_>,
+    filenames: Vec<String>,
+    timing: TransactionTiming,
+) -> Result<Installation, String> {
+    let mut finished = transaction
+        .receive_signal("Finished")
+        .await
+        .map_err(|_| "The system installation status is unavailable.")?;
+    // Background=false requests interactive authorization through the desktop agent.
+    let _: () = tokio::time::timeout(
+        timing.method,
+        transaction.call("SetHints", &vec!["interactive=true", "background=false"]),
+    )
+    .await
+    .map_err(|_| "The system installer timed out while requesting graphical authorization.")?
+    .map_err(|_| "The system installer cannot provide graphical authorization.")?;
+    let accepted = tokio::time::timeout(
+        timing.method,
+        transaction.call::<_, _, ()>("InstallFiles", &(0u64, filenames)),
+    )
+    .await;
+    // A missing method reply does not establish whether the privileged transaction
+    // started. Await its authoritative terminal signal even after an RPC error.
+    let mut terminal = tokio::time::timeout(
+        if matches!(accepted, Ok(Ok(()))) {
+            timing.finished
+        } else {
+            timing.uncertain
+        },
+        finished.next(),
+    )
+    .await
+    .ok()
+    .flatten();
+    if terminal.is_none() {
+        let _ =
+            tokio::time::timeout(timing.cancel, transaction.call::<_, _, ()>("Cancel", &())).await;
+        terminal = tokio::time::timeout(timing.uncertain, finished.next())
+            .await
+            .ok()
+            .flatten();
+    }
+    match terminal {
+        Some(message) => match message.body().deserialize::<(u32, u32)>() {
+            Ok((code, _runtime)) => installation_outcome(code),
+            Err(_) => Ok(Installation::Unconfirmed),
+        },
+        None => Ok(Installation::Unconfirmed),
+    }
 }
 
 pub struct Ticket<T> {
@@ -427,4 +460,143 @@ fn validate_debian_version(value: &str) -> Result<(), String> {
         return Err("The installed Debian version is invalid.".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod transaction_tests {
+    use super::*;
+    use std::{
+        io::{BufRead, BufReader},
+        process::{Child, Command, Stdio},
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        },
+    };
+    struct Bus(Child);
+    impl Drop for Bus {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+    struct Service {
+        stall_hints: bool,
+        exit: Option<u32>,
+        called: Arc<AtomicBool>,
+    }
+    #[zbus::interface(name = "org.freedesktop.PackageKit.Transaction")]
+    impl Service {
+        async fn set_hints(&self, _hints: Vec<String>) {
+            if self.stall_hints {
+                std::future::pending::<()>().await;
+            }
+        }
+        async fn install_files(
+            &self,
+            _flags: u64,
+            _files: Vec<String>,
+            #[zbus(signal_emitter)] emitter: zbus::object_server::SignalEmitter<'_>,
+        ) {
+            self.called.store(true, Ordering::SeqCst);
+            if let Some(exit) = self.exit {
+                Self::finished(&emitter, exit, 0).await.unwrap();
+            }
+            // Finished is authoritative even if the method return is never delivered.
+            std::future::pending::<()>().await;
+        }
+        async fn cancel(&self) {}
+        #[zbus(signal)]
+        async fn finished(
+            emitter: &zbus::object_server::SignalEmitter<'_>,
+            exit: u32,
+            runtime: u32,
+        ) -> zbus::Result<()>;
+    }
+    async fn exercise(
+        stall_hints: bool,
+        exit: Option<u32>,
+    ) -> (Result<Installation, String>, bool) {
+        let mut child = Command::new("/usr/bin/dbus-daemon")
+            .args(["--session", "--nofork", "--print-address=1"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        let mut address = String::new();
+        BufReader::new(child.stdout.take().unwrap())
+            .read_line(&mut address)
+            .unwrap();
+        let _bus = Bus(child);
+        let called = Arc::new(AtomicBool::new(false));
+        let server = zbus::connection::Builder::address(address.trim())
+            .unwrap()
+            .name("org.freedesktop.PackageKit")
+            .unwrap()
+            .serve_at(
+                "/transaction",
+                Service {
+                    stall_hints,
+                    exit,
+                    called: called.clone(),
+                },
+            )
+            .unwrap()
+            .build()
+            .await
+            .unwrap();
+        let client = zbus::connection::Builder::address(address.trim())
+            .unwrap()
+            .build()
+            .await
+            .unwrap();
+        let proxy = zbus::Proxy::new(
+            &client,
+            "org.freedesktop.PackageKit",
+            "/transaction",
+            "org.freedesktop.PackageKit.Transaction",
+        )
+        .await
+        .unwrap();
+        let timing = TransactionTiming {
+            method: Duration::from_millis(30),
+            finished: Duration::from_millis(100),
+            uncertain: Duration::from_millis(30),
+            cancel: Duration::from_millis(30),
+        };
+        let result = tokio::time::timeout(
+            Duration::from_millis(500),
+            run_transaction(&proxy, vec!["/unused-test-package.deb".into()], timing),
+        )
+        .await
+        .expect("transaction must not wait indefinitely for a method reply");
+        drop(proxy);
+        drop(client);
+        drop(server);
+        (result, called.load(Ordering::SeqCst))
+    }
+    #[tokio::test]
+    async fn lost_install_reply_still_observes_already_queued_finished() {
+        let (result, installed_called) = exercise(false, Some(1)).await;
+        assert_eq!(result.unwrap(), Installation::Installed);
+        assert!(installed_called);
+    }
+    #[tokio::test]
+    async fn stalled_authorization_hints_times_out_before_install() {
+        let (result, installed_called) = exercise(true, Some(1)).await;
+        assert!(result.unwrap_err().contains("authorization"));
+        assert!(!installed_called);
+    }
+    #[tokio::test]
+    async fn lost_reply_without_terminal_status_remains_unconfirmed() {
+        let (result, installed_called) = exercise(false, None).await;
+        assert_eq!(result.unwrap(), Installation::Unconfirmed);
+        assert!(installed_called);
+    }
+    #[tokio::test]
+    async fn lost_reply_preserves_authoritative_cancellation() {
+        let (result, installed_called) = exercise(false, Some(3)).await;
+        assert_eq!(result.unwrap(), Installation::Cancelled);
+        assert!(installed_called);
+    }
 }
