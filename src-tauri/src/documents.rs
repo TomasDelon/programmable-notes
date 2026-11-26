@@ -18,6 +18,12 @@ pub struct Documents {
     dialog: AtomicBool,
 }
 impl Documents {
+    pub(crate) fn busy_for_install(&self) -> bool {
+        self.dirty.load(Ordering::SeqCst)
+            || self.client_busy.load(Ordering::SeqCst)
+            || self.operations.load(Ordering::SeqCst) > 0
+            || self.dialog.load(Ordering::SeqCst)
+    }
     fn close_must_wait(&self) -> bool {
         self.operations.load(Ordering::SeqCst) > 0
             || (self.client_busy.load(Ordering::SeqCst)
@@ -31,15 +37,27 @@ impl Documents {
 }
 struct Operation(Arc<Documents>);
 impl Operation {
-    fn new(docs: Arc<Documents>) -> Self {
+    fn new(docs: Arc<Documents>, installing: &AtomicBool) -> Result<Self, String> {
+        // Installer sets its flag before inspecting operations. Sequential ordering
+        // ensures either it sees this reservation or this reservation sees its flag.
         docs.operations.fetch_add(1, Ordering::SeqCst);
-        Self(docs)
+        let operation = Self(docs);
+        if installing.load(Ordering::SeqCst) {
+            return Err("An update is installing; document operations are paused".into());
+        }
+        Ok(operation)
     }
 }
 impl Drop for Operation {
     fn drop(&mut self) {
         self.0.operations.fetch_sub(1, Ordering::SeqCst);
     }
+}
+fn operation(app: &AppHandle, docs: Arc<Documents>) -> Result<Operation, String> {
+    let updates = app
+        .try_state::<crate::updates::Updates>()
+        .ok_or("Native update state unavailable; document operation refused")?;
+    Operation::new(docs, &updates.installing)
 }
 pub(crate) struct Dialog(Arc<Documents>);
 impl Dialog {
@@ -73,7 +91,7 @@ pub async fn open_documents(
     host: tauri::State<'_, Host>,
 ) -> Result<Vec<Document>, String> {
     let docs = editor(&app, &window, &host)?;
-    let operation = Operation::new(docs.clone());
+    let operation = operation(&app, docs.clone())?;
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         let _dialog = Dialog::acquire(&docs)?;
@@ -102,6 +120,36 @@ pub async fn open_documents(
     .await
     .map_err(|e| e.to_string())?
 }
+/// Only the trusted editor's OS dialog may grant a folder; no renderer path argument.
+#[tauri::command]
+pub async fn open_notes_folder(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+) -> Result<Vec<Document>, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        let _dialog = Dialog::acquire(&docs)?;
+        let Some(selected) = app
+            .dialog()
+            .file()
+            .set_parent(&window)
+            .set_title("Open notes folder")
+            .blocking_pick_folder()
+        else {
+            return Ok(Vec::new());
+        };
+        let path = selected
+            .into_path()
+            .map_err(|_| "Only local folders are supported".to_string())?;
+        let result = store(&docs)?.open_folder(&path).map_err(|e| e.to_string());
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
 #[tauri::command]
 pub async fn save_document(
     app: AppHandle,
@@ -112,7 +160,7 @@ pub async fn save_document(
     source: String,
 ) -> Result<Saved, String> {
     let docs = editor(&app, &window, &host)?;
-    let operation = Operation::new(docs.clone());
+    let operation = operation(&app, docs.clone())?;
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         let result = store(&docs)?
@@ -132,7 +180,7 @@ pub async fn save_document_as(
     source: String,
 ) -> Result<Option<Document>, String> {
     let docs = editor(&app, &window, &host)?;
-    let operation = Operation::new(docs.clone());
+    let operation = operation(&app, docs.clone())?;
     if source.len() > native_documents::MAX_SOURCE_BYTES {
         return Err("File exceeds 500 KB limit".into());
     }
@@ -177,7 +225,7 @@ pub async fn reopen_document(
     revision: String,
 ) -> Result<Document, String> {
     let docs = editor(&app, &window, &host)?;
-    let operation = Operation::new(docs.clone());
+    let operation = operation(&app, docs.clone())?;
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         #[cfg(target_os = "linux")]
@@ -204,7 +252,9 @@ pub async fn close_document(
     id: String,
 ) -> Result<(), String> {
     let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
         let result = store(&docs)?.close(&id).map_err(|e| e.to_string());
         result
     })
@@ -218,7 +268,9 @@ pub async fn confirm_discard(
     host: tauri::State<'_, Host>,
 ) -> Result<bool, String> {
     let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
         let _dialog = Dialog::acquire(&docs)?;
         Ok(app
             .dialog()
@@ -264,7 +316,11 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
         return;
     };
     let docs = state.inner().clone();
-    if docs.close_must_wait() {
+    let updating = window
+        .app_handle()
+        .try_state::<crate::updates::Updates>()
+        .is_some_and(|updates| updates.close_must_wait());
+    if docs.close_must_wait() || updating {
         api.prevent_close();
         let Ok(dialog) = Dialog::acquire(&docs) else {
             return;
@@ -272,8 +328,10 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
         window
             .app_handle()
             .dialog()
-            .message("A file operation is still running. Finish or cancel it before closing.")
-            .title("File operation in progress")
+            .message(
+                "A file or update operation is still running. Finish or cancel it before closing.",
+            )
+            .title("Operation in progress")
             .parent(window)
             .show(move |_| {
                 let _dialog = dialog;
@@ -313,7 +371,7 @@ pub async fn recovery_draft(
     file: Option<String>,
 ) -> Result<serde_json::Value, String> {
     let docs = editor(&app, &window, &host)?;
-    let operation = Operation::new(docs);
+    let operation = operation(&app, docs)?;
     tauri::async_runtime::spawn_blocking(move || {
         let _operation = operation;
         #[cfg(target_os = "linux")]
@@ -356,6 +414,27 @@ pub async fn recovery_draft(
 mod tests {
     use super::*;
     #[test]
+    fn install_flag_refuses_new_operations_and_releases_reservation() {
+        let docs = Arc::new(Documents::default());
+        assert!(!docs.busy_for_install());
+        let installing = AtomicBool::new(true);
+        assert!(Operation::new(docs.clone(), &installing).is_err());
+        assert_eq!(docs.operations.load(Ordering::SeqCst), 0);
+        installing.store(false, Ordering::SeqCst);
+        let operation = Operation::new(docs.clone(), &installing).unwrap();
+        assert!(docs.busy_for_install());
+        drop(operation);
+        assert!(!docs.busy_for_install());
+        docs.dirty.store(true, Ordering::SeqCst);
+        assert!(docs.busy_for_install());
+        docs.dirty.store(false, Ordering::SeqCst);
+        let dialog = Dialog::acquire(&docs).unwrap();
+        assert!(docs.busy_for_install());
+        drop(dialog);
+        docs.client_busy.store(true, Ordering::SeqCst);
+        assert!(docs.busy_for_install());
+    }
+    #[test]
     fn renderer_failure_invalidates_only_frontend_hints_not_native_operations_or_dirty_state() {
         let docs = Arc::new(Documents::default());
         docs.dirty.store(true, Ordering::SeqCst);
@@ -364,7 +443,7 @@ mod tests {
             docs.close_must_wait(),
             "Healthy frontend work must protect closing"
         );
-        let operation = Operation::new(docs.clone());
+        let operation = Operation::new(docs.clone(), &AtomicBool::new(false)).unwrap();
         docs.renderer_stopped();
         docs.client_busy.store(true, Ordering::SeqCst); // A queued stale IPC hint.
         assert!(

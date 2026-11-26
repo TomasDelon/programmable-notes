@@ -142,6 +142,32 @@ impl AuthorizedFile {
             source,
         ))
     }
+    /// The directory and O_PATH file are already anchored by the authorized walker.
+    /// Reopen the pinned *regular* inode through procfs, never an attacker-swappable name.
+    pub(crate) fn select_anchored(
+        directory: File,
+        name: &OsStr,
+        path: PathBuf,
+        pinned: File,
+    ) -> Result<(Self, String), Error> {
+        if !pinned.metadata()?.is_file() {
+            return Err(Error::Rejected("Only regular source files are supported"));
+        }
+        let mut file = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_CLOEXEC | libc::O_NONBLOCK)
+            .open(format!("/proc/self/fd/{}", pinned.as_raw_fd()))?;
+        let (snapshot, source) = read(&mut file)?;
+        Ok((
+            Self {
+                directory,
+                name: c_name(name)?,
+                path,
+                snapshot: Some(snapshot),
+            },
+            source,
+        ))
+    }
     pub(crate) fn reread(&self) -> Result<(Snapshot, String), Error> {
         let mut file = at(
             &self.directory,

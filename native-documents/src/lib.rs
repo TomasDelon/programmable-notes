@@ -85,6 +85,8 @@ pub mod draft;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
+mod vault;
+#[cfg(target_os = "linux")]
 use linux::AuthorizedFile;
 use std::collections::HashMap;
 fn random_id() -> Result<String, Error> {
@@ -156,6 +158,27 @@ impl Store {
                 common = common.and_then(|p| p.parent().map(Path::to_path_buf));
             }
         }
+        self.publish(prepared, common.as_deref().unwrap_or(Path::new("/")))
+    }
+    /// Only native-dialog-selected roots may reach this method; never expose a path IPC.
+    pub fn open_folder(&mut self, root: &Path) -> Result<Vec<Document>, Error> {
+        let selected = vault::collect(root)?;
+        self.capacity(
+            selected.len(),
+            selected.iter().map(|(_, source)| source.len()).sum(),
+            0,
+        )?;
+        let prepared = selected
+            .into_iter()
+            .map(|(file, source)| Ok((random_id()?, random_id()?, file, source)))
+            .collect::<Result<Vec<_>, Error>>()?;
+        self.publish(prepared, root)
+    }
+    fn publish(
+        &mut self,
+        prepared: Vec<(String, String, AuthorizedFile, String)>,
+        root: &Path,
+    ) -> Result<Vec<Document>, Error> {
         let mut documents = Vec::new();
         let mut grants = Vec::new();
         for (id, revision, file, source) in prepared {
@@ -167,7 +190,7 @@ impl Store {
                 .into_owned();
             let logical_path = file
                 .path
-                .strip_prefix(common.as_deref().unwrap_or(Path::new("/")))
+                .strip_prefix(root)
                 .unwrap()
                 .to_str()
                 .ok_or(Error::Rejected("Selected file names must be UTF-8"))?

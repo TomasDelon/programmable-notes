@@ -1,5 +1,11 @@
 # Daily-use acceptance receipt
 
+The development branch additionally contains a **not-yet-delivered Linux local-
+editor candidate**. [Implementation status](IMPLEMENTATION_STATUS.md) and
+[Linux local use](LINUX_LOCAL_EDITOR.md) separate its package/update gates from
+the accepted browser deployment below. Cloud activation is paused. No new
+installed GUI/security or live signed-update result is implied.
+
 This is the development status for the 26 November 2026 stabilization plan. It separates identified behavior from version-specific evidence. The draft PR contains final current-head run/artifact links; dated records remain historical.
 
 ## Current accepted browser delivery

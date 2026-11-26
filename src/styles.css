@@ -57,6 +57,45 @@ main {
 .app-header {
   padding-block: 0.5rem;
   border-bottom: 1px solid var(--stroke);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.native-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.native-settings {
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 1.25rem;
+  border: 1px solid var(--stroke);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: inherit;
+}
+.native-settings::backdrop {
+  background: #0007;
+}
+.native-settings header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.native-settings h2 {
+  margin: 0;
+}
+.native-settings section + section {
+  border-top: 1px solid var(--stroke);
+  margin-top: 1rem;
+}
+.native-settings-path {
+  overflow-wrap: anywhere;
 }
 h1 {
   font-size: 1.55rem;
@@ -196,6 +235,24 @@ main {
 .workspace.mode-source,
 .workspace.mode-visual {
   grid-template-columns: minmax(0, 1fr);
+}
+.native-visual-note {
+  font-size: 0.875rem;
+}
+.workspace.mode-visual .rendered-editor {
+  --text: light-dark(#20242d, #e6e9ee);
+  --text-strong: light-dark(#151922, #f4f5f8);
+  --muted: light-dark(#535d6c, #aeb8c7);
+  --divider: var(--stroke);
+  --danger: light-dark(#a92d2d, #ff9a9a);
+  --document-font: system-ui, sans-serif;
+  --document-font-size: 1rem;
+  --document-font-weight: 400;
+  --document-line-height: 1.7;
+  --document-letter-spacing: normal;
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: 2rem clamp(1rem, 5vw, 4rem);
 }
 .editor-pane,
 .preview-pane {

@@ -1,5 +1,26 @@
 # Programmable Notes implementation status
 
+## Linux local-editor candidate — 26 November 2026
+
+The owner paused cloud activation and prioritized an installable Linux app using
+real local source files. Development adds OS-authorized bounded folder loading,
+native Settings, shared literal Markdown/math Visual editing, and signed Debian
+update policy with GUI PackageKit installation. React remains in its supervised
+native child; no browser workspace or iframe authority is adopted.
+
+The update channel is inactive without a production public key and authorized
+signed feed. No key, public release, account or deployment was created. Native
+package upload is gated on verified Cargo/Wry/frontend/Rust-runtime notices.
+See [local use](LINUX_LOCAL_EDITOR.md),
+[ADR023](decisions/ADR-023-linux-local-folders-and-updates.md) and
+[native notices](NATIVE_NOTICES.md). Current candidate receipts will follow the
+executed gates; earlier results below do not certify this package or PackageKit.
+
+Literal-dollar corrections preserve neighboring formatting, deliberate escapes
+and canonical undo. [ADR022](decisions/ADR-022-typed-dollar-provenance.md) records
+conservative history/reopen limits. The inactive cloud code/research remain
+reviewable; provisioning and token requests are paused.
+
 ## Current acceptance and stabilization
 
 [The accepted daily-use receipt](DAILY_USE_STATUS.md#current-accepted-browser-delivery)

@@ -16,8 +16,11 @@ it('restricts the entire configured capability union to the editor and registere
   expect(cap.permissions.sort()).toEqual([
     'allow-close-document',
     'allow-confirm-discard',
+    'allow-desktop-update-check',
+    'allow-desktop-update-install',
     'allow-host-probe',
     'allow-open-documents',
+    'allow-open-notes-folder',
     'allow-preview-connection-active',
     'allow-recovery-draft',
     'allow-reopen-document',

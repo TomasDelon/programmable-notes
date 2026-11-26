@@ -1,8 +1,18 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Programmable Notes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "dev.programmablenotes.app",
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "requireSignedVersion": true,
+      "allowDowngrades": false,
+      "endpoints": [
+        "https://programmable-notes.pages.dev/desktop/linux-amd64/latest.json"
+      ]
+    }
+  },
   "build": {
     "beforeDevCommand": "npm run dev -- --host 127.0.0.1 --port 5173 --strictPort",
     "devUrl": "http://127.0.0.1:5173",
@@ -43,10 +53,13 @@
           "coreutils",
           "apparmor (>= 4.0)",
           "bubblewrap",
-          "xdg-dbus-proxy"
+          "xdg-dbus-proxy",
+          "packagekit"
         ],
         "files": {
-          "/etc/apparmor.d/programmable-notes": "linux/programmable-notes.apparmor"
+          "/etc/apparmor.d/programmable-notes": "linux/programmable-notes.apparmor",
+          "/usr/share/doc/programmable-notes/NATIVE_THIRD_PARTY_NOTICES.txt": "../.cache/native-notices/NATIVE_THIRD_PARTY_NOTICES.txt",
+          "/usr/share/doc/programmable-notes/native-notices-metadata.json": "../.cache/native-notices/metadata.json"
         },
         "postInstallScript": "linux/post-install.sh",
         "preRemoveScript": "linux/pre-remove.sh"

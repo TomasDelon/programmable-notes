@@ -31,6 +31,12 @@ website is not switched to cloud storage automatically.
 
 ## Original engine and native status
 
+The [Linux local-editor candidate](docs/LINUX_LOCAL_EDITOR.md) adds an authorized
+notes-folder picker, native Settings and signed-update handling. Successful native
+CI produces a checksummed `linux-amd64-testing` download with redistribution
+notices. Installed GUI/update acceptance and signing-channel activation remain
+separate gates; no public release or production security claim is made.
+
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile
 in a browser worker, use JSX/imports/hooks/events in an isolated preview and
 save exact source. Linux adds picker-authorized opening, atomic saving/reopening

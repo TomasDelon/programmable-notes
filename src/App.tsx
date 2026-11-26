@@ -6,8 +6,20 @@ import { enqueueNativeOperation } from './preview/native-operations';
 import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { flushSync } from 'react-dom';
 import { useDocuments } from './documents/useDocuments';
+import { nativeDocuments } from './documents/native';
+import { NativeSettings } from './desktop/NativeSettings';
+import { desktopUpdates } from './desktop/updates';
+import type { RenderedRuntimeContext } from './editor/rendered/RenderedRuntime';
 import { compilerFiles, validateFiles, MAX_FILES } from './documents/workspace';
 import counter from '../docs/handoff/samples/fixtures/counter.mdx?raw';
 import imported from '../docs/handoff/samples/fixtures/widgets/ImportedCounter.tsx?raw';
@@ -20,6 +32,16 @@ import { Preview } from './preview/Preview';
 import { previewDocument } from './preview/document';
 
 let wasm: Promise<WebAssembly.Module> | undefined;
+const NATIVE_LITERAL_PREVIEW: Pick<
+  RenderedRuntimeContext,
+  'stopped' | 'theme' | 'images' | 'corePlugins' | 'showComponentSource'
+> = {
+  stopped: true,
+  theme: 'light',
+  images: [],
+  corePlugins: { react: false },
+  showComponentSource: false,
+};
 function compilerModule() {
   return (wasm ??= WebAssembly.compileStreaming(fetch(wasmURL)).catch(
     (error: unknown) => {
@@ -37,10 +59,52 @@ export function App() {
     pendingVisual,
   );
   const { files, entry, selected, groups } = documents.workspace;
-  const documentActionsBlocked = documents.busy || pendingVisual;
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [updateLock, setUpdateLock] = useState<
+    'installing' | 'installed' | 'unconfirmed' | null
+  >(null);
+  const installingUpdate = updateLock !== null;
+  const restartRequired =
+    updateLock === 'installed' || updateLock === 'unconfirmed';
+  const [sourceComposing, setSourceComposing] = useState(false);
+  const documentActionsBlocked =
+    documents.busy || pendingVisual || installingUpdate;
+  const canInstallUpdate =
+    !documentActionsBlocked && !documents.dirty && !sourceComposing;
+  const updateReadiness = useRef({
+    dirty: documents.dirty,
+    busy: documents.busy,
+    pending: pendingVisual || sourceComposing,
+  });
+  useLayoutEffect(() => {
+    updateReadiness.current = {
+      dirty: documents.dirty,
+      busy: documents.busy,
+      pending: pendingVisual || sourceComposing,
+    };
+  }, [documents.dirty, documents.busy, pendingVisual, sourceComposing]);
+  async function installDesktopUpdate(id: string) {
+    const blocked =
+      'Save all sources and finish pending edits before installing.';
+    if (!canInstallUpdate) throw Error(blocked);
+    // Commit the read-only SourceEditor state before handing native authority to
+    // the updater. A queued editor change must reach the readiness check first.
+    flushSync(() => setUpdateLock('installing'));
+    try {
+      const { dirty, busy, pending } = updateReadiness.current;
+      if (dirty || busy || pending) throw Error(blocked);
+      await nativeDocuments.dirty(dirty, busy);
+      const result = await desktopUpdates.install(id);
+      if (result.state !== 'cancelled') setUpdateLock(result.state);
+      return result;
+    } finally {
+      setUpdateLock((state) => (state === 'installing' ? null : state));
+    }
+  }
   const [mode, setMode] = useState<'source' | 'split' | 'visual'>('split');
   const workspaceMode =
     mode === 'visual' && !isMdxSource(selected) ? 'source' : mode;
+  const nativeLiteral = documents.native && isMdxSource(selected);
   const editorCommands = useRef<EditorCommands>(null);
   const histories = useRef<EditorHistory>(new Map());
   useEffect(() => {
@@ -214,6 +278,7 @@ export function App() {
   return (
     <main
       onKeyDown={(event) => {
+        if (settingsOpen) return;
         const target = event.target as HTMLElement;
         if (
           (event.ctrlKey || event.metaKey) &&
@@ -244,7 +309,37 @@ export function App() {
     >
       <header className="app-header">
         <h1>Programmable Notes</h1>
+        {documents.native && (
+          <div className="native-header-actions">
+            <button
+              type="button"
+              disabled={documentActionsBlocked}
+              onClick={() => void documents.openFolder()}
+            >
+              Open notes folder
+            </button>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => setSettingsOpen(true)}
+            >
+              Settings
+            </button>
+          </div>
+        )}
       </header>
+      {documents.native && (
+        <NativeSettings
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          notesFolder={documents.notesFolder}
+          canOpenFolder={!documentActionsBlocked}
+          onOpenFolder={documents.openFolder}
+          canInstall={canInstallUpdate}
+          restartRequired={restartRequired}
+          onInstall={installDesktopUpdate}
+        />
+      )}
       {documents.native && (
         <p className="native-note" role="note">
           Experimental Linux desktop preview. Native isolation is validated on
@@ -331,6 +426,7 @@ export function App() {
           Close source
         </button>
         <button
+          disabled={installingUpdate}
           onClick={() => {
             stopIntent.current = {};
             setHtml('');
@@ -339,7 +435,7 @@ export function App() {
               setStatus('Stopping preview');
               // A mounted artifact stops through its existing cleanup exactly once.
               // After removal, a new user click is an explicit, serialized retry.
-              if (!html)
+              if (!html || workspaceMode !== 'split')
                 observeNativeStop(
                   enqueueNativeOperation(() => invoke<void>('stop_preview')),
                 );
@@ -349,6 +445,7 @@ export function App() {
           Stop preview
         </button>
         <button
+          disabled={documentActionsBlocked}
           onClick={() => {
             stopIntent.current = undefined;
             setStopped(false);
@@ -364,17 +461,21 @@ export function App() {
           <select
             aria-label="Source file"
             value={selected}
-            disabled={pendingVisual}
+            disabled={pendingVisual || installingUpdate}
             onChange={(e) => documents.select(e.target.value)}
           >
-            {Object.keys(files).map((path, index) => (
-              <option key={path} value={path}>
-                {index + 1}.{' '}
-                {documents.workspace.bindings[path]?.name ||
-                  path.replace(/^opened-\d+\//, '')}
-                {files[path] !== documents.workspace.saved[path] ? ' •' : ''}
-              </option>
-            ))}
+            {Object.keys(files).map((path, index) => {
+              const name = documents.workspace.bindings[path]?.name;
+              const relative = path.replace(/^opened-\d+\//, '');
+              const label =
+                name && !relative.endsWith('/' + name) ? name : relative;
+              return (
+                <option key={path} value={path}>
+                  {index + 1}. {label}
+                  {files[path] !== documents.workspace.saved[path] ? ' •' : ''}
+                </option>
+              );
+            })}
           </select>
         </label>
         <div className="mode-picker" role="group" aria-label="Workspace mode">
@@ -382,7 +483,11 @@ export function App() {
             <button
               key={value}
               aria-pressed={workspaceMode === value}
-              disabled={value === 'visual' && !isMdxSource(selected)}
+              disabled={
+                installingUpdate ||
+                (documents.native && pendingVisual) ||
+                (value === 'visual' && !isMdxSource(selected))
+              }
               onClick={() => setMode(value)}
             >
               {value[0]!.toUpperCase() + value.slice(1)}
@@ -390,8 +495,18 @@ export function App() {
           ))}
         </div>
         <div role="group" aria-label="Edit history">
-          <button onClick={() => editorCommands.current?.undo()}>Undo</button>
-          <button onClick={() => editorCommands.current?.redo()}>Redo</button>
+          <button
+            disabled={documentActionsBlocked}
+            onClick={() => editorCommands.current?.undo()}
+          >
+            Undo
+          </button>
+          <button
+            disabled={documentActionsBlocked}
+            onClick={() => editorCommands.current?.redo()}
+          >
+            Redo
+          </button>
         </div>
       </div>
       <p className="build-status" role="status">
@@ -403,13 +518,19 @@ export function App() {
         </p>
       )}
       <p aria-label="Document status" aria-live="polite">
-        {documents.busy
-          ? 'File operation in progress'
-          : pendingVisual
-            ? 'Unapplied visual edit'
-            : documents.selectedDirty
-              ? 'Unsaved changes'
-              : documents.fileNotice || 'Source unchanged'}
+        {updateLock === 'unconfirmed'
+          ? 'Update result unconfirmed. Check the system installer before reopening.'
+          : restartRequired
+            ? 'Close and reopen Programmable Notes to resume editing.'
+            : installingUpdate
+              ? 'Update in progress. Editing is paused.'
+              : documents.busy
+                ? 'File operation in progress'
+                : pendingVisual
+                  ? 'Unapplied visual edit'
+                  : documents.selectedDirty
+                    ? 'Unsaved changes'
+                    : documents.fileNotice || 'Source unchanged'}
       </p>
       {documents.otherDirtyCount > 0 && (
         <p aria-label="Workspace status" aria-live="polite">
@@ -420,9 +541,15 @@ export function App() {
       )}
       {pendingVisual && (
         <p role="note">
-          Visual text has not been applied. In Visual mode, press Enter to apply
-          or Escape to cancel before saving or changing documents. Apply it to
-          include it in saved source and recovery.
+          {documents.native
+            ? 'Finish the current Visual edit before saving or changing documents.'
+            : 'Visual text has not been applied. In Visual mode, press Enter to apply or Escape to cancel before saving or changing documents. Apply it to include it in saved source and recovery.'}
+        </p>
+      )}
+      {documents.native && workspaceMode === 'visual' && (
+        <p className="native-visual-note">
+          React components run in the separate preview window in Split mode. Use
+          Source to edit their code.
         </p>
       )}
       {documents.fileError && (
@@ -472,7 +599,7 @@ export function App() {
             source={files[selected]!}
             baseline={documents.workspace.saved[selected]}
             displayPath={documents.workspace.bindings[selected]?.displayPath}
-            busy={documents.busy}
+            busy={documents.busy || installingUpdate}
             restore={documents.restoreNativeVersion}
           />
           <p>Legacy single-copy controls (kept for migration):</p>
@@ -505,9 +632,14 @@ export function App() {
           restore={documents.restoreBrowserDraft}
         />
       )}
-      <div className={`workspace mode-${workspaceMode}`}>
+      <div
+        className={`workspace mode-${workspaceMode}`}
+        onCompositionStartCapture={() => setSourceComposing(true)}
+        onCompositionEndCapture={() => setSourceComposing(false)}
+      >
         <SourceEditor
-          busy={documents.busy}
+          busy={documents.busy || installingUpdate}
+          readOnly={installingUpdate}
           onPendingChange={setPendingVisual}
           onShowSource={(offset, snapshot) => {
             if (documentActionsBlocked || files[selected] !== snapshot) return;
@@ -519,7 +651,38 @@ export function App() {
             setMode('source');
             setNavigation((value) => value + 1);
           }}
-          visual={workspaceMode === 'visual'}
+          visual={workspaceMode === 'visual' && !documents.native}
+          rendered={
+            nativeLiteral
+              ? {
+                  ...NATIVE_LITERAL_PREVIEW,
+                  active: workspaceMode === 'visual',
+                  files,
+                  entry: selected,
+                }
+              : undefined
+          }
+          sourceIsCurrent={
+            nativeLiteral
+              ? (source) => documents.isCurrentSource(selected, source)
+              : undefined
+          }
+          onRetainAttempt={
+            nativeLiteral
+              ? (base, source) =>
+                  documents.retainVisualAttempt(selected, base, source)
+              : undefined
+          }
+          onKeepAttempt={
+            nativeLiteral
+              ? () => documents.resolveVisualAttempt(selected, false)
+              : undefined
+          }
+          onDiscardAttempt={
+            nativeLiteral
+              ? () => documents.resolveVisualAttempt(selected, true)
+              : undefined
+          }
           commandsRef={editorCommands}
           key={selected}
           documentKey={selected}
@@ -531,11 +694,13 @@ export function App() {
           <div className="pane-title">Live React preview</div>
           {html &&
             (isTauri() ? (
-              <NativePreview
-                html={html}
-                onError={setError}
-                onStop={observeNativeStop}
-              />
+              workspaceMode === 'split' && (
+                <NativePreview
+                  html={html}
+                  onError={setError}
+                  onStop={observeNativeStop}
+                />
+              )
             ) : (
               <Preview html={html} onError={setError} />
             ))}

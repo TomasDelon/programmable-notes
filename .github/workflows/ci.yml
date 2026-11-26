@@ -137,6 +137,9 @@ jobs:
     timeout-minutes: 45
     env:
       CARGO_BUILD_JOBS: 2
+      # Public key only, never the private signing key. An absent value leaves
+      # the testing channel disabled; no fixture key is accepted by the app.
+      PN_UPDATE_PUBLIC_KEY: ${{ secrets.PN_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -148,7 +151,20 @@ jobs:
         run: npm install --global npm@11.9.0
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
+          toolchain: 1.100.0
           components: rustfmt
+      - name: Reuse native build dependencies within the default cache allowance
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            src-tauri/target
+            native-documents/target
+            native-policy/target
+            native-updates/target
+          key: ${{ runner.os }}-${{ runner.arch }}-native-${{ hashFiles('rust-toolchain.toml', 'src-tauri/Cargo.lock', 'native-documents/Cargo.lock', 'native-policy/Cargo.lock', 'native-updates/Cargo.lock') }}
       - name: Install native dependencies with bounded network retries
         shell: bash
         run: |
@@ -160,12 +176,14 @@ jobs:
       - run: npm run native:wry:verify
       - run: npm run native:package
       - name: Inspect production package (does not claim runtime validation)
-        run: node scripts/verify-linux-package.mjs "src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb"
+        run: node scripts/verify-linux-package.mjs
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
       - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
       - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - run: cargo fmt --manifest-path native-updates/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-updates/Cargo.toml --locked
       - name: Verify recovery and original Save under real ENOSPC on a disposable tmpfs
         shell: bash
         run: |
@@ -204,8 +222,14 @@ jobs:
           grep -F 'INJECTED_SYNC_ERROR_PASS stage=publication ' /tmp/recovery-sync-errors.log
           grep -F 'INJECTED_SYNC_ERROR_PASS stage=retention ' /tmp/recovery-sync-errors.log
       - run: cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol,security-test --locked
-      # Native installers remain local to this job until their complete native
-      # redistribution notice inventory is implemented. Build/inspection stay mandatory.
+      - name: Prepare inspected Linux testing download with native notices
+        run: node scripts/package-linux-testing.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-amd64-testing
+          path: .cache/linux-testing/**
+          if-no-files-found: error
+          retention-days: 7
 
   deployment-check:
     if: github.event_name == 'workflow_dispatch' && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''

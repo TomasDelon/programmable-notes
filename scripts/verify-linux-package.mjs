@@ -6,14 +6,18 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import process from 'node:process';
-const pkg = resolve(process.argv[2] || '');
-assert.ok(process.argv[2], 'Pass the produced .deb path');
+const config = JSON.parse(await readFile('src-tauri/tauri.conf.json', 'utf8'));
+const pkg = resolve(
+  process.argv[2] ||
+    `src-tauri/target/release/bundle/deb/${config.productName}_${config.version}_amd64.deb`,
+);
 const temp = await mkdtemp(join(tmpdir(), 'pn-deb-audit-'));
 const dpkg = (...args) =>
   execFileSync('dpkg-deb', args, { encoding: 'utf8' }).trim();
 try {
   assert.equal(dpkg('--field', pkg, 'Package'), 'programmable-notes');
   assert.equal(dpkg('--field', pkg, 'Architecture'), 'amd64');
+  assert.equal(dpkg('--field', pkg, 'Version'), config.version);
   const dependencies = dpkg('--field', pkg, 'Depends');
   for (const dep of [
     'libwebkit2gtk-4.1-0',
@@ -22,6 +26,7 @@ try {
     'apparmor',
     'bubblewrap',
     'xdg-dbus-proxy',
+    'packagekit',
   ])
     assert.ok(dependencies.includes(dep), `Missing dependency ${dep}`);
   dpkg('--extract', pkg, temp);
@@ -45,6 +50,32 @@ try {
   );
   assert.ok(profile.includes('/usr/bin/programmable-notes'));
   assert.ok(profile.includes('userns,'));
+  const notices = await readFile(
+    join(
+      temp,
+      'usr/share/doc/programmable-notes/NATIVE_THIRD_PARTY_NOTICES.txt',
+    ),
+  );
+  const metadata = JSON.parse(
+    await readFile(
+      join(
+        temp,
+        'usr/share/doc/programmable-notes/native-notices-metadata.json',
+      ),
+      'utf8',
+    ),
+  );
+  assert.equal(
+    metadata.verified,
+    true,
+    'Native notice inventory was not verified',
+  );
+  assert.ok(metadata.packages.length > 0, 'Missing native notice inventory');
+  assert.equal(
+    createHash('sha256').update(notices).digest('hex'),
+    metadata.noticeSha256,
+    'Native notice text checksum differs',
+  );
   const install = await readFile(join(temp, 'CONTROL/postinst'), 'utf8');
   assert.ok(
     install.includes('apparmor_parser -r /etc/apparmor.d/programmable-notes'),

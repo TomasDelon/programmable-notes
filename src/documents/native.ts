@@ -23,6 +23,7 @@ export const nativeDocuments = {
   draft: (action: 'keep' | 'restore' | 'delete', source?: string) =>
     invoke<string | null>('recovery_draft', { action, source }),
   open: () => invoke<NativeDocument[]>('open_documents'),
+  openFolder: () => invoke<NativeDocument[]>('open_notes_folder'),
   save: (id: string, revision: string, source: string) =>
     invoke<{ revision: string; durable: boolean }>('save_document', {
       id,

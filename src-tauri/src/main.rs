@@ -5,9 +5,10 @@ mod downloads;
 mod preview_failure;
 #[cfg(target_os = "linux")]
 mod renderer_failure;
+mod updates;
 use documents::{
-    close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
-    save_document, save_document_as, set_documents_dirty,
+    close_document, confirm_discard, open_documents, open_notes_folder, recovery_draft,
+    reopen_document, save_document, save_document_as, set_documents_dirty,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -40,11 +41,18 @@ async fn start_preview(
     }
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
     let supervisor = state.supervisor.clone();
+    let app = window.app_handle().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        supervisor
+        let mut supervisor = supervisor
             .lock()
-            .map_err(|_| "Supervisor poisoned".to_string())?
-            .start(&executable, &html)
+            .map_err(|_| "Supervisor poisoned".to_string())?;
+        if app
+            .try_state::<updates::Updates>()
+            .is_some_and(|updates| updates.installing.load(std::sync::atomic::Ordering::SeqCst))
+        {
+            return Err("Preview cannot start while an update is installing".into());
+        }
+        supervisor.start(&executable, &html)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -125,23 +133,28 @@ fn main() {
             child,
             supervisor: std::sync::Arc::new(Mutex::new(Supervisor::default())),
         })
+        .manage(updates::Updates::default())
         .invoke_handler(tauri::generate_handler![
             start_preview,
             stop_preview,
             preview_connection_active,
             host_probe,
             open_documents,
+            open_notes_folder,
             save_document,
             save_document_as,
             reopen_document,
             close_document,
             confirm_discard,
             set_documents_dirty,
-            recovery_draft
+            recovery_draft,
+            updates::desktop_update_check,
+            updates::desktop_update_install
         ]);
     if !child {
         builder = builder
             .plugin(tauri_plugin_dialog::init())
+            .plugin(updates::plugin())
             .manage(std::sync::Arc::new(documents::Documents::default()))
             .on_window_event(documents::close_requested);
     }

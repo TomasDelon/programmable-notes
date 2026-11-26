@@ -10,12 +10,15 @@
     "allow-preview-connection-active",
     "allow-host-probe",
     "allow-open-documents",
+    "allow-open-notes-folder",
     "allow-save-document",
     "allow-save-document-as",
     "allow-reopen-document",
     "allow-close-document",
     "allow-confirm-discard",
     "allow-set-documents-dirty",
-    "allow-recovery-draft"
+    "allow-recovery-draft",
+    "allow-desktop-update-check",
+    "allow-desktop-update-install"
   ]
 }
