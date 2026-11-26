@@ -6,6 +6,11 @@ prepares an **experimental web beta**, not production security certification or
 a native installer. The current browser interface is at `/`; Linux still selects
 the older `/engine` interface.
 
+This guide describes the default browser-backed build. For the optional private
+backend, authentication, database provisioning and migration, use
+[Private cloud storage](PRIVATE_CLOUD_STORAGE.md). Do not enable the cloud build
+before its separate deployment acceptance and browser-backup migration.
+
 ## Data and security boundaries
 
 - Notes and attachments stay in this browser profile's IndexedDB, identified by
@@ -144,8 +149,10 @@ Mutable entry points/service workers revalidate; content-hashed assets are
 immutable. The host CSP deliberately avoids `script-src`/`default-src` rules
 that would break the inherited `srcdoc` policy; the preview retains its
 independent hash CSP and restrictions. Do not add a zone cache rule or script
-rewriter that overrides these responses. No Pages Functions, Workers backend,
-analytics, database, tunnel or billing commitment is introduced.
+rewriter that overrides these responses. The default build keeps browser storage;
+optional storage Functions deny requests without their complete private backend
+configuration. Generated `_routes.json` limits invocation to the storage API.
+Analytics, tunnels and billing commitments are not part of this setup.
 
 Local emulation cannot prove Pages routing, edge headers, account build quotas,
 DNS/TLS, a particular browser's storage retention or production security

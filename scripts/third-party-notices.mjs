@@ -11,9 +11,45 @@ import { pathToFileURL } from 'node:url';
 import process from 'node:process';
 import { createHash } from 'node:crypto';
 
+const workersRevision = '4dff55a55a5d801c2cd5cd5321eb3272092ccdb7';
+const workersLicense = (kind, sha256) => ({
+  sidecar: `licenses/WORKERS_SDK_LICENSE_${kind}.txt`,
+  sha256,
+  source: `https://github.com/cloudflare/workers-sdk/blob/${workersRevision}/LICENSE-${kind}`,
+});
+const workersMit = workersLicense(
+  'MIT',
+  '9bb3b077cc8628334bab25961223dd8207252c8a56aa054195be38f1c042aaf4',
+);
+const workersApache = workersLicense(
+  'APACHE',
+  '62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a',
+);
+const mathLicense = (revision) => ({
+  license: 'MIT',
+  texts: [
+    {
+      sidecar: 'licenses/REMARK_MATH_LICENSE.txt',
+      sha256:
+        'cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9',
+      source: `https://github.com/remarkjs/remark-math/blob/${revision}/license`,
+    },
+  ],
+});
 const missingPackageLicenses = new Map([
-  ['remark-math@6.0.0', 'd5d0660b150810a535bbb07eac6cc96a4510aa24'],
-  ['rehype-katex@7.0.1', '88a9497e1ede93b958237c85edbf5651faeca7af'],
+  [
+    'remark-math@6.0.0',
+    mathLicense('d5d0660b150810a535bbb07eac6cc96a4510aa24'),
+  ],
+  [
+    'rehype-katex@7.0.1',
+    mathLicense('88a9497e1ede93b958237c85edbf5651faeca7af'),
+  ],
+  [
+    'wrangler@4.168.0',
+    { license: 'MIT OR Apache-2.0', texts: [workersMit, workersApache] },
+  ],
+  ['miniflare@5.20261123.1-beta', { license: 'MIT', texts: [workersMit] }],
 ]);
 
 export async function packageNotice(directory, expectedVersion, projectRoot) {
@@ -28,32 +64,34 @@ export async function packageNotice(directory, expectedVersion, projectRoot) {
     .sort();
   const texts = [];
   if (!names.length) {
-    // These exact upstream tarballs omit the monorepo's root license. Preserve
-    // the text from each release's registry gitHead, never infer a license.
-    const revision = missingPackageLicenses.get(
+    // Exact tarballs omit their monorepo's root texts. Math provenance uses
+    // registry gitHead; Workers SDK uses registry provenance plus release tags
+    // because gitHead is absent. See licenses/WORKERS_SDK_LICENSE_PROVENANCE.json.
+    const exception = missingPackageLicenses.get(
       `${manifest.name}@${manifest.version}`,
     );
-    if (!projectRoot || !revision)
+    if (!projectRoot || !exception)
       throw Error('Missing upstream license text: ' + manifest.name);
-    const project = await realpath(projectRoot);
-    const sidecar = await realpath(
-      resolve(project, 'licenses/REMARK_MATH_LICENSE.txt'),
-    );
-    const inside = relative(project, sidecar);
-    if (inside.startsWith('..') || isAbsolute(inside))
-      throw Error('Upstream license sidecar escapes project');
-    const bytes = await readFile(sidecar);
-    if (
-      createHash('sha256').update(bytes).digest('hex') !==
-      'cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9'
-    )
+    if (manifest.license !== exception.license)
       throw Error(
-        'Upstream math license sidecar changed; verify release provenance',
+        'Upstream license declaration changed; verify release provenance',
       );
-    texts.push({
-      name: `Upstream LICENSE: https://github.com/remarkjs/remark-math/blob/${revision}/license`,
-      text: new TextDecoder('utf-8', { fatal: true }).decode(bytes),
-    });
+    const project = await realpath(projectRoot);
+    for (const file of exception.texts) {
+      const sidecar = await realpath(resolve(project, file.sidecar));
+      const inside = relative(project, sidecar);
+      if (inside.startsWith('..') || isAbsolute(inside))
+        throw Error('Upstream license sidecar escapes project');
+      const bytes = await readFile(sidecar);
+      if (createHash('sha256').update(bytes).digest('hex') !== file.sha256)
+        throw Error(
+          'Upstream license sidecar changed; verify release provenance',
+        );
+      texts.push({
+        name: `Upstream LICENSE: ${file.source}`,
+        text: new TextDecoder('utf-8', { fatal: true }).decode(bytes),
+      });
+    }
   }
   for (const name of names) {
     const path = await realpath(resolve(root, name));

@@ -37,6 +37,7 @@ import {
   type WebState,
 } from './workspace';
 import {
+  cloudStorageEnabled,
   deleteRetainedAttempt,
   readRetainedAttempts,
   type RetainedAttempt,
@@ -48,8 +49,9 @@ import {
   readWorkspace,
   readWorkspaceRevision,
   WorkspaceConflictError,
+  workspaceAutosaveDelay,
   writeWorkspace,
-} from './persistence';
+} from './storage';
 
 export type SaveStatus = 'loading' | 'saving' | 'saved' | 'error' | 'conflict';
 
@@ -93,6 +95,8 @@ function retainView(content: WebState, view: WebState): WebState {
 }
 
 function errorMessage(error: unknown): string {
+  if (cloudStorageEnabled && error instanceof WorkspaceConflictError)
+    return 'This workspace was saved elsewhere. Your edits remain in this tab. Export a backup before reloading.';
   if (error instanceof DOMException && error.name === 'QuotaExceededError') {
     return 'This browser has no storage space available. Your previous saved workspace is intact and your edits remain here. Export a backup before closing this tab.';
   }
@@ -124,14 +128,16 @@ async function downloadBackup(state: WebState): Promise<string> {
   anchor.download = `programmable-notes-${new Date().toISOString().slice(0, 10)}${recoveryIncluded ? '' : '-rescue'}.json`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
-  return recoveryIncluded
-    ? 'Backup exported with current notes, attachments, Trash and recovery history.'
-    : 'Rescue backup exported with all current notes, metadata, Trash and attachments. Browser recovery history could not be read and is not included. Keep this file before closing the tab.';
+  if (recoveryIncluded)
+    return 'Backup exported with current notes, attachments, Trash and recovery history.';
+  const storage = cloudStorageEnabled ? 'Cloud' : 'Browser';
+  return `Rescue backup exported with all current notes, metadata, Trash and attachments. ${storage} recovery history could not be read and is not included. Keep this file before closing the tab.`;
 }
 
 export function useWebWorkspace() {
   const [state, setState] = useState<WebState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cloudWorkspaceEmpty, setCloudWorkspaceEmpty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading');
   const [error, setError] = useState('');
   const [backupNotice, setBackupNotice] = useState('');
@@ -337,7 +343,10 @@ export function useWebWorkspace() {
     workspaceEpoch.current++;
     const token = ++loadSequence.current;
     const startingGeneration = generation.current;
-    if (mounted.current) setLoading(true);
+    if (mounted.current) {
+      setLoading(true);
+      setCloudWorkspaceEmpty(false);
+    }
     try {
       const stored = await readWorkspace();
       if (!mounted.current || token !== loadSequence.current) return;
@@ -345,6 +354,18 @@ export function useWebWorkspace() {
         throw new Error(
           'The workspace changed while reloading. Your newer edits were retained. Save or export them before trying again.',
         );
+      }
+      if (cloudStorageEnabled && !stored) {
+        current.current = null;
+        savedState.current = null;
+        revision.current = 0;
+        conflicting.current = false;
+        setConflict(false);
+        setState(null);
+        setError('');
+        setSaveStatus('loading');
+        setCloudWorkspaceEmpty(true);
+        return;
       }
       const next = stored
         ? retainView(stored.state, stored.state)
@@ -362,18 +383,54 @@ export function useWebWorkspace() {
       setState(next);
       setError('');
       setSaveStatus(stored ? 'saved' : 'saving');
-      void navigator.storage
-        ?.persisted?.()
-        .then((persisted) => {
-          if (mounted.current) setPersistentStorage(persisted);
-        })
-        .catch(() => {});
+      if (!cloudStorageEnabled)
+        void navigator.storage
+          ?.persisted?.()
+          .then((persisted) => {
+            if (mounted.current) setPersistentStorage(persisted);
+          })
+          .catch(() => {});
     } catch (reason) {
       if (token === loadSequence.current) report(reason);
     } finally {
       if (mounted.current && token === loadSequence.current) setLoading(false);
     }
   }, [report]);
+
+  const createCloudWorkspace = useCallback(async () => {
+    if (
+      !cloudStorageEnabled ||
+      !cloudWorkspaceEmpty ||
+      current.current ||
+      operationBusy.current
+    )
+      return;
+    operationBusy.current = true;
+    setLoading(true);
+    try {
+      const next = createWebState(Date.now(), 'cloud');
+      // Revision zero is the explicit initialization grant. A competing device
+      // creating notes in the meantime must cause a conflict, never replacement.
+      const stored = await writeWorkspace(next, 0);
+      if (!mounted.current) return;
+      workspaceEpoch.current++;
+      current.current = next;
+      savedState.current = stored.state;
+      revision.current = stored.revision;
+      savedGeneration.current = ++generation.current;
+      conflicting.current = false;
+      setConflict(false);
+      setState(next);
+      setCloudWorkspaceEmpty(false);
+      setError('');
+      setSaveStatus('saved');
+    } catch (reason) {
+      report(reason);
+    } finally {
+      operationBusy.current = false;
+      if (mounted.current) setLoading(false);
+    }
+  }, [cloudWorkspaceEmpty, report]);
 
   useEffect(() => {
     mounted.current = true;
@@ -449,7 +506,7 @@ export function useWebWorkspace() {
 
   useEffect(() => {
     if (!state || loading || conflict || saveStatus === 'error') return;
-    const timer = setTimeout(() => void persist(), 250);
+    const timer = setTimeout(() => void persist(), workspaceAutosaveDelay);
     return () => clearTimeout(timer);
   }, [state, loading, conflict, saveStatus, persist]);
 
@@ -514,7 +571,11 @@ export function useWebWorkspace() {
     // Persistent-storage permission is an optional preference, not a write.
     // Some browsers leave this promise pending while waiting for a user prompt.
     // Deduplicate that request without holding Save or app updates open.
-    if (navigator.storage?.persist && !storagePermission.current) {
+    if (
+      !cloudStorageEnabled &&
+      navigator.storage?.persist &&
+      !storagePermission.current
+    ) {
       try {
         const request = navigator.storage
           .persist()
@@ -619,8 +680,22 @@ export function useWebWorkspace() {
     // Historical backups can contain a note selection with another note's
     // preview entry. Normalize navigation only; retain every source byte.
     next = retainView(next, next);
+    const hadWorkspace = current.current !== null;
     await persist();
     if (operationBusy.current) return;
+    if (
+      hadWorkspace &&
+      (conflicting.current || savedGeneration.current < generation.current)
+    )
+      return;
+    if (pendingEditorDraft.current) {
+      report(
+        new Error(
+          'Finish or retain the editor draft before restoring a backup. The workspace was not replaced.',
+        ),
+      );
+      return;
+    }
     operationBusy.current = true;
     workspaceEpoch.current++;
     if (mounted.current) {
@@ -628,7 +703,13 @@ export function useWebWorkspace() {
       setSaveStatus('saving');
     }
     try {
-      const expectedRevision = await readWorkspaceRevision();
+      // Confirmation reviewed this tab's acknowledged state, not a later unseen
+      // device's content. Only explicit damaged-browser recovery has no baseline.
+      const expectedRevision = hadWorkspace
+        ? revision.current
+        : cloudStorageEnabled
+          ? 0
+          : await readWorkspaceRevision();
       const stored = await writeWorkspace(
         next,
         expectedRevision,
@@ -646,6 +727,7 @@ export function useWebWorkspace() {
       setConflict(false);
       setError('');
       setState(next);
+      setCloudWorkspaceEmpty(false);
       setSaveStatus('saved');
     } catch (reason) {
       report(reason);
@@ -836,6 +918,8 @@ export function useWebWorkspace() {
 
   return {
     state,
+    cloudWorkspaceEmpty,
+    createCloudWorkspace,
     loading,
     saveStatus,
     error,

@@ -464,9 +464,16 @@ export function validateWebState(value: unknown): WebState {
   return value as unknown as WebState;
 }
 
-export function createWebState(now = Date.now()): WebState {
+export function createWebState(
+  now = Date.now(),
+  storage: 'browser' | 'cloud' = 'browser',
+): WebState {
+  const storageNotice =
+    storage === 'cloud'
+      ? 'Your workspace saves automatically to your private cloud. Keep independent backups.'
+      : 'Your workspace saves automatically in this browser. It is not synchronized between devices.';
   const files = {
-    'welcome/Welcome.mdx': `Your notes, with room to think.\n\nWrite Markdown, add mathematics, or turn an idea into a small React experiment.\n\n## Start here\n\n- Write directly in **Preview**, or use **Source** for the original text.\n- Create a note from the left sidebar.\n- Use the command palette with **Ctrl/Cmd + K**.\n- Export a workspace backup from Settings to keep an independent copy.\n\nYour workspace saves automatically in this browser. It is not synchronized between devices.\n\n## A little mathematics\n\nFor a differentiable function $f$, the derivative measures local change:\n\n$$\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\n$$\n\nOpen **React playground** for a live, editable example.\n`,
+    'welcome/Welcome.mdx': `Your notes, with room to think.\n\nWrite Markdown, add mathematics, or turn an idea into a small React experiment.\n\n## Start here\n\n- Write directly in **Preview**, or use **Source** for the original text.\n- Create a note from the left sidebar.\n- Use the command palette with **Ctrl/Cmd + K**.\n- Export a workspace backup from Settings to keep an independent copy.\n\n${storageNotice}\n\n## A little mathematics\n\nFor a differentiable function $f$, the derivative measures local change:\n\n$$\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\n$$\n\nOpen **React playground** for a live, editable example.\n`,
     'playground/React-playground.mdx': `import { useState } from 'react'\n\nexport function Counter() {\n  const [count, setCount] = useState(0)\n  return (\n    <div style={{display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0'}}>\n      <button onClick={() => setCount(count - 1)} aria-label="Decrease count">−</button>\n      <strong style={{minWidth: 32, textAlign: 'center'}}>{count}</strong>\n      <button onClick={() => setCount(count + 1)} aria-label="Increase count">+</button>\n    </div>\n  )\n}\n\nA small component, right inside your note. The buttons below are live.\n\n<Counter />\n\nSwitch to **Source** to change the component. Changing the component code rebuilds it and resets its temporary state. Ordinary Markdown edits preserve unchanged components.\n\nReact and local JavaScript/TypeScript modules are available. Import related files together to preserve their relative paths.\n`,
   };
   const keys = Object.keys(files);

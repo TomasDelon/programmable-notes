@@ -9,3 +9,5 @@ src-tauri/vendor/** -text whitespace=-trailing-space,-blank-at-eof
 /licenses/ESBUILD_WASM_GO_NOTICES.txt -text
 /licenses/REMARK_MATH_LICENSE.txt -text
 /docs/security-evidence/**/raw/** -text
+/licenses/WORKERS_SDK_LICENSE_MIT.txt -text
+/licenses/WORKERS_SDK_LICENSE_APACHE.txt -text

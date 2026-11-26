@@ -59,6 +59,7 @@ import {
 import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
+import { cloudStorageEnabled } from './storage';
 import { useWebPreview } from './useWebPreview';
 import { shouldCompileWholeDocument } from './previewExecution';
 import { WebPreview } from './WebPreview';
@@ -209,15 +210,53 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
   const [historyError, setHistoryError] = useState('');
   return (
     <div className="web-loading web-storage-failure">
-      <AlertCircle size={26} />
-      <h1>Your workspace could not open</h1>
-      <p role="alert">{model.error || 'Browser storage is unavailable.'}</p>
+      {model.cloudWorkspaceEmpty ? (
+        <HardDrive size={26} />
+      ) : (
+        <AlertCircle size={26} />
+      )}
+      <h1>
+        {model.cloudWorkspaceEmpty
+          ? 'Your private workspace is empty'
+          : 'Your workspace could not open'}
+      </h1>
+      {(!model.cloudWorkspaceEmpty || model.error) && (
+        <p role="alert">
+          {model.error ||
+            (cloudStorageEnabled
+              ? 'Cloud storage is unavailable.'
+              : 'Browser storage is unavailable.')}
+        </p>
+      )}
       <p>
-        Retry, restore a workspace backup, or check recovery history. Use a
-        regular browser window with site storage enabled.
+        {model.cloudWorkspaceEmpty
+          ? 'Create a workspace, or restore a backup exported from your browser. Nothing is uploaded until you choose.'
+          : cloudStorageEnabled
+            ? 'Check your connection and sign-in, then try again. Keep any existing backups.'
+            : 'Retry, restore a workspace backup, or check recovery history. Use a regular browser window with site storage enabled.'}
       </p>
       <RetainedEdits attempts={model.attempts} error={model.attemptError} />
       <div className="web-inline-actions">
+        {cloudStorageEnabled && (
+          <a
+            className="web-button"
+            href="/api/storage/session"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Sign in
+          </a>
+        )}
+        {model.cloudWorkspaceEmpty && (
+          <button
+            className="web-button"
+            type="button"
+            disabled={busy}
+            onClick={() => void model.createCloudWorkspace()}
+          >
+            Create workspace
+          </button>
+        )}
         <button
           className="web-button"
           type="button"
@@ -498,9 +537,13 @@ function WorkspaceApp({
         {
           loading: 'Opening workspace',
           saving: 'Saving…',
-          saved: 'Saved in this browser',
+          saved: cloudStorageEnabled
+            ? 'Saved to cloud'
+            : 'Saved in this browser',
           error: 'Not saved',
-          conflict: 'Another tab changed this workspace',
+          conflict: cloudStorageEnabled
+            ? 'This workspace was saved elsewhere'
+            : 'Another tab changed this workspace',
         } as const
       )[model.saveStatus];
 
@@ -803,6 +846,7 @@ function WorkspaceApp({
     }
   };
   const requestPersistentStorage = async () => {
+    if (cloudStorageEnabled) return;
     try {
       const granted = await navigator.storage?.persist?.();
       setPersistentStatus(
@@ -1263,7 +1307,9 @@ function WorkspaceApp({
       : []),
     {
       name: 'Save workspace',
-      description: 'Save all changes in this browser',
+      description: cloudStorageEnabled
+        ? 'Save all changes to cloud storage'
+        : 'Save all changes in this browser',
       icon: Save,
       actionId: 'save',
     },
@@ -1426,10 +1472,26 @@ function WorkspaceApp({
         persistent: true,
         dismissible: false,
         message: model.conflict
-          ? 'This workspace changed in another tab.'
+          ? cloudStorageEnabled
+            ? 'This workspace was saved elsewhere.'
+            : 'This workspace changed in another tab.'
           : model.error,
         detail: model.conflict ? model.error : undefined,
         actions: [
+          ...(cloudStorageEnabled && !model.conflict
+            ? [
+                {
+                  label: 'Sign in',
+                  run: () => {
+                    window.open(
+                      '/api/storage/session',
+                      '_blank',
+                      'noopener,noreferrer',
+                    );
+                  },
+                },
+              ]
+            : []),
           {
             label: 'Export current backup',
             run: () => latestActions.current.model.exportBackup(),
@@ -2003,7 +2065,11 @@ function WorkspaceApp({
               </span>
               <span className="left-panel-account-label">
                 <strong>Personal workspace</strong>
-                <small>Stored in this browser</small>
+                <small>
+                  {cloudStorageEnabled
+                    ? 'Private cloud storage'
+                    : 'Stored in this browser'}
+                </small>
               </span>
               <ChevronDown size={14} />
             </button>
@@ -2530,31 +2596,41 @@ function WorkspaceApp({
                     {activeKeys.length} documents · {trashKeys.length} in Trash
                   </p>
                   <p>
-                    Notes save automatically in this browser on this device.
-                    There is no account or cloud sync. Clearing site data
-                    removes the local workspace.
+                    {cloudStorageEnabled
+                      ? 'Notes autosave to your private cloud workspace. A connection and sign-in are required to open and save notes. To move notes from a browser workspace, export a backup there and restore it here.'
+                      : 'Notes save automatically in this browser on this device. There is no account or cloud sync. Clearing site data removes the local workspace.'}
                   </p>
                   <p className="web-storage-state">
                     <Check size={15} />
                     {saveLabel}
                   </p>
-                  <button
-                    type="button"
-                    className="web-button"
-                    onClick={() => void requestPersistentStorage()}
-                  >
-                    <HardDrive size={15} /> Protect browser storage
-                  </button>
-                  {persistentStatus && <p role="status">{persistentStatus}</p>}
+                  {!cloudStorageEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="web-button"
+                        onClick={() => void requestPersistentStorage()}
+                      >
+                        <HardDrive size={15} /> Protect browser storage
+                      </button>
+                      {persistentStatus && (
+                        <p role="status">{persistentStatus}</p>
+                      )}
+                    </>
+                  )}
                 </section>
                 <section>
                   <h3>Web app</h3>
                   <p>
-                    {offline.ready
+                    {cloudStorageEnabled
                       ? offline.online
-                        ? 'Ready to open offline on this device.'
-                        : 'Working offline. Your notes still save in this browser.'
-                      : offline.error || 'Preparing offline access…'}
+                        ? 'Cloud notes need a connection even when the app is installed.'
+                        : 'You are offline. Keep this tab open or export a backup to keep unsaved edits.'
+                      : offline.ready
+                        ? offline.online
+                          ? 'Ready to open offline on this device.'
+                          : 'Working offline. Your notes still save in this browser.'
+                        : offline.error || 'Preparing offline access…'}
                   </p>
                   {offline.updateAvailable && (
                     <button
@@ -2585,7 +2661,9 @@ function WorkspaceApp({
                   <p>
                     Export a backup regularly. A workspace backup includes all
                     sources, folders, Recent shortcuts, settings, and Trash.
-                    Keep it somewhere outside this browser.
+                    {cloudStorageEnabled
+                      ? ' Keep a copy outside cloud storage.'
+                      : ' Keep it somewhere outside this browser.'}
                   </p>
                   <div className="web-inline-actions">
                     <button
@@ -2729,6 +2807,13 @@ function WorkspaceApp({
                     TypeScript imports work when related files are imported
                     together.
                   </p>
+                  {cloudStorageEnabled && (
+                    <p>
+                      Cloud saves finish when the server confirms them. If
+                      saving fails, keep this tab open or export a backup to
+                      keep your edits.
+                    </p>
+                  )}
                   <p>
                     Document React cannot access your workspace storage or the
                     network. Remote images and arbitrary npm imports are

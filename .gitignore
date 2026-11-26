@@ -29,6 +29,9 @@ id_rsa
 id_ed25519
 credentials.json
 service-account*.json
+.dev.vars
+.dev.vars.*
+.wrangler/
 gitleaks-report.*
 public-audit/
 

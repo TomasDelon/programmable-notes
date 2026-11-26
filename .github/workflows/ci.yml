@@ -100,7 +100,10 @@ jobs:
           fi
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
-      - run: npm run check
+      - name: Check editor, storage and local Cloudflare runtime
+        # Includes real local workerd/D1 and authenticated browser acceptance.
+        # Synthetic identity verifies the JWT path; no account secrets or paid services.
+        run: npm run check
       - name: Capture the browser walkthrough
         if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
         run: |

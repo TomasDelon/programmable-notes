@@ -23,6 +23,12 @@ To try the browser app at a permanent HTTPS address, follow the
 [Cloudflare Pages setup guide](docs/CLOUDFLARE_PAGES.md). Static hosting is included;
 no personal server is needed. Hosting does not synchronize notes between browsers.
 
+An optional [private cloud storage build](docs/PRIVATE_CLOUD_STORAGE.md) adds
+authenticated Pages Functions and D1, server-confirmed autosave, revision checks
+and recovery. It has local runtime/browser tests; account provisioning, real
+Access login and hosted Free-quota acceptance are still pending. The existing
+website is not switched to cloud storage automatically.
+
 ## Original engine and native status
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile

@@ -63,7 +63,7 @@ after(async () => {
   if (server?.listening) await server[Symbol.asyncDispose]();
 });
 
-function navigation(cached) {
+function navigation(cached, pathname = '/') {
   let handler;
   runInNewContext(worker, {
     URL,
@@ -86,13 +86,25 @@ function navigation(cached) {
   });
   let result;
   handler({
-    request: { method: 'GET', url: origin + '/', mode: 'navigate' },
+    request: { method: 'GET', url: origin + pathname, mode: 'navigate' },
     respondWith(promise) {
       result = promise;
     },
   });
   return result;
 }
+
+test('private API and Access login navigation always go to the network', () => {
+  for (const pathname of [
+    '/api/storage',
+    '/api/storage/head',
+    '/api/storage/chunks/a',
+    '/cdn-cgi/access/login',
+    '/cdn-cgi/access/logout',
+  ]) {
+    assert.equal(navigation(new Response('cached app'), pathname), undefined);
+  }
+});
 
 for (const encoding of ['gzip', 'identity']) {
   test(

@@ -14,7 +14,7 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 - Install with `npm ci`. Keep exact versions and commit `package-lock.json` when intentionally changing dependencies.
 - `.npmrc` puts npm's cache in ignored `.cache/npm`. Keep generated output, browser artifacts, credentials, and local environment files out of commits.
 - Prefer Playwright's matching downloaded browser for final browser gates, as CI does. If cached in the cloud, set `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` and unset `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. The preinstalled `/usr/bin/chromium` remains available for separately recorded system-browser smoke tests by setting that executable variable; do not silently conflate different browser versions or discard their failures. If installing matching browsers, set the browser-cache path before installation and tests; the required download domains must be active. Never disable browser isolation to work around unavailable infrastructure.
-- No application secrets, backend, or database are required for this scaffold.
+- Default browser development needs no application secrets or remote database. Optional private cloud storage uses Pages Functions and D1; read `docs/PRIVATE_CLOUD_STORAGE.md`. Local acceptance uses disposable workerd/D1 and synthetic identity, never production credentials. Only free plans are authorized; do not activate paid services or R2.
 
 ## Public repository privacy
 

@@ -42,7 +42,11 @@ const server = await preview({
             response.end();
             return;
           }
-          if (pathname === '/_headers' || pathname === '/_redirects') {
+          if (
+            pathname === '/_headers' ||
+            pathname === '/_redirects' ||
+            pathname === '/_routes.json'
+          ) {
             response.statusCode = 404;
             response.end('Not found');
             return;
