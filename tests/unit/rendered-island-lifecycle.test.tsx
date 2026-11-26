@@ -9,6 +9,7 @@ import { createRef, type ComponentProps } from 'react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { RenderedEditor } from '../../src/editor/rendered/RenderedEditor';
 import { useWebPreview } from '../../src/web/useWebPreview';
+import { WebRenderedRuntime } from '../../src/web/WebRenderedRuntime';
 import { NotificationProvider } from '../../src/ui/Notifications';
 
 // Keep the real island source selection, React roots, and keyed iframe. Only
@@ -51,6 +52,7 @@ function mount() {
     wikilinks: [],
     commandsRef: createRef(),
     runtime: {
+      renderer: WebRenderedRuntime,
       files: { 'note.mdx': original },
       entry: 'note.mdx',
       theme: 'light',

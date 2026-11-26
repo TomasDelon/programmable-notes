@@ -63,6 +63,7 @@ import { cloudStorageEnabled } from './storage';
 import { useWebPreview } from './useWebPreview';
 import { shouldCompileWholeDocument } from './previewExecution';
 import { WebPreview } from './WebPreview';
+import { WebRenderedRuntime } from './WebRenderedRuntime';
 import { useOffline, activateUpdate } from './offline';
 import { createHoverIntentController } from './hoverIntent';
 import { indexWorkspaceLinks } from '../links';
@@ -2123,6 +2124,7 @@ function WorkspaceApp({
                     selectedIsNote
                       ? {
                           active: mode === 'preview' && !fullDocument,
+                          renderer: WebRenderedRuntime,
                           files,
                           entry: workspace.entry,
                           theme: state.theme,

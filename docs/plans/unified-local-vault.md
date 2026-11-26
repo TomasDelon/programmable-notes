@@ -16,6 +16,9 @@ it is not a UI/product to clone.
 
 ## Progress
 
+- [x] Isolate inline editor execution behind an explicit trusted runtime renderer;
+      web supplies its adapter and the shared default is unavailable. This does
+      not complete the whole-document runtime or native shared workspace.
 - [x] Owner's six questions answered; architecture-first reuse, inline React,
       local autosave, real file operations/Trash, Linux-first and rendering privileges
       recorded separately from engineering choices.

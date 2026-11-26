@@ -1,9 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, type ComponentType } from 'react';
 import type { StoredAsset } from '../../assets/catalog';
-import { runtimeIslandSource } from '../../plugins/core/react';
 import type { CorePluginSettings } from '../../plugins/coreRegistry';
-import { useWebPreview } from '../../web/useWebPreview';
-import { WebPreview } from '../../web/WebPreview';
 
 export interface RenderedRuntimeContext {
   files: Record<string, string>;
@@ -14,69 +11,34 @@ export interface RenderedRuntimeContext {
   rebuildVersion?: number;
   corePlugins?: CorePluginSettings;
   showComponentSource?: boolean;
+  /** Trusted platform presentation only. Authored components never choose this. */
+  renderer?: ComponentType<RenderedRuntimeProps>;
 }
 
-export function RenderedRuntime({
-  context,
-  raw,
-  onError,
-}: {
+export interface RenderedRuntimeProps {
   context: RenderedRuntimeContext;
   raw: string;
   onError: (message: string) => void;
-}) {
-  const serializedFiles = useMemo(
-    () =>
-      JSON.stringify({
-        ...context.files,
-        [context.entry]: runtimeIslandSource(
-          context.files[context.entry] ?? '',
-          context.entry,
-          raw,
-        ),
-      }),
-    [context.files, context.entry, raw],
-  );
-  const files = useMemo(
-    () => JSON.parse(serializedFiles) as Record<string, string>,
-    [serializedFiles],
-  );
-  const serializedImages = JSON.stringify(context.images);
-  const images = useMemo(
-    () => JSON.parse(serializedImages) as StoredAsset[],
-    [serializedImages],
-  );
-  const preview = useWebPreview({
-    ...context,
-    files,
-    images,
-    enabled: !context.stopped,
-    trackWorkspaceDependencies: true,
-    corePlugins: context.corePlugins,
-    // The trusted host already presents this island's source when requested.
-    showComponentSource: false,
-  });
+}
+
+function UnavailableRuntime({
+  onError,
+}: Pick<RenderedRuntimeProps, 'onError'>) {
   useEffect(() => {
-    onError(context.stopped ? '' : preview.error);
-  }, [context.stopped, preview.error, onError]);
-  useEffect(() => () => onError(''), [onError]);
-  if (context.stopped)
-    return <p className="rendered-runtime-status">React preview is paused.</p>;
+    onError('');
+    return () => onError('');
+  }, [onError]);
   return (
-    <div className="rendered-runtime">
-      {preview.html ? (
-        <WebPreview
-          html={preview.html}
-          theme={context.theme}
-          onError={preview.reportRuntimeError}
-        />
-      ) : (
-        !preview.error && (
-          <span className="rendered-runtime-status" role="status">
-            Preparing component…
-          </span>
-        )
-      )}
-    </div>
+    <p className="rendered-runtime-status">React preview is unavailable.</p>
+  );
+}
+
+/** No platform guess or execution fallback; native execution remains unavailable. */
+export function RenderedRuntime(props: RenderedRuntimeProps) {
+  const Renderer = props.context.renderer;
+  return Renderer ? (
+    <Renderer {...props} />
+  ) : (
+    <UnavailableRuntime onError={props.onError} />
   );
 }

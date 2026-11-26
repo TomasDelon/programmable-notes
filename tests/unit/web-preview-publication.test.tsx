@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useWebPreview } from '../../src/web/useWebPreview';
 import { RenderedRuntime } from '../../src/editor/rendered/RenderedRuntime';
+import { WebRenderedRuntime } from '../../src/web/WebRenderedRuntime';
 import { WebPreview } from '../../src/web/WebPreview';
 
 type Inputs = Parameters<typeof useWebPreview>[0];
@@ -228,6 +229,7 @@ it('keeps the same live island iframe after an unused group edit and replaces it
       raw="<Counter />"
       onError={onError}
       context={{
+        renderer: WebRenderedRuntime,
         files,
         entry: island.entry,
         theme: 'light',
@@ -427,6 +429,7 @@ it('retires the proof when React disconnects the compiler effect while preservin
         raw="<Counter />"
         onError={onError}
         context={{
+          renderer: WebRenderedRuntime,
           files,
           entry: island.entry,
           theme: 'light',

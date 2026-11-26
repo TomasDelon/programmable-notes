@@ -34,6 +34,13 @@ scatter whole-app `isTauri()` alternatives through the UI. Native dialogs/update
 services can be platform capabilities within shared settings; a separate shell
 or another note application is not an adapter.
 
+The inline editor now accepts an explicit trusted runtime renderer rather than
+importing browser execution itself ([ADR-034](decisions/ADR-034-explicit-inline-runtime-renderer.md)).
+WebApp supplies the existing web implementation. Absence is visibly unavailable,
+with no iframe fallback. This is one dependency boundary, not the completed shared
+workspace: the whole-document path, workspace model and native lifecycle services
+still require extraction and integration.
+
 ## Responsibilities
 
 | Boundary                     | Owns                                                                                                                         | Must not own                                                                   |
