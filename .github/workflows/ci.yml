@@ -338,5 +338,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Observe ordinary-account KVM API without creating a VM
+        run: |
+          pn_kvm_status=0
+          python3 -I -B scripts/native-kvm-probe.py || pn_kvm_status=$?
+          case "$pn_kvm_status" in
+            0|2) ;;
+            *) exit "$pn_kvm_status" ;;
+          esac
       - name: Check restricted Ubuntu Linux capabilities
         run: bash scripts/native-hosted-preflight.sh

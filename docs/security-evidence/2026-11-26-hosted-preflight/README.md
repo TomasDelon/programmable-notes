@@ -132,3 +132,20 @@ satisfy the positive native-runtime acceptance contract. Use the linked
 full-system disposable desktop procedure with effective private namespaces; do
 not count fail-closed refusal as CPU-under-load, OOM, Stop, expiry, persistence or
 GUI validation. The previously canceled VM launch remains canceled.
+
+## Separate hosted KVM observation
+
+The optional hosted probe also reports whether its ordinary x64 Linux account
+can open `/dev/kvm`, verify the opened descriptor is a character device and query
+KVM API version 12. It does not create a VM, execute a guest, change permissions,
+use sudo, alter groups or relax policy. Every opened descriptor is closed;
+unavailable access is separate from an unexpected observer failure. Nine mocked
+cases verify the exact single ioctl and cleanup. No device was opened locally.
+
+This observation can inform whether a new disposable hosted Linux guest is
+feasible. GitHub treats nested virtualization as experimental, so device API
+access would not prove guest startup or native acceptance. A separately tested
+Debian guest would have its own stock policy, package/ELF identity and results;
+it could not clear either stock Ubuntu failure. The canceled retained managed-host
+VM operation remains untouched. Actual hosted observations belong to their own
+run receipts, not these mock tests.
