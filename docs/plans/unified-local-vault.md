@@ -204,3 +204,22 @@ check 676 unit/96 tooling/150 Chromium/9 Pages/4 inactive-cloud passed. Actual
 new-command GUI/ACL acceptance remains unexecuted and is a pre-activation gate;
 see ADR030 and its receipt. Shared source-revision receipt work follows with
 production callers disabled until its complete protocol is reviewed and tested.
+
+Hosted CI at `32b1cd4` passed both required jobs (`45882998330`); dispatch-only
+preview/native-preflight/deployment jobs were skipped, not executed. The subsequent
+one-case normal-focus diagnostic missed readiness by its declared 44-second
+window, so no component input or React ran. Trusted pre-expiry Stop completed in
+0.83 seconds with working host input. Exact evidence preserves this bounded
+outcome, infrastructure prerequisite correction and unknown cause. New VM/runtime
+resources were removed. Native-adapter build scratch cleanup was interrupted;
+its private temporary source/target is not application data or published evidence.
+No new VM retry is planned without a discriminating hypothesis.
+
+Optional editor receipts and the shared DocumentSessions controller now have
+independent review and a final combined check: exit 0, 726 unit, 96 tooling/zero
+skips, 152 Chromium, 9 Pages and 4 inactive-cloud passed. Source/test hashes bind
+those receipts. Neither protocol nor controller is activated in production UI.
+Next: bind private native grants, exercise controller publication against real
+Store/files, then extract the single shared product/controller boundary. Preserve
+native close/dirty acknowledgements and separate recovery; do not treat controlled
+writer tests as installed autosave or inline runtime/security acceptance.

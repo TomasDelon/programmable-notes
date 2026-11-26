@@ -20,6 +20,58 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Accepted-source receipts and shared sessions — 26 November 2026
+
+The existing SourceEditor/Rendered Preview now has an optional session/revision
+receipt protocol. CodeMirror keeps the single raw-source/history authority; all
+three visual apply paths advance from the actual synchronous host receipt before
+React props echo. Same-byte edit/undo intents, stale links/IME/navigation, retired
+sessions, protocol mismatches and invalid provenance refuse safely. Publication
+failure retains exact attempted bytes and latches pending/close; it cannot imply
+rollback or durable recovery. Existing production callers remain unchanged;
+legacy alternate live/form editors are excluded from the optional protocol.
+[ADR031](decisions/ADR-031-source-session-receipts.md) and
+[receipt evidence](security-evidence/2026-11-26-source-witness/README.md).
+
+A new framework-independent DocumentSessions controller composes those receipts
+with the existing autosave coordinator and injected writer/close ports. It keeps
+session identity, editor revision and disk CAS separate; flushes before close;
+retires only after close acknowledgement; and freezes publication after uncertain
+native close. Unapplied/failed text remains separate from originals. Observers
+cannot cause unchanged-state subscription loops, and custom budgets only tighten
+fixed limits using exactly the values validated. No native-grant bridge, browser
+DB, runtime service or second editing history is added.
+[ADR032](decisions/ADR-032-document-session-controller.md) and
+[controller evidence](security-evidence/2026-11-26-document-sessions/README.md).
+
+Final joint-candidate `npm run check` exited **0**: **726 unit, 96 tooling/zero
+skips, 152 Chromium, 9 Pages and 4 inactive-cloud tests passed**, plus formatting,
+lint, strict types and build. New dedicated coverage is 23 receipt unit tests,
+two actual Chromium receipt fixtures and 27 application-session tests. Independent
+review reran all 23 receipt cases and 60 session/autosave cases; the last two
+budget-copy cases were separately code-reviewed and included in the final 726.
+Review findings were reproduced and corrected before this final check.
+
+These are shared editor/application foundations, **not active desktop autosave or
+an accepted unified application**. Private native-grant binding and a real-file
+controller harness, one shared product tree, native dirty/busy acknowledgement,
+explicit retry/conflict reconciliation, durable recovery and installed acceptance
+remain work. Retained failures in this controller are memory only. The current
+separate native interface is still rejected; no replacement installer is promoted.
+
+The one-case [staged native focus diagnostic](security-evidence/2026-11-26-wry-normal-focus-spike/README.md)
+missed its declared 44-second script-ready window. It sent no component input and
+ran no React case or retry. Verified-live pre-expiry Stop cleared eight tracked
+identities in 0.83 seconds, followed by working trusted host input. The cause is
+unknown; post-case pressure data does not explain startup. Normal keyboard,
+React/geometry and full native security remain unproven. New VM/runtime resources
+were removed; original retained infrastructure was untouched.
+
+Hosted CI at earlier public head `32b1cd4` passed both required jobs in run
+`45882998330`; dispatch-only jobs were skipped. Later pushed heads require their
+own observed CI results, recorded in draft PR #9. No merge, public release or
+production security readiness is implied.
+
 ## Editor-only vault service — 26 November 2026
 
 The native host now exposes OS-authorized vault selection, metadata inventory,

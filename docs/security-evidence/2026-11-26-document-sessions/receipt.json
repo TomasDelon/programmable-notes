@@ -1,0 +1,33 @@
+{
+  "scope": "Trusted application controller only; no UI, private native-grant bridge or installed acceptance",
+  "source_sha256": {
+    "src/application/documentSessions.ts": "2e278364656779ab324c073d9508f0d4cb6322ba175bb3581beb3849f88e6d2f",
+    "tests/unit/document-sessions.test.ts": "79527be80685b7c35945319e1dceffc6432a3755b23320c12416bc2f8f86e44a",
+    "src/application/autosave.ts": "164a7e6cc585496330dec7f9fa5bff83fe32f9899fb742a15ed1c417618c9ff0",
+    "src/editor/sourceWitness.ts": "42b3ad459d95acd9af3f609bc2b35091bc9ee68b16b2c845cc8dbe44198a6d1a"
+  },
+  "targeted": {
+    "documentSessionTests": 27,
+    "existingAutosaveTests": 35,
+    "failed": 0,
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "passed"
+  },
+  "independentReview": "60 tests independently passed after initial corrections; final budget-copy correction code-reviewed; joint full check passed all 726 units",
+  "fullCheck": {
+    "exitCode": 0,
+    "unitPassed": 726,
+    "toolingPassed": 96,
+    "toolingSkipped": 0,
+    "chromiumPassed": 152,
+    "pagesPassed": 9,
+    "inactiveCloudPassed": 4,
+    "scope": "Joint source-receipt and application-controller candidate; not native GUI or active product acceptance"
+  },
+  "notExecuted": [
+    "native bridge or original-file I/O through this controller",
+    "installed application close/restart",
+    "durable recovery or external conflict resolution"
+  ]
+}
