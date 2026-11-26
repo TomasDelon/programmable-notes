@@ -122,6 +122,14 @@ Stop. Normal keyboard focus remains unproven; forced-focus typing is only a
 diagnostic. The next narrow proof must stage normal field focus before keyboard
 input, then actual React, without changing the resource contract.
 
+The [staged normal-focus follow-up](security-evidence/2026-11-26-wry-normal-focus-spike/README.md)
+missed its predeclared 44-second script-ready window, sent no component input and
+ran no React case. Valid targeted Stop completed in 0.83 seconds. The same artifact
+had earlier interacted, but the observer/environment differ; neither result proves
+repeatable readiness. CPU/journal and post-case load data do not establish a cause.
+Do not extend the lifetime or replay cold boots without a new discriminating
+hypothesis. Shared editor/controller work can proceed while this gate stays open.
+
 Browser iframe containment is not proof of native CPU/memory control. Actual
 installed Linux/WebKitGTK or the selected replacement host must pass real runtime
 acceptance in a disposable environment. Browser IPC mocks remain separate evidence.

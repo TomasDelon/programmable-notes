@@ -170,7 +170,7 @@ retention; it cannot claim rollback or durable recovery.
 
 23 targeted witness tests and two pinned Chromium fixture tests passed. Independent
 review reran all 23 tests and found no remaining blocker after the documented
-corrections. Final joint-candidate check exited0:726 unit,96 tooling/zero skips,
-152 Chromium,9 Pages,4 inactive-cloud, format/lint/types/build. See ADR031 and the
+corrections. Final joint-candidate check exited0:726 unit, 96 tooling/zero skips,
+152 Chromium, 9 Pages, 4 inactive-cloud, format/lint/types/build. See ADR031 and the
 dated receipt for exact source hashes and acceptance limits. Shared/native product
 integration remains a later gate, not something enabled by this optional protocol.
