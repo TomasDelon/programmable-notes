@@ -97,9 +97,60 @@ const wikilinkBoundary: Construct = {
   },
 };
 
+const markdownBoundary = (code: number | null) =>
+  code === 42 || code === 96 || code === 126;
+
+const escapedMarkdown: Construct = {
+  partial: true,
+  tokenize(effects, ok, nok) {
+    return start;
+    function start(code: number | null): State | undefined {
+      if (code !== 92) return nok(code);
+      effects.enter('pnMathLiteralData');
+      effects.consume(code);
+      return next;
+    }
+    function next(code: number | null): State | undefined {
+      if (
+        code === null ||
+        code === 38 ||
+        !(
+          (code >= 33 && code <= 47) ||
+          (code >= 58 && code <= 64) ||
+          (code >= 91 && code <= 96) ||
+          (code >= 123 && code <= 126)
+        )
+      )
+        return nok(code);
+      effects.exit('pnMathLiteralData');
+      return ok(code);
+    }
+  },
+};
+
 const dollarLiteral: Construct = {
   name: 'pnMathLiteral',
   tokenize(effects, ok) {
+    let previous: number | null = null;
+    let groupDepth = 0;
+    let command = false;
+    function boundary(code: number | null) {
+      return (
+        groupDepth === 0 &&
+        (markdownBoundary(code) ||
+          (code === 95 &&
+            (previous === null || previous === 32 || lineEnding(previous))) ||
+          (code === 91 && !command))
+      );
+    }
+    function consume(code: number | null) {
+      if (code === 123) groupDepth++;
+      else if (code === 125 && groupDepth) groupDepth--;
+      if (code === 92) command = true;
+      else if (!letter(code) && code !== 32) command = false;
+      previous = code;
+      effects.consume(code);
+    }
     return start;
     function start(code: number | null): State | undefined {
       effects.enter('pnMathLiteral');
@@ -110,10 +161,12 @@ const dollarLiteral: Construct = {
       return ok(code);
     }
     function between(code: number | null): State | undefined {
-      if (code === null) return end(code);
+      if (code === null || boundary(code)) return end(code);
+      if (code === 92 && groupDepth === 0)
+        return effects.check(escapedMarkdown, end, begin)(code);
       if (lineEnding(code)) {
         effects.enter('lineEnding');
-        effects.consume(code);
+        consume(code);
         effects.exit('lineEnding');
         return between;
       }
@@ -123,15 +176,22 @@ const dollarLiteral: Construct = {
     }
     function begin(code: number | null): State | undefined {
       effects.enter('pnMathLiteralData');
-      effects.consume(code);
+      consume(code);
       return data;
     }
     function data(code: number | null): State | undefined {
-      if (code === null || lineEnding(code) || code === 60 || code === 91) {
+      if (
+        code === null ||
+        boundary(code) ||
+        lineEnding(code) ||
+        code === 60 ||
+        code === 91 ||
+        code === 92
+      ) {
         effects.exit('pnMathLiteralData');
         return between(code);
       }
-      effects.consume(code);
+      consume(code);
       return data;
     }
   },

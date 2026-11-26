@@ -1,4 +1,5 @@
 import { EditorView } from 'prosemirror-view';
+import { TextSelection } from 'prosemirror-state';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { createRef, type ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -78,6 +79,259 @@ function reveal(editor: HTMLElement) {
 }
 
 describe('mathematics shares the document text editor', () => {
+  it.each([
+    'undo',
+    'delete/reinsert',
+    'external',
+    'repeated',
+    'history-collision',
+    'live-budget',
+  ] as const)(
+    'preserves owned dollar provenance through %s without guessing Source escapes',
+    (mode) => {
+      const captured: EditorView[] = [];
+      const setProps = EditorView.prototype.setProps;
+      const capture = vi
+        .spyOn(EditorView.prototype, 'setProps')
+        .mockImplementation(function (this: EditorView, props) {
+          captured.push(this);
+          setProps.call(this, props);
+        });
+      const mounted = mount(
+        mode === 'repeated' || mode === 'history-collision'
+          ? '\\$xTail.'
+          : 'Tail.',
+      );
+      capture.mockRestore();
+      const view = captured[0]!;
+      function type(text: string) {
+        act(() => {
+          const { from, to } = view.state.selection;
+          let handled = false;
+          view.someProp(
+            'handleTextInput',
+            (handler) =>
+              (handled = !!handler(view, from, to, text, () =>
+                view.state.tr.insertText(text),
+              )),
+          );
+          if (!handled) view.dispatch(view.state.tr.insertText(text));
+        });
+      }
+      if (mode !== 'history-collision') type('$');
+      if (mode !== 'repeated' && mode !== 'history-collision') type('x');
+      if (mode === 'live-budget')
+        for (let index = 0; index < 33; index++) type('y');
+      if (mode === 'live-budget') {
+        // Exhausting history witnesses must not affect direct live ownership.
+      } else if (mode === 'history-collision') {
+        act(() => view.dispatch(view.state.tr.delete(1, 2)));
+        act(() =>
+          view.dispatch(
+            view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)),
+          ),
+        );
+        type('$');
+        const revisions = ['xTail.', '\\$xTail.'];
+        mounted.props.undo = vi.fn(() =>
+          mounted.rerender(
+            <NotificationProvider>
+              <RenderedEditor {...mounted.props} source={revisions.shift()!} />
+            </NotificationProvider>,
+          ),
+        );
+        mounted.rerender(
+          <NotificationProvider>
+            <RenderedEditor {...mounted.props} />
+          </NotificationProvider>,
+        );
+        fireEvent.keyDown(mounted.editor, {
+          key: 'z',
+          code: 'KeyZ',
+          ctrlKey: true,
+        });
+        fireEvent.keyDown(mounted.editor, {
+          key: 'z',
+          code: 'KeyZ',
+          ctrlKey: true,
+        });
+      } else if (mode === 'repeated') {
+        act(() => view.dispatch(view.state.tr.delete(1, 2)));
+        expect(view.state.doc.textContent).toBe('$xTail.');
+        expect(vi.mocked(mounted.props.apply).mock.calls.at(-1)?.[1]).toBe(
+          '\\$xTail.',
+        );
+      } else if (mode === 'delete/reinsert') {
+        act(() => view.dispatch(view.state.tr.delete(1, 2)));
+        act(() =>
+          view.dispatch(
+            view.state.tr.setSelection(TextSelection.create(view.state.doc, 1)),
+          ),
+        );
+        type('$');
+      } else {
+        act(() => view.dispatch(view.state.tr.delete(2, 3)));
+        const restore = () =>
+          mounted.rerender(
+            <NotificationProvider>
+              <RenderedEditor {...mounted.props} source={'\\$xTail.'} />
+            </NotificationProvider>,
+          );
+        mounted.props.undo = vi.fn(restore);
+        mounted.rerender(
+          <NotificationProvider>
+            <RenderedEditor {...mounted.props} />
+          </NotificationProvider>,
+        );
+        if (mode === 'undo')
+          fireEvent.keyDown(mounted.editor, {
+            key: 'z',
+            code: 'KeyZ',
+            ctrlKey: true,
+          });
+        else restore();
+      }
+      act(() =>
+        view.dispatch(
+          view.state.tr.setSelection(
+            TextSelection.create(
+              view.state.doc,
+              mode === 'live-budget' ? 36 : 3,
+            ),
+          ),
+        ),
+      );
+      type('$');
+      expect(vi.mocked(mounted.props.apply).mock.calls.at(-1)?.[1]).toBe(
+        mode === 'external' ||
+          mode === 'repeated' ||
+          mode === 'history-collision'
+          ? '\\$x\\$Tail.'
+          : mode === 'live-budget'
+            ? '$x' + 'y'.repeat(33) + '$Tail.'
+            : '$x$Tail.',
+      );
+    },
+  );
+  it('escapes a newly typed pending dollar without revealing neighboring bold and promotes only the completed pair', () => {
+    const original = 'Before **bold** tail.';
+    const captured: EditorView[] = [];
+    const originalSetProps = EditorView.prototype.setProps;
+    const capture = vi
+      .spyOn(EditorView.prototype, 'setProps')
+      .mockImplementation(function (this: EditorView, props) {
+        captured.push(this);
+        originalSetProps.call(this, props);
+      });
+    const { editor, props } = mount(original);
+    capture.mockRestore();
+    const view = captured[0]!;
+    function type(text: string) {
+      act(() => {
+        const { from, to } = view.state.selection;
+        let handled = false;
+        view.someProp(
+          'handleTextInput',
+          (handler) =>
+            (handled = !!handler(view, from, to, text, () =>
+              view.state.tr.insertText(text),
+            )),
+        );
+        if (!handled) view.dispatch(view.state.tr.insertText(text));
+      });
+    }
+    act(() =>
+      view.dispatch(
+        view.state.tr.setSelection(TextSelection.create(view.state.doc, 8)),
+      ),
+    );
+    type('$');
+    expect(props.apply).toHaveBeenLastCalledWith(
+      original,
+      'Before \\$**bold** tail.',
+      true,
+    );
+    expect(editor.querySelector('strong')?.textContent).toBe('bold');
+    expect(editor.querySelector('.rendered-math-host')).toBeNull();
+    type('x');
+    type('$');
+    expect(props.apply).toHaveBeenLastCalledWith(
+      'Before \\$x**bold** tail.',
+      'Before $x$**bold** tail.',
+      true,
+    );
+    expect(editor.querySelector('.rendered-math-source')?.textContent).toBe(
+      '$x$',
+    );
+    expect(editor.querySelector('strong')?.textContent).toBe('bold');
+  });
+  it.each([
+    { input: '$x$', canonical: '$x$', math: true },
+    { input: '$$x$$', canonical: '$$x$$', math: true },
+    {
+      input: '$$\nx^2\n$$',
+      canonical: '$$\n\nx^2\n\n$$',
+      math: true,
+      initial: '',
+    },
+    {
+      input: '$\\unknowncommand$',
+      canonical: '$\\unknowncommand$',
+      math: true,
+    },
+    { input: '$$', canonical: '\\$\\$', math: false },
+    { input: '$ $', canonical: '\\$ \\$', math: false },
+    {
+      input: '$<Unsafe />',
+      canonical: '\\$\\<Unsafe /\\>',
+      math: false,
+      whole: true,
+    },
+  ])(
+    'completes only nonempty owned delimiters: $input',
+    ({ input, canonical, math, whole, initial = 'Tail.' }) => {
+      const captured: EditorView[] = [];
+      const setProps = EditorView.prototype.setProps;
+      const capture = vi
+        .spyOn(EditorView.prototype, 'setProps')
+        .mockImplementation(function (this: EditorView, props) {
+          captured.push(this);
+          setProps.call(this, props);
+        });
+      const { editor, props } = mount(initial);
+      capture.mockRestore();
+      const view = captured[0]!;
+      for (const character of whole ? [input] : [...input])
+        act(() => {
+          if (character === '\n') {
+            fireEvent.keyDown(editor, {
+              key: 'Enter',
+              code: 'Enter',
+              keyCode: 13,
+            });
+            return;
+          }
+          const { from, to } = view.state.selection;
+          let handled = false;
+          view.someProp(
+            'handleTextInput',
+            (handler) =>
+              (handled = !!handler(view, from, to, character, () =>
+                view.state.tr.insertText(character),
+              )),
+          );
+          if (!handled) view.dispatch(view.state.tr.insertText(character));
+        });
+      expect(vi.mocked(props.apply).mock.calls.at(-1)?.[1]).toBe(
+        canonical + initial,
+      );
+      expect(Boolean(editor.querySelector('.rendered-math-host'))).toBe(math);
+      if (input.includes('unknowncommand'))
+        expect(editor.querySelector('.rendered-math-invalid')).not.toBeNull();
+      expect(editor.querySelector('input, textarea, .cm-editor')).toBeNull();
+    },
+  );
+
   it('reveals editable child text without nested fields or tab stops', () => {
     const { editor, props } = mount('Before $x$ after.');
     const source = reveal(editor);

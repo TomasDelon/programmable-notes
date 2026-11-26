@@ -17,6 +17,7 @@ import {
   Selection,
   TextSelection,
   type Command,
+  type Transaction,
 } from 'prosemirror-state';
 import {
   Decoration,
@@ -57,6 +58,7 @@ import {
 import { renderedSchema } from './schema';
 import {
   parseRenderedSource,
+  escapeRenderedText,
   renderedTextSourceOffset,
   renderedPositionFromSourceOffset,
   serializeRenderedChange,
@@ -220,6 +222,47 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       latest.current.path,
     );
     let acceptedSource = projection.mapping.source;
+    let pendingDollars = new Set<number>();
+    // Equal source bytes can belong to different history entries. Remember
+    // empty provenance too, and permanently refuse ambiguous ownership.
+    const pendingHistory = new Map<string, number[] | null>([
+      [acceptedSource, []],
+    ]);
+    let pendingHistoryAvailable = true;
+    let restoringPendingHistory = false;
+    let pendingHistoryTimer: number | null = null;
+    function rememberPendingDollars() {
+      if (!pendingHistoryAvailable) return;
+      const offsets = [...pendingDollars].sort((a, b) => a - b);
+      const existing = pendingHistory.get(acceptedSource);
+      if (existing !== null) {
+        const matches =
+          existing === undefined ||
+          (existing.length === offsets.length &&
+            existing.every((offset, index) => offset === offsets[index]));
+        pendingHistory.set(acceptedSource, matches ? offsets : null);
+      }
+      let retained = 0;
+      for (const source of pendingHistory.keys()) retained += source.length;
+      if (retained > 2_000_000 || pendingHistory.size > 32) {
+        // Evicting ambiguity witnesses could revive a foreign dollar later.
+        // Only history restoration is disabled; live ownership remains intact.
+        pendingHistoryAvailable = false;
+        pendingHistory.clear();
+      }
+    }
+    function navigateHistory(action: () => void) {
+      restoringPendingHistory = true;
+      if (pendingHistoryTimer !== null)
+        window.clearTimeout(pendingHistoryTimer);
+      // Canonical history updates React's source in this event. A no-op must
+      // not authorize a later unrelated external/source-editor revision.
+      pendingHistoryTimer = window.setTimeout(() => {
+        restoringPendingHistory = false;
+        pendingHistoryTimer = null;
+      }, 0);
+      action();
+    }
     function publishAnalysisDiagnostic() {
       if (latest.current.sourceIsCurrent?.(acceptedSource) === false) return;
       latest.current.onAnalysisDiagnostic?.(
@@ -228,12 +271,51 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         projection.analysisDiagnostic,
       );
     }
-    function acceptProjection(next: typeof projection) {
+    function pendingAfterPatch(from: number, to: number, newEnd: number) {
+      return new Set(
+        [...pendingDollars].flatMap((offset) =>
+          offset + 2 <= from
+            ? [offset]
+            : offset >= to
+              ? [offset + newEnd - to]
+              : [],
+        ),
+      );
+    }
+    function pendingAfterTransaction(
+      next: typeof projection,
+      transaction: Transaction,
+    ) {
+      const retained = new Set<number>();
+      // A structural canonicalization can replace the whole projection. Refuse
+      // provenance rather than infer character ownership from repeated bytes.
+      if (!next.doc.eq(transaction.doc)) return retained;
+      for (const offset of pendingDollars) {
+        const position = renderedPositionFromSourceOffset(projection, offset);
+        if (position === null) continue;
+        const start = transaction.mapping.mapResult(position, 1);
+        const end = transaction.mapping.mapResult(position + 1, -1);
+        if (start.deleted || end.deleted || end.pos !== start.pos + 1) continue;
+        const mapped = renderedTextSourceOffset(next, start.pos, -1);
+        if (
+          mapped !== null &&
+          next.mapping.source.slice(mapped, mapped + 2) === '\\$'
+        )
+          retained.add(mapped);
+      }
+      return retained;
+    }
+    function acceptProjection(
+      next: typeof projection,
+      pending = new Set<number>(),
+    ) {
       const report =
         projection.analysisDiagnostic !== null ||
         next.analysisDiagnostic !== null;
       projection = next;
       acceptedSource = next.mapping.source;
+      pendingDollars = pending;
+      rememberPendingDollars();
       if (report) publishAnalysisDiagnostic();
     }
     const retainAttempt = (attempted: string) => {
@@ -746,8 +828,161 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         retainedDraft.current !== null
       )
         return false;
-      const offset = renderedTextSourceOffset(projection, from);
-      const end = renderedTextSourceOffset(projection, to);
+      let crossesOpaque = false;
+      current.state.doc.nodesBetween(from, to, (node) => {
+        if (
+          node.type === nodes.source_block ||
+          node.type === nodes.source_inline
+        )
+          crossesOpaque = true;
+      });
+      if (crossesOpaque) return false;
+      const point = current.state.doc.resolve(from);
+      const parent = point.parent;
+      if (
+        [point.nodeBefore, point.nodeAfter].some((node) =>
+          node?.marks.some((mark) => mark.type === marks.math_source),
+        )
+      )
+        return insertMathDollar(current, from, to, text);
+      if (parent.type === nodes.inline_math || parent.type === nodes.math_block)
+        return insertMathDollar(current, from, to, text);
+      if (
+        parent.type.spec.code ||
+        current.state.doc
+          .resolve(from)
+          .marks()
+          .some((mark) => mark.type === marks.code)
+      )
+        return false;
+      let offset = renderedTextSourceOffset(projection, from, -1);
+      const end = renderedTextSourceOffset(projection, to, -1);
+      if (offset === null || end === null || end < offset) return false;
+      let replacement = escapeRenderedText(
+        text,
+        to === current.state.doc.resolve(to).end(),
+      );
+      let promoted = false;
+      // Only this editor's own dollars may become delimiters. Source-authored
+      // escapes have identical spelling, but never receive this provenance.
+      // Bound speculative parsing even in a long sequence of unpaired runs.
+      let candidateBudget = 500_000;
+      for (const opening of [...pendingDollars]
+        .filter((value) => value <= offset! && !pendingDollars.has(value - 2))
+        .sort((a, b) => b - a)
+        .slice(0, 32)) {
+        const position = renderedPositionFromSourceOffset(projection, opening);
+        if (position === null || position > from) continue;
+        candidateBudget -= from - position + text.length;
+        if (candidateBudget < 0) break;
+        let opaque = false;
+        current.state.doc.nodesBetween(position, to, (node) => {
+          if (
+            node.type === nodes.source_inline ||
+            node.type === nodes.source_block ||
+            node.type.spec.code ||
+            node.marks.some((mark) => mark.type !== marks.math_source)
+          )
+            opaque = true;
+        });
+        if (opaque) continue;
+        // A deliberate Source escape inside the candidate remains literal.
+        let foreignDollar = false;
+        for (let index = opening; index < end; index++) {
+          if (acceptedSource[index] === '$' && !pendingDollars.has(index - 1))
+            foreignDollar = true;
+        }
+        if (foreignDollar) continue;
+        const visible =
+          current.state.doc.textBetween(position, from, '\n\n', '') + text;
+        const pair = completedMath(visible);
+        if (!pair || !pair.originalInner.trim()) continue;
+        offset = opening;
+        replacement = preserveMathBreaks(
+          acceptedSource.slice(opening, end),
+          visible,
+        );
+        promoted = true;
+        break;
+      }
+      if (!promoted) {
+        const pair = completedMath(text);
+        if (pair?.originalInner.trim()) {
+          replacement = text;
+          promoted = true;
+        }
+      }
+      const next =
+        acceptedSource.slice(0, offset) +
+        replacement +
+        acceptedSource.slice(end);
+      if (
+        !mathSourceContextPreserved(
+          acceptedSource,
+          next,
+          offset,
+          end,
+          latest.current.path,
+        )
+      )
+        return false;
+      const parsed = reparseRenderedMathEdit(
+        projection,
+        next,
+        offset,
+        end,
+        offset + replacement.length,
+      );
+      const caret = renderedPositionFromSourceOffset(
+        parsed,
+        offset + replacement.length,
+      );
+      if (caret === null || !latest.current.apply(acceptedSource, next, true))
+        return false;
+      const pending = [...pendingDollars].flatMap((value) =>
+        value + 2 <= offset!
+          ? [value]
+          : value >= end
+            ? [value + offset! + replacement.length - end]
+            : [],
+      );
+      if (!promoted)
+        for (let index = 0; index < replacement.length - 1; index++)
+          if (replacement[index] === '\\' && replacement[index + 1] === '$')
+            pending.push(offset + index);
+      selectingAll = false;
+      const transaction = current.state.tr.replaceWith(
+        0,
+        current.state.doc.content.size,
+        parsed.doc.content,
+      );
+      transaction.setSelection(
+        TextSelection.near(transaction.doc.resolve(caret)),
+      );
+      const nextState = current.state.apply(transaction);
+      acceptProjection(
+        rebaseRenderedProjection(parsed, nextState.doc, next),
+        new Set(pending),
+      );
+      current.updateState(nextState);
+      return true;
+    }
+    function insertMathDollar(
+      current: EditorView,
+      from: number,
+      to: number,
+      text: string,
+    ): boolean {
+      if (
+        !text.includes('$') ||
+        current.composing ||
+        compositionBase ||
+        latest.current.disabled ||
+        retainedDraft.current !== null
+      )
+        return false;
+      const offset = renderedTextSourceOffset(projection, from, -1);
+      const end = renderedTextSourceOffset(projection, to, -1);
       if (offset === null || end === null || end < offset) return false;
       let crossesOpaque = false;
       current.state.doc.nodesBetween(from, to, (node) => {
@@ -812,7 +1047,6 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       )
         return false;
       selectingAll = false;
-      acceptProjection(parsed);
       const transaction = current.state.tr.replaceWith(
         0,
         current.state.doc.content.size,
@@ -821,7 +1055,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       transaction.setSelection(
         TextSelection.near(transaction.doc.resolve(caret)),
       );
-      current.updateState(current.state.apply(transaction));
+      const nextState = current.state.apply(transaction);
+      acceptProjection(
+        rebaseRenderedProjection(parsed, nextState.doc, next),
+        pendingAfterPatch(offset, end, offset + replacement.length),
+      );
+      current.updateState(nextState);
       return true;
     }
     const editor = new EditorView(mount.current, {
@@ -873,17 +1112,17 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             },
             'Mod-z': () => {
               if (!latest.current.disabled && !compositionBase)
-                latest.current.undo();
+                navigateHistory(() => latest.current.undo());
               return true;
             },
             'Mod-y': () => {
               if (!latest.current.disabled && !compositionBase)
-                latest.current.redo();
+                navigateHistory(() => latest.current.redo());
               return true;
             },
             'Mod-Shift-z': () => {
               if (!latest.current.disabled && !compositionBase)
-                latest.current.redo();
+                navigateHistory(() => latest.current.redo());
               return true;
             },
             'Mod-b': toggleMark(marks.strong!),
@@ -1016,8 +1255,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               !event.isComposing &&
               !latest.current.disabled
             ) {
-              if (event.inputType === 'historyUndo') latest.current.undo();
-              else latest.current.redo();
+              if (event.inputType === 'historyUndo')
+                navigateHistory(() => latest.current.undo());
+              else navigateHistory(() => latest.current.redo());
             }
             return true;
           }
@@ -1506,7 +1746,10 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               editor.updateState(editor.state);
               return;
             }
-            acceptProjection(rebased);
+            acceptProjection(
+              rebased,
+              pendingAfterTransaction(rebased, transaction),
+            );
             setError('');
           } catch (reason) {
             setError(
@@ -1537,6 +1780,15 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       const previousAllSelection =
         selectingAll || editor.state.selection instanceof AllSelection;
       selectingAll = false;
+      const restoredPending = restoringPendingHistory
+        ? pendingHistory.get(next)
+        : undefined;
+      if (!restoringPendingHistory) {
+        pendingHistoryAvailable = false;
+        pendingHistory.clear();
+      }
+      restoringPendingHistory = false;
+      pendingDollars.clear();
       const parsed = parseRenderedSource(next, latest.current.path);
       const position = Math.min(
         editor.state.selection.from,
@@ -1551,8 +1803,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         (previousAllSelection ? visibleStart(transaction.doc) : undefined) ??
           TextSelection.near(transaction.doc.resolve(position)),
       );
-      editor.updateState(editor.state.apply(transaction));
-      acceptProjection(parsed);
+      const nextState = editor.state.apply(transaction);
+      editor.updateState(nextState);
+      acceptProjection(
+        rebaseRenderedProjection(parsed, nextState.doc, next),
+        new Set(restoredPending ?? []),
+      );
     };
     let deferredSourceChange = false;
     const sourceChanged = () => {
@@ -1723,6 +1979,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       },
     };
     return () => {
+      if (pendingHistoryTimer !== null)
+        window.clearTimeout(pendingHistoryTimer);
       editor.dom.removeEventListener('pn-source-change', sourceChanged);
       editor.dom.removeEventListener('compositionend', afterComposition);
       if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);

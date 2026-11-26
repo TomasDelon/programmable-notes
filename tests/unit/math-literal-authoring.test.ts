@@ -8,6 +8,64 @@ import { parseRenderedSource } from '../../src/editor/rendered/sourceBridge';
 import { compileDocumentSource } from '../../src/compiler/compileDocumentSource';
 
 describe('literal text while mathematical delimiters are incomplete', () => {
+  it.each([
+    { tail: '__bold__', mark: 'strong', text: 'bold' },
+    { tail: '_italic_', mark: 'em', text: 'italic' },
+    { tail: '[link](https://example.com)', mark: 'link', text: 'link' },
+    { tail: '\\*literal\\*', mark: null, text: '*literal*' },
+    { tail: '\\sqrt[2]{x} + x_{i}', mark: null, text: '\\sqrt[2]{x} + x_{i}' },
+  ])(
+    'parses $tail independently after an unfinished dollar',
+    ({ tail, mark, text }) => {
+      const projection = parseRenderedSource('Before $draft ' + tail);
+      expect(projection.doc.textContent).toBe('Before $draft ' + text);
+      if (mark) {
+        const marked: string[] = [];
+        projection.doc.descendants((node) => {
+          if (
+            node.isText &&
+            node.marks.some((value) => value.type.name === mark)
+          )
+            marked.push(node.text!);
+        });
+        expect(marked).toEqual([text]);
+      }
+      expect(projection.analysisDiagnostic).toBeNull();
+    },
+  );
+  it('keeps neighboring Markdown formatting independent of an unmatched dollar', () => {
+    const projection = parseRenderedSource('$x before **bold** and `code`.');
+    const marked: string[] = [];
+    projection.doc.descendants((node) => {
+      if (node.isText && node.marks.some((mark) => mark.type.name === 'strong'))
+        marked.push(node.text!);
+    });
+    expect(marked).toEqual(['bold']);
+  });
+  it('retains ordinary prose structure and escapes after an imported unfinished dollar', () => {
+    const source =
+      'Before $draft __bold__ and _italic_ [link](https://example.com) \\*literal\\* <Safe value={1} />.';
+    const projection = parseRenderedSource(source);
+    const found: Record<string, string[]> = {
+      strong: [],
+      em: [],
+      link: [],
+      source_inline: [],
+    };
+    projection.doc.descendants((node) => {
+      if (node.isText)
+        for (const mark of node.marks)
+          if (found[mark.type.name]) found[mark.type.name]!.push(node.text!);
+      if (node.type.name === 'source_inline')
+        found.source_inline!.push(node.attrs.raw as string);
+    });
+    expect(found.strong).toEqual(['bold']);
+    expect(found.em).toEqual(['italic']);
+    expect(found.link).toEqual(['link']);
+    expect(found.source_inline).toEqual(['<Safe value={1} />']);
+    expect(projection.doc.textContent).toContain('*literal*');
+    expect(projection.doc.textContent).not.toContain('\\*');
+  });
   it('keeps the supplied incomplete display formula editable without consuming later Markdown or JSX', () => {
     const raw = "$$\r\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\r\n$";
     const source =

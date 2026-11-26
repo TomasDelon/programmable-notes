@@ -677,7 +677,7 @@ const serializer = new MarkdownSerializer(
       state.text(
         node.marks.some((mark) => mark.type.name === 'math_source')
           ? literalMathEscaped(node.text!)
-          : escapedText(node.text!, index === parent.childCount - 1),
+          : escapeRenderedText(node.text!, index === parent.childCount - 1),
         false,
       );
     },
@@ -873,7 +873,7 @@ const escapeTrailingSpaces = (value: string, atEnd = true) =>
     return [...part].map((char) => (char === ' ' ? '&#32;' : '&#9;')).join('');
   });
 
-function escapedText(value: string, atEnd = true): string {
+export function escapeRenderedText(value: string, atEnd = true): string {
   return escapeTrailingSpaces(escapedPrefixes(escapedInline(value)), atEnd);
 }
 
@@ -1447,6 +1447,7 @@ function mapRenderedDocument(
 export function renderedTextSourceOffset(
   projection: RenderedProjection,
   position: number,
+  bias = 0,
 ): number | null {
   const candidates = new Set<number>();
   projection.doc.descendants((node, start) => {
@@ -1483,7 +1484,12 @@ export function renderedTextSourceOffset(
     }
   });
   if (candidates.size === 1) return [...candidates][0]!;
-  if (candidates.size > 1) return null;
+  if (candidates.size > 1)
+    return bias < 0
+      ? Math.min(...candidates)
+      : bias > 0
+        ? Math.max(...candidates)
+        : null;
   const caret = projection.doc.resolve(position);
   const range = projection.mapping.ranges.get(caret.parent);
   if (
