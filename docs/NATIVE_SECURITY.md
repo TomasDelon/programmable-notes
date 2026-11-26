@@ -14,6 +14,29 @@ failed its resident-page OOM case and remains retained under its own binary
 scope. New observations do not explain historical crashes or certify other
 binaries/environments.
 
+## New vault-service validation gate — 26 November 2026
+
+The new `choose_vault`, `vault_inventory`, `open_vault_sources` and
+`create_vault_source` handlers are editor-only foundations, not yet connected to
+the shared product. Their actual registered-command/chooser behavior has **not**
+been validated by the historical native runs above. Backend tests and compilation
+are separate evidence: [current receipt](security-evidence/2026-11-26-native-vault-adapter/README.md).
+
+The updated `native:test` requires correctly shaped editor calls for inventory,
+opening and creation to reach their exact forged-token domain refusal before the
+explicit fixture start and preview-denial phase. Unknown-command or ACL errors
+fail that positive registration control. Preview calls must still be denied,
+including `open_notes_folder` and all four new commands. Do not replace this
+native test with its transport-mocked tooling regression.
+
+Before product activation, also exercise the real picker with two disposable
+vaults: cancellation preserves the active scope; selection replacement rejects
+new admissions using the old vault token; already opened document grants survive;
+in-flight captured operations never retarget to the new root. Verify ordinary
+relative opening/creation, collisions, outside-path/symlink refusal and exact disk
+bytes. No generic filesystem permission or document-supplied root path is allowed.
+Production namespace/seccomp and full containment validation remain required.
+
 ## Milestone 3 production configuration
 
 The historical debug/test-feature procedure below remains useful, but does not establish production package behavior. New production work, actual results and limitations are recorded in the [2026-11-18 evidence](security-evidence/2026-11-18/README.md). Read [ADR-004](decisions/ADR-004-linux-persistence-and-production.md) for the authorized file store, actual namespace enforcement, WebKit process sandbox and residual native risks.

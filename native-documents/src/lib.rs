@@ -105,6 +105,11 @@ fn random_id() -> Result<String, Error> {
         .map_err(|_| Error::Rejected("Secure authorization entropy unavailable"))?;
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
+/// Mint an opaque native vault-session token; this alone conveys no filesystem authority.
+/// The trusted host must bind it to an OS-authorized Vault and enforce caller authorization.
+pub fn new_vault_session_token() -> Result<String, Error> {
+    random_id()
+}
 #[cfg(target_os = "linux")]
 struct Grant {
     file: AuthorizedFile,

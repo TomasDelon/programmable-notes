@@ -7,8 +7,9 @@ mod preview_failure;
 mod renderer_failure;
 mod updates;
 use documents::{
-    close_document, confirm_discard, open_documents, open_notes_folder, recovery_draft,
-    reopen_document, save_document, save_document_as, set_documents_dirty,
+    choose_vault, close_document, confirm_discard, create_vault_source, open_documents,
+    open_notes_folder, open_vault_sources, recovery_draft, reopen_document, save_document,
+    save_document_as, set_documents_dirty, vault_inventory,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -141,6 +142,10 @@ fn main() {
             host_probe,
             open_documents,
             open_notes_folder,
+            choose_vault,
+            vault_inventory,
+            open_vault_sources,
+            create_vault_source,
             save_document,
             save_document_as,
             reopen_document,

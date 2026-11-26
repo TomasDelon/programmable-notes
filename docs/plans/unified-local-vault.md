@@ -187,3 +187,20 @@ filesystem tests/71 native crate tests passed; independent review found no block
 No IPC/UI activation. The actual-Wry follow-up establishes partial same-window
 GtkSocket/Plug painting, while input/React/Stop remain unproven. Next runtime probe
 needs explicit readiness/input receipts, not another assumed-success screenshot.
+
+Creation and status-observation subpacket completed at `485de38`: atomic scoped
+no-replace creation, guarded asynchronous persistence subscriptions, 79 native
+crate tests and the final full 673/92/150/9/4 check passed. These are foundations,
+not active native product behavior. The follow-up Wry input packet established
+ordinary pointer input and valid pre-expiry Stop; normal keyboard focus and real
+React remain blocked. See the dated input receipt. Next independent source work
+is the editor-only vault adapter and explicit source-session/revision receipts;
+shared UI integration must not invent a third shell or activate privileged React.
+
+Editor-only native vault service implemented: OS chooser plus token-scoped
+inventory/open/create reuse the existing Store and captured descriptor root.
+Cancellation/replacement/guard tests and independent review passed; final full
+check 676 unit/96 tooling/150 Chromium/9 Pages/4 inactive-cloud passed. Actual
+new-command GUI/ACL acceptance remains unexecuted and is a pre-activation gate;
+see ADR030 and its receipt. Shared source-revision receipt work follows with
+production callers disabled until its complete protocol is reviewed and tested.

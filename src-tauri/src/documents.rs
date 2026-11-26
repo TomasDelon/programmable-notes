@@ -2,6 +2,7 @@
 use crate::Host;
 use native_documents::{Document, Saved, Store};
 use preview_policy::authorize;
+use serde::Serialize;
 use std::sync::{
     atomic::{AtomicBool, AtomicUsize, Ordering},
     Arc, Mutex,
@@ -11,13 +12,74 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 #[derive(Default)]
 pub struct Documents {
     store: Mutex<Store>,
+    #[cfg(target_os = "linux")]
+    vault: Mutex<Option<Arc<VaultSession>>>,
     pub dirty: AtomicBool,
     pub client_busy: AtomicBool,
     renderer_stopped: AtomicBool,
     pub operations: AtomicUsize,
     dialog: AtomicBool,
 }
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultInfo {
+    vault_id: String,
+    display_path: String,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultInventory {
+    vault_id: String,
+    entries: Vec<native_documents::InventoryEntry>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultDocuments {
+    vault_id: String,
+    documents: Vec<Document>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VaultCreated {
+    vault_id: String,
+    document: Document,
+}
+#[cfg(target_os = "linux")]
+struct VaultSession {
+    info: VaultInfo,
+    vault: native_documents::Vault,
+}
 impl Documents {
+    #[cfg(target_os = "linux")]
+    fn activate_vault(
+        &self,
+        selected: Option<(native_documents::Vault, String)>,
+    ) -> Result<Option<VaultInfo>, String> {
+        let Some((vault, display_path)) = selected else {
+            return Ok(None);
+        };
+        let info = VaultInfo {
+            vault_id: native_documents::new_vault_session_token()
+                .map_err(|error| error.to_string())?,
+            display_path,
+        };
+        *self.vault.lock().map_err(|_| "Vault session unavailable")? =
+            Some(Arc::new(VaultSession {
+                info: info.clone(),
+                vault,
+            }));
+        Ok(Some(info))
+    }
+    #[cfg(target_os = "linux")]
+    fn capture_vault(&self, vault_id: &str) -> Result<Arc<VaultSession>, String> {
+        self.vault
+            .lock()
+            .map_err(|_| "Vault session unavailable")?
+            .as_ref()
+            .filter(|session| session.info.vault_id == vault_id)
+            .cloned()
+            .ok_or_else(|| "Unknown or replaced vault session; select a vault again".into())
+    }
     pub(crate) fn busy_for_install(&self) -> bool {
         self.dirty.load(Ordering::SeqCst)
             || self.client_busy.load(Ordering::SeqCst)
@@ -83,6 +145,146 @@ fn store(docs: &Documents) -> Result<std::sync::MutexGuard<'_, Store>, String> {
     docs.store
         .lock()
         .map_err(|_| "Document store unavailable; source retained".into())
+}
+
+/// OS authorization only: no renderer-supplied root path.
+#[tauri::command]
+pub async fn choose_vault(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+) -> Result<Option<VaultInfo>, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            let _dialog = Dialog::acquire(&docs)?;
+            let Some(selected) = app
+                .dialog()
+                .file()
+                .set_parent(&window)
+                .set_title("Choose local vault")
+                .blocking_pick_folder()
+            else {
+                return docs.activate_vault(None);
+            };
+            let path = selected
+                .into_path()
+                .map_err(|_| "Only local folders are supported")?;
+            let vault = native_documents::Vault::select_authorized(&path)
+                .map_err(|error| error.to_string())?;
+            docs.activate_vault(Some((vault, path.to_string_lossy().into_owned())))
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (app, window, docs);
+            Err("Native vaults currently require Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn vault_inventory(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    vault_id: String,
+) -> Result<VaultInventory, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    #[cfg(target_os = "linux")]
+    let captured = docs.capture_vault(&vault_id)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            Ok(VaultInventory {
+                vault_id: captured.info.vault_id.clone(),
+                entries: captured
+                    .vault
+                    .inventory()
+                    .map_err(|error| error.to_string())?,
+            })
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (docs, vault_id);
+            Err("Native vaults currently require Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn open_vault_sources(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    vault_id: String,
+    paths: Vec<String>,
+) -> Result<VaultDocuments, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    #[cfg(target_os = "linux")]
+    let captured = docs.capture_vault(&vault_id)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            Ok(VaultDocuments {
+                vault_id: captured.info.vault_id.clone(),
+                documents: store(&docs)?
+                    .open_vault(&captured.vault, &paths)
+                    .map_err(|error| error.to_string())?,
+            })
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (docs, vault_id, paths);
+            Err("Native vaults currently require Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn create_vault_source(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    vault_id: String,
+    path: String,
+    source: String,
+) -> Result<VaultCreated, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    #[cfg(target_os = "linux")]
+    let captured = docs.capture_vault(&vault_id)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            Ok(VaultCreated {
+                vault_id: captured.info.vault_id.clone(),
+                document: store(&docs)?
+                    .create_vault(&captured.vault, &path, &source)
+                    .map_err(|error| error.to_string())?,
+            })
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (docs, vault_id, path, source);
+            Err("Native vaults currently require Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 #[tauri::command]
 pub async fn open_documents(
@@ -413,6 +615,113 @@ pub async fn recovery_draft(
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::*;
+    struct VaultFixture(std::path::PathBuf);
+    impl VaultFixture {
+        fn new() -> Self {
+            let root = std::path::PathBuf::from("/tmp").join(format!(
+                "pn-native-vault-{}",
+                native_documents::new_vault_session_token().unwrap()
+            ));
+            std::fs::create_dir(&root).unwrap();
+            Self(root)
+        }
+        fn selected(&self) -> (native_documents::Vault, String) {
+            (
+                native_documents::Vault::select_authorized(&self.0).unwrap(),
+                self.0.display().to_string(),
+            )
+        }
+    }
+    impl Drop for VaultFixture {
+        fn drop(&mut self) {
+            std::fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+    #[test]
+    fn vault_cancellation_changes_nothing_and_replacement_preserves_captured_scope_and_grants() {
+        let first = VaultFixture::new();
+        let second = VaultFixture::new();
+        std::fs::write(first.0.join("note.mdx"), "first").unwrap();
+        std::fs::write(second.0.join("note.mdx"), "second").unwrap();
+        let docs = Documents::default();
+        assert!(docs.activate_vault(None).unwrap().is_none());
+        assert!(docs.capture_vault("forged").is_err());
+        let original = docs
+            .activate_vault(Some(first.selected()))
+            .unwrap()
+            .unwrap();
+        let captured = docs.capture_vault(&original.vault_id).unwrap();
+        let opened = store(&docs)
+            .unwrap()
+            .open_vault(&captured.vault, &["note.mdx".into()])
+            .unwrap()
+            .remove(0);
+        assert!(docs.activate_vault(None).unwrap().is_none());
+        assert!(Arc::ptr_eq(
+            &captured,
+            &docs.capture_vault(&original.vault_id).unwrap()
+        ));
+        let replacement = docs
+            .activate_vault(Some(second.selected()))
+            .unwrap()
+            .unwrap();
+        assert_ne!(replacement.vault_id, original.vault_id);
+        assert!(docs.capture_vault(&original.vault_id).is_err());
+        assert!(docs.capture_vault("forged").is_err());
+        assert_eq!(
+            captured.vault.inventory().unwrap()[0].logical_path,
+            "note.mdx"
+        );
+        let late = store(&docs)
+            .unwrap()
+            .create_vault(&captured.vault, "late.mdx", "old admitted operation")
+            .unwrap();
+        assert_eq!(
+            std::fs::read(first.0.join("late.mdx")).unwrap(),
+            b"old admitted operation"
+        );
+        assert!(!second.0.join("late.mdx").exists());
+        store(&docs)
+            .unwrap()
+            .save(&opened.id, &opened.revision, "first saved after switch")
+            .unwrap();
+        assert_eq!(
+            std::fs::read(first.0.join("note.mdx")).unwrap(),
+            b"first saved after switch"
+        );
+        assert_eq!(std::fs::read(second.0.join("note.mdx")).unwrap(), b"second");
+        store(&docs).unwrap().close(&late.id).unwrap();
+    }
+    #[test]
+    fn captured_vault_operation_guards_survive_async_handoff_and_prevent_close_or_update() {
+        let fixture = VaultFixture::new();
+        let docs = Arc::new(Documents::default());
+        let selected = docs
+            .activate_vault(Some(fixture.selected()))
+            .unwrap()
+            .unwrap();
+        let captured = docs.capture_vault(&selected.vault_id).unwrap();
+        let operation = Operation::new(docs.clone(), &AtomicBool::new(false)).unwrap();
+        let (started, wait_started) = std::sync::mpsc::channel();
+        let (finish, wait_finish) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let _operation = operation;
+            started.send(()).unwrap();
+            wait_finish
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .unwrap();
+            captured.vault.inventory().unwrap()
+        });
+        wait_started
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .unwrap();
+        assert!(docs.close_must_wait());
+        assert!(docs.busy_for_install());
+        finish.send(()).unwrap();
+        assert!(worker.join().unwrap().is_empty());
+        assert!(!docs.close_must_wait());
+        assert!(!docs.busy_for_install());
+    }
     #[test]
     fn install_flag_refuses_new_operations_and_releases_reservation() {
         let docs = Arc::new(Documents::default());

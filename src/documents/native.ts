@@ -6,7 +6,35 @@ import type {
   RecoverySnapshot,
 } from './recovery';
 import type { NativeDocument } from './workspace';
+export interface NativeVaultInfo {
+  vaultId: string;
+  /** Display label only; the root may have moved since OS authorization. */
+  displayPath: string;
+}
+export interface NativeVaultInventory {
+  vaultId: string;
+  entries: { logicalPath: string; bytes: number }[];
+}
+export interface NativeVaultDocuments {
+  vaultId: string;
+  documents: NativeDocument[];
+}
+export interface NativeVaultCreated {
+  vaultId: string;
+  document: NativeDocument;
+}
 export const nativeDocuments = {
+  chooseVault: () => invoke<NativeVaultInfo | null>('choose_vault'),
+  vaultInventory: (vaultId: string) =>
+    invoke<NativeVaultInventory>('vault_inventory', { vaultId }),
+  openVaultSources: (vaultId: string, paths: string[]) =>
+    invoke<NativeVaultDocuments>('open_vault_sources', { vaultId, paths }),
+  createVaultSource: (vaultId: string, path: string, source: string) =>
+    invoke<NativeVaultCreated>('create_vault_source', {
+      vaultId,
+      path,
+      source,
+    }),
   snapshots: () =>
     invoke<RecoveryInventory>('recovery_draft', { action: 'list' }),
   snapshot: (input: SnapshotInput) =>

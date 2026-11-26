@@ -20,6 +20,56 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Editor-only vault service — 26 November 2026
+
+The native host now exposes OS-authorized vault selection, metadata inventory,
+selective opening and collision-safe creation through four editor-only commands.
+Opaque session tokens and captured roots keep admitted work scoped during vault
+replacement; cancellation preserves state and existing document grants survive.
+Existing operation/dialog guards and the single Store are retained. No generic
+filesystem capability or preview permission was added. No product route/controller
+is activated. [ADR030](decisions/ADR-030-editor-vault-service.md) records the boundary.
+
+Independent review found no remaining code blocker. **8 app Rust tests, 79 native
+document tests (7 existing ignored slots), 25 targeted TS tests, 4 probe tooling
+regressions and the actual Store/autosave harness passed.** The final complete
+check passed **676 unit, 96 tooling/zero skips, 150 Chromium, 9 Pages and 4
+inactive-cloud tests**, plus format/lint/types/build. Source/test identities are
+captured separately from subsequent editor work. The historical native ignored
+slots and dedicated checks retain their documented scope.
+
+Actual new-command Tauri ACL denial and chooser GUI journeys remain **unexecuted**.
+The local native probe exited 2/NOT RUN at its missing debug executable; independent
+probes confirmed no driver/display/user bus/KVM or outer WebKitGTK development
+package. Clean-image compilation is not a native runtime pass. Updated native
+probes require real editor registration controls before preview denial, and
+[NATIVE_SECURITY](NATIVE_SECURITY.md) retains this pre-activation gate.
+[Receipt and reproduction](security-evidence/2026-11-26-native-vault-adapter/README.md).
+
+## Creation, observable autosave and input diagnosis — 26 November 2026
+
+Collision-safe `Store::create_vault` now creates real files through the retained
+root descriptor, using the existing atomic no-replace writer. Existing or racing
+destinations stay untouched; bytes, limits and grant/CAS semantics are preserved.
+The coordinator now reports asynchronous persistence status through guarded
+subscriptions, including safe handling of rejecting asynchronous listeners.
+Neither foundation is wired into the visible application yet.
+
+Validation at `485de38`: **79 native document tests passed, 7 existing ignored
+slots; 673 unit, 92 tooling/zero skips, 150 Chromium, 9 Pages and 4 inactive-cloud
+tests passed** in the final complete check. The actual Store/autosave harness
+passed after the async-callback correction. Independent reviews found no remaining
+blocker within these narrow changes; see [the receipt](security-evidence/2026-11-26-vault-create-observation/README.md).
+
+A subsequent actual-Wry diagnostic observed script readiness, ordinary pointer
+interaction reaching Count 2 and trusted pre-expiry Stop clearing eight tracked
+identities in 0.79 seconds, followed by working host input. **Normal keyboard
+focus remains unproven; forced-focus typing is diagnostic, and React was not run.**
+The earlier title-based readiness attempt is inconclusive, not a JavaScript failure.
+[Exact sources and observations](security-evidence/2026-11-26-wry-input-spike/README.md)
+retain both attempts. No product/runtime-policy change or complete security pass
+is implied. The separate native interface is still unaccepted.
+
 ## Scoped vault opening and inline diagnostic — 26 November 2026
 
 `Store::open_vault` now opens chosen notes/modules from the retained root descriptor
