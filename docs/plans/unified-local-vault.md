@@ -223,3 +223,13 @@ Next: bind private native grants, exercise controller publication against real
 Store/files, then extract the single shared product/controller boundary. Preserve
 native close/dirty acknowledgements and separate recovery; do not treat controlled
 writer tests as installed autosave or inline runtime/security acceptance.
+
+Private native-session binding now connects the existing controller to exact
+save/close ports, with real Store publication observed before flush and explicit
+close/reopen/external-conflict witnesses. Original harness/negative controls remain.
+Root final check passed 735 unit/96 tooling/152 Chromium/9 Pages/4 inactive-cloud,
+plus 79 Rust document tests and formatting; independent review found no blocker.
+No UI or registered Tauri GUI/ACL activation is implied. Next shared-product work
+can use this tested seam; native inline keyboard/geometry/full security remains
+an independent release gate. A separate bounded actual-React pointer question
+is being investigated without weakening the failed keyboard/startup results.

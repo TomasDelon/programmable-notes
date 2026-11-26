@@ -20,6 +20,35 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Private native binding and real controller I/O — 26 November 2026
+
+The shared controller now has a small injected native save/close binding. It
+copies authorized baselines, keeps grant IDs private and distinct from editor
+sessions/disk revisions, refuses identity reuse and preserves ownership on failed
+attachment. Only native acknowledgement removes a binding; close uncertainty
+still blocks source publication. Its typed surface is not a security facade.
+No production caller, IPC permission or renderer authority is activated.
+[ADR033](decisions/ADR-033-private-native-session-binding.md).
+
+Root independently reran the expanded real Store harness: controller publication
+reached exact real-file bytes before flush, close/reopen used a fresh grant, and
+external conflicting bytes stayed intact while newest local text was retained.
+All original cases remain; the original missing-scheduling control failed at its
+required disk observation. The helper's new fixed-note open uses retained Vault
+scope and rejects unexpected path fields, including the Serde unit-variant edge.
+
+Final validation: **735 unit, 96 tooling/zero skips, 152 Chromium, 9 Pages and 4
+inactive-cloud tests passed**, plus format/lint/types/build; complete-check exit 0.
+Root also passed **79 native document tests, zero failed, 7 existing ignored slots**
+and Rust formatting. Dedicated new binding tests are 9; independent structural and
+helper review found no blocker. [Exact scope and reproduction](security-evidence/2026-11-26-native-session-binding/README.md).
+
+Actual registered-command/OS-picker acceptance and the shared UI remain pending.
+This is real backend controller/file I/O, not active installed autosave. Caller
+cleanup for failed attachment, native dirty/busy acknowledgement, safe explicit
+retry/reconciliation and installed close/recovery still need integration. The
+separate native interface remains rejected; no corrected installer is promoted.
+
 ## Accepted-source receipts and shared sessions — 26 November 2026
 
 The existing SourceEditor/Rendered Preview now has an optional session/revision

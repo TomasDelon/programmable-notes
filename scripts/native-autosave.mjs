@@ -339,6 +339,116 @@ try {
   assert.deepEqual(await readFile(note), Buffer.from(publishedWithoutAck));
   assert.equal((await stat(note)).mode & 0o777, 0o640);
   await backend.stop();
+  // Separate real-file witness for the shared controller and its private binding.
+  // Existing coordinator, collision, restart and negative-control cases above stay intact.
+  await build({
+    entryPoints: [resolve(repo, 'src/documents/nativeSessions.ts')],
+    outfile: resolve(scratch, 'native-sessions.mjs'),
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+  });
+  const { createNativeSessions } = await import(
+    pathToFileURL(resolve(scratch, 'native-sessions.mjs'))
+  );
+  backend = await writer(binary);
+  const controllerGrant = backend.document;
+  const binding = createNativeSessions({
+    save: async (id, revision, source) => {
+      const receipt = await backend.request({
+        documentId: id,
+        expectedDiskRevision: revision,
+        source,
+      });
+      if (!receipt.ok) throw Error(receipt.error);
+      return { revision: receipt.diskRevision, durable: receipt.durable };
+    },
+    close: async (id) => {
+      const receipt = await backend.request({
+        action: 'close',
+        documentId: id,
+      });
+      if (!receipt.ok) throw Error(receipt.error);
+    },
+  });
+  const controllerSession = binding.attach(
+    'host-controller-1',
+    controllerGrant,
+  );
+  const controllerSource =
+    '\uFEFFimport React from "react"\r\n{/* opaque 😀 */}\n<Component value={{ text: "Café" }} />\r\n# Controller\r\n$unfinished\r\n<Broken';
+  controllerSession.publish({
+    expected: controllerSession.witness,
+    source: controllerSource,
+  });
+  const controllerDeadline = Date.now() + 5000;
+  while (
+    !Buffer.from(controllerSource).equals(await readFile(note)) &&
+    Date.now() < controllerDeadline
+  )
+    await new Promise((yes) => setTimeout(yes, 10));
+  assert.deepEqual(
+    await readFile(note),
+    Buffer.from(controllerSource),
+    'Controller publication must automatically reach the real file before flush',
+  );
+  await binding.controller.flush();
+  const controllerState = binding.controller.state('host-controller-1');
+  assert.equal(controllerState.autosave.documentId, 'host-controller-1');
+  assert(
+    !JSON.stringify(controllerState).includes(controllerGrant.id),
+    'Controller state must not expose native grants',
+  );
+  await binding.controller.close('host-controller-1');
+  assert.throws(() => binding.controller.state('host-controller-1'));
+  assert.equal(
+    (
+      await backend.request({
+        documentId: controllerGrant.id,
+        expectedDiskRevision: controllerState.autosave.diskRevision,
+        source: 'closed grant must not write',
+      })
+    ).ok,
+    false,
+  );
+  assert.equal(
+    (await backend.request({ action: 'open', path: '../outside.mdx' })).ok,
+    false,
+    'External harness control protocol must not accept an open path',
+  );
+  const controllerOpened = await backend.request({ action: 'open' });
+  assert.equal(controllerOpened.ok, true);
+  assert.equal(controllerOpened.document.source, controllerSource);
+  assert.notEqual(controllerOpened.document.id, controllerGrant.id);
+  const controllerReopened = binding.attach(
+    'host-controller-2',
+    controllerOpened.document,
+  );
+  const controllerExternal = `${controllerSource}\r\nExternal controller conflict\r\n`;
+  await writeFile(note, controllerExternal);
+  controllerReopened.publish({
+    expected: controllerReopened.witness,
+    source: `${controllerSource}\r\nLocal first`,
+  });
+  await assert.rejects(binding.controller.flush('host-controller-2'));
+  const controllerLatest = `${controllerSource}\r\nLocal latest retained`;
+  controllerReopened.publish({
+    expected: controllerReopened.witness,
+    source: controllerLatest,
+  });
+  await assert.rejects(binding.controller.flush('host-controller-2'));
+  await assert.rejects(binding.controller.close('host-controller-2'));
+  assert.equal(
+    binding.controller.state('host-controller-2').witness.source,
+    controllerLatest,
+  );
+  assert.equal(binding.controller.state('host-controller-2').phase, 'open');
+  assert.deepEqual(await readFile(note), Buffer.from(controllerExternal));
+  assert.equal((await stat(note)).mode & 0o777, 0o640);
+  await backend.stop();
+  console.log(
+    'PASS: shared controller automatic real-file publication, private grant binding, close/reopen and external conflict retention',
+  );
   console.log(
     'PASS: real Store autosave, coalescing, exact bytes, undo/redo, grants, permissions, restart, external conflict and lost-acknowledgement CAS',
   );
