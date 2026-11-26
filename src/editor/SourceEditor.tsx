@@ -43,13 +43,25 @@ import {
   type RenderedCompositionPhase,
 } from './rendered/RenderedEditor';
 import type { RenderedRuntimeContext } from './rendered/RenderedRuntime';
+import {
+  sameSourceWitness,
+  validSourceWitness,
+  type SourceSession,
+  type SourceWitness,
+  type SourceBatch,
+  type SourceReceipt,
+} from './sourceWitness';
 
 const external = Annotation.define<boolean>();
 const EMPTY_WIKILINKS: readonly LinkResolution[] = Object.freeze([]);
 export type EditorCommands = {
   undo: () => void;
   redo: () => void;
-  revealSource: (offset: number, expectedSource: string) => void;
+  revealSource: (
+    offset: number,
+    expectedSource: string,
+    witness?: SourceWitness,
+  ) => void;
   insertText: (text: string) => boolean;
   formatRendered?: (action: string) => void;
 } | null;
@@ -64,6 +76,7 @@ export type EditorHistory = Map<
 export function SourceEditor({
   source,
   sourceIsCurrent,
+  session,
   onChange,
   visual,
   live = false,
@@ -87,34 +100,81 @@ export function SourceEditor({
   source: string;
   /** Host-owned freshness witness for deferred React source echoes. */
   sourceIsCurrent?: (snapshot: string) => boolean;
-  visual?: boolean;
-  live?: boolean;
   documentKey?: string;
   histories?: React.RefObject<EditorHistory>;
   onChange: (value: string) => void;
   busy?: boolean;
   readOnly?: boolean;
   onPendingChange?: (pending: boolean) => void;
-  onRetainAttempt?: (baseSource: string, text: string) => Promise<void>;
+  onRetainAttempt?: (
+    baseSource: string,
+    text: string,
+    witness?: SourceWitness,
+  ) => Promise<void>;
   onKeepAttempt?: () => Promise<void>;
   onDiscardAttempt?: () => Promise<void>;
   onAnalysisDiagnostic?: (
     path: string,
     source: string,
     message: string | null,
+    witness?: SourceWitness,
   ) => void;
-  onShowSource?: (offset: number, snapshot: string) => void;
+  onShowSource?: (
+    offset: number,
+    snapshot: string,
+    witness?: SourceWitness,
+  ) => void;
   acceptChange?: (source: string) => boolean;
   wikilinks?: readonly LinkResolution[];
   onOpenNote?: (id: string) => void;
   rendered?: RenderedRuntimeContext & { active: boolean };
-}) {
+} &
+  // Sessions apply to the owning Source/Rendered Preview surface. The legacy
+  // alternate form/live editors retain their existing, session-free API.
+  (
+    | { session?: SourceSession; visual?: false; live?: false }
+    | { session?: undefined; visual?: boolean; live?: boolean }
+  )) {
   const element = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
   const presentation = useRef(new Compartment());
   const editable = useRef(new Compartment());
   const change = useRef(onChange);
   const accept = useRef(acceptChange);
+  const authority = useRef(session);
+  const acceptedWitness = useRef<SourceWitness | undefined>(
+    session ? { ...session.witness } : undefined,
+  );
+  const sessionId = useRef(session?.witness.sessionId);
+  const pendingBatch = useRef<SourceBatch | null>(null);
+  const publicationFailed = useRef(false);
+  const publishing = useRef(false);
+  useLayoutEffect(() => {
+    authority.current = session;
+  }, [session]);
+
+  const protocolMatches = () =>
+    sessionId.current === undefined
+      ? authority.current === undefined
+      : authority.current?.witness.sessionId === sessionId.current;
+
+  function currentWitness(witness: SourceWitness | undefined): boolean {
+    return (
+      protocolMatches() &&
+      !publicationFailed.current &&
+      Boolean(
+        witness &&
+        validSourceWitness(witness) &&
+        acceptedWitness.current &&
+        validSourceWitness(acceptedWitness.current) &&
+        authority.current &&
+        validSourceWitness(authority.current.witness) &&
+        witness.sessionId === sessionId.current &&
+        sameSourceWitness(witness, acceptedWitness.current) &&
+        authority.current?.isCurrent(witness),
+      )
+    );
+  }
   const latestLinks = useRef(wikilinks);
   const navigate = useRef(onOpenNote);
   const isBusy = useRef(busy);
@@ -144,7 +204,10 @@ export function SourceEditor({
     draftRef.current = next;
     setDraft(next);
     pending.current?.(
-      Boolean(next) || legacyPending.current || renderedPending.current,
+      publicationFailed.current ||
+        Boolean(next) ||
+        legacyPending.current ||
+        renderedPending.current,
     );
   }
 
@@ -153,7 +216,8 @@ export function SourceEditor({
       if (
         draftRef.current ||
         legacyPending.current ||
-        renderedPending.current
+        renderedPending.current ||
+        publicationFailed.current
       ) {
         event.preventDefault();
         event.returnValue = '';
@@ -176,6 +240,8 @@ export function SourceEditor({
   ): boolean {
     if (
       locked.current ||
+      !protocolMatches() ||
+      publicationFailed.current ||
       rawSource(editor.state) !== expected ||
       (isBusy.current && !sourceInput)
     )
@@ -212,13 +278,70 @@ export function SourceEditor({
           ? 'input.type'
           : 'input',
     });
-    return rawSource(editor.state) === next;
+    return (
+      rawSource(editor.state) === next &&
+      (sessionId.current === undefined ||
+        (currentWitness(acceptedWitness.current) &&
+          acceptedWitness.current!.source === next))
+    );
+  }
+
+  function applyRenderedRaw(
+    snapshot: string,
+    next: string,
+    typing: boolean,
+    composition?: RenderedCompositionPhase,
+  ): boolean {
+    const editor = view.current;
+    if (!editor) return false;
+    let from = 0;
+    while (
+      from < snapshot.length &&
+      from < next.length &&
+      snapshot[from] === next[from]
+    )
+      from++;
+    let end = snapshot.length,
+      nextEnd = next.length;
+    while (
+      end > from &&
+      nextEnd > from &&
+      snapshot[end - 1] === next[nextEnd - 1]
+    ) {
+      end--;
+      nextEnd--;
+    }
+    // A physical CRLF and a surrogate pair each have one legal boundary.
+    if (
+      from > 0 &&
+      ((snapshot[from - 1] === '\r' && snapshot[from] === '\n') ||
+        /[\uD800-\uDBFF]/.test(snapshot[from - 1]!))
+    )
+      from--;
+    if (
+      end < snapshot.length &&
+      ((snapshot[end - 1] === '\r' && snapshot[end] === '\n') ||
+        /[\uDC00-\uDFFF]/.test(snapshot[end]!))
+    ) {
+      end++;
+      nextEnd++;
+    }
+    return applyRaw(
+      editor,
+      snapshot,
+      next,
+      { from, to: end, insert: next.slice(from, nextEnd) },
+      false,
+      typing,
+      composition,
+    );
   }
 
   useEffect(() => {
     const cache = histories?.current;
+    const historyKey = sessionId.current ?? documentKey;
     const cached =
-      documentKey === undefined ? undefined : cache?.get(documentKey);
+      historyKey === undefined ? undefined : cache?.get(historyKey);
     const initial = new RawSourceMap(source);
     const extensions = [
       // Tauri authorizes its inline boot style with a nonce. Once present,
@@ -259,6 +382,44 @@ export function SourceEditor({
         return rawAfterTransaction(transaction) === null ? [] : transaction;
       }),
       EditorView.updateListener.of((update) => {
+        const batch = pendingBatch.current;
+        if (batch) {
+          pendingBatch.current = null;
+          try {
+            publishing.current = true;
+            const receipt = authority.current!.publish(batch);
+            if (
+              !validSourceWitness(receipt) ||
+              receipt.sessionId !== batch.expected.sessionId ||
+              receipt.editorRevision <= batch.expected.editorRevision ||
+              receipt.source !== batch.source ||
+              !authority.current!.isCurrent(receipt)
+            )
+              throw Error('Invalid source acceptance receipt.');
+            acceptedWitness.current = { ...receipt };
+          } catch {
+            // CM already owns these exact bytes/history. Block acceptance and
+            // normal close; a failed publisher must never produce a fake receipt.
+            publicationFailed.current = true;
+            pending.current?.(true);
+            try {
+              // The session owner retains this separately from accepted originals,
+              // including when a host published its witness and then threw.
+              void Promise.resolve(
+                authority.current!.retainFailure({
+                  expected: { ...batch.expected },
+                  source: rawSource(update.state),
+                }),
+              ).catch(() => {});
+            } catch {
+              /* Failure stays latched; never claim retained durability. */
+            }
+          } finally {
+            publishing.current = false;
+          }
+          return;
+        }
+        if (sessionId.current !== undefined) return;
         if (
           update.transactions.some(
             (transaction) =>
@@ -345,8 +506,24 @@ export function SourceEditor({
       // History bypasses transaction filters. Check each proposed raw transition
       // against the current model before publishing the batch or consuming history.
       dispatchTransactions(transactions, editor) {
+        if (
+          !protocolMatches() ||
+          publishing.current ||
+          publicationFailed.current
+        )
+          return;
+        let state = editor.state;
+        let localChange = false;
+        let externalChange = false;
         for (const tr of transactions) {
-          if (tr.annotation(external)) continue;
+          if (tr.startState !== state) return;
+          state = tr.state;
+          const previous = rawSource(tr.startState);
+          const next = rawSource(tr.state);
+          if (tr.annotation(external)) {
+            externalChange ||= next !== previous;
+            continue;
+          }
           if (
             locked.current &&
             (tr.docChanged ||
@@ -356,15 +533,43 @@ export function SourceEditor({
               ))
           )
             return;
-          const previous = rawSource(tr.startState);
-          const next = rawSource(tr.state);
+          const historyTraversal =
+            /^(undo|redo)$/.test(tr.annotation(Transaction.userEvent) ?? '') &&
+            tr.startState.field(historyField) !== tr.state.field(historyField);
+          localChange ||= next !== previous || historyTraversal;
           if (
             next !== previous &&
             (locked.current || accept.current?.(next) === false)
           )
             return;
+          if (
+            (next !== previous || historyTraversal) &&
+            sessionId.current !== undefined &&
+            (!currentWitness(acceptedWitness.current) ||
+              !authority.current!.validate({
+                expected: { ...acceptedWitness.current! },
+                source: next,
+              }))
+          )
+            return;
         }
-        editor.update(transactions);
+        if (sessionId.current !== undefined && localChange) {
+          if (
+            externalChange ||
+            !currentWitness(acceptedWitness.current) ||
+            acceptedWitness.current!.source !== rawSource(editor.state)
+          )
+            return;
+          pendingBatch.current = {
+            expected: { ...acceptedWitness.current! },
+            source: rawSource(state),
+          };
+        }
+        try {
+          editor.update(transactions);
+        } finally {
+          pendingBatch.current = null;
+        }
       },
       state: EditorState.create({
         doc: initial.display,
@@ -376,16 +581,21 @@ export function SourceEditor({
     if (commandsRef)
       commandsRef.current = {
         undo: () => {
-          if (!locked.current && !draftRef.current) undo(editor);
+          if (view.current === editor && !locked.current && !draftRef.current)
+            undo(editor);
         },
         redo: () => {
-          if (!locked.current && !draftRef.current) redo(editor);
+          if (view.current === editor && !locked.current && !draftRef.current)
+            redo(editor);
         },
         formatRendered: (action) => {
           if (!locked.current && !draftRef.current && renderedActive.current)
             renderedCommands.current?.format(action);
         },
-        revealSource: (offset, expectedSource) => {
+        revealSource: (offset, expectedSource, witness) => {
+          if (view.current !== editor || !protocolMatches()) return;
+          if (sessionId.current !== undefined && !currentWitness(witness))
+            return;
           if (rawSource(editor.state) !== expectedSource || draftRef.current)
             return;
           const anchor = new RawSourceMap(expectedSource).toDisplay(offset);
@@ -399,6 +609,8 @@ export function SourceEditor({
           editor.coordsAtPos(anchor);
           const isCurrentTarget = () =>
             view.current === editor &&
+            protocolMatches() &&
+            (sessionId.current === undefined || currentWitness(witness)) &&
             rawSource(editor.state) === expectedSource &&
             !draftRef.current &&
             editor.state.selection.main.anchor === anchor &&
@@ -417,7 +629,8 @@ export function SourceEditor({
           }
         },
         insertText: (text) => {
-          if (locked.current || draftRef.current) return false;
+          if (view.current !== editor || locked.current || draftRef.current)
+            return false;
           if (renderedActive.current && renderedCommands.current)
             return renderedCommands.current.insertText(text);
           const raw = rawSource(editor.state),
@@ -437,12 +650,15 @@ export function SourceEditor({
         },
       };
     return () => {
-      if (documentKey !== undefined)
-        cache?.set(documentKey, {
-          source: rawSource(editor.state),
-          history: editor.state.field(historyField),
-          selection: editor.state.selection,
-        });
+      if (historyKey !== undefined) {
+        if (publicationFailed.current) cache?.delete(historyKey);
+        else
+          cache?.set(historyKey, {
+            source: rawSource(editor.state),
+            history: editor.state.field(historyField),
+            selection: editor.state.selection,
+          });
+      }
       if (commandsRef) commandsRef.current = null;
       view.current = null;
       editor.destroy();
@@ -454,7 +670,21 @@ export function SourceEditor({
   useEffect(() => {
     // A model may accept more input before an earlier React render commits.
     // Never turn that obsolete echo into an external edit or history event.
-    if (sourceIsCurrent?.(source) === false) return;
+    if (!protocolMatches()) return;
+    if (sessionId.current !== undefined) {
+      const incoming = session?.witness;
+      if (
+        !incoming ||
+        publicationFailed.current ||
+        incoming.sessionId !== sessionId.current ||
+        incoming.source !== source ||
+        !validSourceWitness(incoming) ||
+        !session.isCurrent(incoming) ||
+        incoming.editorRevision < acceptedWitness.current!.editorRevision
+      )
+        return;
+      acceptedWitness.current = { ...incoming };
+    } else if (sourceIsCurrent?.(source) === false) return;
     const editor = view.current;
     if (editor && rawSource(editor.state) !== source)
       editor.dispatch({
@@ -469,7 +699,7 @@ export function SourceEditor({
           isolateHistory.of('full'),
         ],
       });
-  }, [source, sourceIsCurrent]);
+  }, [source, sourceIsCurrent, session]);
 
   useEffect(() => {
     const editor = view.current;
@@ -571,6 +801,39 @@ export function SourceEditor({
         <RenderedEditor
           source={source}
           sourceIsCurrent={sourceIsCurrent}
+          sourceWitness={session?.witness}
+          witnessIsCurrent={
+            session
+              ? (witness) =>
+                  !publicationFailed.current &&
+                  witness.sessionId === sessionId.current &&
+                  session.isCurrent(witness)
+              : undefined
+          }
+          applyWithWitness={
+            session
+              ? (expected, next, typing, composition): SourceReceipt => {
+                  const editor = view.current;
+                  if (!editor || !currentWitness(expected))
+                    return { accepted: false };
+                  if (
+                    !applyRenderedRaw(
+                      expected.source,
+                      next,
+                      typing,
+                      composition,
+                    ) ||
+                    !currentWitness(acceptedWitness.current) ||
+                    acceptedWitness.current!.source !== next
+                  )
+                    return { accepted: false };
+                  return {
+                    accepted: true,
+                    witness: { ...acceptedWitness.current! },
+                  };
+                }
+              : undefined
+          }
           path={path}
           active={rendered.active}
           disabled={Boolean(readOnly || busy || draft)}
@@ -584,7 +847,10 @@ export function SourceEditor({
           onPendingChange={(value) => {
             renderedPending.current = value;
             pending.current?.(
-              value || legacyPending.current || Boolean(draftRef.current),
+              publicationFailed.current ||
+                value ||
+                legacyPending.current ||
+                Boolean(draftRef.current),
             );
           }}
           openNote={onOpenNote}
@@ -596,52 +862,13 @@ export function SourceEditor({
             if (view.current && !locked.current && !draftRef.current)
               redo(view.current);
           }}
-          openSource={(offset, snapshot) => onShowSource?.(offset, snapshot)}
-          apply={(snapshot, next, typing, composition) => {
-            const editor = view.current;
-            if (!editor) return false;
-            let from = 0;
-            while (
-              from < snapshot.length &&
-              from < next.length &&
-              snapshot[from] === next[from]
-            )
-              from++;
-            let end = snapshot.length,
-              nextEnd = next.length;
-            while (
-              end > from &&
-              nextEnd > from &&
-              snapshot[end - 1] === next[nextEnd - 1]
-            ) {
-              end--;
-              nextEnd--;
-            }
-            // A physical CRLF and a surrogate pair each have one legal boundary.
-            if (
-              from > 0 &&
-              ((snapshot[from - 1] === '\r' && snapshot[from] === '\n') ||
-                /[\uD800-\uDBFF]/.test(snapshot[from - 1]!))
-            )
-              from--;
-            if (
-              end < snapshot.length &&
-              ((snapshot[end - 1] === '\r' && snapshot[end] === '\n') ||
-                /[\uDC00-\uDFFF]/.test(snapshot[end]!))
-            ) {
-              end++;
-              nextEnd++;
-            }
-            return applyRaw(
-              editor,
-              snapshot,
-              next,
-              { from, to: end, insert: next.slice(from, nextEnd) },
-              false,
-              typing,
-              composition,
-            );
+          openSource={(offset, snapshot, witness) => {
+            if (sessionId.current === undefined)
+              onShowSource?.(offset, snapshot);
+            else if (currentWitness(witness))
+              onShowSource?.(offset, snapshot, witness);
           }}
+          apply={applyRenderedRaw}
         />
       )}
       <div hidden={!visual}>
@@ -650,7 +877,10 @@ export function SourceEditor({
           onPendingChange={(value) => {
             legacyPending.current = value;
             pending.current?.(
-              value || renderedPending.current || Boolean(draftRef.current),
+              publicationFailed.current ||
+                value ||
+                renderedPending.current ||
+                Boolean(draftRef.current),
             );
           }}
           onShowSource={onShowSource}

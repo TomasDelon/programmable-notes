@@ -158,3 +158,19 @@ real browser caret/Markdown/math/IME journeys with the pinned engine before fina
 `npm run check`. Independent review must inspect source fidelity, delayed echoes and
 receipt flow at all three apply sites. These tests do not prove installed native
 input, inline React, real-file durability or runtime containment.
+
+## Executed outcome
+
+The optional owning Source/Rendered Preview protocol is implemented; production
+callers remain unchanged and legacy alternate live/form editors are excluded by
+props types. All three PM paths use synchronous host receipts, with external
+same-byte provenance, deferred links/IME/navigation and retired-session guards.
+Publisher failure keeps exact attempted text, pending/close latches and separate
+retention; it cannot claim rollback or durable recovery.
+
+23 targeted witness tests and two pinned Chromium fixture tests passed. Independent
+review reran all 23 tests and found no remaining blocker after the documented
+corrections. Final joint-candidate check exited0:726 unit,96 tooling/zero skips,
+152 Chromium,9 Pages,4 inactive-cloud, format/lint/types/build. See ADR031 and the
+dated receipt for exact source hashes and acceptance limits. Shared/native product
+integration remains a later gate, not something enabled by this optional protocol.

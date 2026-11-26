@@ -70,6 +70,12 @@ import {
   type RenderedRuntimeContext,
 } from './RenderedRuntime';
 import './rendered.css';
+import {
+  sameSourceWitness,
+  validSourceWitness,
+  type SourceWitness,
+  type SourceReceipt,
+} from '../sourceWitness';
 
 export type RenderedCompositionPhase = 'start' | 'update';
 
@@ -81,6 +87,14 @@ export interface RenderedCommands {
 interface Props {
   source: string;
   sourceIsCurrent?: (snapshot: string) => boolean;
+  sourceWitness?: SourceWitness;
+  witnessIsCurrent?: (witness: SourceWitness) => boolean;
+  applyWithWitness?: (
+    expected: SourceWitness,
+    next: string,
+    typing: boolean,
+    composition?: RenderedCompositionPhase,
+  ) => SourceReceipt;
   path: string;
   active: boolean;
   disabled: boolean;
@@ -95,15 +109,20 @@ interface Props {
   ) => boolean;
   undo: () => void;
   redo: () => void;
-  openSource: (offset: number, source: string) => void;
+  openSource: (offset: number, source: string, witness?: SourceWitness) => void;
   openNote?: (id: string) => void;
   onPendingChange?: (pending: boolean) => void;
   onAnalysisDiagnostic?: (
     path: string,
     source: string,
     message: string | null,
+    witness?: SourceWitness,
   ) => void;
-  onRetainAttempt?: (baseSource: string, text: string) => Promise<void>;
+  onRetainAttempt?: (
+    baseSource: string,
+    text: string,
+    witness?: SourceWitness,
+  ) => Promise<void>;
   onDiscardAttempt?: () => Promise<void>;
   onKeepAttempt?: () => Promise<void>;
 }
@@ -172,6 +191,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     from: number;
     to: number;
     source: string;
+    witness?: SourceWitness;
   } | null>(null);
   useLayoutEffect(() => {
     latest.current = props;
@@ -222,6 +242,67 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       latest.current.path,
     );
     let acceptedSource = projection.mapping.source;
+    let projectionWitness = latest.current.sourceWitness
+      ? { ...latest.current.sourceWitness }
+      : undefined;
+    const sessionAware = projectionWitness !== undefined;
+    const protocolMatches = () =>
+      sessionAware
+        ? latest.current.sourceWitness?.sessionId ===
+            projectionWitness?.sessionId &&
+          latest.current.applyWithWitness !== undefined
+        : latest.current.sourceWitness === undefined &&
+          latest.current.applyWithWitness === undefined;
+    const projectionIsCurrent = () =>
+      protocolMatches() &&
+      (!sessionAware ||
+        Boolean(
+          projectionWitness &&
+          validSourceWitness(projectionWitness) &&
+          latest.current.sourceWitness &&
+          validSourceWitness(latest.current.sourceWitness) &&
+          projectionWitness.source === acceptedSource &&
+          latest.current.witnessIsCurrent?.(projectionWitness),
+        ));
+    function applyCanonical(
+      next: string,
+      typing: boolean,
+      composition?: RenderedCompositionPhase,
+    ): { accepted: boolean; witness?: SourceWitness } {
+      if (!protocolMatches()) return { accepted: false };
+      if (!sessionAware)
+        return {
+          accepted:
+            composition === undefined
+              ? latest.current.apply(acceptedSource, next, typing)
+              : latest.current.apply(acceptedSource, next, typing, composition),
+        };
+      if (
+        !projectionIsCurrent() ||
+        !projectionWitness ||
+        !latest.current.applyWithWitness
+      )
+        return { accepted: false };
+      const receipt = latest.current.applyWithWitness(
+        { ...projectionWitness },
+        next,
+        typing,
+        composition,
+      );
+      if (
+        !receipt.accepted ||
+        !validSourceWitness(receipt.witness) ||
+        receipt.witness.sessionId !== projectionWitness.sessionId ||
+        receipt.witness.source !== next ||
+        receipt.witness.editorRevision < projectionWitness.editorRevision ||
+        (next !== acceptedSource &&
+          receipt.witness.editorRevision ===
+            projectionWitness.editorRevision) ||
+        !latest.current.witnessIsCurrent?.(receipt.witness)
+      )
+        return { accepted: false };
+      return { accepted: true, witness: { ...receipt.witness } };
+    }
     let pendingDollars = new Set<number>();
     // Equal source bytes can belong to different history entries. Remember
     // empty provenance too, and permanently refuse ambiguous ownership.
@@ -264,11 +345,17 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       action();
     }
     function publishAnalysisDiagnostic() {
-      if (latest.current.sourceIsCurrent?.(acceptedSource) === false) return;
+      if (
+        !projectionIsCurrent() ||
+        (!sessionAware &&
+          latest.current.sourceIsCurrent?.(acceptedSource) === false)
+      )
+        return;
       latest.current.onAnalysisDiagnostic?.(
         projection.mapping.path,
         acceptedSource,
         projection.analysisDiagnostic,
+        ...(sessionAware ? [{ ...projectionWitness! }] : []),
       );
     }
     function pendingAfterPatch(from: number, to: number, newEnd: number) {
@@ -308,12 +395,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     function acceptProjection(
       next: typeof projection,
       pending = new Set<number>(),
+      witness = projectionWitness,
     ) {
       const report =
         projection.analysisDiagnostic !== null ||
         next.analysisDiagnostic !== null;
       projection = next;
       acceptedSource = next.mapping.source;
+      projectionWitness = witness ? { ...witness } : undefined;
       pendingDollars = pending;
       rememberPendingDollars();
       if (report) publishAnalysisDiagnostic();
@@ -328,9 +417,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         return;
       }
       const base = acceptedSource;
+      const witness = projectionWitness ? { ...projectionWitness } : undefined;
       setRecoveryCopy('saving');
       void Promise.resolve()
-        .then(() => persist(base, attempted))
+        .then(() =>
+          sessionAware
+            ? persist(base, attempted, witness)
+            : persist(base, attempted),
+        )
         .then(
           () => {
             if (recoveryGeneration.current === generation)
@@ -486,6 +580,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       getPos: () => number | undefined,
     ): NodeView {
       let node = initial;
+      let alive = true;
       const display = node.type === nodes.math_block;
       const dom = document.createElement(display ? 'div' : 'span');
       dom.className = display
@@ -543,6 +638,8 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       rendered.addEventListener('mousedown', (event) => {
         if (
           !(event instanceof MouseEvent) ||
+          !alive ||
+          !projectionIsCurrent() ||
           event.button !== 0 ||
           latest.current.disabled
         )
@@ -582,6 +679,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           );
         },
         destroy() {
+          alive = false;
           presentationRefreshers.current.delete(refresh);
         },
       };
@@ -591,6 +689,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       _view: EditorView,
       getPos: () => number | undefined,
     ): NodeView {
+      let alive = true;
       const li = document.createElement('li');
       const contentDOM = document.createElement('div');
       const checkbox = document.createElement('input');
@@ -614,7 +713,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       checkbox.addEventListener('change', () => {
         const editor = view.current;
         const pos = getPos();
-        if (!editor || latest.current.disabled || pos === undefined) {
+        if (
+          !alive ||
+          editor !== _view ||
+          !projectionIsCurrent() ||
+          !editor ||
+          latest.current.disabled ||
+          pos === undefined
+        ) {
           checkbox.checked = Boolean(node.attrs.checked);
           return;
         }
@@ -633,6 +739,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         dom: li,
         contentDOM,
         update,
+        destroy: () => {
+          alive = false;
+        },
         stopEvent: (event) => event.target === checkbox,
         ignoreMutation: (mutation) =>
           mutation.type !== 'selection' &&
@@ -760,6 +869,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       };
     }
     function wikiView(node: ProseNode): NodeView {
+      let alive = true;
       const button = document.createElement('button');
       button.contentEditable = 'false';
       button.type = 'button';
@@ -775,10 +885,22 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       if (!link()) button.dataset.missing = 'true';
       button.addEventListener('click', () => {
         const resolved = link();
-        if (!latest.current.disabled && resolved?.targetId)
+        if (
+          alive &&
+          projectionIsCurrent() &&
+          !latest.current.disabled &&
+          resolved?.targetId
+        )
           latest.current.openNote?.(resolved.targetId);
       });
-      return { dom: button, stopEvent: () => true, ignoreMutation: () => true };
+      return {
+        dom: button,
+        stopEvent: () => true,
+        ignoreMutation: () => true,
+        destroy: () => {
+          alive = false;
+        },
+      };
     }
     // Browsers normalize a native Select All range around display:none and
     // noneditable runtime atoms. Preserve the editor's explicit selection until
@@ -937,8 +1059,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         parsed,
         offset + replacement.length,
       );
-      if (caret === null || !latest.current.apply(acceptedSource, next, true))
-        return false;
+      if (caret === null) return false;
+      const receipt = applyCanonical(next, true);
+      if (!receipt.accepted) return false;
       const pending = [...pendingDollars].flatMap((value) =>
         value + 2 <= offset!
           ? [value]
@@ -963,6 +1086,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       acceptProjection(
         rebaseRenderedProjection(parsed, nextState.doc, next),
         new Set(pending),
+        receipt.witness,
       );
       current.updateState(nextState);
       return true;
@@ -1040,12 +1164,9 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         parsed,
         offset + replacement.length,
       );
-      if (
-        caret === null ||
-        !target ||
-        !latest.current.apply(acceptedSource, next, true)
-      )
-        return false;
+      if (caret === null || !target) return false;
+      const receipt = applyCanonical(next, true);
+      if (!receipt.accepted) return false;
       selectingAll = false;
       const transaction = current.state.tr.replaceWith(
         0,
@@ -1059,6 +1180,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
       acceptProjection(
         rebaseRenderedProjection(parsed, nextState.doc, next),
         pendingAfterPatch(offset, end, offset + replacement.length),
+        receipt.witness,
       );
       current.updateState(nextState);
       return true;
@@ -1735,10 +1857,14 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
               transaction.steps.every(
                 (step) => step.toJSON().stepType === 'replace',
               );
-            const applied = transaction.getMeta('renderedCompositionCommit')
-              ? latest.current.apply(acceptedSource, next, typing, 'start')
-              : latest.current.apply(acceptedSource, next, typing);
-            if (!applied) {
+            const receipt = applyCanonical(
+              next,
+              typing,
+              transaction.getMeta('renderedCompositionCommit')
+                ? 'start'
+                : undefined,
+            );
+            if (!receipt.accepted) {
               setError(
                 'The document changed before this edit could be applied. Your saved source is unchanged.',
               );
@@ -1749,6 +1875,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             acceptProjection(
               rebased,
               pendingAfterTransaction(rebased, transaction),
+              receipt.witness,
             );
             setError('');
           } catch (reason) {
@@ -1769,10 +1896,26 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     publishAnalysisDiagnostic();
     // Runtime-backed atoms never submit messages or transforms to this editor.
     const onSourceChange = () => {
+      if (!protocolMatches()) return;
       const next = latest.current.source;
+      const incoming = latest.current.sourceWitness;
+      if (sessionAware) {
+        if (
+          !incoming ||
+          !projectionWitness ||
+          !validSourceWitness(incoming) ||
+          incoming.source !== next ||
+          incoming.sessionId !== projectionWitness.sessionId ||
+          incoming.editorRevision < projectionWitness.editorRevision ||
+          !latest.current.witnessIsCurrent?.(incoming)
+        )
+          return;
+        if (sameSourceWitness(incoming, projectionWitness)) return;
+      }
       if (
-        latest.current.sourceIsCurrent?.(next) === false ||
-        next === acceptedSource
+        !sessionAware &&
+        (latest.current.sourceIsCurrent?.(next) === false ||
+          next === acceptedSource)
       )
         return;
       // A Select All intent belongs to its original source revision. Undo,
@@ -1804,16 +1947,26 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           TextSelection.near(transaction.doc.resolve(position)),
       );
       const nextState = editor.state.apply(transaction);
-      editor.updateState(nextState);
       acceptProjection(
         rebaseRenderedProjection(parsed, nextState.doc, next),
         new Set(restoredPending ?? []),
+        incoming,
       );
+      editor.updateState(nextState);
     };
     let deferredSourceChange = false;
     const sourceChanged = () => {
       if (editor.composing || compositionBase) {
-        deferredSourceChange = latest.current.source !== acceptedSource;
+        deferredSourceChange = sessionAware
+          ? Boolean(
+              latest.current.sourceWitness &&
+              projectionWitness &&
+              !sameSourceWitness(
+                latest.current.sourceWitness,
+                projectionWitness,
+              ),
+            )
+          : latest.current.source !== acceptedSource;
       } else {
         deferredSourceChange = false;
         onSourceChange();
@@ -1942,6 +2095,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             from: state.selection.from,
             to: state.selection.to,
             source: acceptedSource,
+            witness: projectionWitness ? { ...projectionWitness } : undefined,
           };
           setLinkDraft('https://');
         }
@@ -1956,6 +2110,11 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         if (!selected || latest.current.disabled) return;
         if (
           selected.source !== acceptedSource ||
+          (sessionAware &&
+            (!selected.witness ||
+              !projectionWitness ||
+              !sameSourceWitness(selected.witness, projectionWitness) ||
+              !projectionIsCurrent())) ||
           selected.to > editor.state.doc.content.size
         ) {
           setError(
@@ -1999,7 +2158,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
   } | null>(null);
   useLayoutEffect(() => {
     view.current?.dom.dispatchEvent(new Event('pn-source-change'));
-  }, [props.source, props.sourceIsCurrent]);
+  }, [
+    props.source,
+    props.sourceIsCurrent,
+    props.sourceWitness,
+    props.witnessIsCurrent,
+  ]);
   useEffect(() => {
     // Preserve the editor-owned atomic-IME editable predicate.
     view.current?.setProps({});
