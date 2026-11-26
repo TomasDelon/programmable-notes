@@ -184,6 +184,21 @@ impl Store {
             .collect::<Result<Vec<_>, Error>>()?;
         self.publish(prepared, root)
     }
+    /// Trusted-host relative selection from an existing vault capability; never a path IPC.
+    /// Validate the entire batch before I/O and publish all grants only after every read succeeds.
+    pub fn open_vault(&mut self, vault: &Vault, paths: &[String]) -> Result<Vec<Document>, Error> {
+        vault::validate_source_paths(paths)?;
+        self.capacity(paths.len(), 0, 0)?;
+        let mut prepared = Vec::new();
+        let mut bytes = 0;
+        for path in paths {
+            let (file, source) = vault.select_source(path)?;
+            bytes += source.len();
+            self.capacity(paths.len(), bytes, 0)?;
+            prepared.push((random_id()?, random_id()?, file, source));
+        }
+        self.publish(prepared, vault.display_root())
+    }
     fn publish(
         &mut self,
         prepared: Vec<(String, String, AuthorizedFile, String)>,

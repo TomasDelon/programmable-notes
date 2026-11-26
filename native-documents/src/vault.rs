@@ -5,6 +5,7 @@ use crate::{
     linux::AuthorizedFile, Error, InventoryEntry, MAX_DOCUMENTS, MAX_SOURCE_BYTES, MAX_TOTAL_BYTES,
 };
 use std::{
+    collections::HashSet,
     ffi::{CStr, CString, OsStr, OsString},
     fs::{File, OpenOptions},
     os::{
@@ -14,11 +15,42 @@ use std::{
             fs::OpenOptionsExt,
         },
     },
-    path::Path,
+    path::{Path, PathBuf},
 };
 const MAX_DEPTH: usize = 16;
 const MAX_ENTRIES: usize = 4096;
 const MAX_RELATIVE_BYTES: usize = 4096;
+const EXCLUDED_DIRECTORIES: [&str; 3] = [".git", "node_modules", ".programmable-notes"];
+
+fn validate_source_path(path: &str) -> Result<(), Error> {
+    if path.is_empty()
+        || path.len() > MAX_RELATIVE_BYTES
+        || path.contains(['\0', '\\'])
+        || Path::new(path).is_absolute()
+        || path.split('/').any(|part| {
+            part.is_empty() || part == "." || part == ".." || EXCLUDED_DIRECTORIES.contains(&part)
+        })
+        || path.split('/').count() > MAX_DEPTH + 1
+        || !Path::new(path)
+            .extension()
+            .and_then(OsStr::to_str)
+            .is_some_and(crate::supported_source_extension)
+    {
+        return Err(Error::Rejected("Unsupported vault source path"));
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_source_paths(paths: &[String]) -> Result<(), Error> {
+    let mut unique = HashSet::new();
+    for path in paths {
+        validate_source_path(path)?;
+        if !unique.insert(path) {
+            return Err(Error::Rejected("Duplicate vault source path"));
+        }
+    }
+    Ok(())
+}
 fn open_at(parent: &File, name: &OsStr, flags: libc::c_int) -> Result<File, Error> {
     let name =
         CString::new(name.as_bytes()).map_err(|_| Error::Rejected("Invalid folder entry name"))?;
@@ -118,7 +150,7 @@ impl Walk {
             let pinned = open_at(directory, &name, libc::O_PATH)?;
             let metadata = pinned.metadata()?;
             if metadata.is_dir() {
-                if [".git", "node_modules", ".programmable-notes"]
+                if EXCLUDED_DIRECTORIES
                     .iter()
                     .any(|skip| name == OsStr::new(skip))
                 {
@@ -187,12 +219,15 @@ fn select_root(root: &Path) -> Result<File, Error> {
 /// Trusted-host directory capability, never constructed from document runtime input.
 pub struct Vault {
     directory: File,
+    // Original selection spelling is a label only; it may become stale after a rename.
+    display_root: PathBuf,
 }
 impl Vault {
     /// Call only after OS folder authorization; never expose this path-taking API as IPC.
     pub fn select_authorized(root: &Path) -> Result<Self, Error> {
         Ok(Self {
             directory: select_root(root)?,
+            display_root: root.to_path_buf(),
         })
     }
 
@@ -208,6 +243,46 @@ impl Vault {
             Ok(())
         })?;
         Ok(entries)
+    }
+
+    pub(crate) fn display_root(&self) -> &Path {
+        &self.display_root
+    }
+
+    pub(crate) fn select_source(&self, path: &str) -> Result<(AuthorizedFile, String), Error> {
+        validate_source_path(path)?;
+        let mut directory = self.directory.try_clone()?;
+        let mut components = path.split('/').peekable();
+        while let Some(name) = components.next() {
+            let name = OsStr::new(name);
+            let pinned = open_at(&directory, name, libc::O_PATH)?;
+            let metadata = pinned.metadata()?;
+            if components.peek().is_some() {
+                if !metadata.is_dir() {
+                    return Err(Error::Rejected(
+                        "Vault source parent must be a real directory",
+                    ));
+                }
+                directory = OpenOptions::new()
+                    .read(true)
+                    .custom_flags(libc::O_DIRECTORY | libc::O_CLOEXEC)
+                    .open(format!("/proc/self/fd/{}", pinned.as_raw_fd()))?;
+            } else {
+                if !metadata.is_file() {
+                    return Err(Error::Rejected("Vault source must be a regular file"));
+                }
+                if metadata.len() > MAX_SOURCE_BYTES as u64 {
+                    return Err(Error::Rejected("File exceeds 500 KB limit"));
+                }
+                return AuthorizedFile::select_anchored(
+                    directory,
+                    name,
+                    self.display_root.join(path),
+                    pinned,
+                );
+            }
+        }
+        Err(Error::Rejected("Unsupported vault source path"))
     }
 
     fn visit(
