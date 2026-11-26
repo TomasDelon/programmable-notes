@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Response } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import {
   openMath,
   replaceDocumentText,
@@ -7,6 +8,27 @@ import {
 } from '../e2e/helpers/math-text';
 
 test.describe.configure({ timeout: 60_000 });
+const sha256 = (bytes: Buffer) =>
+  createHash('sha256').update(bytes).digest('hex');
+async function verifiedNavigation(response: Response | null) {
+  expect(response, 'Expected a document navigation response').not.toBeNull();
+  expect(response!.status()).toBe(200);
+  expect(
+    new URL(response!.url()).origin ===
+      new URL(test.info().project.use.baseURL!).origin,
+    'Expected deployment navigation to stay on origin',
+  ).toBe(true);
+  expect(sha256(await response!.body()), 'Expected deployed entry HTML').toBe(
+    sha256(readFileSync('dist/index.html')),
+  );
+}
+async function openDeployment(page: Page) {
+  await verifiedNavigation(await page.goto('/'));
+}
+async function reloadDeployment(page: Page) {
+  await verifiedNavigation(await page.reload());
+}
+
 async function command(page: Page, name: string) {
   await page.locator('.doc-title-row').click();
   await page.keyboard.press('Control+k');
@@ -72,8 +94,13 @@ test('hosting serves correct transport policies and compiler MIME without exposi
   expect(canonical.status()).toBeLessThan(400);
   expect(canonical.headers()['location']).toBe('/');
   const serviceWorker = await request.get('/sw.js');
+  expect(serviceWorker.status()).toBe(200);
   expect(serviceWorker.headers()['cache-control']).toContain('no-cache');
-  const source = await serviceWorker.text();
+  const workerBytes = await serviceWorker.body();
+  expect(createHash('sha256').update(workerBytes).digest('hex')).toBe(
+    createHash('sha256').update(readFileSync('dist/sw.js')).digest('hex'),
+  );
+  const source = workerBytes.toString('utf8');
   const assets = JSON.parse(
     /const ASSETS = (.+);/.exec(source)![1]!,
   ) as string[];
@@ -97,7 +124,7 @@ test('hosting serves correct transport policies and compiler MIME without exposi
 test('real MDX React stays interactive and unprivileged under hosting headers', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openDeployment(page);
   await expect(
     page.getByRole('main', { name: 'Document workspace' }),
   ).toBeVisible();
@@ -148,7 +175,7 @@ test('visual and source edits retain exact bytes through history, saving and off
   page,
   context,
 }) => {
-  await page.goto('/');
+  await openDeployment(page);
   await expect(
     page.getByRole('main', { name: 'Document workspace' }),
   ).toBeVisible();
@@ -180,7 +207,7 @@ test('visual and source edits retain exact bytes through history, saving and off
   const final = changed + 'Tail.';
   expect(await exported(page)).toEqual(Buffer.from(final));
   await saved(page);
-  await page.reload();
+  await reloadDeployment(page);
   expect(await exported(page)).toEqual(Buffer.from(final));
   await page.waitForFunction(
     () => Boolean(navigator.serviceWorker.controller),
@@ -189,7 +216,7 @@ test('visual and source edits retain exact bytes through history, saving and off
   );
   await context.setOffline(true);
   try {
-    await page.reload();
+    await reloadDeployment(page);
     await expect(
       page.getByRole('main', { name: 'Document workspace' }),
     ).toBeVisible();
@@ -205,7 +232,7 @@ test('visual and source edits retain exact bytes through history, saving and off
 test('ordinary keyboard Markdown authoring remains usable after deployment', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openDeployment(page);
   const original =
     '\uFEFF# Hosted writing\r\n\r\nStart here.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
   await page.getByLabel('Import note files').setInputFiles({
@@ -270,14 +297,14 @@ test('ordinary keyboard Markdown authoring remains usable after deployment', asy
     after.toString().endsWith('<span data-kept="yes">Opaque JSX</span>\r\n'),
   ).toBe(true);
   await saved(page);
-  await page.reload();
+  await reloadDeployment(page);
   expect(await exported(page)).toEqual(after);
 });
 
 test('caret mathematics edits in place without forms and preserves source through undo and reload', async ({
   page,
 }, testInfo) => {
-  await page.goto('/');
+  await openDeployment(page);
   const original =
     '\uFEFF# Hosted math\r\n\r\nBefore $x^2$ after.\r\n\r\n$$\r\ny^2\r\n$$\r\n\r\n<span title="unchanged">Opaque</span>\n';
   await page.getByLabel('Import note files').setInputFiles({
@@ -322,14 +349,14 @@ test('caret mathematics edits in place without forms and preserves source throug
   await source.press('Control+Shift+Z');
   expect(await exported(page)).toEqual(Buffer.from(changed));
   await saved(page);
-  await page.reload();
+  await reloadDeployment(page);
   expect(await exported(page)).toEqual(Buffer.from(changed));
 });
 
 test('core plugins, hidden setup and nonblocking invalid mathematics work in the deployed editor', async ({
   page,
 }, testInfo) => {
-  await page.goto('/');
+  await openDeployment(page);
   const original =
     'import {useState} from "react"\n\nexport function Counter(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Plugin count {n}</button>}\n\n# Modular note\n\nA result $x \\in \\mathbb{R}$.\n\n<Counter />\n';
   await page.getByLabel('Import note files').setInputFiles({
@@ -380,7 +407,7 @@ test('core plugins, hidden setup and nonblocking invalid mathematics work in the
     view.locator('pre').filter({ hasText: 'export function Counter' }),
   ).toBeVisible();
   await saved(page);
-  await page.reload();
+  await reloadDeployment(page);
   await expect(
     view.locator('pre').filter({ hasText: 'export function Counter' }),
   ).toBeVisible();
@@ -413,7 +440,7 @@ test('core plugins, hidden setup and nonblocking invalid mathematics work in the
 test('hidden setup survives real selection replacement, undo, redo and exact reopening', async ({
   page,
 }) => {
-  await page.goto('/');
+  await openDeployment(page);
   const original =
     '\uFEFFimport {useState} from "react"\r\n\r\nexport function Counter(){const [n,setN]=useState(0);return <button onClick={()=>setN(n+1)}>Count {n}</button>}\r\n\r\n# Hosted selection\r\n\r\nKeep setup intact.\r\n\r\n<Counter />\r\n';
   await page.getByLabel('Import note files').setInputFiles({
@@ -453,7 +480,7 @@ test('hidden setup survives real selection replacement, undo, redo and exact reo
   await expect(view).toContainText('Replacement body.');
   expect(await exported(page)).toEqual(Buffer.from(changed));
   await saved(page);
-  await page.reload();
+  await reloadDeployment(page);
   expect(await exported(page)).toEqual(Buffer.from(changed));
 });
 
@@ -461,7 +488,7 @@ test('unfinished dollars stay literal and correct without notices on the deploye
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
+  await openDeployment(page);
   const raw = "$$\r\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\r\n$";
   const source =
     '\uFEFF# Mathematics\r\n\r\n' + raw + '\r\n\r\nContinue writing here.\r\n';
@@ -483,7 +510,7 @@ test('unfinished dollars stay literal and correct without notices on the deploye
     path: testInfo.outputPath('literal-math-mobile.png'),
     fullPage: true,
   });
-  await page.reload();
+  await reloadDeployment(page);
   const paragraph = editor.locator('p').filter({ hasText: "f'(x)" });
   const end = (await paragraph.textContent())!.length;
   await selectDocumentText(paragraph, end, end);
@@ -493,5 +520,23 @@ test('unfinished dollars stay literal and correct without notices on the deploye
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(await exported(page)).toEqual(
     Buffer.from(source.replace(raw, () => raw + '$')),
+  );
+});
+
+test('deployment identity rejects stale entry HTML even with a current worker', async ({
+  page,
+}) => {
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().isNavigationRequest() && url.pathname === '/') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><title>Stale deployment control</title>',
+      });
+    } else await route.continue();
+  });
+  await expect(openDeployment(page)).rejects.toThrow(
+    'Expected deployed entry HTML',
   );
 });

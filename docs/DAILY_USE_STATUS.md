@@ -164,6 +164,41 @@ The legacy long-paragraph test sampled browser scrolling immediately after
 Ctrl+End. It now polls the same positive-scroll predicate with the default
 deadline, retaining geometry, exact tail export, undo and redo checks. Actual
 WebKit observation placed scroll delivery after the first post-key sample; local
-Chromium/WebKit checks passed, while hosted Firefox repetition remains required.
+Chromium/WebKit checks passed at that checkpoint. The subsequent hosted Firefox
+repetition passed all 20 cases, as recorded below.
 The optional `editing_scope=authoring` diagnostic selects these four journeys for
 five repetitions without retries. It does not replace complete CI or acceptance.
+
+## Current hosted web acceptance
+
+The corrected application at `0c56878` passed the
+[complete hosted browser gate](https://github.com/TomasDelon/programmable-notes/actions/runs/45734745990):
+**381 passed, 18 intentional skips, zero retries**, across Chromium, Firefox and
+WebKit, plus **24 local Pages-policy cases**. The separate
+[Firefox repetition gate](https://github.com/TomasDelon/programmable-notes/actions/runs/45734746231)
+passed all 20 authoring cases across five repetitions. Mandatory CI also passed
+at `0c56878` and infrastructure-only `502b483`.
+
+The [verified current walkthrough](https://github.com/TomasDelon/programmable-notes/actions/runs/45734745990/artifacts/15079287449)
+contains the playable recording, desktop/tablet/mobile screenshots, exact example
+and portable build. Its positive offline journey and eleven rejection controls
+passed. Artifacts expire after seven days; this is neither an installer nor a
+public release.
+
+The tested `0c56878` was fast-forwarded to the Cloudflare beta branch. The
+[immutable candidate check](https://github.com/TomasDelon/programmable-notes/actions/runs/45736289730)
+passed eight Chromium cases. Earlier candidate dispatches did not select
+`browser_qa=true`; they must not be described as 24-case deployment checks.
+Principal-origin promotion acceptance is a separate gate. It now builds the
+expected Pages output, waits for the exact service-worker SHA-256, and checks
+that identity again during browser acceptance. This prevents an older working
+site from satisfying the new revision's deployment gate. It verifies build
+consistency over HTTPS, not resistance to a compromised hosting account.
+
+The delivery-identity correction passed the complete local check: **484 unit
+cases /55 files, 58 tooling controls, 133 Chromium cases and 9 local Pages-policy
+cases**, zero retries, plus formatting, lint, strict TypeScript and production
+build. Independent review additionally tightened partial APT-index failure
+handling and sanitized navigation-origin failures; the affected final static and
+58-control tooling checks were repeated successfully. Application build identities
+remain unchanged. Hosted principal-origin and native results remain separate.

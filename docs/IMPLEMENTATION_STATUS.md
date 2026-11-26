@@ -2,7 +2,17 @@
 
 ## Current acceptance and stabilization
 
-[The daily-use receipt](DAILY_USE_STATUS.md) distinguishes the verified starting deployment, current development corrections and remaining native gates. The `d2838be` application passed principal-origin three-browser acceptance; `3c36ae2` protocol/tooling CI passed. Older pending statements below describe their original checkpoints, not a request to repeat completed runs. The corrected stabilization candidate passed 478 unit, 44 tooling, 133 Chromium and 8 local Pages-policy cases, plus the mandatory static/build checks. Exact final-head hosted/deployment receipts are maintained in draft PR #9; local results do not certify the deployment. Native UI parity, startup/Stop attribution and browser evidence are separate claims.
+[The daily-use receipt](DAILY_USE_STATUS.md) records the current stabilization
+work and distinguishes web delivery from native gates. Application revision
+`0c56878` passed 381 hosted browser cases across Chromium, Firefox and WebKit
+(18 intentional skips, zero retries), 24 local Pages-policy cases and 20 repeated
+Firefox authoring cases. Its verified downloadable walkthrough is linked there.
+The tested revision has been fast-forwarded to the beta branch; principal-origin
+acceptance must independently verify exact build identity and actual interaction.
+Current-head CI and deployment receipts are maintained in draft PR #9.
+Native UI parity, startup/Stop attribution and installed-package security remain
+separate open gates. Older checkpoint results below remain historical evidence,
+not claims about a later package or a reason to repeat unchanged passing tests.
 
 ## Engineering feedback workflow
 

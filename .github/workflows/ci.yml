@@ -227,6 +227,10 @@ jobs:
           else
             npx playwright install --with-deps chromium
           fi
+      - name: Build the expected deployment from this checkout
+        run: npm run build:cloudflare
+      - name: Require the expected deployed build before interaction tests
+        run: node scripts/verify-deployment-build.mjs
       - name: Validate the actual deployed app in fresh browser profiles
         run: npx playwright test --config playwright.cloudflare.config.ts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
