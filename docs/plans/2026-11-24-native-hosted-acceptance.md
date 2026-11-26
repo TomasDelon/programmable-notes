@@ -2,8 +2,9 @@
 
 Status: infrastructure preflight implemented; actual installed-application validation remains open. Hosted run receipts are maintained in draft PR #9.
 
-The current QEMU TCG guest can run the installed application, but startup jitter
-can exhaust the fixed resource-test window. On the same installed ELF, the CPU
+The retained QEMU TCG guest previously ran the installed application, but startup
+jitter exhausted a fixed resource-test window. Its later launch approval was
+canceled; no current installed-package result is inferred from that history. On the same installed ELF, the CPU
 fixture was armed at 43.90s in a passing Stop case and at 52.51s in a later failing
 attribution case. Keep the latter failure: sampling plus Stop then overlaps the
 60s service lifetime. Physical GPU testing is a separate compatibility task.

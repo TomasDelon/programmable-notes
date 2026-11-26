@@ -122,7 +122,128 @@ describe('rendered Markdown source bridge', () => {
     expect(findNode(result.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
   });
 
-  it('keeps ambiguous quoted prose visible and refuses a rewrite that would destroy its link', () => {
+  it.each([
+    ['quote', '> ', '> '],
+    ['list', '- ', '  '],
+    ['nested quote/list', '> - ', '>   '],
+    ['tabbed continuation', '> ', '> \t'],
+  ])(
+    'preserves %s continuation bytes when typing on either side',
+    (_label, opening, continuation) => {
+      const source =
+        '\uFEFF---\nname: note\r\n---\n\n' +
+        opening +
+        'Café &amp; &#10; tea\r\n' +
+        continuation +
+        'See [[Other]] 🧪 and &NotEqualTilde;.\n\n<Thing />\r\n';
+      const projection = parseRenderedSource(source);
+      const state = EditorState.create({ doc: projection.doc });
+      const step = state.tr.insertText('!', findText(state.doc, 'Café') + 4);
+      const first = apply(projection, step);
+      expect(first.mapping.source).toBe(source.replace('Café', 'Café!'));
+      expect(findNode(first.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+      const second = apply(
+        first,
+        EditorState.create({ doc: first.doc }).tr.insertText(
+          '?',
+          findText(first.doc, 'See') + 3,
+        ),
+      );
+      expect(second.mapping.source).toBe(
+        source.replace('Café', 'Café!').replace('See', 'See?'),
+      );
+      const undone = apply(
+        first,
+        EditorState.create({ doc: first.doc }).tr.step(
+          step.steps[0]!.invert(state.doc),
+        ),
+      );
+      expect(undone.mapping.source).toBe(source);
+    },
+  );
+
+  it.each(['> Café\r\n> a', 'Café a'])(
+    'preserves the untouched spelling when adjacent entities display identically after %s',
+    (prefix) => {
+      const source = prefix + '&#38;&amp; [[Other]]';
+      const projection = parseRenderedSource(source);
+      const from = findText(projection.doc, '&&');
+      const result = apply(
+        projection,
+        EditorState.create({ doc: projection.doc }).tr.delete(from, from + 1),
+      );
+      expect(result.mapping.source).toBe(source.replace('&#38;', ''));
+    },
+  );
+
+  it('preserves the surviving physical line ending when deleting repeated prose', () => {
+    const source = 'a\r\na\na';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    expect(projection.doc.textContent).toBe('a\na\na');
+    const removeFirst = state.tr.delete(1, 3);
+    expect(apply(projection, removeFirst).mapping.source).toBe('a\na');
+    expect(apply(projection, state.tr.delete(3, 5)).mapping.source).toBe(
+      'a\r\na',
+    );
+  });
+
+  it('refuses a snapshot with an ambiguous physical line ending', () => {
+    const projection = parseRenderedSource('a\r\na\na');
+    const state = EditorState.create({ doc: projection.doc });
+    const candidate = state.tr.delete(1, 3).doc;
+    expect(() => serializeRenderedChange(projection, candidate)).toThrow(
+      'source spelling',
+    );
+    expect(projection.mapping.source).toBe('a\r\na\na');
+  });
+
+  it('refuses an unwitnessed deletion with ambiguous raw spelling and accepts plain repetitions', () => {
+    const source = 'Café &#38;&amp; tea';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    const from = findText(state.doc, '&&');
+    expect(() =>
+      serializeRenderedChange(projection, state.tr.delete(from, from + 1).doc),
+    ).toThrow('source spelling');
+    expect(projection.mapping.source).toBe(source);
+    const e = findText(state.doc, 'tea') + 2;
+    expect(
+      serializeRenderedChange(projection, state.tr.insertText('e', e).doc),
+    ).toBe(source.replace('tea', 'teea'));
+  });
+
+  it('keeps lazy continuation and escaped literal greater-than prose editable across successive parses', () => {
+    for (const [source, shown] of [
+      ['> A &amp;\r\n> \\> See [[Other]]', '> See'],
+      ['> B &#13;\rSee [[Other]]', 'See'],
+      ['- D\n  See &#x1F9EA; &NotEqualTilde; [[Other]]', 'See'],
+    ] as const) {
+      const projection = parseRenderedSource(source);
+      const pos = findText(projection.doc, shown) + shown.length;
+      const result = apply(
+        projection,
+        EditorState.create({ doc: projection.doc }).tr.insertText('!', pos),
+      );
+      expect(result.mapping.source).toBe(source.replace('See', 'See!'));
+      expect(findNode(result.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+    }
+  });
+
+  it('discards a partial prefix witness at its per-parse bound', () => {
+    const source = '- A [[Other]]\n' + '  more\n'.repeat(4097);
+    const projection = parseRenderedSource(source);
+    expect(() => replace(projection, 'more', 'more!')).toThrow('wikilink');
+    expect(projection.mapping.source).toBe(source);
+    const next = replace(
+      parseRenderedSource('- A [[Other]]\n  more tea'),
+      'tea',
+      'tea!',
+    );
+    expect(next.mapping.source).toBe('- A [[Other]]\n  more tea!');
+  });
+
+  it('refuses ambiguous caret, cross-prefix and structural edits in visible quoted prose', () => {
     const source =
       '> Café &amp; tea\r\n> See [[Other]] and **bold**.\n\nOutside.';
     const projection = parseRenderedSource(source);
@@ -131,8 +252,20 @@ describe('rendered Markdown source bridge', () => {
     ]);
     const body = projection.doc.firstChild!.firstChild!;
     expect(body.firstChild?.isText).toBe(true);
-    expect(body.textContent).toBe('Café & tea\nSee [[Other]] and bold.');
-    expect(() => replace(projection, 'Café', 'Café!')).toThrow('wikilink');
+    expect(body.textContent).toBe('Café & tea\nSee  and bold.');
+    expect(findNode(body, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+    const boundary = findText(projection.doc, 'See');
+    const rawPrefix = source.indexOf('> See');
+    expect(renderedTextSourceOffset(projection, boundary)).toBeNull();
+    for (const offset of [rawPrefix, rawPrefix + 1, rawPrefix + 2])
+      expect(renderedPositionFromSourceOffset(projection, offset)).toBeNull();
+    const typing = EditorState.create({ doc: projection.doc });
+    expect(() =>
+      apply(projection, typing.tr.insertText('S', boundary)),
+    ).toThrow('wikilink');
+    expect(() =>
+      apply(projection, typing.tr.insertText('!', boundary - 2, boundary + 2)),
+    ).toThrow('wikilink');
     expect(projection.mapping.source).toBe(source);
     const adjacent = replace(projection, 'bold', 'bright');
     expect(adjacent.mapping.source).toBe(source.replace('bold', 'bright'));

@@ -7,6 +7,7 @@ import {
   MarkdownSerializer,
   defaultMarkdownSerializer,
 } from 'prosemirror-markdown';
+import { Transaction } from 'prosemirror-state';
 import { decodeString } from 'micromark-util-decode-string';
 import { parseWikilinks, type LinkSourceSpan } from '../../links';
 import {
@@ -44,7 +45,7 @@ interface TextRange extends RenderedSourceRange {
   rawLiteral: boolean;
 }
 export interface RenderedBlockMapping extends RenderedSourceRange {
-  hasUnmappedWikilink?: boolean;
+  requiresSparseWikilinkEdit?: boolean;
   id: string;
   node: ProseMirrorNode;
 }
@@ -60,6 +61,7 @@ export interface RenderedProjection {
     ranges: Map<ProseMirrorNode, RenderedSourceRange>;
     texts: Map<ProseMirrorNode, TextRange[]>;
     tasks: Map<ProseMirrorNode, RenderedSourceRange>;
+    containerPrefixEdges: Set<number>;
   };
 }
 
@@ -138,7 +140,8 @@ export function parseRenderedSource(
     ? parseWikilinks(source, tree, [], true)
     : [];
 
-  let hasUnmappedWikilink: boolean;
+  const containerPrefixEdges = new Set<number>();
+  let requiresSparseWikilinkEdit: boolean;
 
   function remember(node: ProseMirrorNode, ast: AstNode): ProseMirrorNode {
     const range = rangeOf(ast);
@@ -257,54 +260,91 @@ export function parseRenderedSource(
         : [];
       if (selected.length && range) {
         const value = normalized(ast.value ?? '');
-        const offsets = textOffsets(
-          source.slice(range.from, range.to),
-          value,
-          false,
-        );
-        // The raw parser owns link identity. Only split the visible text at
-        // boundaries witnessed by the same verified source map used for edits.
-        const result: ProseMirrorNode[] = [];
-        let from = range.from;
-        let visibleFrom = 0;
-        for (const link of selected) {
-          const start =
-            offsets && textOffsetIndex(offsets, link.from - range.from);
-          const end = offsets && textOffsetIndex(offsets, link.to - range.from);
-          if (start === null || end === null) {
-            // Keep ordinary prose visible when container syntax prevents a
-            // verified map. This block can still accept other sparse edits.
-            hasUnmappedWikilink = true;
-            return text(value, marks, range);
+        const prefixes = tree?.data?.continuationPrefixes;
+        const gaps: RenderedSourceRange[] = [];
+        if (prefixes?.size) {
+          for (const newline of attrs.raw.matchAll(/\r\n?|\n/g)) {
+            const from = range.from + newline.index + newline[0].length;
+            let to = from;
+            let end = prefixes.get(to);
+            while (
+              end !== undefined &&
+              end > to &&
+              end <= range.to &&
+              /^[> \t]+$/.test(source.slice(to, end))
+            ) {
+              to = end;
+              end = prefixes.get(to);
+            }
+            if (to !== from) gaps.push({ from, to });
           }
-          result.push(
-            ...text(value.slice(visibleFrom, start), marks, {
-              from,
-              to: link.from,
-            }),
-          );
-          visibleFrom = end;
-          const node = schema.nodes.wikilink!.create(
-            {
-              raw: link.raw,
-              target: link.target,
-              alias: link.alias ?? null,
-              sourceFrom: link.from,
-              sourceTo: link.to,
-            },
-            null,
+        }
+        // A link and every invisible prefix come from the same parser pass.
+        // Validate all visible parts together before installing any raw gaps.
+        const segments = [...selected, ...gaps].sort((a, b) => a.from - b.from);
+        const result: ProseMirrorNode[] = [];
+        const visible: string[] = [];
+        let from = range.from;
+        let pending: TextRange[] = [];
+        // A multiline run is a single ProseMirror text node. Keep each
+        // source part once, with no node or bytes for the intervening prefix.
+        function flushText() {
+          if (!pending.length) return;
+          const node = schema.text(
+            pending.map((part) => part.text).join(''),
             marks,
           );
-          ranges.set(node, { from: link.from, to: link.to });
+          texts.set(node, pending);
+          ranges.set(node, { from: pending[0]!.from, to: pending.at(-1)!.to });
           result.push(node);
-          from = link.to;
+          pending = [];
         }
-        result.push(
-          ...text(value.slice(visibleFrom), marks, {
-            from,
-            to: range.to,
-          }),
-        );
+        function appendText(to: number) {
+          const part = normalized(decodeString(source.slice(from, to)));
+          visible.push(part);
+          if (part)
+            pending.push({
+              from,
+              to,
+              text: part,
+              rawLiteral: false,
+              code: false,
+            });
+        }
+        for (const part of segments) {
+          if (part.from < from) {
+            requiresSparseWikilinkEdit = true;
+            return text(value, marks, range);
+          }
+          appendText(part.from);
+          if ('target' in part) {
+            flushText();
+            visible.push(normalized(decodeString(part.raw)));
+            const node = schema.nodes.wikilink!.create(
+              {
+                raw: part.raw,
+                target: part.target,
+                alias: part.alias ?? null,
+                sourceFrom: part.from,
+                sourceTo: part.to,
+              },
+              null,
+              marks,
+            );
+            ranges.set(node, { from: part.from, to: part.to });
+            result.push(node);
+          }
+          from = part.to;
+        }
+        appendText(range.to);
+        flushText();
+        const verified = visible.join('') === value;
+        if (gaps.length || !verified) requiresSparseWikilinkEdit = true;
+        if (!verified) return text(value, marks, range);
+        for (const gap of gaps) {
+          containerPrefixEdges.add(gap.from);
+          containerPrefixEdges.add(gap.to);
+        }
         return result;
       }
       return text(ast.value ?? '', marks, range ?? undefined);
@@ -572,7 +612,7 @@ export function parseRenderedSource(
     // that gets appended after every subsequent typed task label.
     while (range.to < source.length && /[ \t]/.test(source[range.to]!))
       range.to++;
-    hasUnmappedWikilink = false;
+    requiresSparseWikilinkEdit = false;
     const original = block(ast);
     // A terminal virtual break owns its physical newline. Otherwise it would
     // be counted again as a document suffix after the next typed character.
@@ -587,7 +627,7 @@ export function parseRenderedSource(
       original.marks,
     );
     ranges.set(node, range);
-    blocks.push({ ...range, id, node, hasUnmappedWikilink });
+    blocks.push({ ...range, id, node, requiresSparseWikilinkEdit });
   }
   const doc = schema.nodes.doc!.create(
     null,
@@ -607,6 +647,7 @@ export function parseRenderedSource(
       ranges,
       texts,
       tasks,
+      containerPrefixEdges,
     },
   };
 }
@@ -889,10 +930,105 @@ function textOffsets(
       : null;
   return decoded === expected ? offsets : null;
 }
+function changedTextRange(oldValue: string, newValue: string) {
+  let start = 0;
+  while (
+    start < oldValue.length &&
+    start < newValue.length &&
+    oldValue[start] === newValue[start]
+  )
+    start++;
+  let end = oldValue.length,
+    nextEnd = newValue.length;
+  while (
+    end > start &&
+    nextEnd > start &&
+    oldValue[end - 1] === newValue[nextEnd - 1]
+  ) {
+    end--;
+    nextEnd--;
+  }
+  return { start, end, nextEnd };
+}
+
+/** Map a single editor replacement to one literal part. The transaction's
+ * range disambiguates hidden prefixes and equal characters with different
+ * source spellings (such as adjacent numeric and named references). */
+function witnessedTextEdit(
+  before: ProseMirrorNode,
+  after: ProseMirrorNode,
+  spans: TextRange[],
+  edges: Set<number> | null,
+  transaction: Transaction | null,
+) {
+  if (transaction?.steps.length !== 1) return null;
+  const changes: { from: number; to: number }[] = [];
+  transaction.mapping.maps[0]!.forEach((from, to) =>
+    changes.push({ from, to }),
+  );
+  if (changes.length !== 1) return null;
+  const { from, to } = changes[0]!;
+  const start = transaction.before.resolve(from);
+  const end = transaction.before.resolve(to);
+  if (start.parent !== end.parent) return null;
+  const index = start.index();
+  let localFrom = start.textOffset;
+  if (start.parent.maybeChild(index) !== before) {
+    if (
+      localFrom !== 0 ||
+      index === 0 ||
+      start.parent.child(index - 1) !== before
+    )
+      return null;
+    localFrom = before.nodeSize;
+  }
+  const localTo = localFrom + to - from;
+  let pos = 0;
+  for (const part of spans) {
+    const limit = pos + part.text.length;
+    if (
+      localFrom >= pos &&
+      localTo <= limit &&
+      !(localFrom === pos && edges?.has(part.from)) &&
+      !(localTo === limit && edges?.has(part.to))
+    ) {
+      const changedFrom = localFrom - pos;
+      const changedTo = localTo - pos;
+      const insertedEnd = localTo + after.nodeSize - before.nodeSize;
+      const inserted = after.text!.slice(localFrom, insertedEnd);
+      const removed = part.text.slice(changedFrom, changedTo);
+      if (
+        insertedEnd < localFrom ||
+        before.text!.slice(0, localFrom) +
+          inserted +
+          before.text!.slice(localTo) !==
+          after.text ||
+        (edges && (/[\r\n]/.test(removed) || /[\r\n]/.test(inserted)))
+      )
+        return null;
+      const difference = changedTextRange(removed, inserted);
+      return {
+        span: part,
+        oldValue: part.text,
+        newValue:
+          part.text.slice(0, changedFrom) +
+          inserted +
+          part.text.slice(changedTo),
+        start: changedFrom + difference.start,
+        end: changedFrom + difference.end,
+        nextEnd: changedFrom + difference.nextEnd,
+      };
+    }
+    pos = limit;
+  }
+  return null;
+}
+
 function sparseBlock(
   previous: RenderedProjection,
   block: RenderedBlockMapping,
   next: ProseMirrorNode,
+  transaction: Transaction | null,
 ): string | null {
   const { mapping } = previous;
   const patches: Patch[] = [];
@@ -937,9 +1073,16 @@ function sparseBlock(
       const spans = mapping.texts.get(before);
       if (!spans?.length) return false;
       const first = spans[0]!;
-      // Adjacent parser tokens can merge into one text node. Address them as
-      // one span only when their source is contiguous and escaping agrees.
+      let span = { ...first, to: spans.at(-1)!.to };
+      let oldValue = before.text!,
+        newValue = after.text!;
+      const acrossPrefixes = spans.some(
+        (part) =>
+          mapping.containerPrefixEdges.has(part.from) ||
+          mapping.containerPrefixEdges.has(part.to),
+      );
       if (
+        !acrossPrefixes &&
         !spans.every(
           (part, index) =>
             part.code === first.code &&
@@ -948,33 +1091,44 @@ function sparseBlock(
         )
       )
         return false;
-      const span = { ...first, to: spans.at(-1)!.to };
-      const raw = mapping.source.slice(span.from, span.to);
-      const offsets = textOffsets(
-        raw,
-        before.text!,
-        span.code,
-        span.rawLiteral,
-      );
+      let raw = mapping.source.slice(span.from, span.to);
+      const decodedProse = !span.code && !span.rawLiteral && raw !== oldValue;
+      const edit =
+        (acrossPrefixes || decodedProse) && transaction
+          ? witnessedTextEdit(
+              before,
+              after,
+              acrossPrefixes ? spans : [{ ...span, text: oldValue }],
+              acrossPrefixes ? mapping.containerPrefixEdges : null,
+              transaction,
+            )
+          : null;
+      if (acrossPrefixes && !edit) return false;
+      if (edit) {
+        ({ span, oldValue, newValue } = edit);
+        raw = mapping.source.slice(span.from, span.to);
+      }
+      const offsets = textOffsets(raw, oldValue, span.code, span.rawLiteral);
       if (!offsets) return false;
-      const oldValue = before.text!,
-        newValue = after.text!;
-      let start = 0;
-      while (
-        start < oldValue.length &&
-        start < newValue.length &&
-        oldValue[start] === newValue[start]
-      )
-        start++;
-      let end = oldValue.length,
-        nextEnd = newValue.length;
-      while (
-        end > start &&
-        nextEnd > start &&
-        oldValue[end - 1] === newValue[nextEnd - 1]
-      ) {
-        end--;
-        nextEnd--;
+      let { start, end, nextEnd } =
+        edit ?? changedTextRange(oldValue, newValue);
+      if (decodedProse && !edit) {
+        // A snapshot can place the same insertion/deletion at multiple offsets.
+        // Only slide across text whose source spelling is literal throughout.
+        let shift = 0;
+        while (
+          shift < start &&
+          oldValue[end - shift - 1] === newValue[nextEnd - shift - 1]
+        )
+          shift++;
+        if (
+          shift &&
+          raw.slice(offsets[start - shift], offsets[end]) !==
+            oldValue.slice(start - shift, end)
+        )
+          throw new Error(
+            'This edit has ambiguous source spelling. Use Source to choose the text to change.',
+          );
       }
       // Never bisect a supplementary Unicode scalar in the source patch.
       if (start > 0 && /[\uDC00-\uDFFF]/.test(oldValue[start] ?? '')) start--;
@@ -1063,14 +1217,19 @@ function sparseBlock(
 export function serializeRenderedChange(
   previous: RenderedProjection,
   newDoc: ProseMirrorNode,
-  _transaction?: unknown,
+  transaction?: unknown,
 ): string {
-  void _transaction;
+  const witnessed =
+    transaction instanceof Transaction &&
+    transaction.before === previous.doc &&
+    transaction.doc === newDoc
+      ? transaction
+      : null;
   if (previous.doc.eq(newDoc)) return previous.mapping.source;
   const { mapping } = previous;
   const used = new Set<RenderedBlockMapping>();
-  const unmappedLinkMessage =
-    'This edit could change an authored wikilink whose text position is ambiguous. Use Source to edit this passage.';
+  const linkFidelityMessage =
+    'This edit could change an authored wikilink or its continuation prefix. Use Source to edit this passage.';
   const newline = newlineOf(mapping.source);
   let result = mapping.prefix;
   let previousIndex: number | null = null;
@@ -1118,12 +1277,12 @@ export function serializeRenderedChange(
       result += mapping.source.slice(matched.block.from, matched.block.to);
     else {
       const sparse = matched
-        ? sparseBlock(previous, matched.block, node)
+        ? sparseBlock(previous, matched.block, node, witnessed)
         : null;
       if (sparse !== null) result += sparse;
       else {
-        if (matched?.block.hasUnmappedWikilink)
-          throw new Error(unmappedLinkMessage);
+        if (matched?.block.requiresSparseWikilinkEdit)
+          throw new Error(linkFidelityMessage);
         const raw = serializer.serialize(schema.nodes.doc!.create(null, node), {
           tightLists: true,
         });
@@ -1144,10 +1303,10 @@ export function serializeRenderedChange(
   // identity, bypassing the matched-block serializer above.
   if (
     mapping.blocks.some(
-      (block) => block.hasUnmappedWikilink && !used.has(block),
+      (block) => block.requiresSparseWikilinkEdit && !used.has(block),
     )
   )
-    throw new Error(unmappedLinkMessage);
+    throw new Error(linkFidelityMessage);
   return result + mapping.suffix;
 }
 
@@ -1317,6 +1476,7 @@ export function renderedTextSourceOffset(
       const offset = offsets?.[local];
       if (
         offset !== undefined &&
+        !projection.mapping.containerPrefixEdges.has(part.from + offset) &&
         (local === 0 || offset !== offsets![local - 1])
       )
         candidates.add(part.from + offset);
@@ -1344,6 +1504,7 @@ export function renderedPositionFromSourceOffset(
   projection: RenderedProjection,
   sourceOffset: number,
 ): number | null {
+  if (projection.mapping.containerPrefixEdges.has(sourceOffset)) return null;
   let result: number | null = null;
   projection.doc.descendants((node, position) => {
     if (!node.isText) return;

@@ -390,3 +390,46 @@ the subsequently reproduced entity/link defect blocked release of that candidate
 The [390-case run](https://github.com/TomasDelon/programmable-notes/actions/runs/45753577071)
 and [immutable check](https://github.com/TomasDelon/programmable-notes/actions/runs/45753709465)
 remain scoped to their original inputs.
+
+## Container prefixes and actual edit ownership
+
+The next bounded correction supports ordinary punctuation in multiline quote,
+list and nested quote/list continuations containing wikilinks. Three actual
+Chromium baseline cases refused input; four real bridge cases also failed before
+implementation. The existing parser now supplies bounded per-parse continuation
+prefix witnesses without changing its grammar or adding a parse. Separate source
+parts preserve hidden prefix bytes, and complete decoded content must match the
+AST before those parts are accepted.
+
+Review additionally reproduced two source-spelling failures: deleting the first
+of identical rendered entity characters could remove the wrong raw reference,
+and deleting a repeated line could retain the wrong physical EOL. The actual
+browser distinguished the entity failure from a passing second-deletion control;
+the mixed-EOL bridge and unwitnessed snapshot controls failed independently.
+Verified ProseMirror replacement ranges now identify the authored source part
+before trimming unchanged text. Unknown ranges cannot guess between different
+source spellings. Literal code and mathematics retain their existing handling.
+
+Seven actual corrected Chromium journeys passed with exact source exports,
+links/backlinks, canonical Undo/Redo and reopening. The frozen source passed 219
+focused tests and independent review. Full repository/hosted acceptance remains
+a separate gate. Cross-prefix boundaries and unsupported structural/IME changes
+still require Source or retain the attempted edit; no hidden prose or per-block
+input is introduced. See [ADR020](decisions/ADR-020-container-and-text-edit-provenance.md).
+
+The earlier `82bd530` candidate is not promoted: its successful mandatory and
+immutable-deployment checks do not certify the source-spelling correction above.
+Existing note source is never silently migrated or unescaped.
+
+The complete frozen container/ownership candidate passed **543 unit tests /56
+files, 71 tooling controls, 143 Chromium cases and 9 local Pages-policy cases**,
+plus all required formatting/lint/type/build checks. The seven targeted journeys
+also passed **21 WebKit repetitions**, zero retries. Ordinary/Pages fingerprints:
+`542e03021b4d266b` / `9d64b02a1204796b`. Independent frozen-diff review approved the
+same source. Hosted current-source acceptance and promotion remain separate.
+
+The preceding `82bd530` run completed with396 editor passes /18 intentional
+skips,27 local Pages passes and a verified walkthrough. Those receipts remain
+historical; the candidate was held after the additional raw-spelling bugs were
+reproduced. No earlier positive result is assigned to the newer parser/ownership
+implementation.

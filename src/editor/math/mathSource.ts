@@ -1,4 +1,6 @@
 import { createProcessor } from '@mdx-js/mdx';
+import type { Processor } from 'unified';
+import type { Extension } from 'mdast-util-from-markdown';
 import remarkGfm from 'remark-gfm';
 import { remarkMathAuthoring } from '../../plugins/core/mathSyntax';
 import { visualAnalysisLimited } from '../markdownEdits';
@@ -7,7 +9,10 @@ export interface SyntaxNode {
   type: string;
   value?: string;
   depth?: number;
-  data?: { pnMathDraft?: boolean };
+  data?: {
+    pnMathDraft?: boolean;
+    continuationPrefixes?: Map<number, number> | null;
+  };
   children?: SyntaxNode[];
   position?: { start: { offset?: number }; end: { offset?: number } };
 }
@@ -23,13 +28,41 @@ export interface MathSpan {
   originalOuter: string;
 }
 
+/** Observe compiler tokens without changing how mdast builds the tree. Each
+ * root owns its witnesses; overflow discards all evidence for that parse. */
+function remarkContainerPrefixes(this: Processor) {
+  const extension: Extension = {
+    beforeEnter(token) {
+      if (
+        token.type !== 'blockQuotePrefix' &&
+        token.type !== 'listItemIndent' &&
+        token.type !== 'linePrefix'
+      )
+        return;
+      const root = this.stack[0] as SyntaxNode;
+      if (root.data?.continuationPrefixes === null) return;
+      if (
+        !this.stack.some(
+          (node) => node.type === 'blockquote' || node.type === 'listItem',
+        )
+      )
+        return;
+      const data = (root.data ??= {});
+      const prefixes = (data.continuationPrefixes ??= new Map());
+      if (prefixes.size >= 4096) data.continuationPrefixes = null;
+      else prefixes.set(token.start.offset, token.end.offset);
+    },
+  };
+  (this.data().fromMarkdownExtensions ??= []).push(extension);
+}
+
 const markdownProcessor = createProcessor({
   format: 'md',
-  remarkPlugins: [remarkGfm, remarkMathAuthoring],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring, remarkContainerPrefixes],
 });
 const mdxProcessor = createProcessor({
   format: 'mdx',
-  remarkPlugins: [remarkGfm, remarkMathAuthoring],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring, remarkContainerPrefixes],
 });
 
 /** Keep frontmatter opaque while preserving every original UTF-16 offset. */

@@ -20,8 +20,8 @@ cases without changing browser app/build/security inputs.
 
 The next navigation correction binds a fallback note to its compiler entry after
 Trash and cross-tab adoption, and normalizes historical mismatches on load or
-explicit restoration without altering source bytes. Its complete local gate passed522unit/71tooling/136Chromium/9Pages, and repeated
-WebKit passed6/6 with zero retries. Hosted acceptance and promotion remain
+explicit restoration without altering source bytes. Its complete local gate passed 522 unit, 71 tooling, 136 Chromium and 9 Pages cases, and repeated
+WebKit passed 6/6 with zero retries. Hosted acceptance and promotion remain
 separate from live `1442e58` until recorded in the daily-use receipt.
 
 A later bounded review reproduced entity-adjacent punctuation losing wikilink
@@ -31,12 +31,23 @@ the prior candidate. The correction preserves exact entity spelling and safely
 refuses ambiguous container rewrites while keeping prose visible. See the
 [daily-use provenance record](DAILY_USE_STATUS.md#entity-and-wikilink-source-provenance-follow-up)
 for current verification and the remaining container limitation. Its complete
-local gate passed532unit/71tooling/138Chromium/9Pages, plus six repeated WebKit
+local gate passed 532 unit, 71 tooling, 138 Chromium and 9 Pages cases, plus six repeated WebKit
 journeys, zero retries. Current-source hosted acceptance remains separate.
 
-Both tested stock Ubuntu24/26 runners refused execution before payload delivery
+The following container-provenance candidate enables ordinary punctuation in
+multiline quote/list continuations using the existing parser's exact token
+ranges. Actual editor replacement ranges also preserve the correct raw entity
+or physical EOL when repeated visible characters make string comparison
+ambiguous. The complete local gate passed 543 unit tests, 71 tooling controls, 143 Chromium
+cases and 9 Pages cases. All21 repeated WebKit journeys passed with zero retries;
+hosted current-source acceptance remains separate. Cross-prefix structural edits remain
+conservative. [ADR020](decisions/ADR-020-container-and-text-edit-provenance.md)
+records the ownership boundary. `82bd530` remains held for these additional
+source-spelling corrections.
+
+Both tested stock Ubuntu 24/26 runners refused execution before payload delivery
 because effective private network isolation was unavailable. A default-off
-restricted temporary-role experiment queried KVM API12 and verified cleanup; the
+restricted temporary-role experiment queried KVM API 12 and verified cleanup; the
 whole job still failed the unchanged namespace gate. No guest was launched.
 Native UI parity, startup/Stop attribution and exact installed-package security
 remain open gates. Older results below are historical, not later-package claims.
