@@ -181,7 +181,6 @@ export function SourceEditor({
     )
       return false;
     if (next === expected) return true;
-    if (accept.current?.(next) === false) return false;
     const map = new RawSourceMap(expected);
     let changes: TransactionSpec['changes'];
     if (range) {
@@ -257,12 +256,7 @@ export function SourceEditor({
           transaction.annotation(explicitRawSource) === undefined
         )
           return transaction;
-        const next = rawAfterTransaction(transaction);
-        if (next === null) return [];
-        return !transaction.annotation(external) &&
-          accept.current?.(next) === false
-          ? []
-          : transaction;
+        return rawAfterTransaction(transaction) === null ? [] : transaction;
       }),
       EditorView.updateListener.of((update) => {
         if (
@@ -348,22 +342,28 @@ export function SourceEditor({
       extensions.push(historyField.init(() => cached.history));
     const editor = new EditorView({
       parent: element.current!,
-      // History uses filter:false. Guard publication itself, including selection
-      // history shortcuts that can pop a source change in a read-only state.
+      // History bypasses transaction filters. Check each proposed raw transition
+      // against the current model before publishing the batch or consuming history.
       dispatchTransactions(transactions, editor) {
-        if (
-          locked.current &&
-          transactions.some(
-            (tr) =>
-              !tr.annotation(external) &&
-              (tr.docChanged ||
-                tr.annotation(explicitRawSource) !== undefined ||
-                /^(select\.)?(undo|redo)$/.test(
-                  tr.annotation(Transaction.userEvent) ?? '',
-                )),
+        for (const tr of transactions) {
+          if (tr.annotation(external)) continue;
+          if (
+            locked.current &&
+            (tr.docChanged ||
+              tr.annotation(explicitRawSource) !== undefined ||
+              /^(select\.)?(undo|redo)$/.test(
+                tr.annotation(Transaction.userEvent) ?? '',
+              ))
           )
-        )
-          return;
+            return;
+          const previous = rawSource(tr.startState);
+          const next = rawSource(tr.state);
+          if (
+            next !== previous &&
+            (locked.current || accept.current?.(next) === false)
+          )
+            return;
+        }
         editor.update(transactions);
       },
       state: EditorState.create({

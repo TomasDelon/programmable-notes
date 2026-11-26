@@ -18,6 +18,15 @@ Restore creates a new Source-mode note using the original validated Markdown/MDX
 
 Conflict locking covers raw typing, keyboard/command history, late asynchronous attachment insertion and other content mutations. An explicit source read-only contract is separate from native file-I/O busy state, which retains its tested editing semantics. View-only preferences/navigation remain available. An already-owned document composition may finish its native read to retain text; it cannot commit canonical data after authority becomes unavailable. Distinct completed composition sessions keep separate history boundaries.
 
+A later real-CodeMirror regression showed that `filter:false` history also
+bypassed the live model validator before a read-only prop arrived, or when another
+model constraint refused the change. Canonical data stayed intact but the visible
+source and history diverged. Authorize every nonexternal raw-source transition at
+the dispatch boundary before publishing any transaction in the batch, including
+physical-ending-only inverses. Refusal preserves the full state and both history
+branches. Source-neutral UI work does not call the budget validator; trusted
+model-owned synchronization retains its explicit bypass.
+
 ## Rendering and execution
 
 Use an open slice for a single-paragraph paste so follow-up typing stays in the inserted paragraph; multi-block semantics and opaque-source validation remain guarded. WebKit primary refocus synchronizes the owning view before normal native pointer handling; no extra editor field or document-code authorization is introduced.

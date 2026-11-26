@@ -105,3 +105,21 @@ each negative fixture from the validated in-memory receipt and verified immutabl
 archive bytes. A controlled replacement failed before the fix and passed after
 it. Downloadable hosted artifacts and their retention are documented in
 [the web guide](WEB_APP.md#download-a-verified-browser-walkthrough).
+
+## Late source-history review
+
+After the integrated browser gates passed at `ab0e426`, a separate real-CodeMirror
+regression reproduced a remaining live-validation bypass: with editing still
+visibly enabled, a synchronous model refusal did not prevent history's
+`filter:false` transaction. Canonical data stayed intact, but visible source
+changed and history was consumed. This blocked beta promotion.
+
+The correction authorizes every raw transition at dispatch, before applying the
+batch, and keeps physical-ending-only history under the same check. Six new
+regressions failed before the fix; the focused 85-test suite passed afterward.
+The corrected complete local gate passed **484 unit tests /55 files, 47 tooling
+checks, 133 Chromium browser cases and 8 local Pages-policy cases**, with zero
+retries, plus formatting, lint, strict TypeScript and the fresh production build.
+Ordinary/Pages fingerprints: `6a004170ca68b158` / `3f6b19e0f9f49046`. Fresh hosted
+source-head results remain a separate gate recorded in draft PR #9. The native
+infrastructure-only changes are separate from this application fix.
