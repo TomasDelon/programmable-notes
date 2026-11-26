@@ -70,6 +70,9 @@ function documentContent(state: WebState): string {
 function retainView(content: WebState, view: WebState): WebState {
   const available = (key: string) =>
     Object.hasOwn(content.documents, key) && !content.documents[key]!.trashedAt;
+  const selected = available(view.workspace.selected)
+    ? view.workspace.selected
+    : content.workspace.selected;
   return {
     ...content,
     theme: view.theme,
@@ -79,12 +82,12 @@ function retainView(content: WebState, view: WebState): WebState {
     recentIds: view.recentIds.filter(available),
     workspace: {
       ...content.workspace,
-      selected: available(view.workspace.selected)
-        ? view.workspace.selected
-        : content.workspace.selected,
-      entry: available(view.workspace.entry)
-        ? view.workspace.entry
-        : content.workspace.entry,
+      selected,
+      entry: isMdxSource(selected)
+        ? selected
+        : available(view.workspace.entry)
+          ? view.workspace.entry
+          : content.workspace.entry,
     },
   };
 }
@@ -343,7 +346,9 @@ export function useWebWorkspace() {
           'The workspace changed while reloading. Your newer edits were retained. Save or export them before trying again.',
         );
       }
-      const next = stored?.state ?? createWebState();
+      const next = stored
+        ? retainView(stored.state, stored.state)
+        : createWebState();
       workspaceEpoch.current++;
       current.current = next;
       savedState.current = stored?.state ?? null;
@@ -611,6 +616,9 @@ export function useWebWorkspace() {
       )
     )
       return;
+    // Historical backups can contain a note selection with another note's
+    // preview entry. Normalize navigation only; retain every source byte.
+    next = retainView(next, next);
     await persist();
     if (operationBusy.current) return;
     operationBusy.current = true;

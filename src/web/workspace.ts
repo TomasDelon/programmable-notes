@@ -752,15 +752,11 @@ export function trashDocument(
   );
   const entry = remaining.find(isMdxSource);
   if (!entry) next = createDocument(next).state;
-  else
+  else if (next.workspace.selected === key) next = selectDocument(next, entry);
+  else if (next.workspace.entry === key)
     next = {
       ...next,
-      workspace: {
-        ...next.workspace,
-        selected:
-          next.workspace.selected === key ? entry : next.workspace.selected,
-        entry: next.workspace.entry === key ? entry : next.workspace.entry,
-      },
+      workspace: { ...next.workspace, entry },
     };
   return validateWebState(next);
 }
