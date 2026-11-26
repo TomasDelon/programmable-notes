@@ -34,6 +34,7 @@
     "native:editor:test": "node scripts/native-editor.mjs",
     "native:source-whitespace:test": "node scripts/native-source-whitespace.mjs",
     "native:documents:test": "cargo test --manifest-path native-documents/Cargo.toml --locked",
+    "native:autosave:test": "node scripts/native-autosave.mjs",
     "native:package": "tauri build --bundles deb --features custom-protocol -- --locked",
     "prenative:package": "npm run native:notices",
     "native:notices": "node scripts/native-notices.mjs",

@@ -190,6 +190,8 @@ jobs:
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
       - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - name: Verify shared autosave against real native files (not GUI acceptance)
+        run: npm run native:autosave:test
       - run: cargo fmt --manifest-path native-updates/Cargo.toml -- --check
       - run: cargo test --manifest-path native-updates/Cargo.toml --locked
       - name: Verify recovery and original Save under real ENOSPC on a disposable tmpfs

@@ -28,7 +28,8 @@ it is not a UI/product to clone.
       Chromium cases, 9 local Pages cases and 4 inactive-cloud cases. Current
       publication/head-CI evidence is tracked in draft PR #9; this is not
       application acceptance or a replacement app download.
-- [ ] Assess existing modules against the target and record concrete interfaces.
+- [x] Assess existing modules against the target and record concrete interfaces;
+      see the dated shared code-fit report.
 - [ ] Prove isolated native inline presentation and resource/lifecycle ownership.
 - [ ] Extract shared product/use cases and platform ports without a second UI.
 - [ ] Implement scoped local vault/index/file lifecycle and genuine autosave.
@@ -134,3 +135,44 @@ Setup is a specification/workflow deliverable, not application completion. Keep
 this section and Progress current after each packet. Record actual commit/run
 identities and remaining blockers; avoid replaying the whole chat. No future
 agent should infer product approval from an implemented ADR or a green build.
+
+## Active packet — 26 November 2026
+
+- **Outcome:** DATA-01/A04 shared persistence coordination retains accepted source
+  revisions and automatically schedules serialized writes through an injected
+  document writer. This is a domain implementation, not activation in the rejected UI.
+- **Invariants:** editor revision, document identity and disk CAS remain distinct;
+  no normalization of source, no preview authority, no silent retries or overwrites
+  after write uncertainty, no false durability or dropped in-flight edits.
+- **Witness:** gated writer tests reproduce rapid edits, undo during an in-flight
+  save, separate-document callbacks, stale revisions, conflicts and non-durable
+  receipts. Native writer adapter retains existing opaque grants and CAS semantics.
+- **Done:** bounded code-fit/native feasibility reports, tested coordinator and
+  adapter, independent review, required full checks and a coherent pushed commit.
+  Actual installed autosave and inline security remain separate uncompleted gates.
+
+Engineering choice: implement a platform-independent coordinator before wiring a
+shared product. Adapting the rejected shell directly would preserve the wrong
+product boundary; embedding native execution without a containment proof would
+violate A09/A11. Existing owner authorization covers this implementation packet;
+no additional library/product-choice question is needed.
+
+Packet observations: shared coordinator tests exposed and fixed uncertain-write/undo
+and retired-session callback hazards. The real native Store harness passes and
+its omitted-scheduling negative control fails as required. This validates backend
+coordination, not active application autosave or installed A03–A05. A native CI
+step now runs the harness. Final complete-check/run evidence belongs in the PR
+and the dated receipt; no native inline acceptance is inferred.
+
+Packet validation: full npm check exit 0 (663 unit, 150 Chromium, 9 Pages,
+4 inactive-cloud); scanner-enabled tooling rerun 92 passed/zero skips; native
+Store ordinary suite 51 passed/7 existing ignored; actual Store autosave and
+post-publication lost-reply CAS controls passed. The negative scheduling control
+failed exactly as required. See dated receipts under security-evidence.
+
+Native inline outcome: two actual disposable Ubuntu GTK/WebKit diagnostics failed
+to render before the fixed deadline. The new VM/container are stopped; failed
+observations and exact small probes are retained. No parity/security gate is
+checked off. Next work: an actual pinned-Wry embedding/lifecycle proof, while
+shared vault/session/controller adapters can advance independently. Do not begin
+a third shell or activate browser storage as local vault truth.

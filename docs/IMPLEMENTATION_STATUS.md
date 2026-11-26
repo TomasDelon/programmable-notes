@@ -20,6 +20,47 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Shared local-vault foundation — 26 November 2026
+
+The next packet implements a platform-independent accepted-source autosave
+coordinator, without wiring it into the rejected native interface. It separates
+document session identity, editor revision and disk CAS; serializes each document's
+writes; coalesces pending source; retains failed text; and refuses false durability
+or closing unsaved sessions. Lost acknowledgements followed by undo must still
+validate disk. Released session identities cannot be reused by a later opening.
+[ADR025](decisions/ADR-025-shared-autosave-coordination.md) records the scope and
+remaining application integration.
+
+The real-file harness (`npm run native:autosave:test`) bundles this coordinator
+and uses the actual Rust Store in a separate synthetic process, not mocked IPC.
+It observes automatic disk writes before flush, exact BOM/CRLF/Unicode/opaque JSX
+bytes, coalescing, undo/redo, original permissions, atomic replacement, restart,
+unknown/stale grant denial and external-conflict retention. Omitting scheduling
+in its negative control must fail the disk observation. Native CI runs this
+backend integration separately from GUI acceptance.
+
+Code-fit and native feasibility investigations are in
+[the shared seam map](research/2026-11-26-shared-code-fit.md) and
+[the inline runtime report](research/2026-11-26-native-inline-feasibility.md).
+Both whole-document and inline-island execution need platform adapters. Current
+separate-window/manual-save UI behavior is unchanged; A01–A12 are not complete.
+Do not offer another installer as a corrected application from this foundation.
+
+Local validation: **663 unit, 92 tooling (zero skips on scanner-enabled rerun),
+150 Chromium, 9 Pages and 4 inactive-cloud tests passed**, plus format/lint/types/
+build. Native Store ordinary tests: **51 passed, 7 existing ignored, zero failed**;
+the actual autosave integration passed, including post-publication lost-reply/undo
+CAS refusal. The omitted-scheduling negative control exited 1 at the intended
+real-file assertion. See [the foundation receipt](security-evidence/2026-11-26-shared-autosave/README.md).
+
+A fresh disposable Ubuntu VM ran two fixed GTK/WebKit X11 embedding diagnostics.
+Neither rendered before the unchanged 60-second limit; interaction/clipping and
+security acceptance remain unproven. Samples of resource controllers are not
+attack/Stop/cleanup passes. The guest was shut down; original retained VM state
+was untouched. [Failed observations and exact probe source](security-evidence/2026-11-26-native-inline-spike/README.md)
+are preserved. The next native proof must use actual vendored Wry initialization,
+without increasing budgets or treating this Python diagnostic as the app.
+
 ## Autonomous-development setup validation
 
 The owner answered all six product questions; the current contract, architecture
