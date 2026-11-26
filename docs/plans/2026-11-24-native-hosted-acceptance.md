@@ -1,6 +1,6 @@
 # Next milestone: direct hosted Linux acceptance
 
-Status: investigation / implementation handoff, **not implemented or validated**.
+Status: infrastructure preflight implemented; actual installed-application validation remains open. Hosted run receipts are maintained in draft PR #9.
 
 The current QEMU TCG guest can run the installed application, but startup jitter
 can exhaust the fixed resource-test window. On the same installed ELF, the CPU
@@ -50,3 +50,38 @@ A future successful hosted run would narrow the infrastructure uncertainty; it
 would not explain historical JSC crashes, grant publication rights or establish
 arbitrary native-compromise resistance. No permanent tabs, UI redesign or new
 editing grammar is part of this milestone.
+
+## Run the stock-runner infrastructure preflight
+
+The existing registered CI workflow now has a separate manual mode; no main-branch
+merge or new paid runner is needed to test the development branch:
+
+```sh
+gh workflow run ci.yml --repo TomasDelon/programmable-notes \
+  --ref fix/preview-markdown-input -f native_preflight=true
+```
+
+Leave every other dispatch input at its default. Mixed requests fail before
+checkout and use an isolated concurrency group, so they cannot cancel a valid
+preflight. Ordinary PR checks, package inspection, fault injection and browser
+gates remain required and retain their existing routes. This manual mode runs
+only the standard `ubuntu-24.04` infrastructure probe; it does not build or certify
+the application package.
+
+The probe requires stock restricted Ubuntu AppArmor, creates one disposable
+ordinary validation user and checks actual cgroup values, NoNewPrivileges, trusted
+user-journal access and network namespace identity. Missing isolation must remain a
+nonzero blocked result. If systemd silently skips PrivateNetwork, the existing Rust
+supervisor must refuse before payload delivery; the probe records its cause and
+checks cleanup. It never disables a namespace restriction or grants document code
+filesystem/IPC authority. A supported namespace proceeds to authenticated Xvfb,
+window-manager, accessibility and WebKit-driver prerequisites. These observations
+are preparation for the full package matrix above, not that matrix's substitute.
+
+Fixed reason codes distinguish limit, startup and observer failures. An EXIT trap
+stops and verifies the dedicated user's owned probe units after unexpected helper
+exit or timeout, preserving the primary failure and separately flagging cleanup
+failure. Public output contains fixed diagnostics, not raw environments, journal
+records or credentials. No installer or evidence artifact is uploaded by this
+preflight. The cloud shell refuses this runner-only command before privileged
+operations; local mocked routing/cleanup tests are separate from hosted execution.

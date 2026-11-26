@@ -2,7 +2,11 @@ name: CI
 run-name: >-
   CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
   group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-  (inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' || inputs.browser_qa && 'browser-qa') || 'build' }}
+  (inputs.native_preflight && ((inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+  inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
+  inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
+  'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
+  inputs.browser_qa && 'browser-qa') || 'build' }}
 
 on:
   push:
@@ -10,6 +14,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      native_preflight:
+        description: Check stock Linux native capabilities only. Leave all other inputs at their defaults.
+        type: boolean
+        default: false
       browser_qa:
         description: Run all browser tests in Chromium, Firefox and WebKit without a duplicate native build
         type: boolean
@@ -48,12 +56,16 @@ concurrency:
   # Keep the group shown in run-name aligned with the scheduler's group.
   group: >-
     ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-    (inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' || inputs.browser_qa && 'browser-qa') || 'build' }}
+    (inputs.native_preflight && ((inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+    inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
+    inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
+    'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
+    inputs.browser_qa && 'browser-qa') || 'build' }}
   cancel-in-progress: true
 
 jobs:
   check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_preflight && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -113,7 +125,7 @@ jobs:
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_preflight && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -189,7 +201,7 @@ jobs:
       # redistribution notice inventory is implemented. Build/inspection stay mandatory.
 
   deployment-check:
-    if: github.event_name == 'workflow_dispatch' && inputs.deployment_url != ''
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_preflight && inputs.deployment_url != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -229,7 +241,7 @@ jobs:
   # Optional, explicitly named diagnostics. Pull requests still run the complete
   # check/native-check gates above; success here is never a substitute for them.
   preview-input-regression:
-    if: github.event_name == 'workflow_dispatch' && inputs.editing_qa
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_preflight && inputs.editing_qa
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -294,3 +306,19 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  native-preflight:
+    if: github.event_name == 'workflow_dispatch' && inputs.native_preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Reject combined preflight and other dispatch modes
+        if: inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all'
+        run: |
+          echo 'Native preflight requires all other dispatch inputs at their defaults.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check restricted Ubuntu Linux capabilities
+        run: bash scripts/native-hosted-preflight.sh
