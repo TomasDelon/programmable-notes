@@ -1,6 +1,8 @@
 """Exercise the tracked shell controller with a private cgroup tree and service manager."""
 
+import socket
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -145,6 +147,108 @@ def check(case, root):
     ), result.stderr
     assert (root / "calls").read_text().splitlines() == ["LIST", f"STOP {unit}", "LIST"]
     assert bool((root / "units").read_text()) == cleanup_failed
+
+
+# The runner cannot traverse another user's 0700 runtime directory. The test
+# maps that user's view to a real local Unix socket only inside the sudo mock.
+SESSION_MOCK = r"""
+pn_user=pn-test
+pn_home=$RUNNER_TEMP
+pn_uid=1234
+pn_runtime=$RUNNER_TEMP/runner-view
+sudo() {
+  [[ $1 == -u && $2 == "$pn_user" && $3 == env && $4 == -i ]] || exit 90
+  shift 4
+  while [[ $1 == *=* ]]; do shift; done
+  case $1 in
+    test)
+      [[ $2 == -S && $3 == "$pn_runtime/bus" ]] || exit 91
+      echo lookup >> "$RUNNER_TEMP/calls"
+      [[ -f $RUNNER_TEMP/listening && -S $RUNNER_TEMP/owner-bus ]]
+      ;;
+    timeout)
+      [[ $2 == -k && $3 == 1s && $4 =~ ^[0-9]+s$ ]] || exit 92
+      shift 4
+      case $1 in
+        systemctl)
+          if [[ ${*:2} == '--user start dbus.socket' ]]; then
+            echo activate >> "$RUNNER_TEMP/calls"
+            [[ $PN_CASE != activation-fails ]] || return 1
+            if [[ $PN_CASE != still-missing ]]; then : > "$RUNNER_TEMP/listening"; fi
+          elif [[ ${*:2} == '--user --wait is-system-running' ]]; then
+            echo manager >> "$RUNNER_TEMP/calls"
+            if [[ $PN_CASE == manager-timeout ]]; then return 124; fi
+            if [[ $PN_CASE == manager-failed ]]; then echo failed; return 1; fi
+            if [[ $PN_CASE == degraded ]]; then echo degraded; return 1; fi
+            echo running
+          else exit 93; fi
+          ;;
+        busctl)
+          [[ $2 == "--address=unix:path=$pn_runtime/bus" && $3 == --timeout=5s &&
+             ${*:4} == 'call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetId' ]] || exit 94
+          echo roundtrip >> "$RUNNER_TEMP/calls"
+          if [[ $PN_CASE == transport-timeout ]]; then return 124; fi
+          [[ $PN_CASE != transport-fails ]] || return 1
+          echo 'fixture-private-bus-id'
+          ;;
+        *) exit 95 ;;
+      esac ;;
+    *) exit 96 ;;
+  esac
+}
+"""
+
+
+def check_session(case, root):
+    session = source[source.index("as_user() {"):source.index("# One non-networking command")]
+    present = case not in ("activate", "activation-fails", "still-missing")
+    if present:
+        (root / "listening").touch()
+    reason = {
+        "activation-fails": "user-bus-activation",
+        "still-missing": "user-bus-socket",
+        "transport-fails": "user-bus-transport",
+        "transport-timeout": "user-bus-command-timeout",
+        "manager-timeout": "user-manager-timeout",
+        "manager-failed": "user-manager",
+    }.get(case)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as bus:
+        bus.bind(str(root / "owner-bus"))
+        result = subprocess.run(
+            ["/bin/bash", "-c", definitions + SESSION_MOCK + session],
+            env={"PATH": "/nonexistent", "GITHUB_ACTIONS": "true", "PN_CASE": case, "RUNNER_TEMP": str(root)},
+            capture_output=True, text=True, timeout=5,
+        )
+    assert result.returncode == (2 if reason else 0), (case, result.stderr)
+    assert result.stdout == (f"::error::NATIVE_PREFLIGHT_BLOCKED {reason}\n" if reason else ""), (case, result.stdout)
+    expected = ["lookup"]
+    if not present:
+        expected.append("activate")
+        if case != "activation-fails":
+            expected.append("lookup")
+    if case not in ("activation-fails", "still-missing"):
+        expected.append("roundtrip")
+        if case not in ("transport-fails", "transport-timeout"):
+            expected.append("manager")
+    assert (root / "calls").read_text().splitlines() == expected, case
+
+
+if sys.argv[1:] == ["--session"]:
+    for scenario in (
+        "owner-visible",
+        "activate",
+        "activation-fails",
+        "still-missing",
+        "transport-fails",
+        "transport-timeout",
+        "manager-timeout",
+        "manager-failed",
+        "degraded",
+    ):
+        with tempfile.TemporaryDirectory() as directory:
+            check_session(scenario, Path(directory))
+        print(scenario)
+    sys.exit(0)
 
 
 for scenario in [

@@ -64,3 +64,23 @@ test('native preflight preserves each failure and reaps owned service units afte
     'success',
   ]);
 });
+
+test('native preflight checks a private bus as its owner and waits for the dedicated manager', () => {
+  const result = spawnSync('python3', ['-I', fixture, '--session'], {
+    encoding: 'utf8',
+    timeout: 15000,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.stdout.trim().split('\n'), [
+    'owner-visible',
+    'activate',
+    'activation-fails',
+    'still-missing',
+    'transport-fails',
+    'transport-timeout',
+    'manager-timeout',
+    'manager-failed',
+    'degraded',
+  ]);
+});

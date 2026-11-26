@@ -123,3 +123,24 @@ retries, plus formatting, lint, strict TypeScript and the fresh production build
 Ordinary/Pages fingerprints: `6a004170ca68b158` / `3f6b19e0f9f49046`. Fresh hosted
 source-head results remain a separate gate recorded in draft PR #9. The native
 infrastructure-only changes are separate from this application fix.
+
+## Observed browser save latency
+
+An observation-only pinned Chromium run on the `6a004170ca68b158` ordinary build
+made three trusted-key edits in each fixture, with exact exports and the same
+interactive Counter instance throughout. The cloud was free of other local test
+browsers during collection. Values are medians in milliseconds:
+
+| Synthetic note       | UTF-8 bytes | Input → matching IndexedDB put | Input → visible saved acknowledgement |
+| -------------------- | ----------: | -----------------------------: | ------------------------------------: |
+| Small mixed MDX      |         430 |                          260.8 |                                 263.0 |
+| Long supported prose |      40,006 |                          300.0 |                                 302.3 |
+
+Put → transaction completion was 0.4–0.8 ms across six samples; completion → visible
+saved status was 1.4–2.0 ms. The pre-put interval includes the configured 250 ms
+autosave debounce. It does not measure immediate internal canonical acceptance.
+No debounce/storage change or general device-performance claim follows from this
+small experiment. Physical-device and cross-engine performance remain separate.
+
+[The first actual hosted native probe](security-evidence/2026-11-26-hosted-preflight/README.md)
+records its failed observer and correction independently of browser acceptance.

@@ -105,9 +105,26 @@ as_user() {
   sudo -u "$pn_user" env -i HOME="$pn_home" USER="$pn_user" LOGNAME="$pn_user" LANG=C.UTF-8 \
     PATH=/usr/bin:/bin XDG_RUNTIME_DIR="$pn_runtime" DBUS_SESSION_BUS_ADDRESS="unix:path=$pn_runtime/bus" "$@"
 }
-[[ -S "$pn_runtime/bus" ]] || block user-bus
-pn_manager=$(as_user systemctl --user is-system-running || true)
-[[ $pn_manager == running || $pn_manager == degraded ]] || block user-manager
+# /run/user/<uid> is private to that UID. The runner cannot observe its socket.
+if ! as_user test -S "$pn_runtime/bus"; then
+  as_user timeout -k 1s 10s systemctl --user start dbus.socket >/dev/null 2>&1 || block user-bus-activation
+  as_user test -S "$pn_runtime/bus" || block user-bus-socket
+fi
+pn_bus_status=0
+as_user timeout -k 1s 8s busctl --address="unix:path=$pn_runtime/bus" --timeout=5s \
+  call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetId >/dev/null 2>&1 || pn_bus_status=$?
+case $pn_bus_status in
+  0) ;;
+  124|137) block user-bus-command-timeout ;;
+  *) block user-bus-transport ;;
+esac
+pn_manager_status=0
+pn_manager=$(as_user timeout -k 1s 15s systemctl --user --wait is-system-running 2>/dev/null) || pn_manager_status=$?
+case "$pn_manager_status:$pn_manager" in
+  0:running|1:degraded) ;;
+  124:*|137:*) block user-manager-timeout ;;
+  *) block user-manager ;;
+esac
 # One non-networking command under the intended limits, reporting from inside its own unit.
 pn_controller_pid=$BASHPID
 trap 'cleanup_owned_units $?' EXIT
