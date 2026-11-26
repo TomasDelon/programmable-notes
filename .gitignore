@@ -9,6 +9,8 @@ test-results/
 !.env.example
 *.local
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 **/target/
 src-tauri/gen/
@@ -27,6 +29,9 @@ src-tauri/gen/
 *.jks
 id_rsa
 id_ed25519
+controller_ed25519
+negative_ed25519
+ssh_host_*_key
 credentials.json
 service-account*.json
 .dev.vars

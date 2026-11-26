@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "scope": "real-docker-image-preparation-only",
+  "vm_booted": false,
+  "native_app_tested": false,
+  "guard_check": "passed",
+  "inputs": {
+    "scripts/native-vm-launch.py": "50b4e846dacd324b9239c947a2f90b9a70ecf450552f99366a099e40dd035d3f",
+    "scripts/native-vm-provision.py": "d60f84300579b1c198eb1c703b567a78cc907ee484aafa6ad71a228f448e0fe3",
+    "scripts/native-vm-pack.py": "49180cccb400cd21baa6c5ed43bf64ea2b1e37a8b46383959cdcbc08309e82dd",
+    "scripts/native-guest/Dockerfile": "1801992c4f911adbc9ae236822c73ed4c11cdb28a86acd1e242659d5d9381ffc",
+    "scripts/native-guest/configure.sh": "f8521a954bb2d7a803c68fb8960f966392f57001301942c908280f1baf960b34",
+    "scripts/native-guest/pack.sh": "532d3758704b591c114c775f8efce7d1cb8f5df8cc293a7dc38bb032cc7157ee"
+  },
+  "artifacts": {
+    "vmlinuz": {
+      "bytes": 15128968,
+      "allocated_bytes": 15130624,
+      "mode": "0o600",
+      "sha256": "fc6f2a37b8dafff46ac1ff66361503b1f6eeab0e2df680447299235b7d6453be"
+    },
+    "initrd.img": {
+      "bytes": 65370500,
+      "allocated_bytes": 65372160,
+      "mode": "0o600",
+      "sha256": "d8182ca6bff1a63a2f06fba75dd620d405296bbd5d95c2a5786ac618b9e0af87"
+    },
+    "root.ext4": {
+      "bytes": 6442450944,
+      "allocated_bytes": 1762267136,
+      "mode": "0o600",
+      "sha256": "db1f96cffcec29ff39f6547caae5177bd65217746a79108198d096cb19114c5e"
+    },
+    "ssh_host_ed25519_key.pub": {
+      "bytes": 97,
+      "allocated_bytes": 4096,
+      "mode": "0o600",
+      "sha256": "d169d364a52a5a768f2f271e7d8b09cbf710a56c990209256cea804746147e22"
+    }
+  },
+  "remaining_labelled_containers": 0,
+  "remaining_labelled_images": 0
+}
