@@ -657,9 +657,12 @@ still does not prove arbitrary React responsiveness. [ADR012](decisions/ADR-012-
 and [exact observations](security-evidence/2026-11-19-preview-renderer-loss/README.md).
 Keep the unresolved engine/resource failures explicit. The portable review is remote-verified
 and pinned to its earlier engine 54c41a7. A cancellable visual-analysis worker remains a future stronger bound.
-Investigate native blank/startup, renderer SIGSEGV and the failed memory-pressure
-matrix without changing deadlines or isolation. Public standard hosted CI has
-since passed; physical GPU/Wayland compatibility can proceed independently.
+At that checkpoint, native blank/startup, renderer SIGSEGV and the failed
+memory-pressure matrix remained open. The later 24 November installed-package
+run passed both memory workloads but failed CPU Stop attribution against the
+fixed expiry; its complete command failed. See [the current native contract](NATIVE_SECURITY.md)
+for exact binary scope. Public standard hosted CI has since passed; physical
+GPU/Wayland compatibility can proceed independently.
 No production security readiness is claimed.
 
 ## Public repository remediation (2026-11-20)

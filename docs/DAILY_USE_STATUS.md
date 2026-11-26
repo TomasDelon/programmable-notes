@@ -169,7 +169,7 @@ repetition passed all 20 cases, as recorded below.
 The optional `editing_scope=authoring` diagnostic selects these four journeys for
 five repetitions without retries. It does not replace complete CI or acceptance.
 
-## Current hosted web acceptance
+## Hosted web checkpoint at `0c56878`
 
 The corrected application at `0c56878` passed the
 [complete hosted browser gate](https://github.com/TomasDelon/programmable-notes/actions/runs/45734745990):
@@ -179,7 +179,7 @@ WebKit, plus **24 local Pages-policy cases**. The separate
 passed all 20 authoring cases across five repetitions. Mandatory CI also passed
 at `0c56878` and infrastructure-only `502b483`.
 
-The [verified current walkthrough](https://github.com/TomasDelon/programmable-notes/actions/runs/45734745990/artifacts/15079287449)
+The [verified `0c56878` walkthrough](https://github.com/TomasDelon/programmable-notes/actions/runs/45734745990/artifacts/15079287449)
 contains the playable recording, desktop/tablet/mobile screenshots, exact example
 and portable build. Its positive offline journey and eleven rejection controls
 passed. Artifacts expire after seven days; this is neither an installer nor a
