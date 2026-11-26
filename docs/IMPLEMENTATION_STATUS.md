@@ -20,6 +20,37 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Explicit inline runtime and share-free fixture guard — 26 November 2026
+
+The shared inline editor now receives an explicit trusted renderer. WebApp supplies
+the existing browser implementation; without one, React is visibly unavailable
+and no browser compiler/iframe fallback is instantiated. Source/history and web
+island lifecycle remain unchanged. This removes one platform dependency; the
+whole-document path and shared workspace/native lifecycle integration are still
+pending. [ADR034](decisions/ADR-034-explicit-inline-runtime-renderer.md).
+
+A new versioned Linux fixture launcher constructs a fixed share-free QEMU command
+and refuses unsafe configuration, overlapping/aliased paths, key/boot aliases and
+additional arguments. It pins boot descriptors, never reads/inherits the transport
+key, caps serial output at 16 MiB and owns bounded child cleanup across spawn
+signals, overflow and deadline. Independent review found and corrected those
+alias, signal and output gaps. [ADR035](decisions/ADR-035-share-free-native-fixture-launch.md).
+
+**No guest was launched.** The 29 synthetic Python controls exercise real CLI/file
+layouts and local pipes with mocked QEMU dispatch. Image freshness, public-key-only
+installation, pinned SSH transfer and actual mounts/cleanup still require reviewed
+end-to-end provisioning before another native run. The fixture-deviation gate stays
+in force, and the old failed evidence is unchanged. No corrected installer or
+native security acceptance is claimed. [Results and reproduction](security-evidence/2026-11-26-runtime-boundaries/README.md).
+
+The required full check exited 0: **739 unit, 152 Chromium, 9 Pages and 4
+inactive-cloud browser tests passed**, plus format/lint/types/build. A separate
+complete tooling run with the pinned scanner passed **97 tests, zero skips**;
+the check's first tooling run had 95 passes/2 scanner skips. The first full check
+failed two old browser fixtures lacking explicit adapters; their assertions were
+preserved and the affected group then passed 33 tests before the corrected full
+check. No native Rust or GUI test was rerun for this packet.
+
 ## Native React pointer result and infrastructure deviation — 26 November 2026
 
 One fixed, actually compiled MDX/React component mounted inside the GtkSocket/Plug

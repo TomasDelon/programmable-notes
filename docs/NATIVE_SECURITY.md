@@ -57,6 +57,14 @@ overlap before launching QEMU; include negative controls. **This corrected
 provisioning has not been executed or accepted yet.** Do not waive this gate or
 retroactively promote the deviating fixture.
 
+A [versioned launch boundary](decisions/ADR-035-share-free-native-fixture-launch.md)
+now rejects share arguments and unsafe layouts, pins boot descriptors, keeps the
+transport key out of inherited descriptors and bounds serial output/process
+lifetime. Its CLI/layout and mocked-launch controls are not a guest run. The
+end-to-end image preparation, pinned SSH transfer and actual mount/cleanup review
+are still pending; the gate above remains in force. See the
+[boundary evidence](security-evidence/2026-11-26-runtime-boundaries/README.md).
+
 Reuse established process-identity/cleanup semantics for observer corrections.
 Normalize only known absence races on process-bound reads; arbitrary cgroup,
 permission or control errors remain failures. A successor observer requires its
