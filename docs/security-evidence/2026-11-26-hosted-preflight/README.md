@@ -245,3 +245,40 @@ sanitized output and descriptor closure. No local host observation was performed
 Actual hosted output belongs to its own subsequent run receipt, not these mocks.
 The unchanged Ubuntu namespace gate and exact-package application acceptance
 remain required and separate.
+
+## Actual original-job snapshot
+
+[45760635583](https://github.com/TomasDelon/programmable-notes/actions/runs/45760635583)
+at `632c94e` emitted the reviewed sanitized snapshot: CPU, memory and PID
+controllers were available, but all three subtree-enable fields were no. The
+observer was directly in a non-root domain with other visible direct processes;
+root-coordinate ambiguity was no. Device-policy verification remained unknown.
+The ordinary KVM query was denied at open, before any ioctl.
+
+This records the current original-job topology, not a permanent provider policy
+or proof of runner-process identity. Immediate descendant memory delegation
+cannot be enabled in that occupied domain while its processes remain in place.
+No process was moved, parent restriction bypassed, cgroup changed, BPF loaded,
+device permission altered or guest created by this observation. No positive
+containment/guest conclusion is inferred from controller names.
+
+The subsequent unchanged native gate again failed with
+`NATIVE_PREFLIGHT_BLOCKED private-network-unavailable`, exit 2. No graphical or
+installed-package acceptance ran. The existing preflight's separate disposable
+validation-user/resource probes retain their own scope; the metadata observer
+itself is read-only. The previously successful temporary-role API 12 query remains
+its earlier independent receipt.
+
+To reproduce on a new standard hosted allocation without creating a KVM role:
+
+```sh
+gh workflow run ci.yml --repo TomasDelon/programmable-notes \
+  --ref fix/preview-markdown-input -f native_preflight=true
+```
+
+Leave all other inputs at their defaults. Inspect the fixed metadata and actual
+namespace result; unknown evidence is not permission to boot a VM. Installed-app
+validation still requires the full disposable-Linux procedure in
+[Linux desktop testing](../../LINUX_DESKTOP_TESTING.md) and the unchanged
+[native acceptance contract](../../NATIVE_SECURITY.md). Never disable AppArmor,
+namespace checks, quotas or the fixed 60s application lifetime to obtain a pass.

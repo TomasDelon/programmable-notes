@@ -46,7 +46,9 @@
 
 - [x] Exercise native browser typing in quote/list text, real link/backlink interaction, exact export, canonical undo/redo, saving and reload. Keep source-span ambiguity controls.
 - [x] Root runs targeted pinned Chromium/WebKit, then required complete `npm run check` on frozen inputs. Preserve failing checkpoints.
-- [ ] Verify hosted current-source three-engine acceptance, actual immutable deployment and the public origin after authorized beta promotion; retain current screenshots/walkthrough artifacts.
-- [ ] Commit/push verified changes with noreply identity and required privacy scan. Keep PR #9 draft; no main merge, public release, paid infrastructure or native runtime claim.
+- [x] Verify hosted current-source three-engine acceptance, actual immutable deployment and the public origin after authorized beta promotion; retain current screenshots/walkthrough artifacts.
+- [x] Commit/push verified changes with noreply identity and required privacy scan. Keep PR #9 draft; no main merge, public release, paid infrastructure or native runtime claim.
 
 Local receipt:543unit/71tooling/143Chromium/9Pages, plus21 repeated WebKit cases, zero retries. Actual hosted and deployment gates remain unchecked until their own run receipts.
+
+Delivery receipt: application `52c86c4` passed 411 editor/18 intentional skips plus 27 Pages cases and 27 actual principal-origin cases; walkthrough artifact 15089977069. Native evidence remains separately blocked. [Current receipt](../../DAILY_USE_STATUS.md#current-accepted-browser-delivery).

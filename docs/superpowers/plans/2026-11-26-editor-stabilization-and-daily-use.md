@@ -10,7 +10,16 @@
 
 **Spec:** The owner's current requirements, the acceptance contract below, ADR 015–019, `docs/WEB_APP.md`, `docs/NATIVE_SECURITY.md`, and the handoff's visual-editing/security contracts. Later owner requirements supersede historical overlay/input proposals. The handoff's later AI/Git/marketplace roadmap is not this milestone's scope.
 
-## Accepted web checkpoint
+## Latest accepted web delivery
+
+Application `52c86c4` is live with 411 hosted editor passes /18 intentional skips,
+27 local Pages passes and 27 actual principal-origin cases. It adds verified
+container-prefix provenance and actual text-edit ownership (ADR020) to the
+checkpoints below. Current artifact, exact build identity and remaining native
+blockers are in [the accepted receipt](../../DAILY_USE_STATUS.md#current-accepted-browser-delivery).
+This closes the scoped browser delivery, not the blocked native Tasks 5/6 gates.
+
+## Earlier accepted web checkpoint
 
 The deployed web application is `1442e589a57f107944c2e6588e8e915e065b7b39`. Its ordinary and Pages asset fingerprints are `afc89d287b038a18` and `19f503362f07b8c6`. The corrected Pages service-worker SHA-256 is `dac35a0103e6dae7e161cdb1481d2fc8112485de92e805bef2de82125f6d3ed2`. [Daily-use receipt](../../DAILY_USE_STATUS.md)
 

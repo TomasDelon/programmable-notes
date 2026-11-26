@@ -2,55 +2,36 @@
 
 ## Current acceptance and stabilization
 
-[The daily-use receipt](DAILY_USE_STATUS.md#current-accepted-browser-delivery)
-separates accepted browser delivery from native gates and preserves earlier failed
-checkpoints. Live app `1442e58` passed 384 hosted editor cases across Chromium,
-Firefox and WebKit (18 intentional skips, zero retries), 27 local Pages-policy
-cases, 27 repeated Firefox cached-navigation cases and 27 exact-build
-principal-origin cases after promotion. Its current downloadable walkthrough and
-desktop/tablet/mobile screenshots are linked there.
+[The accepted daily-use receipt](DAILY_USE_STATUS.md#current-accepted-browser-delivery)
+binds the live browser application to source `52c86c4`, its real interaction
+results and downloadable media. It passed **543 unit tests, 71 tooling controls,
+143 Chromium cases and 9 local Pages cases**, plus 21 focused WebKit repetitions.
+Hosted Chromium/Firefox/WebKit acceptance passed **411 cases /18 intentional
+skips**, zero flaky/retry acceptance, and 27 local Pages cases. Both immutable and
+actual public-origin acceptance passed 27 cases with exact worker/entry bytes.
 
-This accepted application preserves React islands across unused grouped-file
-changes using bounded trusted compiler dependencies, removes unsupported
-module-to-note recovery actions, and corrects stale compressed-response headers
-on reconstructed cached navigation. See [ADR019](decisions/ADR-019-island-dependency-witnesses.md).
-Later API-observer infrastructure at `ed17dd2` passed mandatory CI and a full local
-gate of 515 unit tests, 71 tooling controls, 134 Chromium cases and 9 Pages-policy
-cases without changing browser app/build/security inputs.
+The source-preserving engine handles same-document math/prose, local invalid TeX,
+ordinary Markdown authoring, recovery and conservative unprivileged React reuse.
+New corrections align Trash fallback selection with execution, preserve entities
+and wikilinks, edit quote/list continuations through parser-owned source spans,
+and anchor repeated entity/EOL edits to their actual editor transaction. See
+[ADR018](decisions/ADR-018-retained-edits-and-stabilization.md),
+[ADR019](decisions/ADR-019-island-dependency-witnesses.md) and
+[ADR020](decisions/ADR-020-container-and-text-edit-provenance.md).
 
-The next navigation correction binds a fallback note to its compiler entry after
-Trash and cross-tab adoption, and normalizes historical mismatches on load or
-explicit restoration without altering source bytes. Its complete local gate passed 522 unit, 71 tooling, 136 Chromium and 9 Pages cases, and repeated
-WebKit passed 6/6 with zero retries. Hosted acceptance and promotion remain
-separate from live `1442e58` until recorded in the daily-use receipt.
+Changes after `52c86c4` concern infrastructure observation, its tests and receipts;
+application/browser/build/security inputs are unchanged. Both required CI jobs
+passed at observer head `632c94e`; its full local check also passed. The separate
+native preflight failed before payload delivery because effective private
+networking was unavailable. Its read-only metadata additionally observed disabled
+child controllers in the occupied original job cgroup; device policy is unverified.
+No VM or weaker policy was used.
 
-A later bounded review reproduced entity-adjacent punctuation losing wikilink
-semantics and a plain-text control refusing the edit. Promotion remains held for
-the trusted-decoder/source-offset correction; both browser regressions failed on
-the prior candidate. The correction preserves exact entity spelling and safely
-refuses ambiguous container rewrites while keeping prose visible. See the
-[daily-use provenance record](DAILY_USE_STATUS.md#entity-and-wikilink-source-provenance-follow-up)
-for current verification and the remaining container limitation. Its complete
-local gate passed 532 unit, 71 tooling, 138 Chromium and 9 Pages cases, plus six repeated WebKit
-journeys, zero retries. Current-source hosted acceptance remains separate.
-
-The following container-provenance candidate enables ordinary punctuation in
-multiline quote/list continuations using the existing parser's exact token
-ranges. Actual editor replacement ranges also preserve the correct raw entity
-or physical EOL when repeated visible characters make string comparison
-ambiguous. The complete local gate passed 543 unit tests, 71 tooling controls, 143 Chromium
-cases and 9 Pages cases. All21 repeated WebKit journeys passed with zero retries;
-hosted current-source acceptance remains separate. Cross-prefix structural edits remain
-conservative. [ADR020](decisions/ADR-020-container-and-text-edit-provenance.md)
-records the ownership boundary. `82bd530` remains held for these additional
-source-spelling corrections.
-
-Both tested stock Ubuntu 24/26 runners refused execution before payload delivery
-because effective private network isolation was unavailable. A default-off
-restricted temporary-role experiment queried KVM API 12 and verified cleanup; the
-whole job still failed the unchanged namespace gate. No guest was launched.
-Native UI parity, startup/Stop attribution and exact installed-package security
-remain open gates. Older results below are historical, not later-package claims.
+Native exact-package GUI/security/startup/Stop, editor parity and installer notice
+inventory remain open. Hidden-prefix boundaries and unsupported structural/IME
+rewrites stay conservative in Visual editing; Source remains available. Physical
+GPU/Wayland/IME and browser CPU/memory quotas are not certified. Older results
+below are historical, not later-package claims.
 
 ## Engineering feedback workflow
 

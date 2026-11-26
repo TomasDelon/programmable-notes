@@ -5,27 +5,39 @@ This is the development status for the 26 November 2026 stabilization plan. It s
 ## Current accepted browser delivery
 
 The [live browser editor](https://programmable-notes.pages.dev/) runs tested
-application source `1442e58`. Later development changes through `ed17dd2` concern
-native infrastructure observation, its tests and documentation; browser source,
-security policies, test fixtures, build settings and worker inputs are unchanged.
-The checkpoints below are historical and do not replace these final receipts:
+application source `52c86c474c5492021ad6062423ffd1c5d99be394`. Subsequent development
+at `632c94e` adds a read-only native-infrastructure observer and its controls;
+application source, browser tests, build inputs and browser security policies are
+unchanged. The checkpoints below this section are historical.
 
-- [Complete hosted editor acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590): **384 passed, 18 intentional skips**, zero retries, across Chromium, Firefox and WebKit; **27 local Pages-policy cases** also passed.
-- [Focused Firefox cached-navigation acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45745225173): **27 passed** over three repetitions, zero retries.
-- [Immutable deployment](https://github.com/TomasDelon/programmable-notes/actions/runs/45745410831) and [actual public origin after promotion](https://github.com/TomasDelon/programmable-notes/actions/runs/45747704986): **27 passed each** across all three engines. Actual navigation/reload bodies and full service-worker bytes matched the expected build, including offline reopening.
-- [Downloadable walkthrough, screenshots and portable build](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590/artifacts/15083762891), plus [browser report](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590/artifacts/15084595020). Capture, eleven rejected mutations and clean-extracted offline editing, React interaction, exact export and reopening passed. Actions artifacts have seven-day retention.
-- The latest complete local gate at `ed17dd2` passed **515 unit tests /56 files, 71 tooling controls, 134 Chromium cases and 9 local Pages-policy cases**, plus formatting, lint, strict TypeScript and fresh production builds. Mocked native-observer controls are not native application runtime tests.
+- Complete local check: **543 unit tests /56 files, 71 tooling controls, 143 Chromium cases and 9 local Pages-policy cases passed**, plus all format/lint/type/build gates. The seven focused source-fidelity journeys passed **21 WebKit repetitions**, zero retries.
+- [Complete hosted editor acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45758877564): **411 passed, 18 intentional skips**, zero flaky/retry acceptance, across Chromium, Firefox and WebKit; **27 local Pages-policy cases** also passed.
+- [Mandatory CI at the application source](https://github.com/TomasDelon/programmable-notes/actions/runs/45758809047) and [subsequent observer head](https://github.com/TomasDelon/programmable-notes/actions/runs/45760502608): both required jobs passed, including production native compilation/inspection and backend fault injection. This is not installed native GUI acceptance.
+- [Immutable deployment](https://github.com/TomasDelon/programmable-notes/actions/runs/45759171087) and [actual public origin after promotion](https://github.com/TomasDelon/programmable-notes/actions/runs/45761897633): **27 passed each** across all three engines, with exact worker and entry bytes, online reloads and offline reopening.
+- [Download the walkthrough, screenshots and portable build](https://github.com/TomasDelon/programmable-notes/actions/runs/45758877564/artifacts/15089977069), plus [browser report](https://github.com/TomasDelon/programmable-notes/actions/runs/45758877564/artifacts/15089957509). Capture, eleven rejected mutations and clean-extracted offline editing, React interaction, exact export and reopening passed. Artifacts have seven-day retention.
+
+Ordinary/Pages fingerprints: `542e03021b4d266b` / `9d64b02a1204796b`. Actual public
+worker SHA-256: `0144d3c15f60825bf514bce876d0e91531310f0ec7d06b79e1bfc30500c6cbb4`.
+The downloaded demo archive is 7,770,163 bytes with SHA-256
+`64980e990673566fc8e8c70d7375aec13d2c20f9fdef6ca467cc959a4853f5c0`.
 
 Existing tabs can use **Settings → Workspace → Save and update app**. Do not clear
-browser storage to obtain an update: workspace data is local to that browser.
+browser storage to update: workspace data is local to that browser. Existing
+intentionally escaped source is not silently rewritten; recovery is explicit.
 
-Browser acceptance is complete for this scoped milestone, not a zero-defect or
-production-security certification. Browser React has no CPU/memory quota claim.
-Physical IME, GPU and Wayland compatibility remain separate from the blocked
-native startup/Stop, exact-package security and native UI-parity gates. The
-[hosted native record](security-evidence/2026-11-26-hosted-preflight/README.md)
-retains actual refusals and the narrowly scoped KVM API result. PR #9 remains
-draft; no main merge or release has occurred.
+This delivery fixes local/remote Trash selection, entity-adjacent links, ordinary
+quote/list continuation punctuation and exact ownership of repeated raw entity
+or EOL spellings. Hidden-prefix edges, crossing structural edits and unsupported
+ambiguous IME snapshots still use Source or retain the attempted text. It is not
+complete visual editing of every possible Markdown structure.
+
+Native readiness remains blocked. [Actual Ubuntu observation](security-evidence/2026-11-26-hosted-preflight/README.md#actual-original-job-snapshot)
+retains unavailable private networking and the occupied original job domain with
+child controllers disabled. No guest was launched and no host policy was relaxed.
+Current-package startup/Stop/security, native UI parity and native redistribution
+notices remain separate gates. Browser React has no CPU/memory quota claim.
+Physical GPU, Wayland and physical IME evidence are separate compatibility targets.
+PR #9 remains draft; no main merge, release or production-security certification.
 
 ## Verified starting point
 
