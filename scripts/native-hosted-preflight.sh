@@ -2,7 +2,17 @@
 # Infrastructure preflight for an ephemeral standard GitHub-hosted runner. All public output is diagnostic.
 set -euo pipefail
 umask 077
-block() { printf 'NATIVE_PREFLIGHT_BLOCKED %s\n' "$1" >&2; exit 2; }
+# Callers supply literal reason codes only. Keep runner and journal data out of annotations.
+annotate_failure() {
+  if [ "${GITHUB_ACTIONS:-}" = true ]; then
+    printf '::error::NATIVE_PREFLIGHT_BLOCKED %s\n' "$1"
+  fi
+}
+block() {
+  printf 'NATIVE_PREFLIGHT_BLOCKED %s\n' "$1" >&2
+  annotate_failure "$1"
+  exit 2
+}
 # This check is passed verbatim to the ordinary user's transient service.
 read_limits() {
   local group=$1 status=$2
@@ -53,6 +63,7 @@ cleanup_owned_units() {
   fi
   if ! after=$(owned_live_units) || [[ -n $after ]]; then failed=1; fi
   printf 'NATIVE_PREFLIGHT_CLEANUP owned_at_exit=%d failed=%d primary_exit=%d\n' "$count" "$failed" "$original" >&2
+  if ((failed)); then annotate_failure cleanup-failed; fi
   if ((original != 0)); then exit "$original"; fi
   if ((failed)); then exit 3; fi
   exit 0

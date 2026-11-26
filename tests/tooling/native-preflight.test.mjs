@@ -22,6 +22,25 @@ test('native preflight refuses a non-hosted runner before external setup', () =>
   assert.equal(result.stderr, 'NATIVE_PREFLIGHT_BLOCKED runner-type\n');
 });
 
+test('native preflight exposes a fixed GitHub error annotation before self-hosted setup', () => {
+  const result = spawnSync('/bin/bash', [preflight], {
+    env: {
+      GITHUB_ACTIONS: 'true',
+      RUNNER_ENVIRONMENT: 'self-hosted',
+      PATH: '/nonexistent',
+    },
+    encoding: 'utf8',
+    timeout: 5000,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 2);
+  assert.equal(
+    result.stdout,
+    '::error::NATIVE_PREFLIGHT_BLOCKED runner-type\n',
+  );
+  assert.equal(result.stderr, 'NATIVE_PREFLIGHT_BLOCKED runner-type\n');
+});
+
 test('native preflight preserves each failure and reaps owned service units after helper timeout', () => {
   const result = spawnSync('python3', ['-I', fixture], {
     encoding: 'utf8',
