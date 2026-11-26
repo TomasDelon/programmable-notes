@@ -18,7 +18,7 @@ test(
     });
     assert.ifError(result.error);
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stderr, /Ran 9 tests/);
+    assert.match(result.stderr, /Ran 17 tests/);
     assert.match(result.stderr, /\bOK\b/);
   },
 );

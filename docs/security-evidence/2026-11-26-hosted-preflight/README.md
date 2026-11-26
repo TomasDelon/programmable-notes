@@ -139,8 +139,8 @@ The optional hosted probe also reports whether its ordinary x64 Linux account
 can open `/dev/kvm`, verify the opened descriptor is a character device and query
 KVM API version 12. It does not create a VM, execute a guest, change permissions,
 use sudo, alter groups or relax policy. Every opened descriptor is closed;
-unavailable access is separate from an unexpected observer failure. Nine mocked
-cases verify the exact single ioctl and cleanup. No device was opened locally.
+unavailable access is separate from an unexpected observer failure. Seventeen mocked
+cases verify the exact single ioctl, cleanup and sanitized metadata. No device was opened locally.
 
 This observation can inform whether a new disposable hosted Linux guest is
 feasible. GitHub treats nested virtualization as experimental, so device API
@@ -149,3 +149,13 @@ Debian guest would have its own stock policy, package/ELF identity and results;
 it could not clear either stock Ubuntu failure. The canceled retained managed-host
 VM operation remains untouched. Actual hosted observations belong to their own
 run receipts, not these mock tests.
+
+The first actual KVM observation,
+[45745975205](https://github.com/TomasDelon/programmable-notes/actions/runs/45745975205)
+at `04beb14`, reported `device-denied` before the unchanged namespace refusal.
+That observer used the same label for device-open and ioctl denial; it does not
+establish absent group membership or provider permission to delegate access.
+The refined observer distinguishes those stages and reports only yes/no/unknown
+for device type, root ownership, stock group/mode, sysfs match, ACL absence and
+caller membership. Unknown or inconsistent metadata cannot justify a new role.
+No account, group, device permission, policy or VM was changed for these probes.
