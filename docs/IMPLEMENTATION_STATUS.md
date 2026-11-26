@@ -2,26 +2,34 @@
 
 ## Current acceptance and stabilization
 
-[The daily-use receipt](DAILY_USE_STATUS.md) separates web delivery from native
-gates. The `0c56878` checkpoint passed 381 hosted browser cases across Chromium,
-Firefox and WebKit (18 intentional skips, zero retries), 24 local Pages-policy
-cases, 20 repeated Firefox authoring cases and 27 exact-build principal-origin
-checks. Its verified downloadable walkthrough is linked there.
+[The daily-use receipt](DAILY_USE_STATUS.md#current-accepted-browser-delivery)
+separates accepted browser delivery from native gates and preserves earlier failed
+checkpoints. Live app `1442e58` passed 384 hosted editor cases across Chromium,
+Firefox and WebKit (18 intentional skips, zero retries), 27 local Pages-policy
+cases, 27 repeated Firefox cached-navigation cases and 27 exact-build
+principal-origin cases after promotion. Its current downloadable walkthrough and
+desktop/tablet/mobile screenshots are linked there.
 
-The follow-up corrects unused grouped files resetting React state through trusted
-compiler dependency witnesses, and removes unsupported module-to-note recovery
-actions. Its corrected complete local gate passed 515 unit tests, 65 tooling controls,
-134 Chromium cases and 9 Pages-policy cases. The production WebKit two-tab
-regression passed independently. Compressed cached navigation preserves decoded
-bytes and security headers; focused Pages diagnostics exercise its Firefox path.
-Current source-head hosted/deployment receipts
-and downloadable artifacts are maintained in draft PR #9. See
-[ADR 019](decisions/ADR-019-island-dependency-witnesses.md) for the reuse boundary.
+This accepted application preserves React islands across unused grouped-file
+changes using bounded trusted compiler dependencies, removes unsupported
+module-to-note recovery actions, and corrects stale compressed-response headers
+on reconstructed cached navigation. See [ADR019](decisions/ADR-019-island-dependency-witnesses.md).
+Later API-observer infrastructure at `ed17dd2` passed mandatory CI and a full local
+gate of 515 unit tests, 71 tooling controls, 134 Chromium cases and 9 Pages-policy
+cases without changing browser app/build/security inputs.
 
-Both tested stock Ubuntu 24/26 runners refused execution before payload delivery
-because effective private network isolation was unavailable. Native UI parity,
-startup/Stop attribution and installed-package security remain separate open
-gates. Older results below are historical evidence, not later-package claims.
+The next navigation correction binds a fallback note to its compiler entry after
+Trash and cross-tab adoption, and normalizes historical mismatches on load or
+explicit restoration without altering source bytes. Its complete local gate passed522unit/71tooling/136Chromium/9Pages, and repeated
+WebKit passed6/6 with zero retries. Hosted acceptance and promotion remain
+separate from live `1442e58` until recorded in the daily-use receipt.
+
+Both tested stock Ubuntu24/26 runners refused execution before payload delivery
+because effective private network isolation was unavailable. A default-off
+restricted temporary-role experiment queried KVM API12 and verified cleanup; the
+whole job still failed the unchanged namespace gate. No guest was launched.
+Native UI parity, startup/Stop attribution and exact installed-package security
+remain open gates. Older results below are historical, not later-package claims.
 
 ## Engineering feedback workflow
 

@@ -2,6 +2,31 @@
 
 This is the development status for the 26 November 2026 stabilization plan. It separates identified behavior from version-specific evidence. The draft PR contains final current-head run/artifact links; dated records remain historical.
 
+## Current accepted browser delivery
+
+The [live browser editor](https://programmable-notes.pages.dev/) runs tested
+application source `1442e58`. Later development changes through `ed17dd2` concern
+native infrastructure observation, its tests and documentation; browser source,
+security policies, test fixtures, build settings and worker inputs are unchanged.
+The checkpoints below are historical and do not replace these final receipts:
+
+- [Complete hosted editor acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590): **384 passed, 18 intentional skips**, zero retries, across Chromium, Firefox and WebKit; **27 local Pages-policy cases** also passed.
+- [Focused Firefox cached-navigation acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45745225173): **27 passed** over three repetitions, zero retries.
+- [Immutable deployment](https://github.com/TomasDelon/programmable-notes/actions/runs/45745410831) and [actual public origin after promotion](https://github.com/TomasDelon/programmable-notes/actions/runs/45747704986): **27 passed each** across all three engines. Actual navigation/reload bodies and full service-worker bytes matched the expected build, including offline reopening.
+- [Downloadable walkthrough, screenshots and portable build](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590/artifacts/15083762891), plus [browser report](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590/artifacts/15084595020). Capture, eleven rejected mutations and clean-extracted offline editing, React interaction, exact export and reopening passed. Actions artifacts have seven-day retention.
+- The latest complete local gate at `ed17dd2` passed **515 unit tests /56 files, 71 tooling controls, 134 Chromium cases and 9 local Pages-policy cases**, plus formatting, lint, strict TypeScript and fresh production builds. Mocked native-observer controls are not native application runtime tests.
+
+Existing tabs can use **Settings → Workspace → Save and update app**. Do not clear
+browser storage to obtain an update: workspace data is local to that browser.
+
+Browser acceptance is complete for this scoped milestone, not a zero-defect or
+production-security certification. Browser React has no CPU/memory quota claim.
+Physical IME, GPU and Wayland compatibility remain separate from the blocked
+native startup/Stop, exact-package security and native UI-parity gates. The
+[hosted native record](security-evidence/2026-11-26-hosted-preflight/README.md)
+retains actual refusals and the narrowly scoped KVM API result. PR #9 remains
+draft; no main merge or release has occurred.
+
 ## Verified starting point
 
 - Development: `3c36ae2`, [successful mandatory CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45716862799), PR #9 draft/unmerged.
@@ -290,3 +315,31 @@ run passed. Ordinary/Pages asset fingerprints remain `afc89d287b038a18` /
 `dac35a0103e6dae7e161cdb1481d2fc8112485de92e805bef2de82125f6d3ed2`.
 This is local evidence; the Firefox diagnostic and fresh hosted full gate remain
 separate receipts in the draft PR.
+
+## Navigation consistency follow-up
+
+Review after browser delivery reproduced a separate selection bug: trashing a
+selected imported module could show Welcome while full-document execution still
+compiled the prior note from another group. Clean cross-tab adoption could
+independently produce the same mismatch. Existing source bytes were unaffected.
+
+Trash now selects the fallback note and entry together. Remote adoption derives
+entry from the effective note selection; surviving module selections keep their
+previous valid note entry. Historical saved mismatches are normalized in memory
+on load without rewriting stored content or revision. Explicit backup/recovery
+replacement normalizes navigation only after confirmation; cancellation keeps the
+existing workspace. No source or preview-to-host authority is added.
+
+The direct model and actual hook refresh/startup regressions failed before their
+respective corrections. Focused workspace tests pass, and two actual Chromium
+journeys verify local/remote Trash, the visible fallback, full-document iframe
+execution, exact source downloads and reopening. Independent scoped review found
+no issues. Required complete/hosted checks and deployment of this follow-up are
+separate from the accepted live `1442e58` receipt above.
+
+The complete fresh local gate for this navigation correction passed **522 unit
+tests /56 files, 71 tooling controls, 136 Chromium cases and 9 local Pages-policy
+cases**, zero retries, plus formatting, lint, strict TypeScript and production
+builds. WebKit passed both actual Trash journeys over three repetitions (**6/6**,
+zero retries). Ordinary/Pages fingerprints: `a77d244e1d3208f2` /
+`cc7dce21803b9dc6`. Hosted acceptance and beta promotion remain separate gates.

@@ -196,3 +196,26 @@ dispatch combinations and automatic PR/main gates. Mocked lifecycle/credential
 controls and independent code review precede any hosted role action. Actual role
 results belong to their own receipts. API12 would prove only that query for that
 role, not guest feasibility, Ubuntu support or application security readiness.
+
+## Actual dedicated-role result
+
+[45752003519](https://github.com/TomasDelon/programmable-notes/actions/runs/45752003519)
+at `ed17dd2` completed the opt-in role step successfully and reported
+`NATIVE_KVM_ROLE_API_ACCESSIBLE version=12`. The fresh ordinary-account probe
+again reported device-open denial and all expected stock metadata. The successful
+role step includes numeric-identity/context checks, descriptor closure and
+verified account/group/staging cleanup; no cleanup-failure annotation occurred.
+This run did create and remove the disposable locked account and private primary
+group. Existing account memberships and device/LSM/namespace policy were unchanged.
+No VM, guest, mmap or vCPU was created.
+
+The complete native job still **failed**, with
+`NATIVE_PREFLIGHT_BLOCKED private-network-unavailable` at the unchanged Ubuntu
+namespace gate. It did not reach graphical dependencies, installed application
+startup, IPC, filesystem or resource stress acceptance. API12 establishes only
+that the constrained role could perform this query on this allocation. It does
+not establish closed-device VMM containment, guest installation or native safety.
+A guest phase requires a separate bounded and reviewed configuration, including
+provider restrictions, exact signed media, device/cgroup isolation, no host shares
+or credentials, and complete process/storage cleanup. The canceled retained
+managed-host VM remains untouched.

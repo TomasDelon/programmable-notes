@@ -8,13 +8,23 @@
 
 **Tech stack:** React, TypeScript, CodeMirror 6, ProseMirror, MDX, KaTeX, Vitest, Playwright, Tauri 2, WebKitGTK, Rust and systemd/cgroups.
 
-**Spec:** The owner's current requirements, the acceptance contract below, ADR 015–017, `docs/WEB_APP.md`, `docs/NATIVE_SECURITY.md`, and the handoff's visual-editing/security contracts. Later owner requirements supersede historical overlay/input proposals. The handoff's later AI/Git/marketplace roadmap is not this milestone's scope.
+**Spec:** The owner's current requirements, the acceptance contract below, ADR 015–019, `docs/WEB_APP.md`, `docs/NATIVE_SECURITY.md`, and the handoff's visual-editing/security contracts. Later owner requirements supersede historical overlay/input proposals. The handoff's later AI/Git/marketplace roadmap is not this milestone's scope.
 
-## Verified baseline — 26 November 2026, Europe/Paris
+## Accepted web checkpoint
 
-- Development branch: `fix/preview-markdown-input`, head `3c36ae21c60bd46b66cdbb8e2258209c1fa3b3de`. Actual current PR: **#9**, open, draft, unmerged.
+The deployed web application is `1442e589a57f107944c2e6588e8e915e065b7b39`. Its ordinary and Pages asset fingerprints are `afc89d287b038a18` and `19f503362f07b8c6`. The corrected Pages service-worker SHA-256 is `dac35a0103e6dae7e161cdb1481d2fc8112485de92e805bef2de82125f6d3ed2`. [Daily-use receipt](../../DAILY_USE_STATUS.md)
+
+- Mandatory CI passed at `1442e58`. The complete pinned Chromium, Firefox and WebKit run passed **384 editor cases with 18 intentional skips** and **27 local Pages-policy cases**, with zero retries accepted. The focused Firefox Pages run passed all 27 cases across three repetitions with zero retries. [Mandatory CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45744910801) · [Full browser run](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590) · [Firefox repetitions](https://github.com/TomasDelon/programmable-notes/actions/runs/45745225173)
+- The immutable Cloudflare candidate passed 27 deployment cases before the beta fast-forward. The public principal origin then passed all 27 cases across the same three browsers, with exact worker and entry identity. [Candidate verification](https://github.com/TomasDelon/programmable-notes/actions/runs/45745410831) · [Principal-origin verification](https://github.com/TomasDelon/programmable-notes/actions/runs/45747704986)
+- The current walkthrough includes desktop, tablet and mobile captures, a playable recording and an exact MDX export. The portable archive passed offline browser verification and eleven integrity controls. [Hosted walkthrough](https://github.com/TomasDelon/programmable-notes/actions/runs/45745493590/artifacts/15083762891)
+
+This checkpoint covers the web track. Native startup, Stop attribution, matching-package runtime acceptance and native editor integration remain blocked. Physical IME and hardware compatibility require separate observations. [Hosted native preflight evidence](../../security-evidence/2026-11-26-hosted-preflight/README.md)
+
+## Recorded baseline — 26 November 2026, Europe/Paris
+
+- Development branch `fix/preview-markdown-input` started at `3c36ae21c60bd46b66cdbb8e2258209c1fa3b3de`. PR #9 was open, draft and unmerged.
 - [Head CI](https://github.com/TomasDelon/programmable-notes/actions/runs/45716862799) completed successfully. The skill/tooling change passed 428 unit, 44 tooling, 128 Chromium and 8 Pages-policy cases locally; these are existing results, not tests executed to write this plan.
-- Production branch `deploy/cloudflare-beta` remains at `d2838be7427e14839999c05366c3cec8d7ad9800`. [Main-origin acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45711771472) passed 24 cases across three browsers. [Repeated diagnostics](https://github.com/TomasDelon/programmable-notes/actions/runs/45709208038) passed 327 cases with 42 intentional skips and zero retries at that application revision.
+- Production branch `deploy/cloudflare-beta` was at `d2838be7427e14839999c05366c3cec8d7ad9800`. At that application revision, main-origin acceptance passed 24 cases across three browsers and repeated diagnostics passed 327 cases with 42 intentional skips and zero retries. [Main-origin acceptance](https://github.com/TomasDelon/programmable-notes/actions/runs/45711771472) · [Repeated diagnostics](https://github.com/TomasDelon/programmable-notes/actions/runs/45709208038)
 - The newer development commit changed development protocols/tooling, not application source. Ordinary/Pages application fingerprints remain `07379478d76c65a7` / `ba3b18a42210f424`. This does not make arbitrary later commits equivalent.
 - The same-editor math/Markdown implementation already exists. This audit established no new confirmed defect in those core behaviors; new code requires a reproduced failure or a demonstrated coverage gap.
 - Documentation still contains historical pending statements and old counts. Reconcile these with actual evidence rather than rerunning completed gates to satisfy stale prose.
@@ -67,10 +77,10 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Output:** One concise requirement → implementation → witness → limitation table, with current source/deployed/package identities and actual artifact links.
 
-- [ ] Record the baseline above, including the successful new-head CI and separately verified deployed application.
-- [ ] Label superseded math/input/mode descriptions as historical; distinguish 44 current tooling tests from the older 14-test checkpoint.
-- [ ] Explicitly distinguish browser workspace durability, unapplied drafts, native file grants, native UI parity and physical compatibility.
-- [ ] Inspect existing screenshots/tests for the user's sequences; mark each item passed, reproduced failure, coverage gap, blocked or optional.
+- [x] Record the baseline above, including the successful development CI and separately verified deployed application.
+- [x] Label superseded math, input and mode descriptions as historical and scope tooling counts to their respective checkpoints.
+- [x] Explicitly distinguish browser workspace durability, unapplied drafts, native file grants, native UI parity and physical compatibility.
+- [x] Inspect existing screenshots and tests for the requested sequences and record their evidence and limitations. [Daily-use receipt](../../DAILY_USE_STATUS.md)
 
 **Exit:** No unsupported current “pending,” “fixed,” “safe,” or native-parity claim. Do not rerun old acceptance merely to refresh documentation.
 
@@ -80,11 +90,12 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Interface:** Distinct concurrency classes `build`, `editing`, `browser-qa`, `deployment` for modes whose actual overlap needs separation; keep required job names, conditions and security checks.
 
-- [ ] Record actual event, Git ref and resolved concurrency group. Same-ref manual editing/browser/ordinary-build dispatches can share the build group; automatic PR refs may already differ. Do not infer that every earlier CI/matrix wait was imposed by GitHub. Demonstrate the interference before changing it.
-- [ ] Make the smallest grouping change; retain cancellation of superseded runs within the same class. Keep one owner for repeated editing dispatches.
-- [ ] Validate YAML/actions and demonstrate actual same-SHA mandatory/optional overlap without cancellation; demonstrate supersession within one class.
-- [ ] Preserve the full credential scan, synthetic scanner control, native package inspection, fault-injection and browser failure-on-flaky behavior.
-- [ ] Measure phase durations. Optimize duplicate runtime preparation or artifact transfer only if measurements justify it and generation prerequisites stay explicit.
+- [x] Record actual events, refs and resolved groups, including the old same-ref manual selector collision and the distinct automatic PR ref.
+- [x] Separate same-ref groups and retain cancellation of superseded runs within each class. Keep one owner for repeated editing dispatches.
+- [x] Validate workflow routing and observe hosted same-ref browser-QA/editing overlap with editing supersession. [Concurrency evidence](../../AGENT_WORKFLOW.md#2-validation-and-execution-ownership)
+- [x] Preserve the full credential scan, synthetic scanner control, native package inspection, fault injection and browser failure-on-flaky behavior.
+- [x] Record observed phase durations and generation prerequisites.
+- [ ] Establish a matched before/after critical-path comparison for mandatory and optional work. The hosted same-ref witness covers browser QA and editing. Historical cross-class cancellation and quantified savings remain unconfirmed.
 
 **Exit:** Actual eligible checks overlap on standard hosted Linux runners with recorded event/ref/group identity; supersession remains scoped correctly. No dropped tests, permission expansion, paid runners or passing-retry substitution. Measure saved critical-path time; no assumed eight-minute improvement.
 
@@ -94,12 +105,12 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Files:** New `tests/e2e/web-authoring-acceptance.spec.ts`; reuse `tests/e2e/helpers/math-text.ts`. Possible fixes under one owner: `src/editor/rendered/RenderedEditor.tsx`, `src/editor/rendered/sourceBridge.ts`, `src/editor/rendered/schema.ts`, `src/editor/math/mathSource.ts`, `src/editor/rendered/rendered.css`.
 
-- [ ] Add one realistic BOM/mixed-EOL fixture containing headings, paragraphs, punctuation, lists, comments/imports, nested JSX and a live Counter.
-- [ ] Type `1. ` and `- ` through ordinary keys, continue/nest/exit lists, insert soft/hard breaks and edit heading/prose text without form controls.
-- [ ] Exercise valid → incomplete → valid mathematics, several independent invalid formulas, raw correction and moving the same caret across boundaries. Check geometry when the same unrendered text gains/loses focus.
-- [ ] Assert no generated entity spelling appears as accidental visible text, no ordinary TeX error toast, no extra mathematical focus surface, and exact unrelated bytes.
-- [ ] Exercise canonical undo/redo, source/Preview switching, note switching, acknowledged save, reload/reopen and exact export. Keep React interaction working and source-visibility/core toggles source-neutral.
-- [ ] If a case fails, capture events/DOM/revision mapping, form one hypothesis, patch minimally, then rerun that same witness in the affected engine before broader regression.
+- [x] Add one realistic BOM/mixed-EOL fixture containing headings, paragraphs, punctuation, lists, comments/imports, nested JSX and a live Counter.
+- [x] Type `1. ` and `- ` through ordinary keys, continue/nest/exit lists, insert soft/hard breaks and edit heading/prose text without form controls.
+- [x] Exercise valid → incomplete → valid mathematics, several independent invalid formulas, raw correction and moving the same caret across boundaries. Check geometry when the same unrendered text gains/loses focus.
+- [x] Assert no generated entity spelling appears as accidental visible text, no ordinary TeX error toast, no extra mathematical focus surface, and exact unrelated bytes.
+- [x] Exercise canonical undo/redo, source/Preview switching, note switching, acknowledged save, reload/reopen and exact export. Keep React interaction working and source-visibility/core toggles source-neutral.
+- [x] Retain event and selection evidence for the pasted-paragraph caret and WebKit refocus defects, and rerun the affected witnesses. The later hosted test-ordering failure was reproduced separately and the acceptance journey now uses native keyboard selection, Copy and Paste. [Authoring evidence](../../DAILY_USE_STATUS.md#hosted-interaction-verification-follow-up)
 
 **Exit:** Real combined authoring works in pinned Chromium, Firefox and WebKit. No editor/library replacement or wholesale serialization to make a fixture pass.
 
@@ -107,11 +118,11 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Files:** `tests/e2e/web-math-composition.spec.ts`, workspace/recovery tests; existing `src/web/persistence.ts`, `src/web/useWebWorkspace.ts`, `src/web/WebApp.tsx`, and editor pending-draft callbacks only as needed.
 
-- [ ] Add a browser witness for a composition spanning prose/math that becomes unavailable through a real document conflict. Assert final Unicode is retained, canonical source/history cannot change while disabled, and the DOM becomes read-only after final native input is read.
-- [ ] Reuse existing save-in-flight, tab-CAS, quota, corrupt-startup and restore regressions. Add only missing edit → acknowledged save → fresh context → exact-source and conflict → rescue → explicit restore witnesses.
-- [ ] Reproduce what survives hard page/application termination for canonical source versus a refused/unapplied attempt. Existing in-memory retention is not automatically crash durability.
-- [ ] If an unapplied-attempt loss is confirmed, persist it through the existing recovery boundary as a separately identified snapshot with document/base-revision provenance. Restore into an explicit recovered copy or revision-checked user action, never automatic overwrite or restored filesystem authority. Keep corrupt data/cancellation/quota failures recoverable.
-- [ ] Test reload/restart, invalid snapshot, cancellation, newer canonical source, conflicting tab and undo after explicit restoration. Native snapshots remain behind the existing authorized native adapter.
+- [x] Exercise synthetic final Unicode composition in prose and mixed prose/math during a real two-tab conflict, with canonical source and history guarded and the DOM read-only after the final input.
+- [x] Retain save-in-flight, tab-CAS, quota, corrupt-startup and restore checks. Verify acknowledged canonical source and separately acknowledged retained text in a fresh browser process using the same profile.
+- [x] Reproduce page-local attempt loss after unmount/reopen and exercise a real Chromium renderer crash before unloading.
+- [x] Store a separately identified, checksummed retained edit with captured source provenance. Restore Markdown/MDX as an explicit new copy and preserve exact module downloads. Keep hard storage failures recoverable. [ADR 018](../../decisions/ADR-018-retained-edits-and-stabilization.md)
+- [x] Cover browser reload/restart, invalid snapshots, cancellation, newer canonical source, conflicting tabs and undo after explicit restoration.
 
 **Exit:** Clear, truthful saved/pending/recovered states; tested exact durable source; no discarded final input or silent replacement. No universal power-loss guarantee. Physical IME evidence remains separate from synthetic browser composition tests.
 
@@ -119,11 +130,12 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Files:** `src/web/useWebPreview.ts`, `src/web/WebPreview.tsx`, `src/editor/rendered/RenderedRuntime.tsx`, `src/web/WebApp.tsx`; preview lifecycle unit/browser tests. Keep shared editor source under root ownership.
 
-- [ ] Pin a lifecycle matrix: unrelated Markdown edit, source/import dependency change, mode/theme/source-visibility change, navigation, plugin disable, Stop and Rebuild.
-- [ ] Assert unchanged executable islands preserve state; changed executable input resets deterministically; disabled/stopped/replaced work cannot be resurrected by stale compiler replies.
-- [ ] Measure input → canonical update, save acknowledgement, compile → interactive render and repeated unnecessary builds on representative small/large supported fixtures.
-- [ ] Fix only measured redundant compilation/rendering or ownership errors. Keep existing cache/source identity and compiler budgets correct.
-- [ ] Retain the unexplained first-click failure separately; investigate a newly reproduced trace, not an assumed React-state-reset explanation.
+- [x] Cover the lifecycle matrix in focused unit and browser cases, including unrelated prose/math, changed executable inputs, mode/theme/source visibility, navigation, plugin disable, Pause and Rebuild.
+- [x] Verify island continuity under unrelated edits and deterministic replacement for changed executable input, with request-owned publication rejecting stale work. The two-tab dependency witness distinguishes an unused grouped file from the imported TSX dependency. [ADR 019](../../decisions/ADR-019-island-dependency-witnesses.md)
+- [x] Measure repeated unnecessary builds and sample the trusted-input-to-saved path on small and large supported fixtures. The `6a004170ca68b158` timing probe also measured initial compiler request to observed Counter click acknowledgment.
+- [ ] Measure immediate in-memory canonical acceptance and isolate compiler-to-interactive-render time. The current autosave interval includes the debounce and the Counter interval includes automation and click delay. [Timing scope](../../DAILY_USE_STATUS.md#observed-browser-save-latency)
+- [x] Remove demonstrated redundant compilation and preserve lifecycle ownership, source identity and compiler budgets. Restore the parser diagnostics that the integrated gate caught. [ADR 018](../../decisions/ADR-018-retained-edits-and-stabilization.md)
+- [x] Retain the unexplained historical first-click failure separately. Its cause remains unresolved; investigate a new trace if it recurs. [First-click evidence](../../security-evidence/2026-11-19-counter-input/README.md)
 
 **Exit:** Predictable, documented temporary state and responsive authoring with retained source guarantees. Arbitrary React hot-state persistence/HMR and reverse editing remain out of scope.
 
@@ -131,7 +143,8 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Files:** `scripts/native-startup.mjs`, `scripts/native-stress.mjs`, lifecycle/fidelity/persistence observers, `docs/NATIVE_SECURITY.md`, dated evidence. Native implementation changes require reproduced defects.
 
-- [ ] Probe suitable disposable Linux infrastructure: systemd user manager, cgroup delegation, user/network namespaces, WebKitGTK, ordinary graphical session and trusted journal observations. Use existing approved cloud resources; no new paid commitment.
+- [x] Probe hosted Linux prerequisites and retain failures. Stock hosted runners reached the namespace check and refused document code before payload launch. [Hosted preflight evidence](../../security-evidence/2026-11-26-hosted-preflight/README.md)
+- [ ] Establish a disposable full-system target with a systemd user manager, cgroup delegation, effective private namespaces, WebKitGTK, a regular graphical session and trusted journal observations.
 - [ ] Bind every observation to one installed optimized package/ELF and fresh fixture/profile. Retain failed cases.
 - [ ] Diagnose startup phases and CPU Stop attribution using monotonic timings, trusted service/termination cause, actual CPU/throttle evidence and cleanup. Establish Stop under load before the fixed expiry; do not extend lifetime, relax quotas, replace fixtures or accept an authored marker as the termination oracle.
 - [ ] If startup remains too slow/unobservable, record a precise failed or blocked result and improve the demonstrated bottleneck or use suitable infrastructure. A subsequent unchanged passing retry does not explain the failure.
@@ -139,11 +152,13 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Exit:** All required commands exit 0 with trusted causes and exact binary identity. Otherwise native hostile-document readiness remains blocked. Software-rendered Ubuntu evidence does not certify physical GPU, Wayland or other distributions.
 
+**Blocked.** The recorded CPU Stop-attribution failure and startup uncertainty remain open. The API-only KVM role step reported API 12 and verified cleanup, while the enclosing preflight failed private-network setup. Disposable guest startup and matching installed-package runtime acceptance remain pending. [API-only role and preflight run](https://github.com/TomasDelon/programmable-notes/actions/runs/45752003519)
+
 ## Task 6 — Bring the native editing experience forward safely
 
 **Files:** `src/web/EditorEntry.tsx`, `src/App.tsx`, `src/editor/rendered/RenderedEditor.tsx`, existing `src/documents/native.ts`/`useDocuments.ts`; routing, native fidelity and persistence tests.
 
-- [ ] First map which trusted Markdown/math editing pieces can be reused without importing browser persistence or browser-only React islands into the privileged native window.
+- [x] Map trusted Markdown/math reuse and identify the compiler settings, authoritative source checks and recovery handoff needed at the native boundary. [Native continuation gate](../../DAILY_USE_STATUS.md#native-continuation-gate)
 - [ ] Prototype the smallest adapter boundary in isolation; native saves keep existing opaque grants/revisions, atomic writes and recovery. Core preference validation remains a fixed allowlist.
 - [ ] Bring continuous trusted text/math editing and consistent feedback into the native host only after that boundary is proven.
 - [ ] Preserve React execution in the existing separately supervised unprivileged process. Do not mount web preview code in the native host to obtain superficial same-window parity.
@@ -151,18 +166,20 @@ The root agent owns scope, shared integration points, artifact identity and fina
 
 **Exit:** Explicitly supported native authoring behavior with unchanged native authority/resource boundaries. Web delivery need not wait for this independent integration; native-parity claims must wait for its actual tests.
 
+**Blocked.** Adapter implementation and matching-package revalidation follow the open native runtime gate.
+
 ## Task 7 — Freeze, verify and deliver one coherent candidate
 
 **Files:** Current status/ADR/evidence links, existing demo/artifact scripts, workflow delivery metadata. Root is the only gate/deployment owner.
 
-- [ ] Freeze relevant code/tests/config and record dirty/input identity, commit, versions, environment and predeclared skips/repetition scopes.
-- [ ] Run targeted checks during development. Run the required full `npm run check` once after stabilization; a failure or relevant change justifies rerunning affected gates.
-- [ ] With Task 1 complete, overlap independent mandatory CI and optional browser diagnostics on separate runners. Keep one server/build/watcher owner per environment; never have workers rebuild shared `dist` or use port 4173 concurrently.
-- [ ] Run the required three-engine editor/security acceptance; repeat demonstrated races with zero retries. Preserve all failed checkpoints and distinguish required runtime tests from compilation.
-- [ ] Verify the immutable Cloudflare candidate, then perform the authorized beta fast-forward only after required gates pass. Verify the actual principal origin afterward. Existing tabs retain data through Save and update.
-- [ ] Capture desktop/tablet/mobile screenshots and a short real walkthrough from the accepted immutable build. Use existing byte-manifest checks and upload a verified playable/demo artifact; link it from the draft PR. Native installer distribution additionally requires complete redistribution notices.
-- [ ] Validate milestone evidence consistency with `scripts/check-agent-evidence.mjs`, then inspect actual logs: the checker is not execution attestation or test-adequacy proof.
-- [ ] Update the current receipt and next handoff, verify noreply identity, run the required history/archive credential scan before pushes, push coherent commits and keep PR #9 draft. No merge, release or readiness change.
+- [x] Freeze web source, tests and build configuration, with recorded build identity, engines, intentional skips and repetition scope.
+- [x] Run targeted witnesses and the required full `npm run check` after stabilization, with affected gates repeated after fixes.
+- [x] Overlap independently owned mandatory and optional jobs, with one server, build and watcher owner per environment. The measured concurrency comparison remains scoped under Task 1.
+- [x] Pass three-engine editor and hosting acceptance and the targeted zero-retry repetitions. Preserve the failed hosted authoring and compressed navigation checkpoints.
+- [x] Verify the immutable Cloudflare candidate, fast-forward beta and verify the actual principal origin against the expected worker and entry. Exercise Save and update with preserved data.
+- [x] Publish current desktop, tablet and mobile captures and a verified playable web artifact with byte manifests and clean-extracted browser acceptance. Native installer acceptance stays in its own gate.
+- [x] Validate the accepted web evidence record with `scripts/check-agent-evidence.mjs` and inspect the actual run receipts. The checker verifies record consistency; native gates and execution evidence have their own receipts.
+- [x] Update the web receipt and draft PR evidence, verify noreply identity, complete the history/archive credential scan before the verified push, and retain the draft PR. [Draft PR #9](https://github.com/TomasDelon/programmable-notes/pull/9)
 
 **Web exit:** Required authoring/math/JSX/plugin/history/save/recovery/security journeys pass on the identified candidate and actual origin, with downloadable evidence and truthful limits.
 
