@@ -20,6 +20,32 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Native vault inventory foundation — 26 November 2026
+
+The Rust host now has a retained-directory `Vault` capability and metadata-only
+inventory, separate from loaded source/file grants. One shared descriptor walker
+preserves no-follow pinning, exclusions and existing depth/entry/path budgets.
+Indexing 100 notes consumes no file grants or source reads; explicit opening
+still enforces 32 loaded files, 500 KB per file and 8 MiB total. Root/ancestor
+renames and path replacements cannot redirect an existing capability. Inventory
+is observational metadata, never an atomic snapshot or write authorization.
+
+Local validation passed: **11 new inventory tests, 62 native document tests with
+7 existing ignored slots, 663 unit, 92 tooling with zero skips, 150 Chromium,
+9 Pages and 4 inactive-cloud tests**, plus formatting/lint/types/build and the
+real Store/autosave integration after the refactor. The ignored contention helper
+is explicitly invoked by its owning test; six dedicated ptrace/ENOSPC controls
+remain separate CI steps. Independent review ran 11 inventory + 10 original vault
+tests unprivileged and found no blocking issue. An inode inotify positive/negative
+control verifies indexing does not open/access note payloads.
+
+No new IPC, permission, dependency or UI route was added. The existing chooser
+still uses eager loading; shared navigation/lazy opening, real lifecycle/Trash,
+external observation/conflict resolution and application autosave integration are
+not completed. See [ADR026](decisions/ADR-026-vault-inventory.md),
+[packet plan](plans/vault-inventory.md) and
+[evidence](security-evidence/2026-11-26-vault-inventory/README.md).
+
 ## Shared local-vault foundation — 26 November 2026
 
 The next packet implements a platform-independent accepted-source autosave

@@ -80,6 +80,14 @@ pub struct Saved {
     pub durable: bool,
 }
 
+/// Observed metadata only: neither a source snapshot nor a document write grant.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InventoryEntry {
+    pub logical_path: String,
+    pub bytes: u64,
+}
+
 #[cfg(target_os = "linux")]
 pub mod draft;
 #[cfg(target_os = "linux")]
@@ -89,6 +97,8 @@ mod vault;
 #[cfg(target_os = "linux")]
 use linux::AuthorizedFile;
 use std::collections::HashMap;
+#[cfg(target_os = "linux")]
+pub use vault::Vault;
 fn random_id() -> Result<String, Error> {
     let mut bytes = [0u8; 16];
     getrandom::fill(&mut bytes)

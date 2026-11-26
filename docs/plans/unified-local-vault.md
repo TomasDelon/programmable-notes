@@ -176,3 +176,8 @@ observations and exact small probes are retained. No parity/security gate is
 checked off. Next work: an actual pinned-Wry embedding/lifecycle proof, while
 shared vault/session/controller adapters can advance independently. Do not begin
 a third shell or activate browser storage as local vault truth.
+
+Inventory subpacket now implements the Rust retained-root metadata boundary with
+11 filesystem tests and independent review; source loading keeps its old budgets.
+See [its packet plan](vault-inventory.md) and ADR026. This completes an indexing
+substep, not the whole vault lifecycle or any installed application gate.

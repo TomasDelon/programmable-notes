@@ -1,7 +1,9 @@
 //! One explicit OS folder selection, bounded before any grant is published.
 //! Skip only real directories named .git, node_modules, or .programmable-notes.
 //! Other regular non-source files are ignored; symlinks and special entries fail closed.
-use crate::{linux::AuthorizedFile, Error, MAX_DOCUMENTS, MAX_SOURCE_BYTES, MAX_TOTAL_BYTES};
+use crate::{
+    linux::AuthorizedFile, Error, InventoryEntry, MAX_DOCUMENTS, MAX_SOURCE_BYTES, MAX_TOTAL_BYTES,
+};
 use std::{
     ffi::{CStr, CString, OsStr, OsString},
     fs::{File, OpenOptions},
@@ -88,16 +90,21 @@ fn names(directory: &File, entries: &mut usize) -> Result<Vec<OsString>, Error> 
 }
 struct Walk {
     entries: usize,
-    bytes: usize,
-    files: Vec<(AuthorizedFile, String)>,
+}
+struct SourceEntry<'a> {
+    directory: &'a File,
+    name: &'a OsStr,
+    logical_path: &'a str,
+    pinned: File,
+    bytes: u64,
 }
 impl Walk {
     fn visit(
         &mut self,
         directory: &File,
-        root: &Path,
         relative: &Path,
         depth: usize,
+        source: &mut impl FnMut(SourceEntry<'_>) -> Result<(), Error>,
     ) -> Result<(), Error> {
         for name in names(directory, &mut self.entries)? {
             let relative = relative.join(&name);
@@ -125,7 +132,7 @@ impl Walk {
                     .read(true)
                     .custom_flags(libc::O_DIRECTORY | libc::O_CLOEXEC)
                     .open(format!("/proc/self/fd/{}", pinned.as_raw_fd()))?;
-                self.visit(&child, root, &relative, depth + 1)?;
+                self.visit(&child, &relative, depth + 1, source)?;
             } else if metadata.is_file() {
                 if !relative
                     .extension()
@@ -134,26 +141,16 @@ impl Walk {
                 {
                     continue;
                 }
-                relative
+                let logical_path = relative
                     .to_str()
                     .ok_or(Error::Rejected("Folder source paths must be UTF-8"))?;
-                if self.files.len() >= MAX_DOCUMENTS {
-                    return Err(Error::Rejected("Folder exceeds 32 source file limit"));
-                }
-                if metadata.len() > MAX_SOURCE_BYTES as u64 {
-                    return Err(Error::Rejected("File exceeds 500 KB limit"));
-                }
-                let (file, source) = AuthorizedFile::select_anchored(
-                    directory.try_clone()?,
-                    &name,
-                    root.join(relative),
+                source(SourceEntry {
+                    directory,
+                    name: &name,
+                    logical_path,
                     pinned,
-                )?;
-                self.bytes += source.len();
-                if self.bytes > MAX_TOTAL_BYTES {
-                    return Err(Error::Rejected("Folder exceeds 8 MiB source limit"));
-                }
-                self.files.push((file, source));
+                    bytes: metadata.len(),
+                })?;
             } else {
                 return Err(Error::Rejected(
                     "Folder contains a symbolic link or special file",
@@ -163,7 +160,7 @@ impl Walk {
         Ok(())
     }
 }
-pub(crate) fn collect(root: &Path) -> Result<Vec<(AuthorizedFile, String)>, Error> {
+fn select_root(root: &Path) -> Result<File, Error> {
     if !root.is_absolute()
         || root
             .as_os_str()
@@ -184,11 +181,66 @@ pub(crate) fn collect(root: &Path) -> Result<Vec<(AuthorizedFile, String)>, Erro
             directory = open_at(&directory, name, libc::O_RDONLY | libc::O_DIRECTORY)?;
         }
     }
-    let mut walk = Walk {
-        entries: 0,
-        bytes: 0,
-        files: Vec::new(),
-    };
-    walk.visit(&directory, root, Path::new(""), 0)?;
-    Ok(walk.files)
+    Ok(directory)
+}
+
+/// Trusted-host directory capability, never constructed from document runtime input.
+pub struct Vault {
+    directory: File,
+}
+impl Vault {
+    /// Call only after OS folder authorization; never expose this path-taking API as IPC.
+    pub fn select_authorized(root: &Path) -> Result<Self, Error> {
+        Ok(Self {
+            directory: select_root(root)?,
+        })
+    }
+
+    /// Metadata is observational, not an atomic snapshot or authority to open/write a path.
+    /// Only the root descriptor is retained; source payloads and file grants are not opened.
+    pub fn inventory(&self) -> Result<Vec<InventoryEntry>, Error> {
+        let mut entries = Vec::new();
+        self.visit(&mut |entry| {
+            entries.push(InventoryEntry {
+                logical_path: entry.logical_path.to_owned(),
+                bytes: entry.bytes,
+            });
+            Ok(())
+        })?;
+        Ok(entries)
+    }
+
+    fn visit(
+        &self,
+        source: &mut impl FnMut(SourceEntry<'_>) -> Result<(), Error>,
+    ) -> Result<(), Error> {
+        Walk { entries: 0 }.visit(&self.directory, Path::new(""), 0, source)
+    }
+}
+
+pub(crate) fn collect(root: &Path) -> Result<Vec<(AuthorizedFile, String)>, Error> {
+    let vault = Vault::select_authorized(root)?;
+    let mut files = Vec::new();
+    let mut bytes = 0;
+    vault.visit(&mut |entry| {
+        if files.len() >= MAX_DOCUMENTS {
+            return Err(Error::Rejected("Folder exceeds 32 source file limit"));
+        }
+        if entry.bytes > MAX_SOURCE_BYTES as u64 {
+            return Err(Error::Rejected("File exceeds 500 KB limit"));
+        }
+        let (file, source) = AuthorizedFile::select_anchored(
+            entry.directory.try_clone()?,
+            entry.name,
+            root.join(entry.logical_path),
+            entry.pinned,
+        )?;
+        bytes += source.len();
+        if bytes > MAX_TOTAL_BYTES {
+            return Err(Error::Rejected("Folder exceeds 8 MiB source limit"));
+        }
+        files.push((file, source));
+        Ok(())
+    })?;
+    Ok(files)
 }
