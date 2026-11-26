@@ -13,6 +13,25 @@ block() {
   annotate_failure "$1"
   exit 2
 }
+# All package names below are fixed prerequisites. APT output stays on the
+# ephemeral runner; public annotations identify only the stage and package.
+install_packages() {
+  local stage=$1 package policy
+  shift
+  if sudo apt-get "${pn_apt_options[@]}" install -yqq "$@" >"$RUNNER_TEMP/pn-preflight-$stage.log" 2>&1; then
+    return 0
+  fi
+  for package in "$@"; do
+    if policy=$(LC_ALL=C apt-cache policy "$package" 2>/dev/null); then
+      if [[ -z $policy || $policy == *'Candidate: (none)'* ]]; then
+        printf 'NATIVE_PREFLIGHT_PACKAGE_UNAVAILABLE %s\n' "$package" >&2
+        annotate_failure "apt-no-candidate-$package"
+      fi
+    fi
+  done
+  block "$stage"
+}
+
 # This check is passed verbatim to the ordinary user's transient service.
 read_limits() {
   local group=$1 status=$2
@@ -87,11 +106,9 @@ check_denial_exit() {
 pn_userns=$(sysctl -n kernel.apparmor_restrict_unprivileged_userns)
 printf 'NATIVE_PREFLIGHT_POLICY restricted_userns=%s\n' "$pn_userns"
 [[ $pn_userns == 1 ]] || block stock-restricted-ubuntu-baseline
-pn_packages=(dbus-user-session dbus-x11 xvfb xauth openbox x11-utils xdotool
-  python3-pyatspi libwebkit2gtk-4.1-0 webkit2gtk-driver xdg-desktop-portal-gtk
-  tesseract-ocr tesseract-ocr-eng acl jq)
-sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update -qq
-sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -yqq "${pn_packages[@]}" >"$RUNNER_TEMP/pn-preflight-apt.log"
+pn_apt_options=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+sudo apt-get "${pn_apt_options[@]}" -o APT::Update::Error-Mode=any update -qq >"$RUNNER_TEMP/pn-preflight-apt-index.log" 2>&1 || block apt-index
+install_packages apt-base-install dbus-user-session jq
 pn_user=pn-native-check
 if getent passwd "$pn_user" >/dev/null; then block validation-user-collision; fi
 sudo useradd --create-home --user-group --shell /bin/bash "$pn_user"
@@ -168,6 +185,11 @@ if [[ $pn_unitns == "$pn_hostns" ]]; then
   echo NATIVE_PREFLIGHT_EXPECTED_SUPERVISOR_DENIAL
   block private-network-unavailable
 fi
+pn_driver_package=webkit2gtk-driver
+if [[ $VERSION_ID == 26.04 ]]; then pn_driver_package=webkitgtk-webdriver; fi
+install_packages apt-gui-install dbus-x11 xvfb xauth openbox x11-utils xdotool \
+  python3-pyatspi libwebkit2gtk-4.1-0 "$pn_driver_package" xdg-desktop-portal-gtk \
+  tesseract-ocr tesseract-ocr-eng acl
 as_user timeout -k 3s 35s xvfb-run --auto-servernum -s '-screen 0 1280x900x24 -nolisten tcp' bash -ceu '
   test -s "$XAUTHORITY"
   openbox >/dev/null 2>&1 &

@@ -89,3 +89,21 @@ lists Ubuntu 26.04 image `20261116.202.1`, kernel `7.0.0-1020-azure` and systemd
 `259.9-0ubuntu0.1` (observed Git blob `58bb856f8f026db66e6f5080cc8c8b4c5502c4cc`).
 It establishes availability of the standard runner, not effective namespace
 isolation. Subsequent actual run outcomes belong to their own source identity.
+
+The first actual Ubuntu 26 dispatch,
+[run 45736249396](https://github.com/TomasDelon/programmable-notes/actions/runs/45736249396)
+at `502b483`, exited 100 during package setup. Its generic annotation does not
+identify which APT stage failed; no native runtime result follows from it.
+Independent inspection of checksum-verified Ubuntu Resolute package indexes
+found that `webkit2gtk-driver` is unavailable there and its replacement is
+`webkitgtk-webdriver` (the same `/usr/bin/WebKitWebDriver` and WebKitGTK 4.1 ABI).
+An isolated package-resolution simulation rejected the former prerequisite set
+and accepted the latter. This explains a reproducible setup defect, not the
+unobserved details of that hosted failure.
+
+The corrected probe installs only session prerequisites before verifying actual
+namespace containment, then installs the version-appropriate graphical driver.
+Fixed annotations distinguish index, base-package and GUI-package failures;
+missing-candidate annotations use only fixed prerequisite names. APT diagnostics
+remain on the disposable runner. Six package-stage simulations join the existing
+session and controller regressions. These controls are not a native runtime pass.

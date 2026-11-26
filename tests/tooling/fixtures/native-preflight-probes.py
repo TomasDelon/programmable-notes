@@ -23,7 +23,17 @@ controller = controller.replace(
 MOCKS = r"""
 pn_uid=1234
 pn_runtime=$RUNNER_TEMP
-sudo() { [[ $1 == journalctl || $1 == install ]] || exit 90; }
+VERSION_ID=24.04
+pn_apt_options=()
+sudo() {
+  case $1 in
+    journalctl|install) ;;
+    apt-get)
+      [[ $PN_CASE == success || $PN_CASE == cleanup-fails ]] || exit 90
+      echo gui >> "$RUNNER_TEMP/gui-log" ;;
+    *) exit 90 ;;
+  esac
+}
 cargo() { [[ $1 == build ]] || exit 91; }
 jq() { cat >/dev/null; }
 as_user() {
@@ -147,6 +157,7 @@ def check(case, root):
     ), result.stderr
     assert (root / "calls").read_text().splitlines() == ["LIST", f"STOP {unit}", "LIST"]
     assert bool((root / "units").read_text()) == cleanup_failed
+    assert (root / "gui-log").exists() == distinct
 
 
 # The runner cannot traverse another user's 0700 runtime directory. The test
@@ -231,6 +242,81 @@ def check_session(case, root):
         if case not in ("transport-fails", "transport-timeout"):
             expected.append("manager")
     assert (root / "calls").read_text().splitlines() == expected, case
+
+
+PACKAGE_MOCK = r"""
+sudo() {
+  [[ $1 == apt-get ]] || exit 90
+  for action in "$@"; do
+    case $action in
+      update)
+        [[ $* == *'APT::Update::Error-Mode=any'* ]] || exit 93
+        echo update >> "$RUNNER_TEMP/calls"
+        [[ $PN_CASE != index-failure ]] || return 100
+        return 0 ;;
+      install)
+        printf '%s\n' "$*" >> "$RUNNER_TEMP/calls"
+        if [[ $* == *'openbox'* ]]; then
+          [[ $PN_CASE != gui-failure && $PN_CASE != missing-driver ]] || return 100
+        elif [[ $PN_CASE == base-failure ]]; then return 100; fi
+        return 0 ;;
+    esac
+  done
+  exit 91
+}
+apt-cache() {
+  [[ $1 == policy && $# == 2 ]] || exit 92
+  if [[ $2 == webkitgtk-webdriver && $PN_CASE == missing-driver ]]; then
+    echo '  Candidate: (none)'
+  else
+    echo '  Candidate: 1.0'
+  fi
+}
+"""
+
+
+def check_packages(case, version):
+    # Execute actual package operation call sites around a synthetic successful
+    # namespace gate. A separate check above exercises the real gate controller.
+    base = source[source.index("pn_apt_options="):source.index("pn_user=pn-native-check")]
+    gui = source[source.index("pn_driver_package="):source.index("as_user timeout -k 3s 35s xvfb-run")]
+    with tempfile.TemporaryDirectory() as tmp:
+        run = subprocess.run(
+            ["/bin/bash", "-c", definitions + PACKAGE_MOCK + base + "\n" + gui],
+            env={"PATH": "/nonexistent", "RUNNER_TEMP": tmp, "PN_CASE": case,
+                 "GITHUB_ACTIONS": "true", "VERSION_ID": version},
+            capture_output=True, text=True, timeout=5,
+        )
+        expected = {
+            "index-failure": ["apt-index"],
+            "base-failure": ["apt-base-install"],
+            "gui-failure": ["apt-gui-install"],
+            "missing-driver": ["apt-no-candidate-webkitgtk-webdriver", "apt-gui-install"],
+        }.get(case, [])
+        assert run.returncode == (2 if expected else 0), (case, run.stderr)
+        assert run.stdout.splitlines() == ["::error::NATIVE_PREFLIGHT_BLOCKED " + code for code in expected], (case, run.stdout)
+        calls = (Path(tmp) / "calls").read_text().splitlines()
+        assert calls[0] == "update"
+        if case == "index-failure":
+            assert len(calls) == 1
+            return
+        assert "dbus-user-session" in calls[1] and "jq" in calls[1] and "webkit" not in calls[1]
+        if case == "base-failure":
+            assert len(calls) == 2
+            return
+        expected_driver = "webkitgtk-webdriver" if version == "26.04" else "webkit2gtk-driver"
+        assert len(calls) == 3 and expected_driver in calls[2].split()
+        assert "libwebkit2gtk-4.1-0" in calls[2].split() and "tesseract-ocr-eng" in calls[2].split()
+
+
+if sys.argv[1:] == ["--packages"]:
+    for scenario, version in [
+        ("ubuntu24", "24.04"), ("ubuntu26", "26.04"), ("index-failure", "26.04"),
+        ("base-failure", "26.04"), ("gui-failure", "26.04"), ("missing-driver", "26.04")
+    ]:
+        check_packages(scenario, version)
+        print(scenario)
+    sys.exit(0)
 
 
 if sys.argv[1:] == ["--session"]:

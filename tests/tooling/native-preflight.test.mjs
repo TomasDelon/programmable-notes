@@ -84,3 +84,20 @@ test('native preflight checks a private bus as its owner and waits for the dedic
     'degraded',
   ]);
 });
+
+test('native preflight installs the matching driver only after the namespace probe and reports fixed APT failures', () => {
+  const result = spawnSync('python3', ['-I', fixture, '--packages'], {
+    encoding: 'utf8',
+    timeout: 15000,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.stdout.trim().split('\n'), [
+    'ubuntu24',
+    'ubuntu26',
+    'index-failure',
+    'base-failure',
+    'gui-failure',
+    'missing-driver',
+  ]);
+});
