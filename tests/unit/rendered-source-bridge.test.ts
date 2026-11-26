@@ -11,6 +11,7 @@ import {
 } from 'prosemirror-schema-list';
 import { addRowAfter } from 'prosemirror-tables';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import { parseSourceWikilinks } from '../../src/links';
 import {
   renderedSchema as schema,
   safeRenderedHref,
@@ -18,7 +19,9 @@ import {
 import {
   parseRenderedSource,
   rebaseRenderedProjection,
+  renderedPositionFromSourceOffset,
   renderedSourceRange,
+  renderedTextSourceOffset,
   serializeRenderedChange,
   type RenderedProjection,
 } from '../../src/editor/rendered/sourceBridge';
@@ -62,6 +65,89 @@ function replace(
 }
 
 describe('rendered Markdown source bridge', () => {
+  it.each([
+    'and tea',
+    '&amp; tea',
+    '&#38; and &#x26;',
+    'first&#13;second&#xD;&#10;third',
+    '&#x1F9EA; and &NotEqualTilde;',
+    String.raw`\&amp; and \[brackets\] and &#91;&#91;Ghost]]`,
+  ])('preserves authored wikilinks and source spelling beside %s', (prose) => {
+    const source =
+      '\uFEFFexport const A = 1\r\n\r\nCafé ' +
+      prose +
+      '.\r\nSee [[Other]].\r\n\r\nPrice $5\n\n<Thing />\r\n';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    const result = apply(
+      projection,
+      state.tr.insertText('!', findText(state.doc, 'Café') + 4),
+    );
+    expect(
+      parseSourceWikilinks(result.mapping.source, 'note.mdx').map(
+        (link) => link.raw,
+      ),
+    ).toEqual(['[[Other]]']);
+    expect(result.mapping.source).toBe(source.replace('Café', 'Café!'));
+    expect(findNode(projection.doc, 'wikilink').node.attrs.raw).toBe(
+      '[[Other]]',
+    );
+  });
+
+  it.each([
+    ['&#x1F9EA;', '🧪'],
+    ['&NotEqualTilde;', '≂\u0338'],
+  ])('maps only complete boundaries of %s', (raw, visible) => {
+    const source = 'Before ' + raw + ' &amp; [[Other]]';
+    const projection = parseRenderedSource(source);
+    const from = findText(projection.doc, visible);
+    const start = source.indexOf(raw);
+    expect(renderedTextSourceOffset(projection, from)).toBe(start);
+    expect(renderedTextSourceOffset(projection, from + 1)).toBeNull();
+    expect(renderedTextSourceOffset(projection, from + visible.length)).toBe(
+      start + raw.length,
+    );
+    expect(renderedPositionFromSourceOffset(projection, start)).toBe(from);
+    expect(renderedPositionFromSourceOffset(projection, start + 1)).toBeNull();
+    expect(
+      renderedPositionFromSourceOffset(projection, start + raw.length),
+    ).toBe(from + visible.length);
+  });
+
+  it('replaces the whole reference when editing one of its decoded characters', () => {
+    const source = 'Before &NotEqualTilde; &amp; [[Other]]';
+    const projection = parseRenderedSource(source);
+    const result = replace(projection, '\u0338', '!');
+    expect(result.mapping.source).toBe(source.replace('&NotEqualTilde;', '≂!'));
+    expect(findNode(result.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+  });
+
+  it('keeps ambiguous quoted prose visible and refuses a rewrite that would destroy its link', () => {
+    const source =
+      '> Café &amp; tea\r\n> See [[Other]] and **bold**.\n\nOutside.';
+    const projection = parseRenderedSource(source);
+    expect(parseSourceWikilinks(source).map((link) => link.raw)).toEqual([
+      '[[Other]]',
+    ]);
+    const body = projection.doc.firstChild!.firstChild!;
+    expect(body.firstChild?.isText).toBe(true);
+    expect(body.textContent).toBe('Café & tea\nSee [[Other]] and bold.');
+    expect(() => replace(projection, 'Café', 'Café!')).toThrow('wikilink');
+    expect(projection.mapping.source).toBe(source);
+    const adjacent = replace(projection, 'bold', 'bright');
+    expect(adjacent.mapping.source).toBe(source.replace('bold', 'bright'));
+    expect(replace(adjacent, 'Outside', 'After').mapping.source).toBe(
+      source.replace('bold', 'bright').replace('Outside', 'After'),
+    );
+    const state = EditorState.create({ doc: projection.doc });
+    expect(() =>
+      apply(
+        projection,
+        state.tr.delete(0, projection.doc.firstChild!.nodeSize),
+      ),
+    ).toThrow('wikilink');
+  });
+
   it('reports an explicit work budget refusal while preserving the accepted source', () => {
     const projection = parseRenderedSource('a b');
     const state = EditorState.create({ doc: projection.doc });

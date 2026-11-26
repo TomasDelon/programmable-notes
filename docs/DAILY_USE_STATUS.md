@@ -343,3 +343,50 @@ cases**, zero retries, plus formatting, lint, strict TypeScript and production
 builds. WebKit passed both actual Trash journeys over three repetitions (**6/6**,
 zero retries). Ordinary/Pages fingerprints: `a77d244e1d3208f2` /
 `cc7dce21803b9dc6`. Hosted acceptance and beta promotion remain separate gates.
+
+## Entity and wikilink source provenance follow-up
+
+A bounded production-API review found a separate real source-fidelity defect:
+adding punctuation near `&amp;` could rewrite an existing `[[Other]]` as escaped
+plain text, removing its navigation/backlink target. Without an authored entity,
+generated whitespace references could instead make the same ordinary edit fail.
+Both actual Chromium journeys failed on the frozen navigation candidate; five
+real ProseMirror regressions also failed before correction. Beta promotion was
+held despite successful navigation-only mandatory and immutable-deployment gates.
+
+The bridge now uses the Markdown parser's own pinned decoder and verified
+UTF-16-to-source boundaries for text around authored links. It preserves raw
+entity spellings and untouched source rather than reserializing a paragraph.
+Caret mapping refuses invented positions inside indivisible references; edits to
+one decoded constituent replace only the complete corresponding token. Decoded
+CR/LF normalization composes its source map, including separate references.
+Unfinished math retains its existing literal path and JSX remains opaque.
+
+If multiline container syntax prevents a reliable map for an existing link,
+ordinary prose stays visible. Verified adjacent sparse edits can proceed;
+rewriting/removing that ambiguous block requires Source mode. No source-block
+form or hidden prose is introduced. This conservative limitation prevents semantic
+loss; it is not complete visual support for every Markdown container.
+
+Existing saved source is not automatically unescaped or rewritten: intentionally
+literal brackets cannot be distinguished from earlier corruption. Use the
+canonical undo history or explicitly restore a verified recovery version/backup
+if a note was already affected.
+
+Current-candidate full, hosted and deployment receipts must follow this change;
+earlier passing navigation runs do not certify the corrected bridge.
+
+The frozen correction passed **532 unit tests /56 files, 71 tooling controls,
+138 Chromium cases and 9 local Pages-policy cases**, plus every required static
+check and production build. Both entity/plain-text browser journeys passed in
+Chromium and six repeated WebKit runs, with zero retries. Independent frozen-diff
+review found no further issue. Ordinary/Pages fingerprints: `8117e4701091ddd2` /
+`881caf5c948a5b13`. These local results do not substitute for the next hosted gate.
+
+The preceding navigation-only revision `bbdb389` separately passed mandatory CI,
+390 editor cases /18 intentional skips and 27 local Pages cases, plus 27 actual
+immutable-deployment cases. Its walkthrough is historical. It was never promoted:
+the subsequently reproduced entity/link defect blocked release of that candidate.
+The [390-case run](https://github.com/TomasDelon/programmable-notes/actions/runs/45753577071)
+and [immutable check](https://github.com/TomasDelon/programmable-notes/actions/runs/45753709465)
+remain scoped to their original inputs.

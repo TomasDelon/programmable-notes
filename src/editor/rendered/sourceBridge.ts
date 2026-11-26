@@ -7,6 +7,7 @@ import {
   MarkdownSerializer,
   defaultMarkdownSerializer,
 } from 'prosemirror-markdown';
+import { decodeString } from 'micromark-util-decode-string';
 import { parseWikilinks, type LinkSourceSpan } from '../../links';
 import {
   analyzeLiveSource,
@@ -43,6 +44,7 @@ interface TextRange extends RenderedSourceRange {
   rawLiteral: boolean;
 }
 export interface RenderedBlockMapping extends RenderedSourceRange {
+  hasUnmappedWikilink?: boolean;
   id: string;
   node: ProseMirrorNode;
 }
@@ -135,6 +137,8 @@ export function parseRenderedSource(
   const links: readonly LinkSourceSpan[] = tree
     ? parseWikilinks(source, tree, [], true)
     : [];
+
+  let hasUnmappedWikilink: boolean;
 
   function remember(node: ProseMirrorNode, ast: AstNode): ProseMirrorNode {
     const range = rangeOf(ast);
@@ -251,21 +255,35 @@ export function parseRenderedSource(
       const selected = range
         ? links.filter((link) => link.from >= range.from && link.to <= range.to)
         : [];
-      // Escaped/entity text needs a decoded-to-source map before splitting.
-      if (
-        selected.length &&
-        range &&
-        normalized(source.slice(range.from, range.to)) === ast.value
-      ) {
+      if (selected.length && range) {
+        const value = normalized(ast.value ?? '');
+        const offsets = textOffsets(
+          source.slice(range.from, range.to),
+          value,
+          false,
+        );
+        // The raw parser owns link identity. Only split the visible text at
+        // boundaries witnessed by the same verified source map used for edits.
         const result: ProseMirrorNode[] = [];
         let from = range.from;
+        let visibleFrom = 0;
         for (const link of selected) {
+          const start =
+            offsets && textOffsetIndex(offsets, link.from - range.from);
+          const end = offsets && textOffsetIndex(offsets, link.to - range.from);
+          if (start === null || end === null) {
+            // Keep ordinary prose visible when container syntax prevents a
+            // verified map. This block can still accept other sparse edits.
+            hasUnmappedWikilink = true;
+            return text(value, marks, range);
+          }
           result.push(
-            ...text(normalized(source.slice(from, link.from)), marks, {
+            ...text(value.slice(visibleFrom, start), marks, {
               from,
               to: link.from,
             }),
           );
+          visibleFrom = end;
           const node = schema.nodes.wikilink!.create(
             {
               raw: link.raw,
@@ -282,7 +300,7 @@ export function parseRenderedSource(
           from = link.to;
         }
         result.push(
-          ...text(normalized(source.slice(from, range.to)), marks, {
+          ...text(value.slice(visibleFrom), marks, {
             from,
             to: range.to,
           }),
@@ -554,6 +572,7 @@ export function parseRenderedSource(
     // that gets appended after every subsequent typed task label.
     while (range.to < source.length && /[ \t]/.test(source[range.to]!))
       range.to++;
+    hasUnmappedWikilink = false;
     const original = block(ast);
     // A terminal virtual break owns its physical newline. Otherwise it would
     // be counted again as a document suffix after the next typed character.
@@ -568,7 +587,7 @@ export function parseRenderedSource(
       original.marks,
     );
     ranges.set(node, range);
-    blocks.push({ ...range, id, node });
+    blocks.push({ ...range, id, node, hasUnmappedWikilink });
   }
   const doc = schema.nodes.doc!.create(
     null,
@@ -817,9 +836,19 @@ function escapedText(value: string, atEnd = true): string {
   return escapeTrailingSpaces(escapedPrefixes(escapedInline(value)), atEnd);
 }
 
-/** Decode only unambiguous CommonMark punctuation escapes, then verify the
- * complete value against the parser's text. Only our two whitespace references
- * are additionally mapped; unknown entity decoding still falls back. */
+/** Return the first visible boundary for a raw offset. Interior UTF-16
+ * positions of a single decoded reference repeat its starting offset. */
+function textOffsetIndex(offsets: number[], raw: number): number | null {
+  let low = 0;
+  let high = offsets.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (offsets[middle]! < raw) low = middle + 1;
+    else high = middle;
+  }
+  return offsets[low] === raw ? low : null;
+}
+
 function textOffsets(
   raw: string,
   expected: string,
@@ -834,24 +863,30 @@ function textOffsets(
   if (code) return null;
   let decoded = '';
   const offsets = [0];
+  const reference = /&(?:#(?:\d{1,7}|x[\da-f]{1,6})|[\da-z]{1,31});/iy;
   for (let index = 0; index < raw.length;) {
-    const whitespace =
-      raw[index] === '&' ? /^&#(32|9);/.exec(raw.slice(index)) : null;
-    if (whitespace) {
-      decoded += whitespace[1] === '32' ? ' ' : '\t';
-      index += whitespace[0].length;
+    reference.lastIndex = index;
+    const token = raw[index] === '&' && reference.exec(raw)?.[0];
+    const value = token && decodeString(token);
+    if (token && value && value !== token) {
+      decoded += value;
+      for (let unit = 1; unit < value.length; unit++) offsets.push(index);
+      index += token.length;
     } else if (
       raw[index] === '\\' &&
       /[\x21-\x2f\x3a-\x40\x5b-\x60\x7b-\x7e]/.test(raw[index + 1] ?? '')
     ) {
       decoded += raw[index + 1];
       index += 2;
-    } else if (raw[index] === '\r') {
-      decoded += '\n';
-      index += raw[index + 1] === '\n' ? 2 : 1;
     } else decoded += raw[index++];
     offsets.push(index);
   }
+  // The editor normalizes decoded line endings, including CR/LF pairs
+  // assembled from separate character references.
+  if (decoded.includes('\r'))
+    return normalized(decoded) === expected
+      ? offsetsFor(decoded).map((index) => offsets[index]!)
+      : null;
   return decoded === expected ? offsets : null;
 }
 function sparseBlock(
@@ -950,6 +985,13 @@ function sparseBlock(
         end++;
         nextEnd++;
       }
+      // A character reference can produce multiple visible UTF-16 units.
+      // An edit inside it must replace the complete raw token.
+      while (start > 0 && offsets[start] === offsets[start - 1]) start--;
+      while (end < oldValue.length && offsets[end] === offsets[end - 1]) {
+        end++;
+        nextEnd++;
+      }
       const inserted = newValue.slice(start, nextEnd);
       if (
         span.code &&
@@ -990,6 +1032,9 @@ function sparseBlock(
         const sentinel = atStart ? '' : 'x';
         replacement = escapeTrailingSpaces(
           escapedPrefixes(sentinel + replacement).slice(sentinel.length),
+          span.to === block.to ||
+            /[\r\n]/.test(mapping.source[span.to] ?? '') ||
+            end === oldValue.length,
         );
       }
       patches.push({ from: span.from, to: span.to, value: replacement });
@@ -1024,6 +1069,8 @@ export function serializeRenderedChange(
   if (previous.doc.eq(newDoc)) return previous.mapping.source;
   const { mapping } = previous;
   const used = new Set<RenderedBlockMapping>();
+  const unmappedLinkMessage =
+    'This edit could change an authored wikilink whose text position is ambiguous. Use Source to edit this passage.';
   const newline = newlineOf(mapping.source);
   let result = mapping.prefix;
   let previousIndex: number | null = null;
@@ -1075,6 +1122,8 @@ export function serializeRenderedChange(
         : null;
       if (sparse !== null) result += sparse;
       else {
+        if (matched?.block.hasUnmappedWikilink)
+          throw new Error(unmappedLinkMessage);
         const raw = serializer.serialize(schema.nodes.doc!.create(null, node), {
           tightLists: true,
         });
@@ -1091,6 +1140,14 @@ export function serializeRenderedChange(
     }
     previousIndex = matched?.index ?? null;
   });
+  // A structural change can also replace a whole block without retaining its
+  // identity, bypassing the matched-block serializer above.
+  if (
+    mapping.blocks.some(
+      (block) => block.hasUnmappedWikilink && !used.has(block),
+    )
+  )
+    throw new Error(unmappedLinkMessage);
   return result + mapping.suffix;
 }
 
@@ -1258,7 +1315,11 @@ export function renderedTextSourceOffset(
         part.rawLiteral,
       );
       const offset = offsets?.[local];
-      if (offset !== undefined) candidates.add(part.from + offset);
+      if (
+        offset !== undefined &&
+        (local === 0 || offset !== offsets![local - 1])
+      )
+        candidates.add(part.from + offset);
     }
   });
   if (candidates.size === 1) return [...candidates][0]!;
@@ -1301,19 +1362,8 @@ export function renderedPositionFromSourceOffset(
         part.rawLiteral,
       );
       if (!offsets) continue;
-      const relative = sourceOffset - part.from;
-      let low = 0;
-      let high = offsets.length - 1;
-      while (low <= high) {
-        const middle = (low + high) >>> 1;
-        const candidate = offsets[middle]!;
-        if (candidate === relative) {
-          result = textPosition + middle;
-          break;
-        }
-        if (candidate < relative) low = middle + 1;
-        else high = middle - 1;
-      }
+      const index = textOffsetIndex(offsets, sourceOffset - part.from);
+      if (index !== null) result = textPosition + index;
     }
   });
   if (result !== null) return result;

@@ -24,6 +24,16 @@ explicit restoration without altering source bytes. Its complete local gate pass
 WebKit passed6/6 with zero retries. Hosted acceptance and promotion remain
 separate from live `1442e58` until recorded in the daily-use receipt.
 
+A later bounded review reproduced entity-adjacent punctuation losing wikilink
+semantics and a plain-text control refusing the edit. Promotion remains held for
+the trusted-decoder/source-offset correction; both browser regressions failed on
+the prior candidate. The correction preserves exact entity spelling and safely
+refuses ambiguous container rewrites while keeping prose visible. See the
+[daily-use provenance record](DAILY_USE_STATUS.md#entity-and-wikilink-source-provenance-follow-up)
+for current verification and the remaining container limitation. Its complete
+local gate passed532unit/71tooling/138Chromium/9Pages, plus six repeated WebKit
+journeys, zero retries. Current-source hosted acceptance remains separate.
+
 Both tested stock Ubuntu24/26 runners refused execution before payload delivery
 because effective private network isolation was unavailable. A default-off
 restricted temporary-role experiment queried KVM API12 and verified cleanup; the
