@@ -1,0 +1,538 @@
+{
+  "classification": "PARTIAL_NORMAL_POINTER_INPUT_AND_TARGETED_STOP; NORMAL_KEYBOARD_AND_REACT_UNPROVEN",
+  "repository_head": "f9d8007c62794b1334e87ce439470943712f49e5",
+  "measurement_ruling": "First title-based run retained as INVALID_READINESS_INSTRUMENTATION after GTK child-window API finding. Root explicitly authorized one corrected property/sentinel HTML case in same30-minute packet.",
+  "toolchain": "rustc 1.100.0 (0ef1bc386 2026-11-09)\nbinary: rustc\ncommit-hash: 0ef1bc386059596dada8fb65b50425aab2ea637a\ncommit-date: 2026-11-09\nhost: x86_64-unknown-linux-gnu\nrelease: 1.100.0\nLLVM version: 23.1.5",
+  "source_sha256": {
+    "repro/Cargo.lock": "d58ed3cf445cfb00cf31e5a4d7f9bb9b5c1b86fbf8023677af4a1eb7eabd0b1a",
+    "repro/Cargo.toml": "2b9225c00eb436e978de2f7f69419295f41c780478f4101a293233bc43b6e7c9",
+    "repro/inspect.py": "d340273c73e59da2b499c8fc2d435d2e412edd122219c6aeefcdaf61a8e1e9fe",
+    "repro/property-main.rs": "d7ed81be9a01b70913d934cc4e9ef670ed8e23b6b4362d4e3e926ef0fa9c1579",
+    "repro/property-observer.py": "abc47a272c2f1eac283bf8de2bdae6a5e19ced8718a28cbdb334b6b3ef85eeda",
+    "repro/title-main.rs": "4e0722b5290a55f5ac00ac784cd3a7e674350de2c293111de9e1f55912b38a81",
+    "repro/title-observer.py": "19a1d6a96094cdebd297aaf3fc6250b16d5085e9bd06c2119e02dc4865f45747",
+    "raw/browser-control.mjs": "ded6d62d165ff4d49e21176fe46abb9fbe86c797e106f63a3ba244feb31e67a2",
+    "raw/fixture.html": "5a4b83959ce7aa0deff4237ae45839138d44d3a3f8fc7b000150f86779fae77a"
+  },
+  "artifacts": {
+    "title_variant": "28d1327bf3e793d8cd305d41dddf2efbad1fd9515c03b4b024dbe5ce9b101fcb",
+    "property_variant": "357a46fc9491c7619bd17b47743c163c64552e0cd71b013ff6c33a93333da81f"
+  },
+  "title_run": {
+    "result": {
+      "normal_input": "SCRIPT_READY_NOT_OBSERVED",
+      "forced_focus": "NOT_RUN",
+      "stop": "NOT_RUN",
+      "host_input": "NOT_RUN",
+      "unit": "programmable-notes-preview-552-1795717263478354640.service",
+      "host_pid": 552,
+      "main_pid": 563,
+      "socket_xid": 4194315,
+      "host_xid": 4194307,
+      "unit_start_monotonic": 82.661525,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "x_errors": []
+    },
+    "events": [
+      {
+        "kind": "unit_verified",
+        "monotonic": 83.140651904,
+        "normal_input": "NOT_RUN",
+        "forced_focus": "NOT_RUN",
+        "stop": "NOT_RUN",
+        "host_input": "NOT_RUN",
+        "unit": "programmable-notes-preview-552-1795717263478354640.service",
+        "host_pid": 552,
+        "main_pid": 563,
+        "socket_xid": 4194315,
+        "host_xid": 4194307,
+        "unit_start_monotonic": 82.661525,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        }
+      }
+    ]
+  },
+  "property_run": {
+    "result": {
+      "normal_input": "UNPROVEN",
+      "forced_focus": "DIAGNOSTIC_ONLY_STATE_CHANGE",
+      "stop": "TARGETED_BOUNDED_OBSERVATION_PASS_NOT_FULL_SECURITY_MATRIX",
+      "host_input": "PASS",
+      "unit": "programmable-notes-preview-657-1795717629672252470.service",
+      "host_pid": 657,
+      "main_pid": 666,
+      "socket_xid": 4194315,
+      "host_xid": 4194307,
+      "unit_start_monotonic": 448.92791,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "native_bridge": "PASS",
+      "child_xid": 10485763,
+      "last_normal_state": {
+        "ready": true,
+        "count": 2,
+        "field": "",
+        "focus": "counter",
+        "error": ""
+      },
+      "last_forced_state": {
+        "ready": true,
+        "count": 2,
+        "field": "hello",
+        "focus": "field",
+        "error": ""
+      },
+      "x_errors": []
+    },
+    "events": [
+      {
+        "kind": "unit_verified",
+        "monotonic": 449.457600794,
+        "normal_input": "NOT_RUN",
+        "forced_focus": "NOT_RUN",
+        "stop": "NOT_RUN",
+        "host_input": "NOT_RUN",
+        "unit": "programmable-notes-preview-657-1795717629672252470.service",
+        "host_pid": 657,
+        "main_pid": 666,
+        "socket_xid": 4194315,
+        "host_xid": 4194307,
+        "unit_start_monotonic": 448.92791,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        }
+      },
+      {
+        "kind": "native_bridge_sentinel",
+        "monotonic": 452.330086464,
+        "child_xid": 10485763
+      },
+      {
+        "kind": "script_ready",
+        "monotonic": 484.908266414,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "",
+          "error": ""
+        },
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 120,
+          "border": 0,
+          "depth": 24
+        },
+        "unit_age": 35.97991116399999
+      },
+      {
+        "kind": "normal_real_input_begin",
+        "monotonic": 485.283701314,
+        "child_xid": 10485763,
+        "unit_age": 36.355753424
+      },
+      {
+        "kind": "state",
+        "monotonic": 485.890489774,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "",
+          "error": ""
+        },
+        "unit_age": 36.96254898400002
+      },
+      {
+        "kind": "state",
+        "monotonic": 487.666996984,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 38.738962214000026
+      },
+      {
+        "kind": "state",
+        "monotonic": 487.876469794,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 1,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 38.94854045400001
+      },
+      {
+        "kind": "state",
+        "monotonic": 488.241772694,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 39.313841293999985
+      },
+      {
+        "kind": "forced_focus_diagnostic_only",
+        "monotonic": 489.155207934,
+        "child_xid": 10485763,
+        "unit_age": 40.227251523999996
+      },
+      {
+        "kind": "state",
+        "monotonic": 489.501379554,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 40.573452304
+      },
+      {
+        "kind": "state",
+        "monotonic": 489.554562504,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "o",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 40.62663537399999
+      },
+      {
+        "kind": "state",
+        "monotonic": 490.548676354,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "h",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 41.62074834399999
+      },
+      {
+        "kind": "state",
+        "monotonic": 490.758018354,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "he",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 41.830091444000004
+      },
+      {
+        "kind": "state",
+        "monotonic": 490.967408064,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "hel",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 42.039481353999975
+      },
+      {
+        "kind": "state",
+        "monotonic": 491.229026184,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "hell",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 42.30107858399998
+      },
+      {
+        "kind": "state",
+        "monotonic": 491.438977284,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "hello",
+          "focus": "field",
+          "error": ""
+        },
+        "unit_age": 42.51105029400003
+      },
+      {
+        "kind": "verified_live_before_stop",
+        "monotonic": 491.647019464,
+        "unit": "programmable-notes-preview-657-1795717629672252470.service",
+        "main_pid": 666,
+        "start_identity": "44815",
+        "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-657-1795717629672252470.service",
+        "unit_age": 42.693247024000016,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        },
+        "identities": [
+          ["666", "44815"],
+          ["678", "45283"],
+          ["685", "45812"],
+          ["687", "45882"],
+          ["688", "45981"],
+          ["695", "46142"],
+          ["696", "46202"],
+          ["697", "46312"]
+        ]
+      },
+      {
+        "kind": "bounded_stop_observed",
+        "monotonic": 492.439809284,
+        "elapsed": 0.7899579299999573,
+        "unit_age": 43.511860204000016,
+        "identities": [
+          ["666", "44815"],
+          ["678", "45283"],
+          ["685", "45812"],
+          ["687", "45882"],
+          ["688", "45981"],
+          ["695", "46142"],
+          ["696", "46202"],
+          ["697", "46312"]
+        ],
+        "host_stop_receipt": true
+      },
+      {
+        "kind": "host_input_after_stop",
+        "monotonic": 492.799641614,
+        "text": "hostok"
+      }
+    ]
+  },
+  "journal": {
+    "title_run": [
+      {
+        "__REALTIME_TIMESTAMP": "1795717324384161",
+        "MESSAGE": "programmable-notes-preview-552-1795717263478354640.service: Service reached runtime time limit. Stopping.",
+        "USER_UNIT": "programmable-notes-preview-552-1795717263478354640.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795717324856789",
+        "MESSAGE": "programmable-notes-preview-552-1795717263478354640.service: Failed with result 'timeout'.",
+        "MESSAGE_ID": "d9b373ed55a64feb8242e02dbe79a49c",
+        "USER_UNIT": "programmable-notes-preview-552-1795717263478354640.service",
+        "UNIT_RESULT": "timeout",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795717324859714",
+        "MESSAGE": "programmable-notes-preview-552-1795717263478354640.service: Consumed 15.233s CPU time, 105.4M memory peak, 0B memory swap peak.",
+        "MESSAGE_ID": "ae8f7b866b0347b9af31fe1c80b127c0",
+        "USER_UNIT": "programmable-notes-preview-552-1795717263478354640.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      }
+    ],
+    "property_run": [
+      {
+        "__REALTIME_TIMESTAMP": "1795717673561689",
+        "MESSAGE": "Stopping programmable-notes-preview-657-1795717629672252470.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-input-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child...",
+        "MESSAGE_ID": "de5b426a63be47a7b6ac3eaac82e2f6f",
+        "USER_UNIT": "programmable-notes-preview-657-1795717629672252470.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795717674023742",
+        "MESSAGE": "Stopped programmable-notes-preview-657-1795717629672252470.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-input-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child.",
+        "MESSAGE_ID": "9d1aaa27d60140bd96365438aad20286",
+        "USER_UNIT": "programmable-notes-preview-657-1795717629672252470.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      },
+      {
+        "__REALTIME_TIMESTAMP": "1795717674031360",
+        "MESSAGE": "programmable-notes-preview-657-1795717629672252470.service: Consumed 11.020s CPU time, 61.3M memory peak, 0B memory swap peak.",
+        "MESSAGE_ID": "ae8f7b866b0347b9af31fe1c80b127c0",
+        "USER_UNIT": "programmable-notes-preview-657-1795717629672252470.service",
+        "_EXE": "/usr/lib/systemd/systemd",
+        "_UID": "1000",
+        "_TRANSPORT": "journal"
+      }
+    ]
+  },
+  "process_sample_scope": "Only initial title/inconclusive unit; do not transfer this independent seccomp observation to corrected unit. Corrected Stop identities/controller snapshot are in its event log.",
+  "initial_unit_sample": {
+    "unit": "programmable-notes-preview-552-1795717263478354640.service",
+    "sample_utc": "2026-11-26 18:21:54",
+    "host_pid": 552,
+    "host_netns": "net:[4026531840]",
+    "processes": [
+      {
+        "pid": 563,
+        "comm": "pn-wry-inline-s",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 580,
+        "comm": "WebKitNetworkPr",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 591,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 592,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 594,
+        "comm": "xdg-dbus-proxy",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 597,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532253]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t0",
+          "Seccomp_filters:\t0"
+        ]
+      },
+      {
+        "pid": 598,
+        "comm": "bwrap",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      },
+      {
+        "pid": 599,
+        "comm": "WebKitWebProces",
+        "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-552-1795717263478354640.service",
+        "netns": "net:[4026532321]",
+        "status": [
+          "Uid:\t1000\t1000\t1000\t1000",
+          "NoNewPrivs:\t1",
+          "Seccomp:\t2",
+          "Seccomp_filters:\t1"
+        ]
+      }
+    ]
+  },
+  "upstream_source": {
+    "gtkwindow-3.24.41.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/3.24.41/gtk/gtkwindow.c",
+      "sha256": "a79a7ca2f3722bde28cec1d603c3394fd9ec0ef79e9abaa361696dcbd979a803"
+    },
+    "gtkplug-3.24.41.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/3.24.41/gtk/gtkplug.c",
+      "sha256": "eb822ea7d3489a5b72dc3807ab97cad2ceb923a4276446fbbdbce67f68f3d26a"
+    },
+    "gdkwindow-x11-3.24.41.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/3.24.41/gdk/x11/gdkwindow-x11.c",
+      "sha256": "a661a625710ec54bdefcb5d143b238118d8222c287ca7c6e2ec20fa3f5d73c1f"
+    },
+    "gdkproperty-x11-3.24.41.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/3.24.41/gdk/x11/gdkproperty-x11.c",
+      "sha256": "3d5a81f8c8b4c15e86e1e57cbeaa1aa70b89ee9869288268ea97ca2913898b87"
+    }
+  },
+  "optional_browser_control": "NOT RUN: matching Chromium sandbox launch failed with No usable sandbox; no sandbox-disabled fallback. Existing prior fixture control is separate evidence.",
+  "react": "NOT RUN: full normal HTML input acceptance not established.",
+  "security_matrix": "NOT RUN",
+  "tooling_cache": "Local flattened public-distro tooling image independently exported/audited without keys/root auth/probe/log contents; unsuitable intermediate cache images removed; never published."
+}

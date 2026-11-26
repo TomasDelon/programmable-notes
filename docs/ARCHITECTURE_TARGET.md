@@ -116,8 +116,11 @@ provides partial X11 presentation evidence: GTK Socket/Plug with Wry's GTK build
 painted a fixed fixture under the unchanged Supervisor. Raw `build_as_child`
 remained black. Interaction, React and full geometry/lifecycle/security are not
 proved; do not repeat the raw-window hypothesis as if no investigation occurred.
-The next narrow proof must observe script readiness and input after paint, then
-actual React and valid pre-expiry Stop, without changing the resource contract.
+The subsequent [input diagnostic](security-evidence/2026-11-26-wry-input-spike/README.md)
+observed script readiness, real pointer interaction and a verified-live pre-expiry
+Stop. Normal keyboard focus remains unproven; forced-focus typing is only a
+diagnostic. The next narrow proof must stage normal field focus before keyboard
+input, then actual React, without changing the resource contract.
 
 Browser iframe containment is not proof of native CPU/memory control. Actual
 installed Linux/WebKitGTK or the selected replacement host must pass real runtime

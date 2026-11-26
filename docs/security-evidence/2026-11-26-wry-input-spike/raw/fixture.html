@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-spike'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"></head>
+<body style="margin:0;background:#bbeedd;font:20px sans-serif"><button id="counter">Count: 0</button><input id="field" placeholder="Type here"><p>ACTUAL WRY INPUT</p>
+<script nonce="spike">
+let count=0,error='';
+function report(){document.title=JSON.stringify({ready:true,count,field:document.getElementById('field').value.slice(0,80),focus:document.activeElement.id,error})}
+addEventListener('error',event=>{error=String(event.message).slice(0,60);report()});
+document.getElementById('counter').addEventListener('click',()=>{document.getElementById('counter').textContent='Count: '+(++count);report()});
+document.getElementById('field').addEventListener('input',report);
+document.addEventListener('focusin',report);
+report();
+</script></body></html>
