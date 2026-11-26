@@ -6,13 +6,18 @@ import { startOffline } from './web/offline';
 import { EditorEntry } from './web/EditorEntry';
 import { NotificationProvider } from './ui/Notifications';
 
-// Keep the native editor and its regression fixture on their existing path.
-// The browser product has its own presentation and persistence adapter.
-const legacy = isTauri() || location.pathname === '/engine';
+// Native uses the current editor presentation with its own persistence/runtime authority.
+// The legacy /engine fixture retains its regression path; offline storage is browser-only.
+const native = isTauri();
+const legacy = location.pathname === '/engine';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing root element');
-document.documentElement.dataset.runtime = legacy ? 'engine' : 'web';
+document.documentElement.dataset.runtime = native
+  ? 'native'
+  : legacy
+    ? 'engine'
+    : 'web';
 
 createRoot(root).render(
   <StrictMode>
@@ -28,4 +33,4 @@ createRoot(root).render(
   </StrictMode>,
 );
 
-if (import.meta.env.PROD && !legacy) startOffline();
+if (import.meta.env.PROD && !native && !legacy) startOffline();

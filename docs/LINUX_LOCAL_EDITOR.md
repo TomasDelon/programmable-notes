@@ -11,16 +11,19 @@ Successful native CI produces a **linux-amd64-testing** artifact after package,
 notice and Rust checks. Download it from the draft PR's Actions run and extract
 the ZIP. It includes the `.deb`, SHA256SUMS, build identity and instructions.
 
-[Initial verified testing download](https://github.com/TomasDelon/programmable-notes/actions/runs/45829899133/artifacts/15121738182)
-(seven-day retention, GitHub sign-in required). The native build/inspection and
-Rust/recovery gates passed; installed GUI acceptance remains unexecuted. See the
-[dated receipt](security-evidence/2026-11-26-linux-local/README.md).
+[Find the latest successful PR build](https://github.com/TomasDelon/programmable-notes/actions?query=branch%3Afix%2Fpreview-markdown-input+event%3Apull_request+is%3Asuccess)
+and choose its **linux-amd64-testing** artifact (seven-day retention, GitHub sign-in
+required). Check `build.json`: use version **0.1.2 or later** for the current
+document interface. Version 0.1.1 exposed the historical engine test interface.
+Its [dated receipt](security-evidence/2026-11-26-linux-local/README.md) remains
+historical evidence; it does not certify the replacement UI. Installed GUI
+acceptance remains separate from compilation and package inspection.
 
 Verify and install from the extracted directory:
 
 ```sh
 sha256sum --check SHA256SUMS
-sudo apt install './Programmable Notes_0.1.1_amd64.deb'
+sudo apt install './Programmable Notes_0.1.2_amd64.deb'
 ```
 
 Open **Programmable Notes** using the desktop application launcher. This is a
@@ -64,6 +67,9 @@ An unconfirmed installer result is not success: inspect the system installer fir
 The initial channel remains disabled until a real public verification key and
 authorized signed distribution feed exist. No test signing key is embedded.
 Actions artifacts expire after 7 days and cannot provide permanent automatic updates.
+Because the verification key is compiled in, a no-key testing package cannot be
+activated remotely. Install a real-key bootstrap package once after the channel
+is provisioned; subsequent signed updates can use Settings.
 
 ## Test on your desktop
 

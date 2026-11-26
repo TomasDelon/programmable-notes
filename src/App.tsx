@@ -7,6 +7,9 @@ import { NativePreview } from './preview/NativePreview';
 import CompilerWorker from './compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 import {
+  lazy,
+  Suspense,
+  useContext,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -18,6 +21,15 @@ import { flushSync } from 'react-dom';
 import { useDocuments } from './documents/useDocuments';
 import { nativeDocuments } from './documents/native';
 import { NativeSettings } from './desktop/NativeSettings';
+import { NotificationContext } from './ui/useNotifications';
+
+const NativeWorkspaceShell = lazy(() =>
+  import('./desktop/NativeWorkspaceShell').then((module) => ({
+    default: module.NativeWorkspaceShell,
+  })),
+);
+const NATIVE_WELCOME =
+  "Your notes, with room to think.\n\nWrite Markdown, add mathematics, or turn an idea into a small React experiment.\n\n## Start here\n\n- Open your notes folder from the sidebar.\n- Write directly in **Preview**, or use **Source** for the original MDX.\n- Save to a real local file with **Ctrl/Cmd + S**. New notes use Save As.\n- Recovery copies are available in Settings and never silently replace your files.\n\n## A little mathematics\n\nFor a differentiable function $f$, the derivative measures local change:\n\n$$\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\n$$\n\nReact components run in the isolated native preview when you choose Split.\n";
 import { desktopUpdates } from './desktop/updates';
 import type { RenderedRuntimeContext } from './editor/rendered/RenderedRuntime';
 import { compilerFiles, validateFiles, MAX_FILES } from './documents/workspace';
@@ -54,7 +66,9 @@ function compilerModule() {
 export function App() {
   const [pendingVisual, setPendingVisual] = useState(false);
   const documents = useDocuments(
-    { 'note.mdx': counter, 'widgets/ImportedCounter.tsx': imported },
+    isTauri()
+      ? { 'note.mdx': NATIVE_WELCOME }
+      : { 'note.mdx': counter, 'widgets/ImportedCounter.tsx': imported },
     'note.mdx',
     pendingVisual,
   );
@@ -101,7 +115,9 @@ export function App() {
       setUpdateLock((state) => (state === 'installing' ? null : state));
     }
   }
-  const [mode, setMode] = useState<'source' | 'split' | 'visual'>('split');
+  const [mode, setMode] = useState<'source' | 'split' | 'visual'>(
+    isTauri() ? 'visual' : 'split',
+  );
   const workspaceMode =
     mode === 'visual' && !isMdxSource(selected) ? 'source' : mode;
   const nativeLiteral = documents.native && isMdxSource(selected);
@@ -157,7 +173,7 @@ export function App() {
       editorCommands.current?.revealSource(target.offset, target.source);
   }, [navigation, selected, workspaceMode]);
   const [status, setStatus] = useState('Waiting');
-  const [stopped, setStopped] = useState(false);
+  const [stopped, setStopped] = useState(isTauri());
   const [revision, setRevision] = useState(0);
   const stopIntent = useRef<object | undefined>(undefined);
   const observeNativeStop = useCallback((completion: Promise<void>) => {
@@ -266,6 +282,7 @@ export function App() {
         files: buildFiles,
         entry,
         wasmModule,
+        ...(isTauri() ? { webMode: true } : {}),
       });
     }, 300);
     return () => {
@@ -275,6 +292,297 @@ export function App() {
       worker?.terminate();
     };
   }, [buildFiles, entry, revision, stopped]);
+  const notices = useContext(NotificationContext);
+  useEffect(() => {
+    if (!documents.native || !notices) return;
+    const message = documents.fileError || error;
+    if (message)
+      notices.notify({
+        id: 'native-document-error',
+        message,
+        tone: 'error',
+        persistent: true,
+      });
+    else notices.dismiss('native-document-error');
+  }, [documents.native, documents.fileError, error, notices]);
+  const editorSurface = (
+    <div
+      className={`workspace mode-${workspaceMode}${documents.native && workspaceMode !== 'visual' ? ' web-source-panel' : ''}`}
+      onCompositionStartCapture={() => setSourceComposing(true)}
+      onCompositionEndCapture={() => setSourceComposing(false)}
+    >
+      <SourceEditor
+        busy={documents.busy || installingUpdate}
+        readOnly={installingUpdate}
+        onPendingChange={setPendingVisual}
+        onShowSource={(offset, snapshot) => {
+          if (documentActionsBlocked || files[selected] !== snapshot) return;
+          pendingLocation.current = {
+            file: selected,
+            offset,
+            source: snapshot,
+          };
+          setMode('source');
+          setNavigation((value) => value + 1);
+        }}
+        visual={workspaceMode === 'visual' && !documents.native}
+        rendered={
+          nativeLiteral
+            ? {
+                ...NATIVE_LITERAL_PREVIEW,
+                active: workspaceMode === 'visual',
+                files,
+                entry: selected,
+              }
+            : undefined
+        }
+        sourceIsCurrent={
+          nativeLiteral
+            ? (source) => documents.isCurrentSource(selected, source)
+            : undefined
+        }
+        onRetainAttempt={
+          nativeLiteral
+            ? (base, source) =>
+                documents.retainVisualAttempt(selected, base, source)
+            : undefined
+        }
+        onKeepAttempt={
+          nativeLiteral
+            ? () => documents.resolveVisualAttempt(selected, false)
+            : undefined
+        }
+        onDiscardAttempt={
+          nativeLiteral
+            ? () => documents.resolveVisualAttempt(selected, true)
+            : undefined
+        }
+        commandsRef={editorCommands}
+        key={selected}
+        documentKey={selected}
+        histories={histories}
+        source={files[selected]!}
+        onChange={documents.change}
+      />
+      <div className="preview-pane" hidden={workspaceMode !== 'split'}>
+        <div className="pane-title">Live React preview</div>
+        {html &&
+          (isTauri() ? (
+            workspaceMode === 'split' && (
+              <NativePreview
+                html={html}
+                onError={setError}
+                onStop={observeNativeStop}
+              />
+            )
+          ) : (
+            <Preview html={html} onError={setError} />
+          ))}
+      </div>
+    </div>
+  );
+  if (documents.native) {
+    const documentStatus =
+      updateLock === 'unconfirmed'
+        ? 'Update result unconfirmed. Check the system installer before reopening.'
+        : restartRequired
+          ? 'Close and reopen Programmable Notes to resume editing.'
+          : installingUpdate
+            ? 'Update in progress. Editing is paused.'
+            : documents.busy
+              ? 'File operation in progress'
+              : pendingVisual
+                ? 'Unapplied visual edit'
+                : documents.selectedDirty
+                  ? 'Unsaved changes'
+                  : documents.fileNotice || 'Saved source unchanged';
+    const selectedName =
+      documents.workspace.bindings[selected]?.name ||
+      selected.replace(/^opened-\d+\//, '');
+    return (
+      <div
+        style={{ height: '100%' }}
+        onKeyDown={(event) => {
+          if (settingsOpen || event.nativeEvent.isComposing || event.repeat)
+            return;
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            !event.altKey &&
+            event.key.toLowerCase() === 's'
+          ) {
+            event.preventDefault();
+            if (event.nativeEvent.isTrusted && !documentActionsBlocked)
+              void documents.save(event.shiftKey);
+          }
+        }}
+      >
+        <Suspense
+          fallback={<p className="boot-message">Opening your workspace…</p>}
+        >
+          <NativeWorkspaceShell
+            documents={Object.keys(files).map((key) => ({
+              key,
+              name:
+                documents.workspace.bindings[key]?.name ||
+                key.replace(/^opened-\d+\//, ''),
+              source: files[key]!,
+              dirty: files[key] !== documents.workspace.saved[key],
+            }))}
+            selected={selected}
+            title={
+              selected === 'note.mdx' && !documents.workspace.bindings[selected]
+                ? 'Welcome'
+                : selectedName.replace(/\.(mdx?|tsx?|jsx?)$/i, '')
+            }
+            mode={workspaceMode}
+            canVisual={isMdxSource(selected)}
+            disabled={documentActionsBlocked}
+            saving={documents.busy}
+            dirty={documents.selectedDirty}
+            folderLabel={documents.notesFolder || undefined}
+            onSelect={documents.select}
+            onModeChange={(next) => {
+              if (documentActionsBlocked) return;
+              setMode(next);
+              stopIntent.current = undefined;
+              setStopped(next !== 'split');
+              if (next === 'split') setRevision((value) => value + 1);
+              else setHtml('');
+            }}
+            onNew={() => {
+              documents.newNote();
+              setError('');
+              setLocations([]);
+              setMode('visual');
+              setStopped(true);
+              setHtml('');
+            }}
+            onOpenFiles={() => void documents.openNative()}
+            onOpenFolder={() => void documents.openFolder()}
+            onSave={() => void documents.save()}
+            onSaveAs={() => void documents.save(true)}
+            onSettings={() => setSettingsOpen(true)}
+            onUndo={() => editorCommands.current?.undo()}
+            onRedo={() => editorCommands.current?.redo()}
+            onReopen={() => void documents.reopen()}
+            onClose={() => void documents.close()}
+            onStopPreview={() => {
+              stopIntent.current = {};
+              setHtml('');
+              setStopped(true);
+              setStatus('Stopping preview');
+              if (!html || workspaceMode !== 'split')
+                observeNativeStop(
+                  enqueueNativeOperation(() => invoke<void>('stop_preview')),
+                );
+            }}
+            onRebuildPreview={() => {
+              stopIntent.current = undefined;
+              setStopped(false);
+              setRevision((value) => value + 1);
+            }}
+            status={
+              <>
+                <span role="status" aria-label="Document status">
+                  {workspaceMode === 'split' ? status + ' · ' : ''}
+                  {documentStatus}
+                </span>
+                {!notices && (documents.fileError || error) && (
+                  <span role="alert">{documents.fileError || error}</span>
+                )}
+              </>
+            }
+            settings={
+              <NativeSettings
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                notesFolder={documents.notesFolder}
+                canOpenFolder={!documentActionsBlocked}
+                onOpenFolder={documents.openFolder}
+                canInstall={canInstallUpdate}
+                restartRequired={restartRequired}
+                onInstall={installDesktopUpdate}
+              >
+                <section aria-label="Native recovery">
+                  <h3>Recovery</h3>
+                  {recoveryHealth.message && (
+                    <p
+                      aria-label="Recovery status"
+                      role={recoveryHealth.error ? 'alert' : undefined}
+                    >
+                      {recoveryHealth.message}
+                    </p>
+                  )}
+                  <RecoveryHistory
+                    unappliedEdit={pendingVisual}
+                    candidates={recoveryCandidates}
+                    onHealth={setRecoveryHealth}
+                    documentKey={selected}
+                    name={
+                      documents.workspace.bindings[selected]?.name ||
+                      selected.split('/').pop()!
+                    }
+                    source={files[selected]!}
+                    baseline={documents.workspace.saved[selected]}
+                    displayPath={
+                      documents.workspace.bindings[selected]?.displayPath
+                    }
+                    busy={documents.busy || installingUpdate}
+                    restore={documents.restoreNativeVersion}
+                  />
+                  <details>
+                    <summary>Legacy recovery copy</summary>
+                    <button
+                      disabled={
+                        documentActionsBlocked || !isMdxSource(selected)
+                      }
+                      onClick={() => void documents.nativeDraft('keep')}
+                    >
+                      Keep recovery draft
+                    </button>
+                    <button
+                      disabled={documentActionsBlocked}
+                      onClick={() => void documents.nativeDraft('restore')}
+                    >
+                      Restore as unsaved document
+                    </button>
+                    <button
+                      disabled={documentActionsBlocked}
+                      onClick={() => void documents.nativeDraft('delete')}
+                    >
+                      Delete recovery draft
+                    </button>
+                  </details>
+                  {locations.map((location, index) => (
+                    <button
+                      key={index}
+                      disabled={
+                        documentActionsBlocked ||
+                        files[location.file] !== location.source
+                      }
+                      onClick={() => {
+                        if (files[location.file] !== location.source) return;
+                        pendingLocation.current = location;
+                        documents.select(location.file);
+                        setMode('source');
+                        setNavigation((value) => value + 1);
+                        setSettingsOpen(false);
+                      }}
+                    >
+                      Open {location.file.replace(/^opened-\d+\//, '')} at line{' '}
+                      {location.line}
+                    </button>
+                  ))}
+                </section>
+              </NativeSettings>
+            }
+          >
+            {editorSurface}
+          </NativeWorkspaceShell>
+        </Suspense>
+      </div>
+    );
+  }
   return (
     <main
       onKeyDown={(event) => {
@@ -632,80 +940,7 @@ export function App() {
           restore={documents.restoreBrowserDraft}
         />
       )}
-      <div
-        className={`workspace mode-${workspaceMode}`}
-        onCompositionStartCapture={() => setSourceComposing(true)}
-        onCompositionEndCapture={() => setSourceComposing(false)}
-      >
-        <SourceEditor
-          busy={documents.busy || installingUpdate}
-          readOnly={installingUpdate}
-          onPendingChange={setPendingVisual}
-          onShowSource={(offset, snapshot) => {
-            if (documentActionsBlocked || files[selected] !== snapshot) return;
-            pendingLocation.current = {
-              file: selected,
-              offset,
-              source: snapshot,
-            };
-            setMode('source');
-            setNavigation((value) => value + 1);
-          }}
-          visual={workspaceMode === 'visual' && !documents.native}
-          rendered={
-            nativeLiteral
-              ? {
-                  ...NATIVE_LITERAL_PREVIEW,
-                  active: workspaceMode === 'visual',
-                  files,
-                  entry: selected,
-                }
-              : undefined
-          }
-          sourceIsCurrent={
-            nativeLiteral
-              ? (source) => documents.isCurrentSource(selected, source)
-              : undefined
-          }
-          onRetainAttempt={
-            nativeLiteral
-              ? (base, source) =>
-                  documents.retainVisualAttempt(selected, base, source)
-              : undefined
-          }
-          onKeepAttempt={
-            nativeLiteral
-              ? () => documents.resolveVisualAttempt(selected, false)
-              : undefined
-          }
-          onDiscardAttempt={
-            nativeLiteral
-              ? () => documents.resolveVisualAttempt(selected, true)
-              : undefined
-          }
-          commandsRef={editorCommands}
-          key={selected}
-          documentKey={selected}
-          histories={histories}
-          source={files[selected]!}
-          onChange={documents.change}
-        />
-        <div className="preview-pane" hidden={workspaceMode !== 'split'}>
-          <div className="pane-title">Live React preview</div>
-          {html &&
-            (isTauri() ? (
-              workspaceMode === 'split' && (
-                <NativePreview
-                  html={html}
-                  onError={setError}
-                  onStop={observeNativeStop}
-                />
-              )
-            ) : (
-              <Preview html={html} onError={setError} />
-            ))}
-        </div>
-      </div>
+      {editorSurface}
     </main>
   );
 }

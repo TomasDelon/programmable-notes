@@ -130,8 +130,14 @@ async function openSettings() {
   return within(await screen.findByRole('dialog', { name: 'Settings' }));
 }
 
-function mount() {
-  return render(<App />, { wrapper: NotificationProvider });
+async function mount() {
+  const result = render(<App />, { wrapper: NotificationProvider });
+  fireEvent.click(
+    await screen.findByRole('button', { name: 'Show document modes' }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Source' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Open right panel' }));
+  return result;
 }
 
 it('reports a disabled signed channel through a read-only Settings check', async () => {
@@ -146,7 +152,7 @@ it('reports a disabled signed channel through a read-only Settings check', async
         : undefined,
     ),
   );
-  mount();
+  await mount();
   const panel = await openSettings();
   expect(invoke).not.toHaveBeenCalledWith('desktop_update_check');
   fireEvent.click(panel.getByRole('button', { name: 'Check for updates' }));
@@ -170,7 +176,7 @@ it.each([
 ] as const)(
   'syncs locked editor state before passing an opaque ticket, then handles %s',
   async (state, notice) => {
-    mount();
+    await mount();
     const panel = await openSettings();
     fireEvent.click(panel.getByRole('button', { name: 'Check for updates' }));
     const install = await panel.findByRole('button', {
@@ -230,7 +236,7 @@ it.each([
 );
 
 it('allows read-only update checks but refuses installation with an unsaved note', async () => {
-  mount();
+  await mount();
   const editor = EditorView.findFromDOM(document.querySelector('.cm-editor')!)!;
   act(() => editor.dispatch({ changes: { from: 0, insert: '# Unsaved\n' } }));
   expect(screen.getByLabelText('Document status')).toHaveTextContent(
@@ -250,20 +256,23 @@ it('allows read-only update checks but refuses installation with an unsaved note
 });
 
 it('shows folder context and edits literal maths without mounting an iframe', async () => {
-  const { container } = mount();
+  const { container } = await mount();
   fireEvent.click(screen.getByRole('button', { name: 'Open notes folder' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Open left panel' }));
   await waitFor(() =>
-    expect(screen.getByRole('combobox', { name: 'Source file' })).toHaveValue(
-      'opened-1/math/note.mdx',
+    expect(screen.getByTitle('opened-1/math/note.mdx')).toHaveAttribute(
+      'aria-current',
+      'page',
     ),
   );
   expect(
-    screen.getByRole('option', { name: /math\/Counter\.tsx/ }),
+    screen.getByRole('button', { name: 'Open Counter.tsx' }),
   ).toBeVisible();
   const panel = await openSettings();
   expect(panel.getByText('/home/test/My Notes')).toBeVisible();
   fireEvent.click(panel.getByRole('button', { name: 'Close' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Visual' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Show document modes' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
   const documentEditor = screen.getByRole('textbox', {
     name: 'Editable document',
   });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   desktopUpdates,
   type DesktopUpdateCheck,
@@ -14,6 +14,7 @@ interface NativeSettingsProps {
   canInstall: boolean;
   restartRequired: boolean;
   onInstall: (id: string) => Promise<DesktopUpdateInstall>;
+  children?: ReactNode;
 }
 
 export function NativeSettings({
@@ -25,6 +26,7 @@ export function NativeSettings({
   canInstall,
   restartRequired,
   onInstall,
+  children,
 }: NativeSettingsProps) {
   const panel = useRef<HTMLDialogElement>(null);
   const [check, setCheck] = useState<DesktopUpdateCheck | null>(null);
@@ -170,6 +172,7 @@ export function NativeSettings({
           </p>
         )}
       </section>
+      {children}
     </dialog>
   );
 }

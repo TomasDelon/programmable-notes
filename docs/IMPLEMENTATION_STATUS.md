@@ -1,5 +1,23 @@
 # Programmable Notes implementation status
 
+## Native presentation correction — 26 November 2026
+
+Owner installation feedback showed that the first local-folder testing package
+opened the historical engine interface. Native launches now use the current
+product presentation with the shared Markdown/math editor, native file grants,
+recovery and guarded updates. Preview is the initial mode; a supervised React
+window starts only after explicitly choosing Split. Browser storage, service
+workers and iframe execution are not used as a native shortcut.
+
+[ADR024](decisions/ADR-024-native-product-presentation.md) records the boundary and
+the canonical-undo/render freshness correction found by the new adapter tests.
+The replacement package is version 0.1.2. The complete local check passed:
+637 unit tests, 84 tooling controls, 150 Chromium cases, 9 local Pages cases and
+4 inactive-cloud cases. The [dated correction receipt](security-evidence/2026-11-26-native-presentation/README.md)
+distinguishes native-entry browser interaction from unexecuted installed WebKitGTK
+acceptance. The draft PR records the verified replacement artifact and hosted
+results; the previous package's results do not certify this UI.
+
 ## Linux local-editor candidate — 26 November 2026
 
 The owner paused cloud activation and prioritized an installable Linux app using

@@ -424,6 +424,17 @@ export function useDocuments(
   }
   function change(source: string) {
     const key = workspace.selected;
+    // A queued callback stays bound to its original file, even after selection
+    // changes. Retain that edit without touching the newly selected document.
+    if (!Object.hasOwn(current.current.files, key)) return;
+    // Descendant layout effects refresh rendered history before this hook's
+    // layout effect runs. Publish the accepted bytes now, so that refresh can
+    // validate the new source without accepting an obsolete rendered snapshot.
+    // Keep the state update functional to preserve queued save/binding changes.
+    current.current = {
+      ...current.current,
+      files: { ...current.current.files, [key]: source },
+    };
     setWorkspace((next) =>
       key in next.files
         ? {

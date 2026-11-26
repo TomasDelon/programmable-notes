@@ -9,7 +9,7 @@ import {
   remarkInvalidMathematics,
 } from '../plugins/core/math';
 
-/** Browser features are opt-in so the established native pipeline is unchanged. */
+/** Product Markdown/math transforms are opt-in; /engine keeps its legacy fixture. */
 export async function compileDocumentSource(
   source: string,
   path: string,
