@@ -53,11 +53,13 @@ self.addEventListener('fetch', event => {
     event.respondWith(caches.open(CACHE).then(async cache => {
       const cached = await cache.match('/index.html');
       if (!cached) return fetch(request);
-      // Pages redirects /index.html to /. Navigation requests reject redirected
-      // cached responses; preserve the body and every response policy header.
-      return cached.redirected
-        ? new Response(cached.body, {status: cached.status, statusText: cached.statusText, headers: cached.headers})
-        : cached;
+      if (!cached.redirected) return cached;
+      // Pages redirects /index.html to /. A navigation needs a fresh response.
+      // Fetch decoded the stream. Its original encoding and length describe the wire bytes.
+      const headers = new Headers(cached.headers);
+      headers.delete('Content-Encoding');
+      headers.delete('Content-Length');
+      return new Response(cached.body, {status: cached.status, statusText: cached.statusText, headers});
     }));
   } else if (ASSETS.includes(url.pathname)) {
     event.respondWith(caches.open(CACHE).then(async cache => (await cache.match(url.pathname)) || fetch(request)));

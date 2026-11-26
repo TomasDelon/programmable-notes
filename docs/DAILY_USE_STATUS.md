@@ -245,3 +245,48 @@ acknowledged 10. All exact source checks passed. The immutable ordinary build
 fingerprint is `afc89d287b038a18`; hosted all-engine and deployment acceptance
 remain distinct evidence, linked from the draft PR. This does not certify a
 native binary or physical keyboard/device.
+
+## Compressed cached navigation correction
+
+The complete hosted follow-up at `5f5b7a8`
+([45741189077](https://github.com/TomasDelon/programmable-notes/actions/runs/45741189077))
+passed all **384 editor cases /18 intentional skips**. Its subsequent local Pages
+suite failed six Firefox reload checks and passed 21 cases: Playwright could not
+retrieve cached navigation bodies (`NS_ERROR_INVALID_CONTENT_ENCODING`). The
+complete command failed, no new walkthrough was captured, and beta promotion
+remained on hold. The immutable Cloudflare candidate separately passed all 27
+cases. Neither result establishes note corruption or a visible page failure.
+
+A real loopback redirect/gzip fixture reproduced decoded response bytes retaining
+compressed network headers. The service worker had copied those headers while
+wrapping a redirected cached response. Two regressions failed before correction;
+three transport controls then passed with exact decoded HTML and unchanged
+security policies. Only reconstructed navigation responses remove Content-Encoding
+and Content-Length; direct cached responses retain their original identity.
+Service-worker script bytes change independently of the asset-based cache label;
+the deployment verifier checks their full SHA-256.
+
+For inexpensive reproduction, the existing optional diagnostic job now accepts
+`editing_scope=pages`. It prepares the actual local Pages policies and repeats
+all cases three times with zero retries. For example:
+
+```sh
+gh workflow run ci.yml --repo TomasDelon/programmable-notes \
+  --ref fix/preview-markdown-input -f editing_qa=true \
+  -f editing_scope=pages -f editing_browser=firefox
+```
+
+This does not replace mandatory CI, full browser acceptance or actual deployment
+checks. Four shell-command controls preserve browser selection and existing
+core-only/authoring behavior. Current corrected Firefox and full-matrix receipts
+are maintained in draft PR #9; the failed checkpoint remains failed.
+
+The corrected transport and diagnostic candidate passed the complete local gate:
+**515 unit /56 files, 65 tooling, 134 Chromium and 9 Pages-policy cases**, zero
+retries, plus all mandatory static/build checks. The earlier first attempt stopped
+at a lint-only regex-spacing error before tests; it was corrected and this full
+run passed. Ordinary/Pages asset fingerprints remain `afc89d287b038a18` /
+`19f503362f07b8c6`; the corrected Pages worker SHA-256 is
+`dac35a0103e6dae7e161cdb1481d2fc8112485de92e805bef2de82125f6d3ed2`.
+This is local evidence; the Firefox diagnostic and fresh hosted full gate remain
+separate receipts in the draft PR.

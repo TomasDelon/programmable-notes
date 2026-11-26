@@ -10,9 +10,11 @@ checks. Its verified downloadable walkthrough is linked there.
 
 The follow-up corrects unused grouped files resetting React state through trusted
 compiler dependency witnesses, and removes unsupported module-to-note recovery
-actions. Its complete local gate passed 515 unit tests, 58 tooling controls,
+actions. Its corrected complete local gate passed 515 unit tests, 65 tooling controls,
 134 Chromium cases and 9 Pages-policy cases. The production WebKit two-tab
-regression passed independently. Current source-head hosted/deployment receipts
+regression passed independently. Compressed cached navigation preserves decoded
+bytes and security headers; focused Pages diagnostics exercise its Firefox path.
+Current source-head hosted/deployment receipts
 and downloadable artifacts are maintained in draft PR #9. See
 [ADR 019](decisions/ADR-019-island-dependency-witnesses.md) for the reuse boundary.
 
