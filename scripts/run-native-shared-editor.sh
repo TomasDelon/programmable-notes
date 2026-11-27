@@ -11,11 +11,14 @@ if [[ $ID != ubuntu || $VERSION_ID != 24.04 || $EUID == 0 ]]; then
   exit 2
 fi
 pn_repo=$(pwd -P)
-pn_node=$(command -v node)
+pn_node=$(realpath -e "$(command -v node)")
+# All later runner-side tools use immutable system paths, not the movable SDK PATH.
+PATH=/usr/bin:/bin
 pn_role=pn-shared-editor
 pn_home=/home/pn-shared-editor
 pn_evidence="$pn_repo/.cache/native-shared-evidence"
 pn_created=0
+pn_payload=
 pn_stage=role_setup
 mkdir -p "$pn_evidence"
 chmod 700 "$pn_evidence"
@@ -61,14 +64,32 @@ cleanup() {
     case "$pn_observed" in display_start|wm_start|accessibility_start|driver_start|journey|journey_finished) pn_stage=$pn_observed ;; esac
     if ! sudo userdel --remove "$pn_role" >/dev/null 2>&1; then pn_clean=false; fi
   fi
-  PN_HOST_STATUS="$pn_result" PN_HOST_STAGE="$pn_stage" PN_HOST_CLEAN="$pn_clean" PN_HOST_FORCED="$pn_forced" PN_HOST_RESIDUAL="$pn_residual" "$pn_node" --input-type=module - "$pn_evidence" "$pn_diag" <<'REPORT'
-import {readFile, writeFile, stat, unlink} from 'node:fs/promises';
+  PN_HOST_STATUS="$pn_result" PN_HOST_STAGE="$pn_stage" PN_HOST_CLEAN="$pn_clean" PN_HOST_FORCED="$pn_forced" PN_HOST_RESIDUAL="$pn_residual" "$pn_node" --input-type=module - "$pn_evidence" "$pn_diag" "$pn_payload" <<'REPORT'
+import assert from 'node:assert/strict';
+import {readFile, writeFile, stat, unlink, lstat, realpath, rm} from 'node:fs/promises';
 import {join} from 'node:path';
-const [directory, diagnostic] = process.argv.slice(2);
+const [directory, diagnostic, payload = ''] = process.argv.slice(2);
+let cleanupVerified = process.env.PN_HOST_CLEAN === 'true';
+if (payload) {
+  try {
+    assert.match(payload, /^\/tmp\/pn-shared-observer-[A-Za-z0-9]{6}$/);
+    const metadata = await lstat(payload);
+    assert(metadata.isDirectory() && !metadata.isSymbolicLink());
+    assert.equal(metadata.uid, process.geteuid());
+    assert.equal(await realpath(payload), payload);
+    // Linux keeps this executing immutable Node image mapped after unlink.
+    // Remove its owned payload before deciding whether cleanup really passed.
+    await rm(payload, {recursive: true, force: false});
+  } catch { cleanupVerified = false; }
+}
+const knownStages = new Set(['role_setup', 'checkout_boundary', 'checkout_ancestor_exposed', 'observer_tmp_exposed', 'observer_prepare', 'role_creation', 'role_groups', 'role_sudo', 'observer_access', 'node_access', 'desktop_session', 'display_start', 'wm_start', 'accessibility_start', 'driver_start', 'journey', 'journey_finished']);
+const stage = knownStages.has(process.env.PN_HOST_STAGE) ? process.env.PN_HOST_STAGE : 'unknown';
+const rawExit = Number(process.env.PN_HOST_STATUS);
+const exitCode = Number.isInteger(rawExit) && rawExit >= 0 && rawExit <= 255 ? rawExit : 255;
 let result = 'failed';
 try {
   const receipt = JSON.parse(await readFile(join(directory, 'native-shared-editor.json'), 'utf8'));
-  if (receipt.schema === 1 && receipt.result === 'passed' && receipt.cleanupVerified === true && receipt.forcedCleanup === false && process.env.PN_HOST_STATUS === '0' && process.env.PN_HOST_CLEAN === 'true' && process.env.PN_HOST_FORCED === 'false' && process.env.PN_HOST_RESIDUAL === 'false') result = 'passed';
+  if (receipt.schema === 1 && receipt.result === 'passed' && receipt.cleanupVerified === true && receipt.forcedCleanup === false && process.env.PN_HOST_STATUS === '0' && cleanupVerified && process.env.PN_HOST_FORCED === 'false' && process.env.PN_HOST_RESIDUAL === 'false') result = 'passed';
 } catch { /* Missing/malformed evidence is a failed observation. */ }
 for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
   const path = join(directory, name);
@@ -79,9 +100,14 @@ for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
 }
 try {if ((await stat(join(directory, 'native-shared-editor.json'))).size > 65536) {await unlink(join(directory, 'native-shared-editor.json')); result = 'failed';}} catch {result = 'failed';}
 const raw = await readFile(diagnostic, 'utf8');
-const denials = raw.split(/\r?\n/).filter(line => /bwrap:|[Nn]amespace.*[Pp]ermission|[Ss]andbox.*[Ff]ail|Operation not permitted/.test(line)).slice(-8).map(line => line.replace(/[\x00-\x1f\x7f]/g, '').slice(0, 512));
-await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage: process.env.PN_HOST_STAGE, exitCode: Number(process.env.PN_HOST_STATUS), cleanupVerified: process.env.PN_HOST_CLEAN === 'true', forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
-if (result !== 'passed') process.exitCode = 1;
+const denials = [['bubblewrap_message', /bwrap:/], ['namespace_permission', /[Nn]amespace.*[Pp]ermission/], ['sandbox_failure', /[Ss]andbox.*[Ff]ail/], ['operation_not_permitted', /Operation not permitted/]].filter(([, pattern]) => pattern.test(raw)).map(([name]) => name);
+await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
+if (result !== 'passed') {
+  // Only closed stage names, numeric codes and booleans reach the public API.
+  // Never publish diagnostic text, paths, source or framework replies here.
+  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}`);
+  process.exitCode = 1;
+}
 REPORT
   pn_report=$?
   rm -f "$pn_diag"
@@ -90,14 +116,50 @@ REPORT
 }
 trap cleanup EXIT
 if getent passwd "$pn_role" >/dev/null; then exit 2; fi
+pn_stage=checkout_boundary
+[[ $(stat -c %u "$pn_repo") == "$EUID" ]]
+# The observer uses only its public copy. Runner source/cache/token directories
+# remain unavailable even when checkout defaults were previously permissive.
+chmod 700 "$pn_repo"
+pn_stage=observer_tmp_exposed
+[[ -d /tmp && ! -L /tmp && $(realpath -e /tmp) == /tmp && $(stat -c %u /tmp) == 0 && $(stat -c %a /tmp) == 1777 ]]
+pn_stage=observer_prepare
+pn_payload=$("$pn_node" scripts/prepare-native-shared-observer.mjs)
+[[ $pn_payload =~ ^/tmp/pn-shared-observer-[A-Za-z0-9]{6}$ && $(stat -c %u "$pn_payload") == "$EUID" && $(realpath -e "$pn_payload") == "$pn_payload" ]]
+# Never execute the movable original SDK path after the fresh UID exists.
+pn_node="$pn_payload/bin/node"
+pn_stage=role_creation
 sudo useradd --create-home --user-group --shell /bin/bash --no-log-init "$pn_role"
 pn_created=1
 pn_uid=$(id -u "$pn_role")
 sudo chmod 700 "$pn_home"
+pn_stage=role_groups
 [[ $(id -G "$pn_role") == "$(id -g "$pn_role")" ]]
+pn_stage=role_sudo
 if sudo -H -u "$pn_role" env -i PATH=/usr/bin:/bin /usr/bin/sudo -n true >/dev/null 2>&1; then exit 2; fi
-sudo -H -u "$pn_role" test -r "$pn_repo/scripts/native-shared-editor.mjs"
-sudo -H -u "$pn_role" test ! -w "$pn_repo"
+# A private checkout is insufficient if the fresh UID could rename one of its
+# ancestors and replace the pathname before evidence collection. Ask the kernel
+# about effective access at every level, including ACLs and inaccessible parents.
+pn_stage=checkout_ancestor_exposed
+pn_ancestor=$(dirname "$pn_repo")
+while :; do
+  # A sudo/PAM error must not be confused with test's ordinary false status.
+  if ! sudo -H -u "$pn_role" /bin/sh -c 'if test -w "$1"; then exit 42; fi; exit 0' sh "$pn_ancestor"; then exit 2; fi
+  if [[ $pn_ancestor == / ]]; then break; fi
+  pn_ancestor=$(dirname "$pn_ancestor")
+done
+pn_stage=observer_access
+sudo -H -u "$pn_role" test ! -x "$pn_repo"
+sudo -H -u "$pn_role" test -r "$pn_payload/scripts/native-shared-editor.mjs"
+sudo -H -u "$pn_role" test ! -w "$pn_payload"
+sudo -H -u "$pn_role" test ! -w "$pn_payload/scripts"
+sudo -H -u "$pn_role" test ! -w "$pn_payload/bin"
+sudo -H -u "$pn_role" test ! -w "$pn_node"
+for pn_file in native-shared-editor.mjs native-webdriver-lib.mjs native-ui-lib.mjs native-dialog.py native-close-window.py; do
+  sudo -H -u "$pn_role" test -r "$pn_payload/scripts/$pn_file"
+  sudo -H -u "$pn_role" test ! -w "$pn_payload/scripts/$pn_file"
+done
+pn_stage=node_access
 sudo -H -u "$pn_role" test -x "$pn_node"
 sudo -H -u "$pn_role" mkdir -m 700 "$pn_home/runtime" "$pn_home/evidence"
 pn_stage=desktop_session
@@ -108,7 +170,7 @@ sudo -H -u "$pn_role" env -i \
   GTK_MODULES=atk-bridge NO_AT_BRIDGE=0 \
   WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 \
   NATIVE_DISPOSABLE_PROFILE=1 NATIVE_SHARED_EVIDENCE="$pn_home/evidence/native-shared-editor.json" \
-  timeout -k 5s 260s dbus-run-session -- /bin/bash -s -- "$pn_repo" "$pn_node" <<'DESKTOP'
+  timeout -k 5s 260s dbus-run-session -- /bin/bash -s -- "$pn_payload" "$pn_node" <<'DESKTOP'
 set -euo pipefail
 exec >"$HOME/session.log" 2>&1
 cd "$1"
