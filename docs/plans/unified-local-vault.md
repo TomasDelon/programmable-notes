@@ -353,3 +353,20 @@ startup are required before activation. Physical GPU/Wayland coverage is separat
 Real rename/move/recoverable Trash, continuous external observation and configured
 signed updates remain pending. No new installer is promoted as accepted, and no
 release, merge or PR readiness change follows from this checkpoint.
+
+### Current correction checkpoint
+
+CI46066421522 passed the real recovery-command SDK build. Installed46067552665
+reached the owned chooser and failed exact location echo before acceptance;
+cleanup passed. The next changed helper retains strict echo/ownership checks,
+types the GTK directory separator, uses the pinned Open acceptance label and
+projects only closed echo-shape diagnostics. Installed editing/restart remains
+pending. The startup PNG artifact is retained but not visually inspected here.
+
+Recovery-copy form styling/focus now has actual controlled-port browser evidence.
+The inline guard foundation is implemented as strictly guarded-v2, including
+source-bound manifests and prepublication native handlers, but its GTK compile
+and actual runtime observation remain pending. Historical v1 evidence cannot
+activate it. Full local checks:1006 unit,157 Chromium,9 Pages,4 local cloud;
+final helper tooling185/zero skips plus static checks. No new installer acceptance,
+merge, release or general native React activation follows.

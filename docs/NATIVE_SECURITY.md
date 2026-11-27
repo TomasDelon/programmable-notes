@@ -36,6 +36,14 @@ Do not repeat an identical blocked runtime or treat an explicit namespace option
 as permission. A suitable environment must satisfy actual effective checks; no
 sysctl change, executor exemption or weaker assertion is authorized.
 
+The successor experimental host now uses profile inline-react-guarded-v2 and the
+same canonical GTK chooser/permission/dialog/print/fullscreen guards as the Tauri
+preview. Guards and failure hooks precede one-shot authored publication; old v1
+observations do not establish v2. Source review and mutation tests do not prove
+actual native handlers or complete navigation denial. The about:blank exception
+and all original hostile-workload/IPC/filesystem/network gates remain; general
+native React stays disabled. See [ADR043](decisions/ADR-043-inline-native-browser-guards.md).
+
 ## New vault-service validation gate — 26 November 2026
 
 The new `choose_vault`, `vault_inventory`, `open_vault_sources` and

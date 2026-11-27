@@ -473,3 +473,49 @@ zero skips, and format/lint/types passed. Application inputs remain those of the
 fully checked recovery candidate. Independent source review found no Important
 issue. A new required CI build and actual changed observation are still needed;
 the helper signatures and startup image have not yet been observed natively.
+
+## Observed chooser refusal and changed guarded profile
+
+Required [CI46066421522](https://github.com/TomasDelon/programmable-notes/actions/runs/46066421522)
+passed both jobs on d733ae2, including actual GTK SDK compilation of the recovery
+commands and the optimized package. Actual installed
+[run46067552665](https://github.com/TomasDelon/programmable-notes/actions/runs/46067552665)
+on that source failed with startupPhase=complete,
+journeyStage=authorized_vault_chooser, failureKind=other and
+dialogClasses=dialog_location_echo_mismatch. The owned dialog/focus was reached;
+exact location echo failed before acceptance. Cleanup passed without force or
+residual processes. The advisory permission substring does not diagnose a
+namespace failure. Editing, disk, close, restart and recovery did not pass.
+
+The [bounded installed artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46067552665/artifacts/15231427625)
+retains the fixed startup PNG captured before chooser entry. Its capture succeeded;
+the image was not downloaded or visually inspected in this cloud workspace.
+Raw logs and signed artifact URLs were not exposed.
+
+The changed helper types an explicit trailing folder separator while retaining
+both exact echo comparisons, owned PID/title/focus, deadlines and dismissal
+acknowledgement. Its closed shape marker never includes a path or raw value.
+The pinned GTK3/rfd SELECT_FOLDER default acceptance label is Open, also corrected
+with an upstream-source-bound regression. That label was not reached in the
+previous refusal. These changes need a new actual journey, not an unchanged retry.
+
+ADR043's guard foundation shares the canonical native denial handlers with the
+experimental inline host before one-shot authored publication. Profile identity
+is strictly inline-react-guarded-v2; earlier v1 passes remain historical. Empty
+construction/publication ordering and mutation controls passed, plus six shared
+Activation tests. GTK compilation and actual handler/navigation denial still
+require separate proof. General native React stays disabled.
+
+Recovery-copy dialogs now reuse existing form styling and return typing to the
+created copy. Controlled-port browser journeys capture desktop/tablet/mobile
+screenshots and verify lossless immediate typing. These are shared UI evidence,
+not actual native restart evidence.
+
+The frozen combined local full check exited0:1006 unit,184 tooling/zero skips,
+157 Chromium,9 Pages and4 disposable local cloud cases, plus static checks and
+production build. The final helper-only acceptance-label correction was followed
+by the entire185-case tooling suite with zero failures/skips and static checks.
+Application/browser source inputs were unchanged after the full run. Rustfmt
+passed for Tauri and the experimental host. Independent guard, picker/privacy
+and recovery product reviews found no remaining blocking source issue. Current
+source CI and the changed packaged/guarded-v2 observations remain pending.

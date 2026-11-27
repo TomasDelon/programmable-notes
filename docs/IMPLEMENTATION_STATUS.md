@@ -20,6 +20,38 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Current validation checkpoint — 27 November 2026
+
+Required CI46066421522 passed both jobs on d733ae2, including real GTK SDK
+compilation of the recovery commands and production packaging. Actual installed
+run46067552665 reached the shared ProductRoot and owned vault chooser, but failed
+its exact typed-location echo check before acceptance. Cleanup passed without
+force or residual processes. The fixed signature is dialog_location_echo_mismatch;
+the generic permission substring does not identify a namespace failure. A bounded
+startup image is retained in its artifact; it was not downloaded or visually
+inspected in this cloud workspace. Installed editing, disk saves, close, restart
+and recovery remain unverified.
+
+The changed chooser helper now types the directory separator expected by GTK
+folder completion and still compares the entire exact value. A closed echo-shape
+classification can distinguish the next refusal without exposing paths. The
+pinned GTK3/rfd default folder acceptance label is Open; the helper now uses that
+label instead of Select. The previous run failed before that button stage, so
+neither correction is claimed as a runtime repair until the new journey executes.
+
+Recovery dialogs reuse existing shared form styling and restore typing to a
+successfully created copy. Real controlled-port Chromium tests cover immediate
+typing and capture desktop/tablet/mobile layouts; they are not native GTK proof.
+The combined local full check passed1006 unit,184 tooling/zero skips,157 Chromium,
+9 Pages and4 disposable local cloud cases, plus formatting/lint/types/build.
+After the final helper-only accept-label change, all185 tooling tests and static
+checks passed; application inputs did not change. Rust formatting passed, and
+six shared Activation tests passed. Updated inline GTK guards still require
+current-source SDK compilation and actual guarded-v2 runtime observation.
+
+The sections below retain earlier checkpoints rather than silently transferring
+old successes to new sources. See the dated evidence for exact scopes.
+
 ## Experimental inline guard foundation — 27 November 2026
 
 A candidate shares ADR040's canonical GTK denial handlers with the inline Wry
