@@ -1663,6 +1663,8 @@ body {
   color: var(--text-strong);
 }
 .floating-toggle[aria-expanded='true'] {
+  /* Docked drawer controls must remain above the central mode hit area. */
+  z-index: 85;
   opacity: 0.85;
 }
 .floating-left {

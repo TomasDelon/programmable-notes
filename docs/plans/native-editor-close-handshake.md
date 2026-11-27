@@ -119,7 +119,8 @@ their reference behavior; no filesystem grants or renderer permissions expand.
 The owning editor barrier and native state/command guard are implemented as an
 inactive prerequisite packet. Focused editor controls passed52 cases; pure native
 state controls passed11. Registration mocks and exact capability controls passed;
-actual native Documents reservation tests await hosted Tauri execution. Independent
+actual native Documents reservation/update tests passed hosted run46003547608
+on97d3aab. Independent
 source review found no Important/Critical defect in that bounded packet. No native
 entry or frontend OS-close orchestration is activated by these results.
 
@@ -159,3 +160,11 @@ entry or frontend OS-close orchestration is activated by these results.
   save/recovery, external writer, no-document close, application replacement and
   exact history after abort. Then run the installed Linux witness; no corrected
   installer claim or default entry activation before its acceptance gate.
+
+Before native activation, explicitly cover table composition with ProseMirror's
+Safari detector enabled. Linux WebKitGTK must not be assumed to bypass that
+branch: upstream WebKit defaults navigator.vendor to Apple Computer, Inc. Source
+review found its deferred table flush guarded by composition state and forced at
+compositionend, not a demonstrated false-clean path. Test finalizer-before20ms
+ordering with exact source, then observe actual installed vendor/input behavior.
+This is a pending target witness, not a reason to weaken composition refusal.

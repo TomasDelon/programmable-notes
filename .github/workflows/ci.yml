@@ -155,6 +155,8 @@ jobs:
             .cache/product-browser-results.json
             .cache/product-browser.png
             .cache/product-browser.png.failure.png
+            .cache/product-browser.png.tablet.png
+            .cache/product-browser.png.mobile.png
           retention-days: 7
 
   native-check:
@@ -218,7 +220,7 @@ jobs:
         run: node scripts/verify-linux-package.mjs
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
       - name: Test native document and close guards (headless, not GUI acceptance)
-        run: cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol --locked
+        run: timeout -k 5s 300s cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol --locked
       - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check

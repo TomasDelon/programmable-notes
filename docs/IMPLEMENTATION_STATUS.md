@@ -40,9 +40,10 @@ No default-entry, installer or installed-close acceptance is claimed.
 The full local check passed873 unit,140 tooling/zero skips,153 Chromium,9 Pages
 and4 local cloud cases, with formatting/lint/types/build. The separate shared
 product Chromium journey passed nine checkpoints again. Eleven pure Rust close-state
-cases and Rust formatting passed. Actual Tauri Documents reservation/update tests
-are scheduled in CI and remain unexecuted locally because this host lacks the
-GTK/WebKitGTK development stack. Compilation, headless guards, real native IPC
+cases and Rust formatting passed. Hosted native-check in run46003547608 passed on97d3aab, including the optimized
+Linux package and production-profile headless Tauri Documents/close/update tests.
+These remain unexecuted locally because this host lacks the GTK/WebKitGTK
+development stack. Compilation, headless guards, real native IPC
 and installed application behavior remain separate claims.
 
 The new browser journey runs in the existing standard-Linux check job; its exact

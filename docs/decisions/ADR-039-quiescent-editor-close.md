@@ -47,9 +47,9 @@ registration probes deliberately do not negotiate the legacy test application.
 
 Nine editor-barrier cases plus existing source/history/composition controls passed
 52 focused tests. Eleven pure Rust protocol tests passed; the native Documents unit
-cases require actual hosted Tauri compilation/execution. Transport-mocked controls
-verify probe behavior, not real IPC denial. CI now schedules headless production-
-profile Tauri tests alongside package compilation; that is not GUI validation.
+cases passed actual hosted Tauri compilation/execution in run46003547608 on97d3aab. Transport-mocked controls
+verify probe behavior, not real IPC denial. CI runs headless production-profile Tauri tests alongside package compilation;
+that is not GUI validation.
 
 The frontend must still join clean detachment, aggregate admission/flush, recovery
 acknowledgements and the exact native request/commit response. Definite precommit

@@ -80,3 +80,21 @@ Native React still has intermittent startup/keyboard failures and lacks the full
 repeatable interaction/containment matrix. See the separate native-inline fixture
 evidence, including failed run45964414560. Rename/move/Trash, continuous external
 observation, signed updates and installed shared-root acceptance remain separate.
+
+## Later prerequisite and viewport verification
+
+The next full check passed873 unit,140 tooling with zero skips,153 Chromium,
+9 Pages and4 local cloud cases. Eleven pure Rust close-state cases passed. Hosted
+run46003547608 on97d3aab passed native-check, including actual Tauri headless
+Documents/close/update tests and optimized package build. This is not actual
+native IPC, OS-close input or installed local-vault acceptance.
+
+Expanding the controlled browser journey to768px and390px reproduced a genuine
+pointer failure: the mode picker's invisible hit area intercepted the drawer's
+Close button. Open drawer controls now stack above that hit area. The same
+ordinary-click regression passed at all three widths with ten total checkpoints;
+no force click or event bypass is used. Screenshots wait for the drawer to leave
+the viewport and are whitelisted individually in CI artifacts. These are viewport
+checks in Chromium, not mobile hardware/touch or Linux WebKitGTK acceptance.
+An initial final-check attempt stopped at a missing browser-global qualification
+in the new Node test runner; that test-only lint error was corrected before rerun.

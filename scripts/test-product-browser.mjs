@@ -135,6 +135,51 @@ try {
     );
     await mkdir(dirname(resolve(screenshot)), { recursive: true });
     await page.screenshot({ path: resolve(screenshot), fullPage: true });
+    await page
+      .getByRole('button', { name: 'Close navigation', exact: true })
+      .click();
+    for (const [name, width, height] of [
+      ['tablet', 768, 1024],
+      ['mobile', 390, 844],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await expect(visual).toBeVisible();
+      await expect(visual).toContainText('Body. Source. Visual.');
+      await expect(visual).not.toContainText('&#32;');
+      await expect
+        .poll(() =>
+          page.evaluate(() => globalThis.document.documentElement.scrollWidth),
+        )
+        .toBeLessThanOrEqual(width);
+      await page
+        .getByRole('button', { name: 'Open navigation', exact: true })
+        .click();
+      await expect(
+        page.getByRole('button', { name: 'Open primary.md', exact: true }),
+      ).toBeVisible();
+      await page
+        .getByRole('button', { name: 'Close navigation', exact: true })
+        .click();
+      await page.mouse.move(width / 2, height * 0.65);
+      await expect
+        .poll(() =>
+          page
+            .locator('#notes-navigation')
+            .evaluate((node) => node.getBoundingClientRect().right),
+        )
+        .toBeLessThanOrEqual(0);
+      await expect(visual).toBeVisible();
+      assert.equal((await read()).canonical, visualEdit);
+      await page.screenshot({
+        path: resolve(`${screenshot}.${name}.png`),
+        fullPage: true,
+      });
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page
+      .getByRole('button', { name: 'Open navigation', exact: true })
+      .click();
+    results.push('responsive-viewport-navigation');
   }
   await mode('Source');
   results.push('close-and-fresh-reopen');
