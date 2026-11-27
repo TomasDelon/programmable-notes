@@ -2627,3 +2627,23 @@ scan zero additional findings; all12tooling tests passed with zero skips, includ
 synthetic Git/ZIP credential-refusal controls. The exact six known historical
 false-positive fingerprints do not waive any credential rule or future finding.
 The next push waits for the new postcommit scan to finish before publication.
+
+## Resume — hosted dependency correction and Debian diagnostic
+
+On fd6f7f2 the required check job passed; native-check failed before compilation
+because an unrelated Microsoft runner APT source returned403. A reviewed fixed
+helper now selects the runner's existing Ubuntu source, preserving archive
+signing, authentication and expiry checks. All six dependency-installing jobs
+invoke it. Real offline APT URI planning includes an omitted-filter negative
+control. No paid runner or mandatory-test change. Full local check exited0:
+808 unit,133 tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage
+cases; format/lint/types/build passed. Hosted rerun remains required.
+
+Debian OS-only run45939785719 passed actual assembly/boot/identity negatives and
+normal shutdown. Native run45940249067 passed effective isolation admission and
+the native bridge, but React readiness timed out. Stop termination and host
+input passed individually; pointer/key/expiry did not run and session cleanup
+failed. Dated bounded evidence preserves this failure. A concrete test-driver
+shutdown defect was identified independently: XDestroyWindow bypasses the GTK
+delete-event handler. Its separate correction and discriminating readiness
+diagnostic are prepared, not yet native-verified. No product installer accepted.

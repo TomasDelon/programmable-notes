@@ -242,3 +242,18 @@ OS admission does not test the native application, malicious MDX, IPC/filesystem
 denial, keyboard/geometry, native Stop/expiry or CPU/memory containment. Those
 remain required after the infrastructure gate. No namespace restriction,
 AppArmor policy or application isolation limit is disabled by this pipeline.
+
+## Actual sealed Debian OS admission passed
+
+On **fd6f7f2**, [run45939785719](https://github.com/TomasDelon/programmable-notes/actions/runs/45939785719)
+passed the reviewed Debian13 recipe's real assembly, boot, strict SSH/key/pin
+controls, OS facts and normal QMP shutdown. The bounded
+[annotation summary](os-admission-45939785719.json) records actual kernel
+6.12.118+deb13-amd64, systemd257.13, libc2.41, GTK3.24.49 and WebKit2.54.3 with
+exact package versions. This verifies the required packages/services for this
+image; the frozen official base digest does not pin later repository updates.
+
+No helper or author code ran. This result does not verify native ABI, per-user
+network isolation, React input, Stop or expiry. The Ubuntu namespace failure
+remains failed. The separate fixed native diagnostic must repeat admission in
+its own fresh guest and then satisfy unchanged effective checks before input.

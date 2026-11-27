@@ -1,0 +1,63 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not raw private logs",
+  "run_id": 45940249067,
+  "job_id": 140312685069,
+  "source_commit": "fd6f7f2779e9939c919b4c298f6c0ee1ff4933bd",
+  "source_profile": "debian13",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "os_admission": "passed",
+  "session": {
+    "phase": "cleanup",
+    "reason": "cleanup_failed",
+    "cleanup": "failed"
+  },
+  "stop": {
+    "status": "failed",
+    "phase": "ready",
+    "reason": "readiness_deadline",
+    "bridge": "passed",
+    "pointer": "not_run",
+    "keyboard": "not_run",
+    "termination": "passed",
+    "host_input": "passed",
+    "original_reason": "observer_failed",
+    "host_before_teardown": "running",
+    "observer_before_teardown": "exited",
+    "observer_exit": 2,
+    "host_stage": "unit_ready",
+    "start_failure": "none",
+    "observer_exception": {
+      "phase": "ready",
+      "error_type": "Refused",
+      "errno": null,
+      "frames": [
+        {
+          "function": "run",
+          "line": 637
+        },
+        {
+          "function": "state_until",
+          "line": 618
+        },
+        {
+          "function": "_wait",
+          "line": 595
+        }
+      ]
+    }
+  },
+  "expiry": "not_run",
+  "interpretation": [
+    "The unchanged supervisor admitted the effective namespace, UID, no-new-privileges and cgroup configuration before publishing the native embedding bridge.",
+    "The observer never received the required React ready state within the original deadline. Its cause is not yet established.",
+    "Stop termination and trusted-host input passed as individual observations; the entire case failed.",
+    "Application cleanup failed. These results do not verify the product application."
+  ],
+  "limitations": [
+    "No React pointer or keyboard interaction passed; expiry was not executed.",
+    "No hostile-workload or production application acceptance is established."
+  ]
+}

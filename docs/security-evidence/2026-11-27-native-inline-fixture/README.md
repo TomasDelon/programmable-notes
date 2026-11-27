@@ -262,3 +262,19 @@ No global namespace sysctl, executor exemption, isolation property or resource
 limit is changed. Further work must use an actually suitable environment or a
 separately reviewed secure backend; compilation or a weaker assertion cannot
 clear this blocker.
+
+## First sealed Debian native diagnostic — failed
+
+[Run45940249067](https://github.com/TomasDelon/programmable-notes/actions/runs/45940249067)
+on fd6f7f2 passed same-lifecycle Debian OS admission and the unchanged effective
+namespace/UID/no-new-privileges/cgroup admission before document input. The
+embedding bridge passed, but React readiness hit its original deadline.
+Pointer and keyboard observations did not run. Stop termination and trusted-host
+input passed individually; the entire case failed and expiry did not run.
+Session cleanup also failed. Neither partial observations nor VM admission
+establish product application acceptance. The cause of missing React readiness
+and failed host teardown is under investigation; neither is yet attributed to
+WebKit, rendering, policy or window-manager behavior.
+
+[Bounded annotation receipt](native-profile-45940249067.json). Existing Ubuntu
+namespace failures remain failed. No isolation setting or deadline was relaxed.

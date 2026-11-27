@@ -20,6 +20,23 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Hosted dependency-source failure and correction
+
+Required CI on fd6f7f2 passed the browser/check job but failed native dependency
+installation: an unrelated Microsoft APT source on the disposable runner
+returned403. The correction selects the runner's existing Ubuntu Deb822 source
+for all six dependency-installing jobs. Its signer and authentication/expiry
+checks remain intact; no source is deleted, mandatory test skipped, runner
+upgraded or paid service introduced. Missing expected source/signature
+configuration fails closed.
+
+Real offline APT URI planning verifies Ubuntu-only selection and demonstrates
+that omitting the filter exposes unrelated sources. Four targeted controls and
+independent review passed. The complete local check exited0:808 unit,133
+tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus
+formatting/lint/types/production build. History/archive and staged patch scans
+found zero findings. Actual hosted execution remains pending.
+
 ## Captured-vault directory creation and sealed validation profile
 
 The Rust Vault now creates one real directory through its retained parent
@@ -40,15 +57,21 @@ v2 profile/base/context binding across preparation, packing and smoke validation
 The Ubuntu default, private authentication/layout, mount-free construction and
 all isolation/deadline checks remain. Bounded receipts record actual distro,
 kernel and fixed package versions without hostname, paths or raw errors.
-Independent source controls/review passed; **no Debian image or guest has run**.
-OS-only admission must pass before the separate native diagnostic. ABI and
-namespace compatibility remain unproven. [Validation plan](plans/debian-native-validation.md).
+Independent source controls/review passed. Actual Debian OS-only admission
+passed on fd6f7f2 in run45939785719, including packaging, boot, identity negatives
+and normal shutdown; actual kernel/package identities are retained. No helper
+ran in that test. The separate fixed diagnostic then passed effective namespace
+admission and the embedding bridge, but timed out waiting for React readiness;
+its Stop termination and trusted-host input observations passed individually.
+The case and session cleanup failed, React input and expiry remain unverified.
+[Exact evidence](security-evidence/2026-11-27-native-inline-fixture/native-profile-45940249067.json)
+and [validation plan](plans/debian-native-validation.md).
 
 The complete frozen-source packet check exited **0**: **808 unit, 129 tooling /
 zero skips, 153 Chromium, 9 Pages and 4 local cloud-storage browser cases**,
 plus formatting, lint, strict types and production build. Rust formatting passed;
 all functional input hashes stayed unchanged. This verifies code and existing
-browser behavior, not the unexecuted Debian environment or native UI.
+browser behavior; it does not establish native UI acceptance.
 
 ## Native namespace admission blocker — 27 November 2026
 

@@ -103,6 +103,8 @@ jobs:
       - name: Verify the secret scanner refuses a synthetic key
         run: PN_GITLEAKS_BIN="$PWD/.cache/security-tools/gitleaks" node --test tests/tooling/secret-scan.test.mjs
       - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install matching browser dependencies
         run: |
           if [ "$PN_ALL_BROWSERS" = 1 ]; then
@@ -181,6 +183,8 @@ jobs:
             native-policy/target
             native-updates/target
           key: ${{ runner.os }}-${{ runner.arch }}-native-${{ hashFiles('rust-toolchain.toml', 'src-tauri/Cargo.lock', 'native-documents/Cargo.lock', 'native-policy/Cargo.lock', 'native-updates/Cargo.lock', 'scripts/native-inline-react-v1/host/Cargo.lock') }}
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install native dependencies with bounded network retries
         shell: bash
         run: |
@@ -277,6 +281,8 @@ jobs:
       - name: Pin the repository npm version
         run: npm install --global npm@11.9.0
       - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install matching browser dependencies
         run: |
           if [ "$PN_ALL_BROWSERS" = 1 ]; then
@@ -321,6 +327,8 @@ jobs:
       - name: Pin the repository npm version
         run: npm install --global npm@11.9.0
       - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install the requested matching browsers
         run: |
           case "$PN_EDITING_BROWSER" in
@@ -406,6 +414,8 @@ jobs:
       - name: Opt-in fixed KVM API observation under an isolated temporary role
         if: inputs.kvm_role_probe
         run: bash scripts/native-kvm-role-probe.sh --api-only
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Check restricted Ubuntu Linux capabilities
         run: bash scripts/native-hosted-preflight.sh
 
@@ -422,6 +432,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install host QEMU on the disposable standard runner
         run: |
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update

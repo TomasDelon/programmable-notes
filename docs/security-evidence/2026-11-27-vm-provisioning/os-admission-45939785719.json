@@ -1,0 +1,43 @@
+{
+  "evidence_source": "strictly validated GitHub check annotation; exact source-pinned reporter/schema",
+  "run_id": 45939785719,
+  "source_commit": "fd6f7f2779e9939c919b4c298f6c0ee1ff4933bd",
+  "job_id": 140311203560,
+  "scope": "guest-os-admission-only",
+  "status": "passed",
+  "native_app_tested": false,
+  "native_payload_executed": false,
+  "verified_by_reporter": {
+    "uid": 1001,
+    "pid1_systemd": true,
+    "cgroup_v2": true,
+    "mounts_allowed": true,
+    "root_ext4_vda": true,
+    "container_absent": true,
+    "logind_active": true,
+    "authorized_count": 1,
+    "authorized_key_hash_validated_not_reproduced": true,
+    "agent_absent": true,
+    "wrong_pin_rejected": true,
+    "wrong_key_rejected": true,
+    "guard_normal_exit": true
+  },
+  "limitations": [
+    "Derived from strict source-pinned annotations, not the raw private receipt.",
+    "OS-only: no native helper, ABI, private-network service, React input, Stop or expiry tested.",
+    "This separate Debian result does not repair the Ubuntu namespace refusal."
+  ],
+  "source_profile": "debian13",
+  "environment": {
+    "id": "debian",
+    "version": "13",
+    "kernel_release": "6.12.118+deb13-amd64",
+    "packages": {
+      "libc6": "2.41-12+deb13u5",
+      "libgtk-3-0t64": "3.24.49-3",
+      "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+      "linux-image-amd64": "6.12.118-1",
+      "systemd": "257.13-1~deb13u1"
+    }
+  }
+}
