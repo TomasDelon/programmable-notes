@@ -46,6 +46,11 @@ native React stays disabled. See [ADR043](decisions/ADR-043-inline-native-browse
 
 ## New vault-service validation gate — 26 November 2026
 
+This section preserves the preactivation contract. The shared native workspace
+is now connected to these services; current source-bound results are in
+IMPLEMENTATION_STATUS. Actual installed picker/edit/restart gates remain open,
+and historical legacy-app observations cannot satisfy them automatically.
+
 The new `choose_vault`, `vault_inventory`, `open_vault_sources` and
 `create_vault_source` handlers are editor-only foundations, not yet connected to
 the shared product. Their actual registered-command/chooser behavior has **not**

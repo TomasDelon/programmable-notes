@@ -20,6 +20,13 @@ including its share deviation and unproven Stop result.
 
 ## Latest checkpoint and next gates
 
+Current execution is strictly inline-react-guarded-v2; historical path names remain.
+Canonical prepublication native guards compiled, but actual46072990136 on25041e7
+failed readiness before pointer/keyboard or expiry. Termination, host input and
+cleanup passed. Historical v1 success below is not transferred. Exact schema2
+passive milestones are the next first-load observation; they do not grant
+readiness or weaken any gate. See ADR043 and the dated evidence.
+
 On2ad5910, sealed Debian13 run46057753337 passed this fixed helper's input/Stop
 and natural-expiry cases. See the [dated evidence](../security-evidence/2026-11-27-shared-product/README.md).
 Earlier startup failures remain retained; one pass does not prove repeatability
@@ -34,7 +41,8 @@ Independent review identifies the next application gates:
    gaps; changing a toggle alone is insufficient.
 2. Before arbitrary source publication, apply and test the native browser
    chooser/permission/dialog/print/fullscreen/download/navigation restrictions on
-   the inline Wry path. ADR040's Tauri-child guards do not cover that path.
+   the inline Wry path. Shared guards are now installed there, but actual handler
+   denial witnesses remain unverified.
    Require real editor-positive and preview-negative IPC tests.
 3. Reuse Supervisor and existing stress/editor/lifecycle fixtures for actual
    integrated CPU, both memory workloads, trusted OOM/expiry attribution, Stop,

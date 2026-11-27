@@ -1,6 +1,7 @@
 # ADR-043: Native browser guards before experimental inline publication
 
-Status: development candidate; GTK compilation and runtime denial evidence pending.
+Status: development candidate; GTK compilation verified in CI46072131165.
+Actual guarded-v2 readiness failed in46072990136; runtime denial evidence pending.
 
 ## Context
 
@@ -60,3 +61,28 @@ Do not describe navigation as fully denied or activate arbitrary source on this
 basis. Integrated editor/preview IPC, geometry/lifecycle, hostile CPU and both
 memory workloads, Stop/expiry/recovery and packaged acceptance remain separate
 gates. Physical GPU/Wayland compatibility cannot substitute for any of them.
+
+## First-load observation after the failed guarded-v2 run
+
+Run46072990136 built the helper and passed Debian admission but failed authored
+readiness. The earlier built flag precedes guard installation; no commit/finish,
+denied navigation, load failure or termination was observed. Cause is unknown.
+Both the legacy constructor and subsequent Wry load_html call the same pinned
+WebKit load_html with no base URI; no transport/base-URL difference was found.
+The source-order difference is retained as a hypothesis, not a demonstrated cause.
+
+The next passive native snapshot has exact schema2: guards_installed follows all
+setup hooks, publication_requested precedes the fixed load call,
+publication_returned follows its successful return, and provisional_started comes
+from a native GTK Started-only hook installed before publication. Existing Wry
+Started still means Committed and Finished remains unchanged. A provisional event
+may happen synchronously inside the load call; flags are independent and sticky,
+not inferred ordering or readiness. Returned means API return, not rendered React.
+
+All consumers require every schema2 field and reject old/missing/extra/mistyped
+snapshots. The execution profile remains guarded-v2; source hashes distinguish
+observations. Exhaustive serialization controls keep all2560 flag/termination
+combinations within the existing256-byte limit (maximum251 ASCII bytes). All-true
+native flags cannot authorize authored readiness or input. There is no resource,
+policy, navigation, callback-denial or admission change and no claimed startup fix.
+Actual observation of these new milestones remains pending.

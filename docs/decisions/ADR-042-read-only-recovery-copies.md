@@ -83,3 +83,19 @@ focus handoff, capturing the initiator before awaiting and validating the curren
 application, newly selected session and destination before focusing. Cancellation
 and newer focused controls retain ownership. No new focus engine or document
 writer was introduced. These remain controlled-native-IPC browser observations.
+
+## Discovery and modal follow-up
+
+The dialog distinguishes in-flight discovery, successful empty results and failed
+refreshes. A refresh failure preserves the existing catalog and allows explicit
+restoration from cached valid versions; Retry discovery is manual. Request and
+application identity suppress late completions after replacement. Effect replay
+must retire its lifetime before reserving the existing model operation.
+
+Enabled initial focus and the rendered recovery dialog's keyboard ownership keep
+background palette/mode/history commands out while preserving normal input undo.
+These are shared UI fixes, not a new source/history owner or filesystem authority.
+Unit and controlled-port browser regressions cover failure, cached restoration,
+stale discovery, strict replay and keyboard interaction. Actual installed restart
+acceptance remains separate; see the dated evidence and proposed installed
+recovery acceptance procedure.

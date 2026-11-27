@@ -20,6 +20,49 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Recovery discovery and current native observation — 27 November 2026
+
+Required CI46072131165 passed both jobs on25041e7, including actual GTK SDK
+compilation of the canonical guards and the production package. Changed installed
+run46072986581 passed exact path echo and reached the final chooser dismissal
+check, which failed. Startup completed; cleanup passed without force or residual
+processes. Button-action state was not recorded, so no cause is inferred and
+file editing/disk/close/restart/recovery remain unverified. See the dated receipt.
+
+The changed guarded-v2 sealed Debian diagnostic46072990136 compiled and passed OS
+admission, but failed Stop at ready/readiness_deadline. Bridge, termination,
+trusted host input and cleanup passed; pointer/keyboard and expiry did not run.
+The advisory native snapshot was built, without observed commit/finish, denial,
+load failure or termination. Built precedes guard installation, whose completion
+is not separately witnessed. Cause remains unknown; no unchanged retry or native
+React activation is justified. Historical v1 success is not transferred to v2.
+
+The next helper narrows acceptance-button lookup to the unique exact-title
+chooser under the owned PID, refusing ambiguous roots before any action. Its
+closed acceptance-state marker distinguishes existing lookup/action results.
+A separate exact schema2 native snapshot adds passive guard-installation,
+publication-request/return and actual provisional-start observations. They do
+not authorize readiness, alter limits or establish a runtime repair. Current
+source native observations remain pending.
+
+The shared recovery dialog now distinguishes pending, successful-empty and failed
+discovery. It offers explicit retry and keeps cached versions usable after a
+refresh error. Stale discovery results cannot publish into a replacement app;
+strict effect replay cannot reserve a retired operation. Enabled initial focus
+and recovery-modal keyboard ownership preserve native field undo while preventing
+background palette/mode/history commands. No persistence, source/history authority
+or native API changed. Independent product review found no blocking issue.
+
+The combined local check passed1014 unit,159 Chromium,9 Pages and4 disposable
+local cloud cases plus static checks/build. Its185 tooling cases had183 passes
+and two scanner-dependent skips because the scanner path was omitted from that
+command. The final full tooling rerun with the pinned scanner and acceptance-state
+diagnostics and first-load schema2 passed191 tests, with zero failures or skips. Static checks also
+passed. No skipped security control is counted passed.
+Actual installed recovery acceptance and full native React integration remain
+separate unresolved gates. The proposed installed recovery and native denial
+witness procedures are recorded in docs/plans, not reported as executed.
+
 ## Current validation checkpoint — 27 November 2026
 
 Required CI46066421522 passed both jobs on d733ae2, including real GTK SDK

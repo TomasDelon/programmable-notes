@@ -519,3 +519,99 @@ Application/browser source inputs were unchanged after the full run. Rustfmt
 passed for Tauri and the experimental host. Independent guard, picker/privacy
 and recovery product reviews found no remaining blocking source issue. Current
 source CI and the changed packaged/guarded-v2 observations remain pending.
+
+## Required CI and actual later chooser boundary
+
+Required [CI46072131165](https://github.com/TomasDelon/programmable-notes/actions/runs/46072131165)
+passed both jobs on25041e7, including actual GTK SDK compilation of the canonical
+guards, backend checks and production packaging. Its downloadable
+[browser/screenshots artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46072131165/artifacts/15233651655)
+and [Linux engineering package](https://github.com/TomasDelon/programmable-notes/actions/runs/46072131165/artifacts/15233366552)
+are source-bound; the package is not promoted as accepted.
+
+The changed [installed run46072986581](https://github.com/TomasDelon/programmable-notes/actions/runs/46072986581)
+reached complete startup and passed the helper's exact path echo, then failed final
+chooser dismissal. Cleanup passed without force or residual processes. See
+[the fixed receipt](installed-46072986581.json). Acceptance-action state was not
+available: missing button, refused/error action, acknowledged action without
+completion and deadline exhaustion remain distinct unknowns. No disk editing,
+close, restart or recovery pass is inferred. The generic permission substring
+is advisory. Its [bounded startup artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46072986581/artifacts/15234585492)
+was retained but not downloaded or visually inspected here.
+
+The next observation records one closed acceptance state using only existing
+traversal/action results, gated to failed chooser dismissal. It changes no action, label, exact echo, acknowledgement or deadline predicate.
+This is diagnostic work, not a claimed runtime correction.
+
+## Recovery discovery and modal regressions
+
+Initial discriminating tests reproduced false empty status on loading/failure,
+disabled initial focus and an actual CtrlK palette over the recovery modal.
+The shared dialog now has app-bound pending/ready/failed states, explicit retry,
+cached-version restoration during failure and stale-completion protection.
+A strict replay test also found and fixed a retired discovery reservation before
+the existing application port is invoked. Native field undo remains available;
+background palette/mode/history dispatch is suppressed only while recovery renders.
+
+The frozen full local check exited0:1014 unit,159 Chromium,9 Pages,4 disposable
+local cloud cases, static checks and production build. Tooling had183 passes and
+two scanner-dependent skips from an omitted scanner path. The subsequent entire
+tooling rerun with the pinned scanner and final helper diagnostics passed189
+cases with zero failures/skips; format/lint/types also passed. Application source
+inputs were unchanged after the full browser run.
+Targeted44 units and7 controlled-port Chromium journeys also passed, including
+cached restoration while refresh remains failed, late resolution/rejection after
+app replacement, strict replay and responsive screenshots. Independent source
+review found no blocking issue. These are shared browser interactions, not GTK or
+actual application restart/recovery evidence.
+
+## Actual guarded-v2 readiness failure
+
+[Run46072990136](https://github.com/TomasDelon/programmable-notes/actions/runs/46072990136)
+on25041e7 compiled the changed fixed host and passed headless lifecycle tests and
+sealed Debian13 OS admission (GTK3.24.49/WebKitGTK2.54.3). The actual Stop case
+failed ready/readiness_deadline; bridge, termination, trusted host input and
+cleanup passed. Pointer/keyboard and expiry did not run. The existing readiness
+clock and all policy/resource limits were unchanged.
+
+The strictly validated [fixed receipt](react-46072990136.json) retains an advisory
+native_only/built snapshot without observed commit/finish, denied navigation,
+load failure or renderer termination. Built is published before guard installation;
+there is no separate guard-installation or publication-completion witness.
+Consequently this does not identify a guard bug, startup cause or renderer crash.
+No unchanged retry follows. General native React remains disabled and historical
+v1 success is not relabelled as guarded-v2 acceptance.
+
+Only fixed annotations and API metadata were inspected, not raw logs or artifacts.
+Downloadable [diagnostic](https://github.com/TomasDelon/programmable-notes/actions/runs/46072990136/artifacts/15233114208)
+and [OS admission](https://github.com/TomasDelon/programmable-notes/actions/runs/46072990136/artifacts/15233517801)
+artifacts remain separately scoped. Next inspect empty construction versus later
+load_html and define a discriminating first-load observation; do not delay guards,
+loosen CSP/network/isolation or increase deadlines to obtain a pass.
+
+## Source-bound follow-up, not yet observed natively
+
+The action selector now searches only the unique exact-title chooser under the
+owned PID, rather than every same-PID window. Negative controls reject another
+window's Open button and duplicate owned roots before any action. This is a real
+selector correctness fix; its relationship to the observed dismissal failure
+remains unproven. Closed acceptance-state reporting remains separate and carries
+no path, button contents or exception text.
+
+The next guarded-v2 native snapshot uses exact schema2 and four additional passive
+milestones: all guards/hooks installed, fixed publication requested/returned, and
+actual GTK provisional Started. Existing Committed/Finished meanings, all runtime
+limits and readiness/input requirements stay unchanged. Both old and new load
+paths invoke the same pinned WebKit API with no base URI; no base-URL cause was
+found. Tests reject old/missing/extra/mistyped fields and all-native-flags success
+without actual authored readiness. Exhaustive native serialization stays within
+the existing256-byte bound. These source controls do not establish GTK runtime
+behavior; the next observation is still required, with no unchanged retry.
+
+After title-scoped selection and schema2 inputs froze, the entire final tooling
+suite passed191 tests with zero failures or skips using the pinned scanner.
+Format/lint/types also passed. The native snapshot's six pure-std Rust tests
+passed, including all512 boolean combinations across five termination labels;
+Rustfmt passed. Independent source review found no blocking issue. Application
+source inputs remain those of the1014-unit/159-Chromium/9-Pages/4-cloud full run;
+these helper-only changes do not claim new native execution or handler denial.

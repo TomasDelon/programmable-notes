@@ -6,8 +6,9 @@ The current native entry mounts the shared Source/Preview workspace through its
 guarded window-lifetime owner. Authorize a disposable folder using **Choose local
 vault**. Edits target original files automatically; there is no manual Save
 workflow in this candidate. Reselect the vault after restarting. React execution,
-file lifecycle/Trash, recovery discovery and update integration remain incomplete.
-Do not treat this as the accepted application or production security readiness.
+file lifecycle/Trash and update integration remain incomplete. Recovery discovery
+and explicit new-copy restoration are implemented; actual installed restart/recovery
+acceptance remains pending. Do not treat this as the accepted application or production security readiness.
 
 Actual installed validation must use a fresh ordinary account and synthetic files:
 open through the real OS folder picker; type in Source and Preview; independently
@@ -34,7 +35,7 @@ Use a completed required CI run from this repository and exact branch head. The
 job rejects mismatched head/tree/digest, fork runs, missing required jobs and mixed
 dispatch modes before installation. It uses a fresh ordinary account on the
 standard ubuntu-24.04 runner and uploads only two fixed JSON receipts and synthetic
-Source/Preview PNGs as `native-shared-editor-witness`. Missing receipts, forced
+startup/Source/Preview PNGs as `native-shared-editor-witness`. Missing receipts, forced
 app cleanup and residual app/WebKit processes are failures. Ordinary display/driver
 service cleanup is separate. This is a free standard public-repository runner;
 there are no paid services, public releases or update feed changes.
@@ -454,3 +455,17 @@ Open for folder selection, and Save only for its save action. The helper now use
 that exact default label rather than Select; it does not try alternative buttons.
 This independently verified SDK mismatch was after the previous failed echo
 stage, so it is not claimed as the cause of that earlier failure.
+
+The next diagnostic records one closed acceptance state only when exact chooser
+dismissal fails: not_attempted, not_found, action_error, action_rejected or
+action_acknowledged. It reuses existing lookup/action results and adds no click or time. An action acknowledgement still does not prove selection or
+closure. The observer publishes only one validated bare marker for the matching
+failed journey; missing, duplicate or malformed markers stay unknown. This is a
+measurement, not a fix for installed run46072986581's dismissal failure.
+
+Button lookup now traverses only the unique exact-title top-level child of the
+owned PID, matching the already-used location-entry topology. Previously it
+searched every same-PID window, which could act on a different window or spend
+the observation budget traversing WebKit. Duplicate matching roots fail before
+any action; there is no global fallback. This is a proven selector narrowing,
+not proof that it caused or fixes the observed native dismissal failure.
