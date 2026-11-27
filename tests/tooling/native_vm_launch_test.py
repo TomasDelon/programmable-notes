@@ -255,6 +255,9 @@ class LaunchGate(unittest.TestCase):
         self.assertEqual(argv[argv.index("-device") + 1], "virtio-net-pci,netdev=net0")
         self.assertEqual(argv.count("-device"), 1)
         self.assertEqual(argv[argv.index("-serial") + 1], "stdio")
+        self.assertEqual(argv[argv.index("-monitor") + 1], "none")
+        self.assertEqual(argv.count("-qmp"), 1)
+        self.assertRegex(argv[argv.index("-qmp") + 1], r"^unix:/proc/self/fd/[0-9]+/monitor\.sock,server=on,wait=off$")
         for forbidden in ("-virtfs", "-fsdev", "-chardev", "-enable-kvm"):
             self.assertNotIn(forbidden, argv)
         self.assertNotIn(str(self.key), " ".join(argv))

@@ -38,6 +38,8 @@ const passed = {
   mounts_allowed: true,
   root_ext4_vda: true,
   agent_absent: true,
+  container_absent: true,
+  logind_active: true,
   authorized_count: 1,
   authorized_sha256: 'a'.repeat(64),
 };
@@ -86,6 +88,16 @@ test('reports OS-only success without promoting native application security or p
     '::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false\n',
   );
   assert.doesNotMatch(result.stdout, /a{64}/);
+});
+
+test('requires both full OS admission facts to be present and exactly true', (t) => {
+  for (const field of ['container_absent', 'logind_active']) {
+    const missing = { ...passed };
+    delete missing[field];
+    refused(run(fixture(t, missing).file));
+    for (const value of [false, 1, 'true', null])
+      refused(run(fixture(t, { ...passed, [field]: value }).file));
+  }
 });
 
 test('reports only paired fixed advisory boot markers for boot failure or its cleanup', (t) => {
@@ -176,6 +188,8 @@ test('reports only fixed failed-probe checks and rejects misplaced or injected d
     'mounts_allowed',
     'root_ext4_vda',
     'agent_absent',
+    'container_absent',
+    'logind_active',
   ]) {
     for (const scope of [
       probe,

@@ -226,7 +226,7 @@ def main(argv=None):
                 "-drive", f"file={pinned[2]},format=raw,if=virtio,cache=writeback",
                 "-netdev", f"user,id=net0,restrict=on,hostfwd=tcp:127.0.0.1:{config['ssh_port']}-:22",
                 "-device", "virtio-net-pci,netdev=net0", "-nographic", "-serial", "stdio",
-                "-monitor", f"unix:{runtime_path}/monitor.sock,server=on,wait=off",
+                "-monitor", "none", "-qmp", f"unix:{runtime_path}/monitor.sock,server=on,wait=off",
                 "-pidfile", f"{runtime_path}/qemu.pid", "-no-reboot",
             ]
             serial = os.open("serial.log", os.O_WRONLY | os.O_CREAT | os.O_EXCL | FLAGS,

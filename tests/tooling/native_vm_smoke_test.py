@@ -18,7 +18,7 @@ import tempfile
 import threading
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts/native-vm-smoke.py"
 SPEC = importlib.util.spec_from_file_location("native_vm_smoke", SCRIPT)
@@ -61,7 +61,7 @@ class Process:
 
 
 class Smoke(unittest.TestCase):
-    def execute_probe(self, *, mount_suffix=b"", auth_suffix=b""):
+    def execute_probe(self, *, mount_suffix=b"", auth_suffix=b"", command_results=None):
         authorized = (self.root / "context/controller.pub").read_bytes()
         reads = {
             "/proc/self/mountinfo": [b"1 0 8:0 / / rw - ext4 /dev/vda rw\n2 1 0:1 / /sys/fs/cgroup rw - cgroup2 cgroup rw\n", mount_suffix, b""],
@@ -80,8 +80,24 @@ class Smoke(unittest.TestCase):
                                stat=lambda path, **options: SimpleNamespace(st_rdev=os.makedev(8, 0), st_mode=stat.S_IFBLK),
                                major=os.major, minor=os.minor, getuid=lambda: 1001, environ={})
         original_import = builtins.__import__
+        results = iter(command_results or [1, 0])
+        def run(args, **options):
+            expected = (["/usr/bin/systemd-detect-virt", "--container", "--quiet"],
+                        ["/usr/bin/systemctl", "is-active", "--quiet", "systemd-logind.service"])
+            self.assertIn(args, expected)
+            self.assertEqual(options, {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL,
+                                       "stderr": subprocess.DEVNULL, "timeout": 2})
+            result = next(results)
+            if isinstance(result, Exception):
+                raise result
+            return SimpleNamespace(returncode=result)
         def import_module(name, *args, **options):
-            return fake if name == "os" else original_import(name, *args, **options)
+            if name == "os":
+                return fake
+            if name == "subprocess":
+                return SimpleNamespace(run=run, DEVNULL=subprocess.DEVNULL,
+                                       TimeoutExpired=subprocess.TimeoutExpired)
+            return original_import(name, *args, **options)
         output = io.StringIO()
         with redirect_stdout(output):
             exec(smoke.PROBE, {"__builtins__": {**vars(builtins), "__import__": import_module}})
@@ -114,7 +130,8 @@ class Smoke(unittest.TestCase):
         authorization = (self.root / "context/controller.pub").read_bytes()
         self.facts = {"version": 1, "uid": 1001, "pid1_systemd": True, "cgroup_v2": True,
                       "mounts_allowed": True, "root_ext4_vda": True, "authorized_count": 1,
-                      "authorized_sha256": hashlib.sha256(authorization).hexdigest(), "agent_absent": True}
+                      "authorized_sha256": hashlib.sha256(authorization).hexdigest(), "agent_absent": True,
+                      "container_absent": True, "logind_active": True}
         self.calls, self.processes = [], []
         self.guard = None
         self.ssh_transform = lambda status, data, _kind: (status, data)
@@ -270,7 +287,9 @@ class Smoke(unittest.TestCase):
         cases = [(raw, "schema") for raw in malformed]
         for field, value in (("version", True), ("uid", "PRIVATE_UID"), ("authorized_count", 2),
                              ("pid1_systemd", False), ("cgroup_v2", False), ("mounts_allowed", 1),
-                             ("root_ext4_vda", False), ("agent_absent", False), ("authorized_sha256", "PRIVATE_HASH")):
+                             ("root_ext4_vda", False), ("agent_absent", False),
+                             ("container_absent", 1), ("logind_active", False),
+                             ("authorized_sha256", "PRIVATE_HASH")):
             cases.append((json.dumps({**self.facts, field: value}).encode(), field))
         cases.append((json.dumps({**self.facts, "PRIVATE_UNKNOWN": "PRIVATE_VALUE"}).encode(), "schema"))
         for raw, check in cases:
@@ -352,7 +371,7 @@ class Smoke(unittest.TestCase):
         self.assertEqual(receipt["reason"], "cleanup_failed")
         self.assertEqual(receipt.get("probe_check"), "cgroup_v2")
 
-    def test_monitor_sends_only_fixed_powerdown_to_owned_unix_socket(self):
+    def qmp_fixture(self, replies):
         path = self.root / "runtime/monitor.sock"
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.addCleanup(server.close)
@@ -362,12 +381,104 @@ class Smoke(unittest.TestCase):
         def receive():
             connection, _ = server.accept()
             with connection:
-                observed.append(connection.recv(128))
+                connection.settimeout(1)
+                try:
+                    for reply in replies:
+                        if reply is None:
+                            observed.append(connection.recv(256))
+                        else:
+                            for chunk in reply:
+                                connection.sendall(chunk)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
         worker = threading.Thread(target=receive, daemon=True)
         worker.start()
+        return worker, observed
+
+    def test_qmp_fragmented_greeting_and_acknowledgements_send_only_fixed_commands(self):
+        worker, observed = self.qmp_fixture([
+            [b'{"QMP":{"version":{},', b'"capabilities":[]}}\r\n'], None,
+            [b'{"event":"READY","data":{},"timestamp":{}}\r\n',
+             b'{"return":{},"id":"capabilities"}\r', b'\n'], None,
+            [b'{"return":{},"id":"powerdown"}\r\n']])
         smoke._powerdown(str(self.root))
         worker.join(timeout=2)
-        self.assertEqual(observed, [b"system_powerdown\n"])
+        self.assertFalse(worker.is_alive())
+        self.assertEqual([json.loads(raw) for raw in observed], [
+            {"execute": "qmp_capabilities", "id": "capabilities"},
+            {"execute": "system_powerdown", "id": "powerdown"}])
+
+    def test_qmp_refuses_wrong_ids_errors_duplicates_oversize_and_invalid_greetings(self):
+        for greeting, reply in [
+            (b'{}\r\n', b''),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"return":{},"id":"wrong"}\r\n'),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"error":{"class":"GenericError"},"id":"capabilities"}\r\n'),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"return":{},"id":"capabilities","id":"capabilities"}\r\n'),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'x' * 4097),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"return":{},"id":"capabilities"}\r\n' * 2),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"event":"READY"}\r\n' * 17),
+            (b'{"QMP":{"version":{},"capabilities":[]}}\r\n', b'{"event":1}\r\n'),
+        ]:
+            with self.subTest(reply=reply[:32]):
+                path = self.root / "runtime/monitor.sock"
+                if path.exists():
+                    path.unlink()
+                worker, _ = self.qmp_fixture([[greeting], None, [reply]])
+                with self.assertRaises(Exception):
+                    smoke._powerdown(str(self.root))
+                worker.join(timeout=2)
+
+    def test_qmp_uses_one_deadline_including_fragmented_greeting(self):
+        worker, _ = self.qmp_fixture([[b'{"QMP":{"version":{},"capabilities":[]}}\r\n']])
+        with patch.object(smoke.time, "monotonic", side_effect=[0, 0, 0, 5]):
+            with self.assertRaises(smoke.TimedOut):
+                smoke._powerdown(str(self.root))
+        worker.join(timeout=2)
+
+    def test_qmp_stalled_peer_times_out_without_fallback_command(self):
+        path = self.root / "runtime/monitor.sock"
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
+            server.bind(str(path))
+            server.listen(1)
+            # Real connected socket, with a shortened synthetic remaining deadline.
+            with patch.object(smoke.time, "monotonic", side_effect=[0, 4.99, 4.99]):
+                with self.assertRaises(TimeoutError):
+                    smoke._powerdown(str(self.root))
+            connection, _ = server.accept()
+            with connection:
+                self.assertEqual(connection.recv(1024), b"")
+
+    def test_qmp_rejects_duplicate_final_ack_already_buffered_with_accepted_ack(self):
+        path = self.root / "runtime/monitor.sock"
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
+            server.bind(str(path))
+            # Script recv boundaries: later frames after completion are outside
+            # this check; only an already-buffered trailing reply is rejected.
+            monitor = MagicMock()
+            monitor.__enter__.return_value = monitor
+            monitor.recv.side_effect = [
+                b'{"QMP":{"version":{},"capabilities":[]}}\r\n',
+                b'{"return":{},"id":"capabilities"}\r\n',
+                b'{"return":{},"id":"powerdown"}\r\n' * 2]
+            with patch.object(smoke.socket, "socket", return_value=monitor):
+                with self.assertRaises(smoke.Refused):
+                    smoke._powerdown(str(self.root))
+            self.assertEqual(monitor.recv.call_count, 3)
+
+    def test_full_os_probe_accepts_only_exact_command_exit_codes(self):
+        for results, field in [([0, 0], "container_absent"), ([2, 0], "container_absent"),
+                               ([FileNotFoundError(), 0], "container_absent"),
+                               ([subprocess.TimeoutExpired("fixed", 2), 0], "container_absent"),
+                               ([1, 1], "logind_active"), ([1, FileNotFoundError()], "logind_active"),
+                               ([1, subprocess.TimeoutExpired("fixed", 2)], "logind_active")]:
+            facts = self.execute_probe(command_results=results)
+            self.assertIs(facts[field], False)
+            with self.assertRaises(smoke.ProbeRefused) as failure:
+                smoke._facts(json.dumps(facts).encode(), self.facts["authorized_sha256"])
+            self.assertEqual(failure.exception.probe_check, field)
+        facts = self.execute_probe()
+        self.assertIs(facts["container_absent"], True)
+        self.assertIs(facts["logind_active"], True)
 
     def test_guard_spawn_signal_is_retained_and_owned_guard_reaped(self):
         actual = self.dispatch
@@ -405,7 +516,8 @@ class Smoke(unittest.TestCase):
         self.assertIn(b"/sys/fs/cgroup/cgroup.controllers", smoke.PROBE)
         self.assertIn(b"/home/fixture/.ssh/authorized_keys", smoke.PROBE)
         self.assertIn(b"SSH_AUTH_SOCK", smoke.PROBE)
-        self.assertNotIn(b"subprocess", smoke.PROBE)
+        self.assertIn(b"/usr/bin/systemd-detect-virt", smoke.PROBE)
+        self.assertIn(b"/usr/bin/systemctl", smoke.PROBE)
         self.assertNotIn(b"sudo", smoke.PROBE)
         self.assertLess(len(smoke.PROBE), 4096)
 

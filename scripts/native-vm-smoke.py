@@ -44,7 +44,7 @@ class CleanupFailed(Refused):
 
 
 PROBE_CHECKS = frozenset(("schema", "version", "uid", "authorized_count", "authorized_sha256",
-                          "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"))
+                          "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"))
 
 
 class ProbeRefused(Refused):
@@ -59,8 +59,8 @@ class ProbeRefused(Refused):
 
 ENV = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
 FIELDS = {"version", "uid", "pid1_systemd", "cgroup_v2", "mounts_allowed",
-          "root_ext4_vda", "authorized_count", "authorized_sha256", "agent_absent"}
-PROBE = b'''import hashlib,json,os,stat
+          "root_ext4_vda", "authorized_count", "authorized_sha256", "agent_absent", "container_absent", "logind_active"}
+PROBE = b'''import hashlib,json,os,stat,subprocess
 def read(path,limit):
  fd=os.open(path,os.O_RDONLY|os.O_CLOEXEC|os.O_NOFOLLOW|os.O_NONBLOCK)
  try:
@@ -71,6 +71,10 @@ def read(path,limit):
    raw.extend(chunk)
   raise ValueError()
  finally: os.close(fd)
+def command_ok(args,expected):
+ try:
+  return subprocess.run(args,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=2).returncode==expected
+ except (OSError,subprocess.TimeoutExpired): return False
 allowed={'ext4','proc','sysfs','tmpfs','devtmpfs','devpts','cgroup2','securityfs','pstore','bpf','tracefs','debugfs','configfs','hugetlbfs','mqueue','autofs','efivarfs','fusectl','binfmt_misc','ramfs','nsfs'}
 mounts=[]
 for line in read('/proc/self/mountinfo',65536).decode('ascii').splitlines():
@@ -84,7 +88,7 @@ try:
 except OSError: pass
 authorized=read('/home/fixture/.ssh/authorized_keys',256)
 controllers=read('/sys/fs/cgroup/cgroup.controllers',4096).split()
-result={'version':1,'uid':os.getuid(),'pid1_systemd':read('/proc/1/comm',32)==b'systemd\\n','cgroup_v2':any(item[2]=='cgroup2' for item in mounts) and {b'cpu',b'memory',b'pids'}.issubset(controllers),'mounts_allowed':bool(mounts) and len(mounts)<=512 and all(item[2] in allowed for item in mounts),'root_ext4_vda':root,'authorized_count':len([line for line in authorized.splitlines() if line.strip()]),'authorized_sha256':hashlib.sha256(authorized).hexdigest(),'agent_absent':'SSH_AUTH_SOCK' not in os.environ}
+result={'version':1,'uid':os.getuid(),'pid1_systemd':read('/proc/1/comm',32)==b'systemd\\n','cgroup_v2':any(item[2]=='cgroup2' for item in mounts) and {b'cpu',b'memory',b'pids'}.issubset(controllers),'mounts_allowed':bool(mounts) and len(mounts)<=512 and all(item[2] in allowed for item in mounts),'root_ext4_vda':root,'authorized_count':len([line for line in authorized.splitlines() if line.strip()]),'authorized_sha256':hashlib.sha256(authorized).hexdigest(),'agent_absent':'SSH_AUTH_SOCK' not in os.environ,'container_absent':command_ok(['/usr/bin/systemd-detect-virt','--container','--quiet'],1),'logind_active':command_ok(['/usr/bin/systemctl','is-active','--quiet','systemd-logind.service'],0)}
 print(json.dumps(result,sort_keys=True))
 '''
 
@@ -101,8 +105,8 @@ def _facts(raw, expected):
     for field, value in (("version", 1), ("uid", 1001), ("authorized_count", 1)):
         if type(facts[field]) is not int or facts[field] != value:
             raise ProbeRefused(field)
-    # Fixed order makes multiple failures reproducible; admission predicates are unchanged.
-    for field in ("pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"):
+    # Fixed order makes multiple admission failures reproducible.
+    for field in ("pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"):
         if facts[field] is not True:
             raise ProbeRefused(field)
     if facts["authorized_sha256"] != expected:
@@ -404,15 +408,81 @@ def _ssh(identity, known_hosts):
 
 
 def _powerdown(root_path):
+    # QMP acknowledges the request; only the subsequent normal guard exit proves
+    # shutdown. One deadline covers connect, greeting, capabilities and powerdown.
+    deadline = time.monotonic() + 5
     with ExitStack() as stack:
         runtime = guard._root(root_path + "/runtime", stack)
         node = os.stat("monitor.sock", dir_fd=runtime, follow_symlinks=False)
         if not stat.S_ISSOCK(node.st_mode) or node.st_uid != os.getuid():
             raise Refused()
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as monitor:
-            monitor.settimeout(5)
-            monitor.connect(root_path + "/runtime/monitor.sock")
-            monitor.sendall(b"system_powerdown\n")
+            def remaining():
+                duration = deadline - time.monotonic()
+                if duration <= 0:
+                    raise TimedOut()
+                monitor.settimeout(duration)
+            remaining()
+            monitor.connect(f"/proc/self/fd/{runtime}/monitor.sock")
+            current = os.stat("monitor.sock", dir_fd=runtime, follow_symlinks=False)
+            if (current.st_dev, current.st_ino) != (node.st_dev, node.st_ino):
+                raise Refused()
+            pending = bytearray()
+            total = events = 0
+            def message():
+                nonlocal total
+                while b"\n" not in pending:
+                    remaining()
+                    chunk = monitor.recv(min(4096, 4097 - len(pending)))
+                    total += len(chunk)
+                    if not chunk or len(pending) + len(chunk) > 4096 or total > 16384:
+                        raise Refused()
+                    pending.extend(chunk)
+                end = pending.index(b"\n") + 1
+                raw = bytes(pending[:end])
+                del pending[:end]
+                if not raw.endswith(b"\r\n"):
+                    raise Refused()
+                try:
+                    value = json.loads(raw, object_pairs_hook=guard._pairs)
+                except (ValueError, UnicodeError, guard.Refused):
+                    raise Refused() from None
+                if type(value) is not dict:
+                    raise Refused()
+                remaining()
+                return value
+            greeting = message()
+            info = greeting.get("QMP")
+            if (set(greeting) != {"QMP"} or type(info) is not dict
+                    or type(info.get("version")) is not dict
+                    or type(info.get("capabilities")) is not list
+                    or any(type(item) is not str for item in info["capabilities"])):
+                raise Refused()
+            def event(value):
+                nonlocal events
+                if ("event" not in value or set(value) - {"event", "data", "timestamp"}
+                        or type(value["event"]) is not str or not 0 < len(value["event"]) <= 128
+                        or ("data" in value and type(value["data"]) is not dict)
+                        or ("timestamp" in value and type(value["timestamp"]) is not dict)):
+                    raise Refused()
+                events += 1
+                if events > 16:
+                    raise Refused()
+            for execute, identifier in (("qmp_capabilities", "capabilities"), ("system_powerdown", "powerdown")):
+                remaining()
+                monitor.sendall((json.dumps({"execute": execute, "id": identifier}) + "\r\n").encode("ascii"))
+                while True:
+                    value = message()
+                    if "event" in value:
+                        event(value)
+                        continue
+                    if value != {"return": {}, "id": identifier}:
+                        raise Refused()
+                    break
+            # Reject duplicate replies already delivered with the final ack.
+            while pending:
+                event(message())
+            remaining()
 
 
 def _smoke(root_path):
@@ -539,7 +609,8 @@ def _smoke(root_path):
         receipt = {"version": 1, "status": "passed", "scope": "guest-os-admission-only", "native_app_tested": False,
                    "wrong_pin_rejected": True, "wrong_key_rejected": True, "guard_normal_exit": True,
                    "uid": 1001, "pid1_systemd": True, "cgroup_v2": True, "mounts_allowed": True,
-                   "root_ext4_vda": True, "agent_absent": True, "authorized_count": 1,
+                   "root_ext4_vda": True, "agent_absent": True, "container_absent": True,
+                   "logind_active": True, "authorized_count": 1,
                    "authorized_sha256": expected_hash}
         preparation._write(root, "smoke-receipt.json", (json.dumps(receipt, sort_keys=True) + "\n").encode())
 

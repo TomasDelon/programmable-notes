@@ -150,6 +150,35 @@ The correction still requires a **fresh** preparation/packing/admission run.
 Old prepared contexts intentionally fail current source-hash validation. Do not
 reuse the old private image, weaken admission checks or relabel earlier failures.
 
+## SSH admission passed; normal shutdown failed
+
+After the mode correction, [run45920885755](https://github.com/TomasDelon/programmable-notes/actions/runs/45920885755)
+at **d8119a7** reached `guard_exit` with successful SSH return0. The
+[source-pinned receipt](os-admission-45920885755.json) records completed positive
+probes, the then-current OS-fact checks and both wrong-pin/key refusal brackets.
+Normal guest shutdown timed out; the guard returned2 after owned failure cleanup.
+This is **not a successful full admission or normal-shutdown result**. No native
+payload ran. Required [CI45920835175](https://github.com/TomasDelon/programmable-notes/actions/runs/45920835175)
+passed both jobs, separately from this failed runtime gate.
+
+The old monitor client wrote HMP bytes and closed without acknowledgement. It is
+replaced with fixed QMP greeting/capability/powerdown exchanges: fixed command IDs,
+5-second absolute deadline, bounded frames/bytes/events, strict consumed replies
+and no force-off fallback. Already-buffered contradictory replies are refused;
+the client does not promise to inspect future frames after command completion.
+An acknowledged command still cannot pass without the exact normal guard exit.
+
+Admission now also requires `container_absent` and `logind_active` to be exactly
+true, using only fixed absolute commands with 2-second timeouts and discarded
+output. Error, timeout, missing binary or unexpected return status fails closed.
+These strengthen readiness; no stale-container cause is asserted. The existing
+packer already removes Docker's `.dockerenv`/`.dockerinit` offline and is unchanged.
+SSH identity rules, boot180s, shutdown60s, process ownership and native isolation
+limits are unchanged. **47 smoke, 29 launch and 10 reporter controls passed**.
+The complete local regression packet passed **793 unit, 114 tooling / zero skips,
+153 Chromium, 9 Pages and 4 cloud browser cases**; the final affected-tooling rerun
+also passed114/zero skips. Actual QMP/full-OS execution remains the next gate.
+
 ## Reproduce
 
 On a disposable Linux host with Docker, Python and OpenSSH client:

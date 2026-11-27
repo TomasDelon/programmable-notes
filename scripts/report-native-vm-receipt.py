@@ -21,11 +21,11 @@ STAGES = {"boot_wait", "probe", "pin", "key", "powerdown", "guard_exit"}
 SSH = {"none", "host_key", "authentication", "timeout", "connection", "protocol", "other"}
 BASE = {"version", "scope", "native_app_tested", "status"}
 PROBE_CHECKS = {"schema", "version", "uid", "authorized_count", "authorized_sha256",
-                "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"}
+                "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"}
 BOOT_MARKERS = {"linux_kernel_started", "systemd_started", "multiuser", "sshd_started",
                 "kernel_panic", "emergency", "network_wait", "crng_ready", "root_device_timeout", "initramfs_shell"}
 PASSED = {"wrong_pin_rejected", "wrong_key_rejected", "guard_normal_exit", "pid1_systemd",
-          "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"}
+          "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"}
 
 
 def annotation(receipt):

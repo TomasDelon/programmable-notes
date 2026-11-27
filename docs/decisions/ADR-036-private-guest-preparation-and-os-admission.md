@@ -54,3 +54,12 @@ disabled. The same-UID trusted host is outside this fixture's adversary model.
 No source review, mocked process test or image hash establishes installed GUI,
 native IPC denial, inline React input, Stop, resource containment or recovery.
 The rejected native interface is not promoted by this decision.
+
+The subsequent real run passed SSH/key/pin checks but timed out on normal poweroff.
+Use fixed, acknowledged QMP instead of an unacknowledged HMP write. Bound the whole
+exchange and every consumed reply; retain mandatory normal guard exit and owned
+failure cleanup. Full-OS admission also checks actual no-container detection and
+active logind, with fixed bounded quiet commands and strict true-only facts.
+This adds no guest command API or application privilege and does not establish
+that either predicate caused the earlier failure. Image normalization and native
+isolation policy are unchanged; actual runtime validation remains required.
