@@ -113,3 +113,49 @@ their reference behavior; no filesystem grants or renderer permissions expand.
   pending composition, conflict, failed recovery, repeated/no-change close,
   restart/reopen and preserved legacy reference behavior. Mocks and a compilation
   pass cannot satisfy installed filesystem or runtime security acceptance.
+
+## Prerequisite implementation checkpoint
+
+The owning editor barrier and native state/command guard are implemented as an
+inactive prerequisite packet. Focused editor controls passed52 cases; pure native
+state controls passed11. Registration mocks and exact capability controls passed;
+actual native Documents reservation tests await hosted Tauri execution. Independent
+source review found no Important/Critical defect in that bounded packet. No native
+entry or frontend OS-close orchestration is activated by these results.
+
+## Next frontend integration packet
+
+- Make the native product bootstrap async and negotiate before constructing a
+  model that can issue dirty/recovery/filesystem calls. Capture the epoch privately;
+  validate the exact fixed native wire records and fail closed on malformed replies.
+- Extend the existing native product service with a narrow closeGuard observer and
+  cancel/commit operation. Start one serial bounded polling lifecycle on the first
+  product subscriber and stop it on the last; ignore retired callbacks. No generic
+  event, IPC or lifecycle framework and no duplicated source/history registry.
+- Project only closeRequestId/closeUncertain/closing to shared ProductRoot. Keep
+  epoch/transport identity private. OS requests, not author preview messages, drive
+  the product's close path.
+- Track product operations synchronously before their initial protection await;
+  workspace.operation can still be null while choose/open/create waits there.
+  Refuse before detachment if an operation or retained-resolution action is in
+  flight, and keep one private close singleflight.
+- prepareClose receives only a trusted synchronous detach callback. Capture request
+  scope privately, detach and obtain aggregate admission before any await; flush
+  originals and relevant recovery acknowledgements, then assert exact witnesses.
+- Drain recovery and hint queues to a stable tail after originals flush; queue
+  identity may advance while an await is held. Awaiting a UX-swallowed rejection
+  is not a durability receipt. Verify pending work and original-file durability;
+  obsolete recovery failure cannot erase retained/unapplied text or fake its Keep
+  acknowledgement.
+- On a blocked barrier or definite precommit failure, cancel the exact native
+  request and prove its acknowledgement before resuming. Return an explicit editing,
+  committing or uncertain outcome; unsupported services keep the existing refusal.
+  Lost/malformed commit/cancel responses hold identities and publication closed.
+- Root handles each application/request once, including StrictMode and late async
+  completion. Remount only its owning editor after a proved cancellation AND actual
+  clean detachment; never unmount a refused IME. Preserve session/history keys and
+  change only a local mount nonce. Committing/uncertain outcomes never remount.
+- Test held commit/cancel, real editor producer retirement, late reports, failed
+  save/recovery, external writer, no-document close, application replacement and
+  exact history after abort. Then run the installed Linux witness; no corrected
+  installer claim or default entry activation before its acceptance gate.

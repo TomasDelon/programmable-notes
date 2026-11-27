@@ -14,6 +14,10 @@ import {
   session,
   binary,
 } from './native-webdriver-lib.mjs';
+import {
+  verifyEditorCloseCommands,
+  verifyPreviewCloseCommands,
+} from './native-close-controls.mjs';
 await preflight();
 function denied(result) {
   console.log('IPC_DENIED', JSON.stringify(result));
@@ -60,6 +64,10 @@ try {
     });
     console.log('IPC_EDITOR_VAULT_REGISTERED', command);
   }
+  // Unsupported version and forged epochs prove registration without enabling
+  // guarded mode in the legacy app, which has no close-request consumer.
+  await verifyEditorCloseCommands(invoke);
+  console.log('IPC_EDITOR_CLOSE_REGISTERED');
   await wd(`/session/${session}/execute/sync`, {
     script:
       "localStorage.setItem('pn-native-validation-secret','editor-only-marker'); return true;",
@@ -191,6 +199,8 @@ try {
         busy: false,
       }),
     );
+  await verifyPreviewCloseCommands(invoke);
+  console.log('IPC_PREVIEW_CLOSE_DENIED');
   for (const action of [
     'list',
     'append',

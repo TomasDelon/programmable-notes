@@ -19,6 +19,9 @@ fn main() {
             "close_document",
             "confirm_discard",
             "set_documents_dirty",
+            "enable_editor_close_guard",
+            "editor_close_state",
+            "resolve_editor_close",
             "recovery_draft",
         ]),
     ))

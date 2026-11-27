@@ -44,6 +44,16 @@ and recovery. It has local runtime/browser tests; account provisioning, real
 Access login and hosted Free-quota acceptance are still pending. The existing
 website is not switched to cloud storage automatically.
 
+## Shared editor integration checks
+
+`npm run test:product:browser` runs real Chromium caret/history/navigation and
+failure tests against the shared editor with synthetic in-memory vault ports.
+It does not test native OS dialogs or disk access. The ordinary CI `check` job
+also runs it and includes its synthetic screenshots/results in the downloadable
+`playwright-results` artifact. See the
+[dated evidence and limits](docs/security-evidence/2026-11-27-shared-product/README.md).
+The shared native product is not yet the default installed entry.
+
 ## Original engine and native implementation status
 
 The [Linux local-editor candidate](docs/LINUX_LOCAL_EDITOR.md) adds an authorized

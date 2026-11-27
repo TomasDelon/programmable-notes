@@ -20,6 +20,37 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Safe-close prerequisites and CI evidence — 27 November 2026
+
+The owning SourceEditor/RenderedEditor now expose a synchronous clean-detachment
+prerequisite. It refuses unprocessed DOM, composition/end finalization, drafts,
+retained text and unresolved recovery/publication, preserves immutable history,
+and retires captured commands. Repeated same-stack requests cannot drain the
+observer and bypass refusal. Its timing reasoning is Linux-scoped, not a mobile
+or arbitrary-browser guarantee.
+
+Rust adds three fixed editor-only guard commands with private epoch/request
+identity, shared operation/dialog reservation and a one-shot OS-close permit.
+Legacy callers do not negotiate automatically. Preview/child checks precede state
+access, and registration probes do not activate the guard in legacy tests. The
+native frontend still needs to join detachment, aggregate flush/recovery and exact
+commit/cancel acknowledgement; current nativeProduct deliberately refuses release.
+No default-entry, installer or installed-close acceptance is claimed.
+
+The full local check passed873 unit,140 tooling/zero skips,153 Chromium,9 Pages
+and4 local cloud cases, with formatting/lint/types/build. The separate shared
+product Chromium journey passed nine checkpoints again. Eleven pure Rust close-state
+cases and Rust formatting passed. Actual Tauri Documents reservation/update tests
+are scheduled in CI and remain unexecuted locally because this host lacks the
+GTK/WebKitGTK development stack. Compilation, headless guards, real native IPC
+and installed application behavior remain separate claims.
+
+The new browser journey runs in the existing standard-Linux check job; its exact
+synthetic screenshots/JSON are whitelisted in playwright-results artifacts, not
+the cache directory. No extra runner, paid service or public release is introduced.
+See [ADR039](decisions/ADR-039-quiescent-editor-close.md) and the updated
+[close plan](plans/native-editor-close-handshake.md) for remaining wiring/gates.
+
 ## Shared product/local-vault integration — 27 November 2026
 
 The pending ProductRoot slice extracts actual document navigation, mode/history

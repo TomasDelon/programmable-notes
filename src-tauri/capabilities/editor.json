@@ -21,6 +21,9 @@
     "allow-close-document",
     "allow-confirm-discard",
     "allow-set-documents-dirty",
+    "allow-enable-editor-close-guard",
+    "allow-editor-close-state",
+    "allow-resolve-editor-close",
     "allow-recovery-draft",
     "allow-desktop-update-check",
     "allow-desktop-update-install"

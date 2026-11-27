@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
+import * as nativeClose from '../../scripts/native-close-controls.mjs';
 
 // Execute the real probe's editor phase with a transport boundary only. This is a
 // regression for probe ordering/assertions, never evidence of native IPC/ACL behavior.
@@ -28,7 +29,8 @@ async function editorProbe(brokenCommand, error = 'Command not found') {
   const sandbox = {
     exports: {},
     console: { log() {} },
-    __builtin: (name) => require(name),
+    __builtin: (name) =>
+      name === './native-close-controls.mjs' ? nativeClose : require(name),
     __invoke(command, args) {
       calls.push({ command, args: args && JSON.parse(JSON.stringify(args)) });
       if (command === 'host_probe')
@@ -37,6 +39,19 @@ async function editorProbe(brokenCommand, error = 'Command not found') {
         return JSON.stringify({
           ok: false,
           error: command === brokenCommand ? error : domainError,
+        });
+      if (command === 'enable_editor_close_guard')
+        return JSON.stringify({
+          ok: false,
+          error: 'Unsupported editor close protocol',
+        });
+      if (
+        command === 'editor_close_state' ||
+        command === 'resolve_editor_close'
+      )
+        return JSON.stringify({
+          ok: false,
+          error: 'Unknown editor close epoch',
         });
       if (command === 'stop_preview') return JSON.stringify({ ok: true });
       if (command === 'preview_connection_active')

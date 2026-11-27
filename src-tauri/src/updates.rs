@@ -273,6 +273,36 @@ mod tests {
     }
 
     #[test]
+    fn guarded_close_waits_for_active_update_not_its_returned_latch() {
+        use crate::editor_close::{update_blocks_close, Action, Busy, Decision, Gate};
+        let updates = Updates::default();
+        let mut gate = Gate::default();
+        gate.enable(1, "epoch".into(), Busy::default()).unwrap();
+        gate.close(Some("request".into()), Busy::default());
+        let mut installing = Flag::acquire(&updates.installing).unwrap();
+        let active = Flag::acquire(&updates.busy).unwrap();
+        let conditions = || Busy {
+            installing: update_blocks_close(
+                updates.installing.load(Ordering::SeqCst),
+                updates.close_must_wait(),
+                false,
+            ),
+            ..Busy::default()
+        };
+        assert!(gate
+            .resolve("epoch", "request", Action::Commit, conditions())
+            .is_err());
+        installing.keep = true;
+        drop(active);
+        drop(installing);
+        assert!(updates.installing.load(Ordering::SeqCst));
+        assert!(Flag::acquire(&updates.installing).is_err());
+        assert!(update_blocks_close(true, updates.close_must_wait(), true));
+        gate.resolve("epoch", "request", Action::Commit, conditions())
+            .unwrap();
+        assert_eq!(gate.close(None, conditions()), Decision::Permit);
+    }
+    #[test]
     fn returned_installed_or_unconfirmed_outcome_allows_close_without_new_install() {
         let updates = Updates::default();
         let mut installing = Flag::acquire(&updates.installing).unwrap();

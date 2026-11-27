@@ -1,15 +1,17 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod documents;
 mod downloads;
+mod editor_close;
 #[cfg(target_os = "linux")]
 mod preview_failure;
 #[cfg(target_os = "linux")]
 mod renderer_failure;
 mod updates;
 use documents::{
-    choose_vault, close_document, confirm_discard, create_vault_source, open_documents,
-    open_notes_folder, open_vault_sources, recovery_draft, reopen_document, save_document,
-    save_document_as, set_documents_dirty, vault_inventory,
+    choose_vault, close_document, confirm_discard, create_vault_source, editor_close_state,
+    enable_editor_close_guard, open_documents, open_notes_folder, open_vault_sources,
+    recovery_draft, reopen_document, resolve_editor_close, save_document, save_document_as,
+    set_documents_dirty, vault_inventory,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -152,6 +154,9 @@ fn main() {
             close_document,
             confirm_discard,
             set_documents_dirty,
+            enable_editor_close_guard,
+            editor_close_state,
+            resolve_editor_close,
             recovery_draft,
             updates::desktop_update_check,
             updates::desktop_update_install

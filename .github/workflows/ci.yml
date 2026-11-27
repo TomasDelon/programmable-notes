@@ -120,6 +120,9 @@ jobs:
         # Includes real local workerd/D1 and authenticated browser acceptance.
         # Synthetic identity verifies the JWT path; no account secrets or paid services.
         run: npm run check
+      - name: Verify shared product editor with synthetic vault transport
+        # Real Chromium input and source/history; simulated OS ports, not native acceptance.
+        run: npm run test:product:browser
       - name: Capture the browser walkthrough
         if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
         run: |
@@ -144,9 +147,14 @@ jobs:
         if: always() && !cancelled()
         with:
           name: playwright-results
+          # Whitelist synthetic outputs; never upload the cache directory itself.
+          include-hidden-files: true
           path: |
             playwright-report/
             test-results/
+            .cache/product-browser-results.json
+            .cache/product-browser.png
+            .cache/product-browser.png.failure.png
           retention-days: 7
 
   native-check:
@@ -209,6 +217,8 @@ jobs:
       - name: Inspect production package (does not claim runtime validation)
         run: node scripts/verify-linux-package.mjs
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - name: Test native document and close guards (headless, not GUI acceptance)
+        run: cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol --locked
       - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check

@@ -1,8 +1,14 @@
 //! Only this editor-side module turns native picker selections into file grants.
-use crate::Host;
+use crate::{
+    editor_close::{
+        Action as GuardAction, Busy as GuardBusy, Decision as GuardDecision, Gate as CloseGate,
+        Phase as GuardPhase,
+    },
+    Host,
+};
 use native_documents::{Document, Saved, Store};
 use preview_policy::authorize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::{
     atomic::{AtomicBool, AtomicUsize, Ordering},
     Arc, Mutex,
@@ -12,6 +18,7 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 #[derive(Default)]
 pub struct Documents {
     store: Mutex<Store>,
+    close_gate: Mutex<CloseGate>,
     #[cfg(target_os = "linux")]
     vault: Mutex<Option<Arc<VaultSession>>>,
     pub dirty: AtomicBool,
@@ -152,7 +159,10 @@ impl Documents {
             .ok_or_else(|| "Unknown or replaced vault session; select a vault again".into())
     }
     pub(crate) fn busy_for_install(&self) -> bool {
-        self.dirty.load(Ordering::SeqCst)
+        self.close_gate
+            .lock()
+            .map_or(true, |gate| gate.busy_for_install())
+            || self.dirty.load(Ordering::SeqCst)
             || self.client_busy.load(Ordering::SeqCst)
             || self.operations.load(Ordering::SeqCst) > 0
             || self.dialog.load(Ordering::SeqCst)
@@ -164,6 +174,9 @@ impl Documents {
     }
     #[cfg(target_os = "linux")]
     fn renderer_stopped(&self) {
+        if let Ok(mut gate) = self.close_gate.lock() {
+            gate.renderer_stopped();
+        }
         self.renderer_stopped.store(true, Ordering::SeqCst);
         self.client_busy.store(false, Ordering::SeqCst);
     }
@@ -173,7 +186,14 @@ impl Operation {
     fn new(docs: Arc<Documents>, installing: &AtomicBool) -> Result<Self, String> {
         // Installer sets its flag before inspecting operations. Sequential ordering
         // ensures either it sees this reservation or this reservation sees its flag.
-        docs.operations.fetch_add(1, Ordering::SeqCst);
+        {
+            let mut gate = docs
+                .close_gate
+                .lock()
+                .map_err(|_| "Editor close gate unavailable")?;
+            gate.reserve_authority()?;
+            docs.operations.fetch_add(1, Ordering::SeqCst);
+        }
         let operation = Self(docs);
         if installing.load(Ordering::SeqCst) {
             return Err("An update is installing; document operations are paused".into());
@@ -195,6 +215,13 @@ fn operation(app: &AppHandle, docs: Arc<Documents>) -> Result<Operation, String>
 pub(crate) struct Dialog(Arc<Documents>);
 impl Dialog {
     pub(crate) fn acquire(docs: &Arc<Documents>) -> Result<Self, String> {
+        let gate = docs
+            .close_gate
+            .lock()
+            .map_err(|_| "Editor close gate unavailable")?;
+        if gate.phase() == GuardPhase::Committing {
+            return Err("Editor close commit is frozen; dialog refused".into());
+        }
         if docs.dialog.swap(true, Ordering::SeqCst) {
             return Err("A native dialog is already open".into());
         }
@@ -561,6 +588,157 @@ pub fn set_documents_dirty(
     docs.client_busy.store(busy, Ordering::SeqCst);
     Ok(())
 }
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorCloseState {
+    version: u8,
+    epoch: String,
+    phase: &'static str,
+    request: Option<String>,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EditorCloseAction {
+    Cancel,
+    Commit,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorCloseResolution {
+    status: &'static str,
+    epoch: String,
+    request: String,
+    reason: Option<&'static str>,
+    state: EditorCloseState,
+}
+fn close_state(gate: &CloseGate) -> Result<EditorCloseState, String> {
+    Ok(EditorCloseState {
+        version: 1,
+        epoch: gate
+            .epoch()
+            .ok_or("Editor close guard is not enabled")?
+            .into(),
+        phase: match gate.phase() {
+            GuardPhase::Idle => "idle",
+            GuardPhase::Requested => "requested",
+            GuardPhase::Committing => "committing",
+            GuardPhase::Uncertain => "uncertain",
+        },
+        request: gate.request().map(String::from),
+    })
+}
+fn close_busy(app: &AppHandle, docs: &Documents, negotiating: bool) -> Result<GuardBusy, String> {
+    let updates = app
+        .try_state::<crate::updates::Updates>()
+        .ok_or("Native update state unavailable; editor close refused")?;
+    Ok(GuardBusy {
+        operations: docs.operations.load(Ordering::SeqCst),
+        dialog: docs.dialog.load(Ordering::SeqCst),
+        installing: crate::editor_close::update_blocks_close(
+            updates.installing.load(Ordering::SeqCst),
+            updates.close_must_wait(),
+            negotiating,
+        ),
+        renderer_stopped: docs.renderer_stopped.load(Ordering::SeqCst),
+    })
+}
+#[tauri::command]
+pub fn enable_editor_close_guard(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    version: u8,
+) -> Result<EditorCloseState, String> {
+    let docs = editor(&app, &window, &host)?;
+    let mut gate = docs
+        .close_gate
+        .lock()
+        .map_err(|_| "Editor close gate unavailable")?;
+    let epoch = native_documents::new_vault_session_token()
+        .map_err(|_| "Editor close entropy unavailable")?;
+    gate.enable(version, epoch, close_busy(&app, &docs, true)?)?;
+    close_state(&gate)
+}
+#[tauri::command]
+pub fn editor_close_state(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    epoch: String,
+) -> Result<EditorCloseState, String> {
+    let docs = editor(&app, &window, &host)?;
+    let gate = docs
+        .close_gate
+        .lock()
+        .map_err(|_| "Editor close gate unavailable")?;
+    gate.verify_epoch(&epoch)?;
+    close_state(&gate)
+}
+#[tauri::command]
+pub fn resolve_editor_close(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    epoch: String,
+    request: String,
+    action: EditorCloseAction,
+) -> Result<EditorCloseResolution, String> {
+    let docs = editor(&app, &window, &host)?;
+    let mut gate = docs
+        .close_gate
+        .lock()
+        .map_err(|_| "Editor close gate unavailable")?;
+    gate.verify_epoch(&epoch)?;
+    let commit = matches!(action, EditorCloseAction::Commit);
+    let reason = gate
+        .resolve(
+            &epoch,
+            &request,
+            if commit {
+                GuardAction::Commit
+            } else {
+                GuardAction::Cancel
+            },
+            close_busy(&app, &docs, false)?,
+        )
+        .err();
+    let state = close_state(&gate)?;
+    drop(gate);
+    if reason.is_none() && commit {
+        let native = window.clone();
+        let held = docs.clone();
+        // The permit is consumed by CloseRequested, never by destroying the window.
+        if app
+            .run_on_main_thread(move || {
+                if native.close().is_err() {
+                    if let Ok(mut gate) = held.close_gate.lock() {
+                        gate.mark_uncertain();
+                    }
+                }
+            })
+            .is_err()
+        {
+            if let Ok(mut gate) = docs.close_gate.lock() {
+                gate.mark_uncertain();
+            }
+            return Err("Native close dispatch is uncertain".into());
+        }
+    }
+    Ok(EditorCloseResolution {
+        status: if reason.is_some() {
+            "refused"
+        } else if commit {
+            "committing"
+        } else {
+            "cancelled"
+        },
+        epoch,
+        request,
+        reason,
+        state,
+    })
+}
+
 /// Frontend work cannot continue after its renderer has terminated. Rust-side
 /// operation counts and the last dirty-source state remain authoritative.
 #[cfg(target_os = "linux")]
@@ -581,6 +759,29 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
         return;
     };
     let docs = state.inner().clone();
+    {
+        let Ok(mut gate) = docs.close_gate.lock() else {
+            api.prevent_close();
+            return;
+        };
+        let Ok(busy) = close_busy(window.app_handle(), &docs, false) else {
+            api.prevent_close();
+            return;
+        };
+        let request = if gate.guarded() && gate.phase() == GuardPhase::Idle {
+            native_documents::new_vault_session_token().ok()
+        } else {
+            None
+        };
+        match gate.close(request, busy) {
+            GuardDecision::Permit => return,
+            GuardDecision::Prevent => {
+                api.prevent_close();
+                return;
+            }
+            GuardDecision::Legacy => {}
+        }
+    }
     let updating = window
         .app_handle()
         .try_state::<crate::updates::Updates>()
@@ -619,7 +820,11 @@ pub fn close_requested(window: &tauri::Window, event: &tauri::WindowEvent) {
             .show(move |confirmed| {
                 let _dialog = dialog;
                 if confirmed {
-                    let _ = window.destroy();
+                    if let Ok(gate) = docs.close_gate.lock() {
+                        if !gate.guarded() {
+                            let _ = window.destroy();
+                        }
+                    }
                 }
             });
     }
@@ -930,6 +1135,165 @@ mod tests {
         assert!(worker.join().unwrap().is_empty());
         assert!(!docs.close_must_wait());
         assert!(!docs.busy_for_install());
+    }
+    #[test]
+    fn negotiated_close_shares_operation_and_dialog_admission() {
+        let docs = Arc::new(Documents::default());
+        docs.close_gate
+            .lock()
+            .unwrap()
+            .enable(1, "epoch".into(), GuardBusy::default())
+            .unwrap();
+        let operation = Operation::new(docs.clone(), &AtomicBool::new(false)).unwrap();
+        let dialog = Dialog::acquire(&docs).unwrap();
+        {
+            let mut gate = docs.close_gate.lock().unwrap();
+            assert_eq!(
+                gate.close(Some("request".into()), GuardBusy::default()),
+                GuardDecision::Prevent
+            );
+            assert!(gate
+                .resolve(
+                    "epoch",
+                    "request",
+                    GuardAction::Commit,
+                    GuardBusy {
+                        operations: docs.operations.load(Ordering::SeqCst),
+                        dialog: docs.dialog.load(Ordering::SeqCst),
+                        ..GuardBusy::default()
+                    }
+                )
+                .is_err());
+        }
+        drop(dialog);
+        drop(operation);
+        docs.close_gate
+            .lock()
+            .unwrap()
+            .resolve(
+                "epoch",
+                "request",
+                GuardAction::Commit,
+                GuardBusy::default(),
+            )
+            .unwrap();
+        assert!(Operation::new(docs.clone(), &AtomicBool::new(false)).is_err());
+        assert!(Dialog::acquire(&docs).is_err());
+        assert_eq!(docs.operations.load(Ordering::SeqCst), 0);
+        assert!(docs.busy_for_install());
+    }
+    #[test]
+    fn installed_update_latch_allows_guarded_close_but_refuses_new_operations() {
+        let docs = Arc::new(Documents::default());
+        let updates = crate::updates::Updates::default();
+        {
+            let mut gate = docs.close_gate.lock().unwrap();
+            gate.enable(1, "epoch".into(), GuardBusy::default())
+                .unwrap();
+            gate.close(Some("request".into()), GuardBusy::default());
+        }
+        // The returned updater future has released busy, keeping only its latch.
+        updates.installing.store(true, Ordering::SeqCst);
+        assert!(!updates.close_must_wait());
+        assert!(Operation::new(docs.clone(), &updates.installing).is_err());
+        let busy = GuardBusy {
+            installing: crate::editor_close::update_blocks_close(
+                updates.installing.load(Ordering::SeqCst),
+                updates.close_must_wait(),
+                false,
+            ),
+            ..GuardBusy::default()
+        };
+        let mut gate = docs.close_gate.lock().unwrap();
+        gate.resolve("epoch", "request", GuardAction::Commit, busy)
+            .unwrap();
+        assert_eq!(gate.close(None, busy), GuardDecision::Permit);
+    }
+    #[test]
+    fn native_operation_and_final_commit_cannot_both_win_admission() {
+        for _ in 0..32 {
+            let docs = Arc::new(Documents::default());
+            {
+                let mut gate = docs.close_gate.lock().unwrap();
+                gate.enable(1, "epoch".into(), GuardBusy::default())
+                    .unwrap();
+                gate.close(Some("request".into()), GuardBusy::default());
+            }
+            let barrier = Arc::new(std::sync::Barrier::new(2));
+            let worker_docs = docs.clone();
+            let worker_barrier = barrier.clone();
+            let worker = std::thread::spawn(move || {
+                worker_barrier.wait();
+                Operation::new(worker_docs, &AtomicBool::new(false))
+            });
+            barrier.wait();
+            let committed = {
+                let mut gate = docs.close_gate.lock().unwrap();
+                gate.resolve(
+                    "epoch",
+                    "request",
+                    GuardAction::Commit,
+                    GuardBusy {
+                        operations: docs.operations.load(Ordering::SeqCst),
+                        ..GuardBusy::default()
+                    },
+                )
+                .is_ok()
+            };
+            let operation = worker.join().unwrap();
+            assert_ne!(committed, operation.is_ok());
+            drop(operation);
+            assert_eq!(docs.operations.load(Ordering::SeqCst), 0);
+        }
+    }
+    #[test]
+    fn stopped_guard_retains_native_protection_and_warned_recovery_dialog() {
+        let docs = Arc::new(Documents::default());
+        {
+            let mut gate = docs.close_gate.lock().unwrap();
+            gate.enable(1, "epoch".into(), GuardBusy::default())
+                .unwrap();
+            gate.close(Some("request".into()), GuardBusy::default());
+            gate.resolve(
+                "epoch",
+                "request",
+                GuardAction::Commit,
+                GuardBusy::default(),
+            )
+            .unwrap();
+        }
+        docs.renderer_stopped();
+        assert_eq!(
+            docs.close_gate.lock().unwrap().phase(),
+            GuardPhase::Uncertain
+        );
+        assert!(docs.busy_for_install());
+        assert!(Operation::new(docs.clone(), &AtomicBool::new(false)).is_err());
+        let notice = Dialog::acquire(&docs)
+            .expect("The existing warned force-quit notice remains available");
+        assert_eq!(
+            docs.close_gate
+                .lock()
+                .unwrap()
+                .close(None, GuardBusy::default()),
+            GuardDecision::Prevent
+        );
+        drop(notice);
+    }
+    #[test]
+    fn poisoned_native_close_gate_refuses_admission_and_installation() {
+        let docs = Arc::new(Documents::default());
+        let held = docs.clone();
+        assert!(std::thread::spawn(move || {
+            let _gate = held.close_gate.lock().unwrap();
+            panic!("synthetic poison");
+        })
+        .join()
+        .is_err());
+        assert!(docs.busy_for_install());
+        assert!(Operation::new(docs.clone(), &AtomicBool::new(false)).is_err());
+        assert!(Dialog::acquire(&docs).is_err());
+        assert_eq!(docs.operations.load(Ordering::SeqCst), 0);
     }
     #[test]
     fn install_flag_refuses_new_operations_and_releases_reservation() {

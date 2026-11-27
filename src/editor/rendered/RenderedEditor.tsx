@@ -80,6 +80,9 @@ import {
 export type RenderedCompositionPhase = 'start' | 'update';
 
 export interface RenderedCommands {
+  /** Owning SourceEditor checks both views before detaching either. */
+  canDetachIfClean?: () => boolean;
+  detachIfClean?: () => boolean;
   insertText: (text: string) => boolean;
   focus: () => void;
   format: (action: string) => void;
@@ -162,6 +165,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     'memory' | 'saving' | 'saved' | 'failed'
   >('memory');
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
+  const linkDraftActive = useRef(false);
   const [documentComposing, setDocumentComposing] = useState(false);
   useEffect(() => {
     if (error || unappliedText !== null)
@@ -237,6 +241,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
 
   useEffect(() => {
     if (!mount.current) return;
+    let disposed = false;
     let projection = parseRenderedSource(
       latest.current.source,
       latest.current.path,
@@ -254,6 +259,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         : latest.current.sourceWitness === undefined &&
           latest.current.applyWithWitness === undefined;
     const projectionIsCurrent = () =>
+      !disposed &&
       protocolMatches() &&
       (!sessionAware ||
         Boolean(
@@ -1648,6 +1654,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
         return true;
       },
       dispatchTransaction: (transaction) => {
+        if (disposed) return;
         if (
           transaction.docChanged &&
           ((latest.current.disabled && compositionBase === null) ||
@@ -2025,11 +2032,71 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     };
     editor.dom.addEventListener('pn-source-change', sourceChanged);
     editor.dom.addEventListener('compositionend', afterComposition);
+    const domObserver =
+      typeof MutationObserver === 'function'
+        ? new MutationObserver(() => {})
+        : null;
+    domObserver?.observe(editor.dom, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    let pendingDom = false;
+    const hasPendingDom = () => {
+      if (pendingDom || !domObserver) return true;
+      if (!domObserver.takeRecords().length) return false;
+      pendingDom = true;
+      queueMicrotask(() => {
+        pendingDom = false;
+      });
+      return true;
+    };
+    const canDetachIfClean = () =>
+      !disposed &&
+      view.current === editor &&
+      projectionIsCurrent() &&
+      !editor.composing &&
+      !compositionBase &&
+      compositionFrame === null &&
+      !deferredSourceChange &&
+      retainedDraft.current === null &&
+      !recoveryAction.current &&
+      !linkDraftActive.current &&
+      !hasPendingDom();
+    const dispose = () => {
+      if (disposed) return;
+      disposed = true;
+      domObserver?.disconnect();
+      if (pendingHistoryTimer !== null)
+        window.clearTimeout(pendingHistoryTimer);
+      editor.dom.removeEventListener('pn-source-change', sourceChanged);
+      editor.dom.removeEventListener('compositionend', afterComposition);
+      if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
+      editor.destroy();
+      view.current = null;
+      commandsRef.current = null;
+      toolbar.current = null;
+    };
     commandsRef.current = {
-      focus: () => editor.focus(),
-      format: (action) => toolbar.current?.run(action),
+      canDetachIfClean,
+      detachIfClean: () => {
+        if (disposed) return true;
+        if (!canDetachIfClean()) return false;
+        dispose();
+        return true;
+      },
+      focus: () => {
+        if (!disposed) editor.focus();
+      },
+      format: (action) => {
+        if (!disposed) toolbar.current?.run(action);
+      },
       insertText: (text) => {
-        if (latest.current.disabled || retainedDraft.current !== null)
+        if (
+          disposed ||
+          latest.current.disabled ||
+          retainedDraft.current !== null
+        )
           return false;
         const before = acceptedSource;
         const parsed = parseRenderedSource(text, latest.current.path);
@@ -2046,7 +2113,7 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
     // Expose commands only within this component, never on window or iframe APIs.
     toolbar.current = {
       run: (name) => {
-        if (latest.current.disabled) return;
+        if (disposed || latest.current.disabled) return;
         const state = editor.state;
         const dispatch = editor.dispatch.bind(editor);
         const commands: Record<string, Command> = {
@@ -2097,11 +2164,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             source: acceptedSource,
             witness: projectionWitness ? { ...projectionWitness } : undefined,
           };
+          linkDraftActive.current = true;
           setLinkDraft('https://');
         }
         editor.focus();
       },
       link: (href) => {
+        if (disposed) return;
         if (!/^(https?:\/\/|mailto:|attachment:)/i.test(href)) {
           setError('Use an https, http, mailto or attachment link.');
           return;
@@ -2133,21 +2202,12 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
           marks.link!.create({ href }),
         );
         editor.dispatch(transaction.setMeta('isolated', true));
+        linkDraftActive.current = false;
         setLinkDraft(null);
         editor.focus();
       },
     };
-    return () => {
-      if (pendingHistoryTimer !== null)
-        window.clearTimeout(pendingHistoryTimer);
-      editor.dom.removeEventListener('pn-source-change', sourceChanged);
-      editor.dom.removeEventListener('compositionend', afterComposition);
-      if (compositionFrame !== null) cancelAnimationFrame(compositionFrame);
-      editor.destroy();
-      view.current = null;
-      commandsRef.current = null;
-      toolbar.current = null;
-    };
+    return dispose;
     // The host switches presentation without replacing the canonical source/history.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.path, commandsRef]);
@@ -2197,7 +2257,13 @@ export function RenderedEditor({ commandsRef, ...props }: Props) {
             onChange={(event) => setLinkDraft(event.target.value)}
           />
           <button type="submit">Apply link</button>
-          <button type="button" onClick={() => setLinkDraft(null)}>
+          <button
+            type="button"
+            onClick={() => {
+              linkDraftActive.current = false;
+              setLinkDraft(null);
+            }}
+          >
             Cancel
           </button>
         </form>

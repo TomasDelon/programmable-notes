@@ -59,7 +59,9 @@
     "test:cloudflare": "npm run build:cloudflare && playwright test --config playwright.cloudflare.config.ts",
     "test:cloudflare:built": "npm run prepare:cloudflare && playwright test --config playwright.cloudflare.config.ts",
     "pretest:cloud:local": "npm run prepare:runtime && npm run prepare:notices",
-    "test:cloud:local": "node scripts/build-cloud-test.mjs && playwright test --config playwright.cloud.config.ts"
+    "test:cloud:local": "node scripts/build-cloud-test.mjs && playwright test --config playwright.cloud.config.ts",
+    "pretest:product:browser": "npm run prepare:runtime",
+    "test:product:browser": "node scripts/test-product-browser.mjs .cache/product-browser.png"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

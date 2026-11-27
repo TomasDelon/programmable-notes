@@ -55,6 +55,8 @@ import {
 const external = Annotation.define<boolean>();
 const EMPTY_WIKILINKS: readonly LinkResolution[] = Object.freeze([]);
 export type EditorCommands = {
+  /** Native close prerequisite; absence or false means close must remain blocked. */
+  detachIfClean?: () => boolean;
   undo: () => void;
   redo: () => void;
   revealSource: (
@@ -152,14 +154,16 @@ export function SourceEditor({
   const pendingBatch = useRef<SourceBatch | null>(null);
   const publicationFailed = useRef(false);
   const publishing = useRef(false);
+  const detached = useRef(false);
   useLayoutEffect(() => {
     authority.current = session;
   }, [session]);
 
   const protocolMatches = () =>
-    sessionId.current === undefined
+    !detached.current &&
+    (sessionId.current === undefined
       ? authority.current === undefined
-      : authority.current?.witness.sessionId === sessionId.current;
+      : authority.current?.witness.sessionId === sessionId.current);
 
   function currentWitness(witness: SourceWitness | undefined): boolean {
     return (
@@ -190,8 +194,10 @@ export function SourceEditor({
   const path = sourcePath ?? documentKey ?? 'note.mdx';
   const renderedCommands = useRef<RenderedCommands | null>(null);
   const renderedActive = useRef(Boolean(rendered?.active));
+  const renderedMounted = useRef(Boolean(rendered));
   useLayoutEffect(() => {
     renderedActive.current = Boolean(rendered?.active);
+    renderedMounted.current = Boolean(rendered);
   }, [rendered]);
 
   useEffect(() => {
@@ -341,6 +347,8 @@ export function SourceEditor({
   }
 
   useEffect(() => {
+    detached.current = false;
+    locked.current = readOnly;
     const cache = histories?.current;
     const historyKey = sessionId.current ?? documentKey;
     const cached =
@@ -581,8 +589,101 @@ export function SourceEditor({
       }),
     });
     view.current = editor;
+    // This observer does not interpret source or replace CodeMirror's observer.
+    // It only refuses a same-stack close before native DOM input is processed.
+    const domObserver =
+      typeof MutationObserver === 'function'
+        ? new MutationObserver(() => {})
+        : null;
+    domObserver?.observe(editor.contentDOM, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    let pendingDom = false;
+    let sourceCompositionPending = false;
+    let compositionEpoch = 0;
+    const compositionStart = () => {
+      sourceCompositionPending = true;
+      compositionEpoch++;
+    };
+    const compositionEnd = () => {
+      sourceCompositionPending = true;
+      const epoch = ++compositionEpoch;
+      // Bubble on the outer editor after CodeMirror's content DOM handler: its
+      // Linux end-of-composition mutation read has already been queued.
+      queueMicrotask(() => {
+        if (epoch === compositionEpoch) sourceCompositionPending = false;
+      });
+    };
+    editor.dom.addEventListener('compositionstart', compositionStart);
+    editor.dom.addEventListener('compositionend', compositionEnd);
+    const hasPendingDom = () => {
+      if (pendingDom || !domObserver) return true;
+      if (!domObserver.takeRecords().length) return false;
+      // takeRecords drains our queue. Keep repeated same-stack attempts refused
+      // until the already-queued browser mutation checkpoint has run.
+      pendingDom = true;
+      queueMicrotask(() => {
+        pendingDom = false;
+      });
+      return true;
+    };
+    let disposed = false;
+    const dispose = () => {
+      if (disposed) return;
+      disposed = true;
+      detached.current = true;
+      locked.current = true;
+      domObserver?.disconnect();
+      editor.dom.removeEventListener('compositionstart', compositionStart);
+      editor.dom.removeEventListener('compositionend', compositionEnd);
+      if (historyKey !== undefined) {
+        if (publicationFailed.current) cache?.delete(historyKey);
+        else
+          cache?.set(historyKey, {
+            source: rawSource(editor.state),
+            history: editor.state.field(historyField),
+            selection: editor.state.selection,
+          });
+      }
+      if (commandsRef) commandsRef.current = null;
+      view.current = null;
+      editor.destroy();
+    };
+    const ownReady = () =>
+      view.current === editor &&
+      protocolMatches() &&
+      !publishing.current &&
+      !publicationFailed.current &&
+      !pendingBatch.current &&
+      !draftRef.current &&
+      !legacyPending.current &&
+      !renderedPending.current &&
+      !sourceCompositionPending &&
+      !editor.composing &&
+      !editor.compositionStarted &&
+      !visual &&
+      !live &&
+      (sessionId.current === undefined ||
+        currentWitness(acceptedWitness.current)) &&
+      !hasPendingDom();
     if (commandsRef)
       commandsRef.current = {
+        detachIfClean: () => {
+          if (disposed) return true;
+          if (!ownReady()) return false;
+          const child = renderedCommands.current;
+          if (
+            renderedMounted.current &&
+            (!child?.canDetachIfClean?.() || !child.detachIfClean)
+          )
+            return false;
+          // No await or event yield between readiness of both views and teardown.
+          if (renderedMounted.current && !child!.detachIfClean!()) return false;
+          dispose();
+          return true;
+        },
         undo: () => {
           if (view.current === editor && !locked.current && !draftRef.current)
             undo(editor);
@@ -592,7 +693,13 @@ export function SourceEditor({
             redo(editor);
         },
         formatRendered: (action) => {
-          if (!locked.current && !draftRef.current && renderedActive.current)
+          if (
+            !disposed &&
+            !detached.current &&
+            !locked.current &&
+            !draftRef.current &&
+            renderedActive.current
+          )
             renderedCommands.current?.format(action);
         },
         revealSource: (offset, expectedSource, witness) => {
@@ -652,20 +759,7 @@ export function SourceEditor({
           return true;
         },
       };
-    return () => {
-      if (historyKey !== undefined) {
-        if (publicationFailed.current) cache?.delete(historyKey);
-        else
-          cache?.set(historyKey, {
-            source: rawSource(editor.state),
-            history: editor.state.field(historyField),
-            selection: editor.state.selection,
-          });
-      }
-      if (commandsRef) commandsRef.current = null;
-      view.current = null;
-      editor.destroy();
-    };
+    return dispose;
     // The immutable document identity owns one EditorView. Updates below are transactions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
