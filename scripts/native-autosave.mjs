@@ -449,6 +449,111 @@ try {
   console.log(
     'PASS: shared controller automatic real-file publication, private grant binding, close/reopen and external conflict retention',
   );
+  // Application use cases around a real Store. Chooser/index are synthetic
+  // trusted ports: this is not OS-dialog, native GUI or create-file acceptance.
+  await build({
+    entryPoints: [resolve(repo, 'src/application/nativeWorkspace.ts')],
+    outfile: resolve(scratch, 'native-workspace.mjs'),
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+  });
+  const { createNativeWorkspace } = await import(
+    pathToFileURL(resolve(scratch, 'native-workspace.mjs'))
+  );
+  backend = await writer(binary);
+  // Release the helper's initial grant so every workspace grant comes from open.
+  assert.equal(
+    (
+      await backend.request({
+        action: 'close',
+        documentId: backend.document.id,
+      })
+    ).ok,
+    true,
+  );
+  let sequence = 0;
+  const workspace = createNativeWorkspace(
+    {
+      chooseVault: async () => ({
+        vaultId: 'fixture-vault',
+        displayPath: 'Synthetic fixture',
+      }),
+      vaultInventory: async (vaultId) => ({
+        vaultId,
+        entries: [{ logicalPath: 'note.mdx', bytes: (await stat(note)).size }],
+      }),
+      openVaultSources: async (vaultId, paths) => {
+        assert.deepEqual(paths, ['note.mdx']);
+        const receipt = await backend.request({ action: 'open' });
+        assert.equal(receipt.ok, true);
+        return { vaultId, documents: [receipt.document] };
+      },
+      createVaultSource: async () => {
+        throw Error('Not exercised by this fixture');
+      },
+      save: async (id, revision, source) => {
+        const receipt = await backend.request({
+          documentId: id,
+          expectedDiskRevision: revision,
+          source,
+        });
+        if (!receipt.ok) throw Error(receipt.error);
+        return { revision: receipt.diskRevision, durable: receipt.durable };
+      },
+      close: async (documentId) => {
+        const receipt = await backend.request({ action: 'close', documentId });
+        if (!receipt.ok) throw Error(receipt.error);
+      },
+    },
+    () => `workspace-${++sequence}`,
+  );
+  await workspace.choose();
+  const workspaceId = await workspace.open('note.mdx');
+  const workspaceSession = workspace.session(workspaceId);
+  const workspaceSource = `${controllerSource}\r\n# Workspace 😀\r\n`;
+  workspaceSession.publish({
+    expected: workspaceSession.witness,
+    source: workspaceSource,
+  });
+  const workspaceDeadline = Date.now() + 5000;
+  while (
+    !Buffer.from(workspaceSource).equals(await readFile(note)) &&
+    Date.now() < workspaceDeadline
+  )
+    await new Promise((yes) => setTimeout(yes, 10));
+  assert.deepEqual(
+    await readFile(note),
+    Buffer.from(workspaceSource),
+    'Workspace accepted edits reach disk before explicit flush',
+  );
+  await workspace.controller.flush();
+  await workspace.close(workspaceId);
+  assert.equal(workspace.state().sessions.length, 0);
+  const reopenedWorkspaceId = await workspace.open('note.mdx');
+  assert.notEqual(reopenedWorkspaceId, workspaceId);
+  const workspaceReopened = workspace.session(reopenedWorkspaceId);
+  assert.equal(workspaceReopened.witness.source, workspaceSource);
+  const workspaceExternal = `${workspaceSource}Independent disk edit\r\n`;
+  await writeFile(note, workspaceExternal);
+  const workspaceLocal = `${workspaceSource}Local retained edit\r\n`;
+  workspaceReopened.publish({
+    expected: workspaceReopened.witness,
+    source: workspaceLocal,
+  });
+  await assert.rejects(workspace.controller.flush());
+  await assert.rejects(workspace.close(reopenedWorkspaceId));
+  assert.equal(
+    workspace.session(reopenedWorkspaceId).witness.source,
+    workspaceLocal,
+  );
+  assert.equal(workspace.state().sessions.length, 1);
+  assert.deepEqual(await readFile(note), Buffer.from(workspaceExternal));
+  assert.equal((await stat(note)).mode & 0o777, 0o640);
+  await backend.stop();
+  console.log(
+    'PASS: native workspace selective open, automatic exact-byte real-file writes, close/reopen and external-conflict retention (synthetic chooser/index; no GUI/create claim)',
+  );
   console.log(
     'PASS: real Store autosave, coalescing, exact bytes, undo/redo, grants, permissions, restart, external conflict and lost-acknowledgement CAS',
   );

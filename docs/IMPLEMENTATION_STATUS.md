@@ -20,6 +20,39 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Native workspace use cases — 27 November 2026
+
+A new framework-independent `createNativeWorkspace` composes the reviewed native
+vault ports, private grant binding and DocumentSessions controller. It coordinates
+selection, inventory, selective opening, creation and acknowledged close without
+another source/history model, UI, browser database or runtime authority. Existing
+accepted-source autosave stays independent of structural operations. Late responses
+keep their originating vault/session; pending text and deliberate newer selection
+are retained. [ADR037](decisions/ADR-037-native-workspace-use-cases.md).
+
+Root's targeted validation passed **37 workspace tests, 108 combined targeted
+tests**. These are controller/transport-boundary results, not installed Tauri or
+GUI acceptance. An additional real Store workspace scenario passed with synthetic
+chooser/inventory ports and actual Store open/save/close: accepted BOM/CRLF/JSX and
+invalid MDX bytes appeared on disk **before flush**, close/reopen acquired a fresh
+session, and external conflict retained local text without overwriting external
+bytes or changing mode0640. This case does not demonstrate real creation or GUI
+interaction. The complete repository check exited 0: **776 unit, 107 tooling
+(zero skips), 152 Chromium, 9 local Pages and 4 inactive-cloud browser tests**,
+plus formatting, lint, strict types and production build. After the final
+diagnostic-only probe changes, tooling passed again: **108 tests, zero skips**.
+The original no-scheduling negative control still failed as expected.
+[Reproduction and scope](security-evidence/2026-11-27-native-workspace/README.md).
+No VM success is claimed here.
+
+Lost/rejected open or create replies conservatively block new acquisitions and
+vault replacement: a native grant or created file may already exist. Error-message
+strings cannot prove a no-side-effect refusal. Known session text remains owned;
+future typed refusals/reconciliation must resolve uncertain acquisition and failed
+cleanup before normal acquisition resumes. No silent retry, grant disposal or file
+deletion is introduced. Shared product wiring, native dirty/busy acknowledgement,
+recovery and installed lifecycle/security acceptance remain separate work.
+
 ## Share-free image preparation and OS admission pipeline — 27 November 2026
 
 New permanent development commands create a public-only Docker context, assemble
@@ -36,18 +69,31 @@ found zero remaining labelled containers or images. Host client location and
 read-only BuildX state failures were reproduced and fixed without replacing HOME,
 Docker trust settings or any sandbox restriction.
 
-The new manual-only standard Ubuntu CI mode performs boot/identity/share-free OS
-admission without duplicate application builds. Its source-review gate has passed;
-actual guest execution is still a distinct required observation. It uploads only
-a sanitized JSON receipt. **No guest boot, native application run or full security
-acceptance is claimed here.** The managed host still lacks host QEMU; no unchecked
+Required CI for source **3533fcc** actually passed:
+[run 45913220787](https://github.com/TomasDelon/programmable-notes/actions/runs/45913220787).
+The separate manual OS-admission
+[run 45913264160](https://github.com/TomasDelon/programmable-notes/actions/runs/45913264160)
+**failed after real image assembly and launch-layout validation**. Its exact
+internal failure stage/category is unverified: downloading the sanitized artifact
+returned Azure Blob `Forbidden`, including the approved retry. This retrieval
+blocker does not explain the guest failure. The failed run/artifact remain retained.
+
+A strict receipt reporter now exposes only validated OS stage/
+error enums and bounded return codes as check annotations on a future run. It
+reports fixed failed-probe field names without their values. It prints no raw SSH,
+paths, hashes or key material and does not suppress the original
+smoke-step failure. It is diagnostic delivery, not a fix for the unknown cause or
+retroactive evidence about the failed run. **Successful guest boot, authenticated
+OS admission, normal shutdown, native application behavior and full security
+acceptance remain unclaimed.** The managed host still lacks host QEMU; no unchecked
 container launch was substituted. [Evidence and reproduction](security-evidence/2026-11-27-vm-provisioning/README.md).
 
 Local complete-check exit 0: **739 unit, 101 tooling/zero skips, 152 Chromium,
 9 Pages and 4 inactive-cloud browser tests passed**, plus format/lint/types/build.
 New preparation/packing/admission wrappers count 29/31/28 Python controls. Staged
-source scanning found zero secrets. These local and image-preparation results do
-not stand in for the pending actual Ubuntu guest run.
+source scanning found zero secrets. These earlier local results and green required
+CI do not relabel the failed OS-admission run or certify the current workspace/
+reporter additions, which have only their separately stated targeted evidence.
 
 ## Explicit inline runtime and share-free fixture guard — 26 November 2026
 

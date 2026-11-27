@@ -16,6 +16,11 @@ it is not a UI/product to clone.
 
 ## Progress
 
+- [x] Compose native vault selection, inventory, selective open/create and
+      close in shared application use cases, reusing the canonical session and
+      autosave owners. Unit controls and a real Store open/save/close/conflict
+      witness pass. UI activation, typed acquisition refusal/reconciliation and
+      installed acceptance remain incomplete; see ADR037.
 - [x] Implement/review share-free preparation and fixed OS-admission tooling;
       real image assembly and layout checks passed. Actual guest admission,
       authored native runtime and full application acceptance remain pending.
