@@ -47,7 +47,12 @@ Use PLAYWRIGHT_BROWSERS_PATH when the matching browser is installed outside its
 default cache. The runner owns an ephemeral loopback Vite server and isolated
 optimizer cache; it never mounts the product through an application route or
 changes an entry point. Its screenshots and JSON results stay in ignored .cache.
-Native filesystem and native runtime results must remain marked not-tested.
+The frozen runner exited0 with nine checkpoints: Source and Preview caret edits,
+undo/redo in both modes, session-preserving switching, untouched mixed-MDX bytes,
+fresh-session close/reopen, blocked-write retention and external-writer CAS refusal.
+It also checks no literal numeric entity is visible after typing, a mode roundtrip
+and fresh reopen. Normal Preview and blocked-write screenshots were captured.
+Native filesystem and native runtime results remain marked not-tested.
 
 Development observations are preserved in the task log: an initial cold/shared
 optimizer caused startup/input timeouts; the runner now isolates its cache and
