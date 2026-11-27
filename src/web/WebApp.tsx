@@ -8,6 +8,7 @@ import {
   type FormEvent,
   type DragEvent,
   type ReactNode,
+  type ComponentType,
 } from 'react';
 import {
   AlertCircle,
@@ -60,9 +61,14 @@ import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
 import { cloudStorageEnabled } from './storage';
-import { useWebPreview } from './useWebPreview';
+import {
+  DocumentRuntime,
+  type DocumentRuntimeInput,
+  type DocumentRuntimeProps,
+  type DocumentRuntimeSession,
+} from '../preview/DocumentRuntime';
+import { WebDocumentRuntime } from './WebDocumentRuntime';
 import { shouldCompileWholeDocument } from './previewExecution';
-import { WebPreview } from './WebPreview';
 import { WebRenderedRuntime } from './WebRenderedRuntime';
 import { useOffline, activateUpdate } from './offline';
 import { createHoverIntentController } from './hoverIntent';
@@ -200,7 +206,13 @@ export function WebApp() {
       </div>
     );
   if (!model.state) return <StorageFailure model={model} />;
-  return <WorkspaceApp model={model} state={model.state} />;
+  return (
+    <WorkspaceApp
+      model={model}
+      state={model.state}
+      runtimeRenderer={WebDocumentRuntime}
+    />
+  );
 }
 
 function StorageFailure({ model }: { model: WorkspaceModel }) {
@@ -348,38 +360,30 @@ function DocumentTitle({ title }: { title: string }) {
   );
 }
 
+interface WorkspaceExecution {
+  files: DocumentRuntimeInput['files'];
+  images: DocumentRuntimeInput['images'];
+  fullDocument: boolean;
+  requested: boolean;
+  setRequested: (requested: boolean) => void;
+}
+
 function WorkspaceApp({
   model,
   state,
+  runtimeRenderer,
 }: {
   model: WorkspaceModel;
   state: WebState;
+  runtimeRenderer?: ComponentType<DocumentRuntimeProps>;
 }) {
-  const { notify, dismiss } = useNotifications();
   const { workspace } = state;
-  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
-  const offline = useOffline();
   const selected = workspace.selected;
-  const metadata = state.documents[selected]!;
-  const source = workspace.files[selected] ?? '';
-  const selectedIsNote = isMdxSource(selected);
-  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
+  const mode =
+    isMdxSource(selected) && state.mode !== 'source' ? 'preview' : 'source';
   const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
   const fullDocument = reactEnabled && runtimeDocument === selected;
-  const [analysisDiagnostic, setAnalysisDiagnostic] = useState<{
-    path: string;
-    source: string;
-    message: string | null;
-  } | null>(null);
-  const [islandRebuildVersion, setIslandRebuildVersion] = useState(0);
-  const attachmentRefs = useMemo(
-    () => attachmentReferences(source, selected),
-    [source, selected],
-  );
-  const attachmentIds = useMemo(
-    () => [...new Set(attachmentRefs.map((reference) => reference.id))],
-    [attachmentRefs],
-  );
   const previewImages = useMemo(
     () =>
       referencedPreviewAssets(
@@ -398,15 +402,73 @@ function WorkspaceApp({
       }),
     [workspace.files, workspace.groups, workspace.entry],
   );
-  const documentPreview = useWebPreview({
-    files,
-    entry: workspace.entry,
-    theme: state.theme,
-    images: previewImages,
-    corePlugins: state.corePlugins,
-    showComponentSource: state.previewPreferences?.showComponentSource,
-    enabled: shouldCompileWholeDocument(reactEnabled, mode, fullDocument),
-  });
+  return (
+    <DocumentRuntime
+      renderer={runtimeRenderer}
+      input={{
+        files,
+        entry: workspace.entry,
+        theme: state.theme,
+        images: previewImages,
+        corePlugins: state.corePlugins,
+        showComponentSource: state.previewPreferences?.showComponentSource,
+        enabled: shouldCompileWholeDocument(reactEnabled, mode, fullDocument),
+      }}
+    >
+      {(documentPreview) => (
+        <WorkspaceBody
+          model={model}
+          state={state}
+          documentPreview={documentPreview}
+          execution={{
+            files,
+            images: previewImages,
+            fullDocument,
+            requested: runtimeDocument === selected,
+            setRequested: (requested) =>
+              setRuntimeDocument(requested ? selected : null),
+          }}
+        />
+      )}
+    </DocumentRuntime>
+  );
+}
+
+function WorkspaceBody({
+  model,
+  state,
+  execution,
+  documentPreview,
+}: {
+  model: WorkspaceModel;
+  state: WebState;
+  execution: WorkspaceExecution;
+  documentPreview: DocumentRuntimeSession;
+}) {
+  const { notify, dismiss } = useNotifications();
+  const { workspace } = state;
+  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
+  const offline = useOffline();
+  const selected = workspace.selected;
+  const metadata = state.documents[selected]!;
+  const source = workspace.files[selected] ?? '';
+  const selectedIsNote = isMdxSource(selected);
+  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  const { files, images: previewImages, fullDocument } = execution;
+  const [analysisDiagnostic, setAnalysisDiagnostic] = useState<{
+    path: string;
+    source: string;
+    message: string | null;
+  } | null>(null);
+  const [islandRebuildVersion, setIslandRebuildVersion] = useState(0);
+  const attachmentRefs = useMemo(
+    () => attachmentReferences(source, selected),
+    [source, selected],
+  );
+  const attachmentIds = useMemo(
+    () => [...new Set(attachmentRefs.map((reference) => reference.id))],
+    [attachmentRefs],
+  );
   const preview = {
     ...documentPreview,
     error:
@@ -2177,14 +2239,11 @@ function WorkspaceApp({
                 />
               </div>
               <div className="web-preview-panel" hidden={mode !== 'preview'}>
-                {reactEnabled && preview.html && fullDocument && (
-                  <WebPreview
-                    html={preview.html}
-                    theme={state.theme}
-                    onError={preview.reportRuntimeError}
-                  />
-                )}
-                {!preview.html && !preview.error && fullDocument && (
+                {reactEnabled &&
+                  preview.presentation &&
+                  fullDocument &&
+                  preview.presentation}
+                {!preview.presentation && !preview.error && fullDocument && (
                   <div className="web-preview-placeholder" role="status">
                     {preview.stopped ? (
                       <>
@@ -2193,7 +2252,7 @@ function WorkspaceApp({
                         <button
                           type="button"
                           className="web-button"
-                          disabled={!reactEnabled}
+                          disabled={!reactEnabled || !preview.available}
                           onClick={preview.rebuild}
                         >
                           <Play size={14} /> Resume preview
@@ -2295,6 +2354,7 @@ function WorkspaceApp({
                 {mode === 'preview' &&
                 !fullDocument &&
                 reactEnabled &&
+                preview.available &&
                 !preview.stopped
                   ? 'Editable preview'
                   : preview.status}
@@ -2303,7 +2363,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={!reactEnabled}
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2312,7 +2372,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={!reactEnabled}
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild
@@ -2320,15 +2380,13 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={pendingEdit || !reactEnabled}
+                  disabled={pendingEdit || !reactEnabled || !preview.available}
                   onClick={() => {
-                    setRuntimeDocument(
-                      runtimeDocument === selected ? null : selected,
-                    );
+                    execution.setRequested(!execution.requested);
                     model.setMode('preview');
                   }}
                 >
-                  {runtimeDocument === selected
+                  {execution.requested
                     ? 'Edit rendered document'
                     : 'Run full document'}
                 </button>
@@ -2525,7 +2583,7 @@ function WorkspaceApp({
                       checked={corePluginEnabled(state.corePlugins, plugin.id)}
                       onChange={(event) => {
                         if (plugin.id === 'react' && !event.target.checked)
-                          setRuntimeDocument(null);
+                          execution.setRequested(false);
                         model.setCorePlugin(plugin.id, event.target.checked);
                       }}
                     />
@@ -2926,6 +2984,7 @@ function WorkspaceApp({
                 {mode === 'preview' &&
                 !fullDocument &&
                 reactEnabled &&
+                preview.available &&
                 !preview.stopped
                   ? 'Editable preview'
                   : preview.status}
@@ -2934,7 +2993,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={!reactEnabled}
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2943,7 +3002,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={!reactEnabled}
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild

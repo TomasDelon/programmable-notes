@@ -34,12 +34,23 @@ scatter whole-app `isTauri()` alternatives through the UI. Native dialogs/update
 services can be platform capabilities within shared settings; a separate shell
 or another note application is not an adapter.
 
-The inline editor now accepts an explicit trusted runtime renderer rather than
-importing browser execution itself ([ADR-034](decisions/ADR-034-explicit-inline-runtime-renderer.md)).
-WebApp supplies the existing web implementation. Absence is visibly unavailable,
-with no iframe fallback. This is one dependency boundary, not the completed shared
-workspace: the whole-document path, workspace model and native lifecycle services
-still require extraction and integration.
+Both the inline editor and whole-document presentation accept explicit trusted
+runtime renderers rather than importing browser execution into their boundaries
+([ADR-034](decisions/ADR-034-explicit-inline-runtime-renderer.md)). The actual
+WebApp bootstrap supplies `WebRenderedRuntime` for islands and the stable
+`WebDocumentRuntime` component for the whole document. `DocumentRuntime` delivers
+its adapter session through a render prop: presentation, current diagnostics and
+Stop/rebuild controls, without a mirrored runtime state or second source/history.
+Absence is visibly unavailable, with no default browser hook or iframe fallback.
+
+The web adapters retain the existing compiler/deadlines and sandbox policy.
+Whole-document HTML still owns iframe identity: unchanged executable HTML retains
+the frame across Source/Preview and theme changes, while retired requests withdraw
+stale diagnostics and presentation. Stop/rebuild, island lifecycle and React-disable
+reset retain their existing semantics. This extraction changes neither the product
+UI nor native activation. The workspace model and native lifecycle services still
+require integration; these dependency boundaries do not complete the shared
+workspace or establish native/product acceptance.
 
 ## Responsibilities
 
@@ -101,8 +112,9 @@ supervision opens a separate window, so presentation/embedding is unresolved.
 Investigate actual embedding/compositing, input, focus, scrolling, sizing and
 accessibility while preserving process/profile/cgroup ownership and denial of IPC,
 filesystem and unauthorized network access. Whole-document runtime and inline
-islands both need adapters; changing only WebApp's full preview misses the direct
-browser runtime dependencies in `editor/rendered/RenderedRuntime.tsx`.
+islands now have explicit renderer seams with browser adapters. Both still need
+validated native adapters; extracting those browser dependencies does not prove
+native embedding or containment.
 
 Prove the relevant renderer PID/process tree and fixed aggregate resource limits;
 multiple islands must not silently multiply budgets. Stop must terminate execution

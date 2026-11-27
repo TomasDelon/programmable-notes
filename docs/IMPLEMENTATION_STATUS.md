@@ -20,6 +20,25 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Whole-document runtime seam — 27 November 2026
+
+Both inline and whole-document rendering now have explicit trusted adapters.
+WebApp selects WebDocumentRuntime; the generic boundary defaults to unavailable
+and creates no browser compiler/frame fallback. A stable wrapper retains existing
+runtime selection, file/image inputs and workspace source/history ownership.
+The existing iframe, mode/theme continuity, error/location withdrawal, execution
+policy, Stop/rebuild and React-disable behavior are preserved. This is a dependency
+seam, not a new product interface or activated native renderer.
+[ADR034](decisions/ADR-034-explicit-inline-runtime-renderer.md).
+
+The new full check exited **0**: **793 unit, 110 tooling / zero skips, 152 Chromium,
+9 local Pages and 4 inactive-cloud browser tests**, plus format/lint/types/build.
+After the guest configuration mode correction, tooling passed again: **110 tests,
+zero skips**. Independent review found no remaining blocker in the seam.
+Actual browser tests preserve full-document React state across modes and theme,
+source fidelity and sandbox restrictions. Native/installed interaction remains
+unverified for this packet; the separate native product is still rejected.
+
 ## Native workspace use cases — 27 November 2026
 
 A new framework-independent `createNativeWorkspace` composes the reviewed native
@@ -37,7 +56,7 @@ chooser/inventory ports and actual Store open/save/close: accepted BOM/CRLF/JSX 
 invalid MDX bytes appeared on disk **before flush**, close/reopen acquired a fresh
 session, and external conflict retained local text without overwriting external
 bytes or changing mode0640. This case does not demonstrate real creation or GUI
-interaction. The latest complete repository check exited 0: **788 unit, 110 tooling
+interaction. At source 1ab4bb4, the complete repository check exited 0: **788 unit, 110 tooling
 (zero skips), 152 Chromium, 9 local Pages and 4 inactive-cloud browser tests**,
 plus formatting, lint, strict types and production build. After the final
 diagnostic-only deadline correction, tooling passed again: **110 tests, zero skips**.
@@ -52,7 +71,7 @@ only resolved, exact, originating-vault/path refusals with fixed codes. Confirme
 refusals permit another request without changing owned source or grants; malformed,
 foreign and rejected replies remain uncertain. The targeted workspace/adapter
 tests pass **52 cases**, with **123 combined targeted cases**. Four actual Tauri
-outcome tests are added but await hosted execution; local GLib packages are absent.
+outcome tests passed in hosted native-check at 1ab4bb4; local GLib packages remain absent.
 Explicit reconciliation must still resolve uncertain acquisition and failed
 cleanup. No silent retry, grant disposal or file deletion is introduced. Shared
 product wiring, native dirty/busy acknowledgement, recovery and installed
@@ -116,9 +135,9 @@ Its actual OS-admission [45916879926](https://github.com/TomasDelon/programmable
 failed at boot/SSH timeout before native payload. The fixed check annotation proves
 that category, not the startup cause. A bounded private-serial diagnostic now
 exposes only advisory literal marker names/counts; 42 Python controls and 9 reporter
-CLI tests passed. Actual new marker observations await execution. The latest
-complete local check above covers the typed outcomes and diagnostic source;
-four contained Tauri outcome tests still await hosted compilation/execution.
+CLI tests passed. The subsequent run recorded startup markers as described below.
+Hosted native-check then compiled the production package and passed the Tauri
+test command containing all four outcome cases for source 1ab4bb4.
 
 ## Explicit inline runtime and share-free fixture guard — 26 November 2026
 
