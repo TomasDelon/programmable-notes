@@ -19,14 +19,16 @@ it is not a UI/product to clone.
 - [x] Compose native vault selection, inventory, selective open/create and
       close in shared application use cases, reusing the canonical session and
       autosave owners. Unit controls and a real Store open/save/close/conflict
-      witness pass. UI activation, typed acquisition refusal/reconciliation and
-      installed acceptance remain incomplete; see ADR037.
+      witness pass. Confirmed no-effect acquisition refusals are typed; UI activation, uncertain
+      outcome reconciliation and installed acceptance remain incomplete; see ADR037.
 - [x] Implement/review share-free preparation and fixed OS-admission tooling;
-      real image assembly and layout checks passed. Actual guest admission,
-      authored native runtime and full application acceptance remain pending.
+      real image assembly, layout and complete hosted guest OS admission passed.
+      The first native profile failed desktop startup before both cases; authored
+      native interaction and full application acceptance remain pending.
 - [x] Isolate inline editor execution behind an explicit trusted runtime renderer;
-      web supplies its adapter and the shared default is unavailable. This does
-      not complete the whole-document runtime or native shared workspace.
+      web supplies its adapter and the shared default is unavailable. The explicit
+      whole-document browser boundary is implemented too. Native adapters
+      and the shared product workspace remain incomplete.
 - [x] Owner's six questions answered; architecture-first reuse, inline React,
       local autosave, real file operations/Trash, Linux-first and rendering privileges
       recorded separately from engineering choices.
@@ -42,7 +44,12 @@ it is not a UI/product to clone.
 - [x] Assess existing modules against the target and record concrete interfaces;
       see the dated shared code-fit report.
 - [ ] Prove isolated native inline presentation and resource/lifecycle ownership.
-- [ ] Extract shared product/use cases and platform ports without a second UI.
+- [x] Extract and verify the existing document panels as one shared leaf (ADR038);
+      controlled native-session bindings and actual browser interactions pass.
+      This is not a shared root or installed native acceptance.
+- [ ] Extract the remaining shared product/use cases and platform ports without a
+      second UI. Live session projection, navigation/storage/root composition
+      remain separate work.
 - [ ] Implement scoped local vault/index/file lifecycle and genuine autosave.
 - [ ] Adapt both inline and full-document execution paths to platform services.
 - [ ] Execute reusable interaction/fidelity acceptance and exact-package native

@@ -52,11 +52,8 @@ import {
 } from 'lucide-react';
 import '@fontsource-variable/dm-sans';
 import '@fontsource-variable/dm-sans/wght-italic.css';
-import {
-  SourceEditor,
-  type EditorCommands,
-  type EditorHistory,
-} from '../editor/SourceEditor';
+import type { EditorCommands, EditorHistory } from '../editor/SourceEditor';
+import { DocumentSurface } from '../workspace/DocumentSurface';
 import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
@@ -2171,44 +2168,41 @@ function WorkspaceBody({
                 void importAttachments(files);
               }}
             >
-              <div
-                ref={sourcePanel}
-                className="web-source-panel"
-                hidden={mode === 'preview' && fullDocument}
-              >
-                <SourceEditor
-                  key={selected}
-                  source={source}
-                  sourceIsCurrent={(snapshot) =>
-                    model.isCurrentSource(selected, snapshot)
-                  }
-                  rendered={
-                    selectedIsNote
-                      ? {
-                          active: mode === 'preview' && !fullDocument,
-                          renderer: WebRenderedRuntime,
-                          files,
-                          entry: workspace.entry,
-                          theme: state.theme,
-                          images: previewImages,
-                          corePlugins: state.corePlugins,
-                          showComponentSource:
-                            state.previewPreferences?.showComponentSource,
-                          stopped: preview.stopped || fullDocument,
-                          rebuildVersion: islandRebuildVersion,
-                        }
-                      : undefined
-                  }
-                  wikilinks={linkIndex.outgoing[selected] ?? []}
-                  onOpenNote={openDocument}
-                  busy={operationPending}
-                  readOnly={model.conflict}
-                  onRetainAttempt={(base, text) =>
-                    model.retainAttempt(selected, base, text)
-                  }
-                  onDiscardAttempt={model.discardLiveAttempt}
-                  onKeepAttempt={model.keepLiveAttempt}
-                  onAnalysisDiagnostic={(path, snapshot, message) => {
+              <DocumentSurface
+                documentId={selected}
+                mode={mode}
+                fullDocument={fullDocument}
+                reactEnabled={reactEnabled}
+                runtime={preview}
+                sourcePanelRef={sourcePanel}
+                editor={{
+                  source,
+                  sourceIsCurrent: (snapshot) =>
+                    model.isCurrentSource(selected, snapshot),
+                  rendered: selectedIsNote
+                    ? {
+                        active: mode === 'preview' && !fullDocument,
+                        renderer: WebRenderedRuntime,
+                        files,
+                        entry: workspace.entry,
+                        theme: state.theme,
+                        images: previewImages,
+                        corePlugins: state.corePlugins,
+                        showComponentSource:
+                          state.previewPreferences?.showComponentSource,
+                        stopped: preview.stopped || fullDocument,
+                        rebuildVersion: islandRebuildVersion,
+                      }
+                    : undefined,
+                  wikilinks: linkIndex.outgoing[selected] ?? [],
+                  onOpenNote: openDocument,
+                  busy: operationPending,
+                  readOnly: model.conflict,
+                  onRetainAttempt: (base, text) =>
+                    model.retainAttempt(selected, base, text),
+                  onDiscardAttempt: model.discardLiveAttempt,
+                  onKeepAttempt: model.keepLiveAttempt,
+                  onAnalysisDiagnostic: (path, snapshot, message) => {
                     if (!model.isCurrentSource(path, snapshot)) return;
                     setAnalysisDiagnostic((current) =>
                       current?.path === path &&
@@ -2217,56 +2211,26 @@ function WorkspaceBody({
                         ? current
                         : { path, source: snapshot, message },
                     );
-                  }}
-                  onPendingChange={(value) => {
+                  },
+                  onPendingChange: (value) => {
                     model.setPendingEditorDraft(value);
                     setPendingEdit(value);
-                  }}
-                  documentKey={selected}
-                  histories={histories}
-                  commandsRef={commands}
-                  acceptChange={(value) =>
-                    model.canUpdateSource(selected, value)
-                  }
-                  onChange={(value) => model.updateSource(selected, value)}
-                  onShowSource={(offset, snapshot) => {
+                  },
+                  documentKey: selected,
+                  histories,
+                  commandsRef: commands,
+                  acceptChange: (value) =>
+                    model.canUpdateSource(selected, value),
+                  onChange: (value) => model.updateSource(selected, value),
+                  onShowSource: (offset, snapshot) => {
                     if (!canLeaveDraft()) return;
                     model.setMode('source');
                     requestAnimationFrame(() =>
                       commands.current?.revealSource(offset, snapshot),
                     );
-                  }}
-                />
-              </div>
-              <div className="web-preview-panel" hidden={mode !== 'preview'}>
-                {reactEnabled &&
-                  preview.presentation &&
-                  fullDocument &&
-                  preview.presentation}
-                {!preview.presentation && !preview.error && fullDocument && (
-                  <div className="web-preview-placeholder" role="status">
-                    {preview.stopped ? (
-                      <>
-                        <Pause size={20} />
-                        <p>Preview is paused.</p>
-                        <button
-                          type="button"
-                          className="web-button"
-                          disabled={!reactEnabled || !preview.available}
-                          onClick={preview.rebuild}
-                        >
-                          <Play size={14} /> Resume preview
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <LoaderCircle className="web-spin" size={20} />
-                        <span>Preparing preview…</span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+                  },
+                }}
+              />
             </div>
           </div>
         </div>

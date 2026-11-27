@@ -20,7 +20,40 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Shared document surface — 27 November 2026
+
+The existing SourceEditor and full-document preview panels are extracted into
+`workspace/DocumentSurface.tsx`; WebApp composes that same leaf with its existing
+model, commands, history, focus ref and explicit runtime adapters. There is no
+new wrapper DOM, source/history owner, storage dependency, native invoke or
+browser-runtime fallback. Native session identity stays distinct from logical
+path. [ADR038](decisions/ADR-038-shared-document-surface.md).
+
+Six focused tests exercise the real editor with existing NativeWorkspace sessions
+and injected writers: exact BOM/CRLF history, delayed save origin, switching,
+retired commands, retained failures, draft blocking and runtime absence. These
+are controller/DOM integration controls, not installed native GUI or real Store
+I/O. Independent review found no remaining blocker. The shared product root,
+live session subscriptions, native runtime and installed autosave remain pending;
+the rejected shell is not activated or promoted by this extraction.
+
+The complete frozen-source local check exited **0**: **799 unit, 125 tooling /
+zero skips, 153 Chromium, 9 Pages and 4 local cloud-storage browser cases**,
+plus formatting, lint, strict types and production build. Checked functional
+inputs remained unchanged through completion. This includes the shared-surface
+extraction and bounded desktop-probe correction; native execution of the latter
+still requires a new completed profile run. No cloud backend is activated.
+
 ## Fixed native interaction profile — 27 November 2026
+
+The first actual [native profile45931348826](https://github.com/TomasDelon/programmable-notes/actions/runs/45931348826)
+at **aeff50b** failed during desktop startup with a deadline; both Stop and expiry
+cases were **not run**. The helper compiled, OS admission and normal shutdown
+passed, and the session reported cleanup passed. Its exact desktop substage and
+cause remain unknown. [Retained evidence](security-evidence/2026-11-27-native-inline-fixture/native-profile-45931348826.json)
+distinguishes this failure from browser/control tests. Investigation reproduced
+an overly broad per-probe timeout abort locally; that is not an established cause
+of the original VM failure. No native application acceptance is claimed.
 
 Required [CI45928155833](https://github.com/TomasDelon/programmable-notes/actions/runs/45928155833)
 at **37e45f4** passed both mandatory jobs, including the actual locked GTK host

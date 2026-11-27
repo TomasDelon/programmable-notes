@@ -52,6 +52,14 @@ UI nor native activation. The workspace model and native lifecycle services stil
 require integration; these dependency boundaries do not complete the shared
 workspace or establish native/product acceptance.
 
+The existing document panels are extracted into `workspace/DocumentSurface.tsx`
+([ADR038](decisions/ADR-038-shared-document-surface.md)). The host passes the
+existing SourceEditor props and explicit runtime session; the leaf owns no
+source copy, history, storage or native IPC. Mount/session identity is distinct
+from logical path. This is a shared presentation leaf, not a completed shared
+product root or native activation. Controller-injected DOM tests and real Store
+I/O remain separate evidence; installed typing-to-disk is still required.
+
 ## Responsibilities
 
 | Boundary                     | Owns                                                                                                                         | Must not own                                                                   |
