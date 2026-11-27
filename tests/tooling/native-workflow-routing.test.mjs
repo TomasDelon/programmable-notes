@@ -90,6 +90,10 @@ function assertInlineHostCompileGate(text) {
   );
   assert.ok(section.includes(inlineGate));
   const gateIndex = section.indexOf(inlineGate);
+  const matcherIndex = section.indexOf(
+    '::add-matcher::.github/native-problem-matcher.json',
+  );
+  assert.ok(matcherIndex >= 0 && matcherIndex < gateIndex);
   for (const setup of [
     'install -y libwebkit2gtk-4.1-dev',
     '      - run: npm ci\n',
@@ -132,6 +136,10 @@ test('the inline host compile control rejects missing formatting, unlocked build
       '--target-dir other-target',
     ),
     workflow.replace(`, '${inlineLock}'`, ''),
+    workflow.replace(
+      '::add-matcher::.github/native-problem-matcher.json',
+      '::notice::matcher omitted',
+    ),
     workflow.replace(
       `cargo test --manifest-path ${inlineManifest} --release --locked`,
       `cargo test --manifest-path ${inlineManifest} --release`,
@@ -376,8 +384,17 @@ test('inline diagnostics reject mixed inputs before checkout and retain only fix
 });
 
 function assertInlineStepGuards(text) {
+  const matcherIndex = text.indexOf(
+    '::add-matcher::.github/native-problem-matcher.json',
+  );
+  assert.ok(
+    matcherIndex >= 0 &&
+      matcherIndex <
+        text.indexOf('name: Compile only the fixed diagnostic host'),
+  );
   for (const name of [
     'Prepare locked native diagnostic dependencies',
+    'Register fixed host compiler error annotations',
     'Compile only the fixed diagnostic host (not the product application)',
     'Test fixed native lifecycle state before guest admission (headless logic only)',
     'Run the fixed native diagnostic after same-lifecycle OS admission',

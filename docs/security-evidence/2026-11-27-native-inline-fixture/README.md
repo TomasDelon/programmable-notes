@@ -370,3 +370,17 @@ compilation, before any optional guest. This is not GTK/native runtime evidence.
 Post-construction signals can miss earlier events, and Finished is not JavaScript
 success. Full host compilation requires the hosted GTK dependencies; no new
 native probe has yet executed.
+
+## Instrumented candidate blocked before guest execution
+
+On cac8399, [run45947395962](https://github.com/TomasDelon/programmable-notes/actions/runs/45947395962)
+failed fixed-host compilation with exit101. No guest was allocated and no native
+payload ran. The required CI check job passed; native-check failed at the same
+host compilation gate. [Bounded build record](native-build-45947395962.json).
+
+Compiler stderr could not be retrieved. Independent review of the locked
+WebKitGTK2.0.2 crate found a concrete invalid import: `WebViewExt` is exported
+at the crate root, with no `prelude` module. The correction changes only that
+import. Early compiler annotations now precede the host build so future compiler
+errors are visible without downloading private logs. Actual GTK compilation and
+a new guest remain required; source review is not reported as a build pass.

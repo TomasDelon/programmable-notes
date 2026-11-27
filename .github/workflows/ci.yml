@@ -194,6 +194,8 @@ jobs:
           echo '::remove-matcher owner=programmable-notes-apt::'
       - run: npm ci
       - run: npm run native:wry:verify
+      - name: Register native compiler error annotations
+        run: echo '::add-matcher::.github/native-problem-matcher.json'
       - name: Check the fixed inline host Rust formatting
         run: cargo fmt --manifest-path scripts/native-inline-react-v1/host/Cargo.toml -- --check
       - name: Compile the fixed inline host (not GUI acceptance)
@@ -203,7 +205,6 @@ jobs:
       - name: Build the production Linux package
         shell: bash
         run: |
-          echo '::add-matcher::.github/native-problem-matcher.json'
           npm run native:package
       - name: Inspect production package (does not claim runtime validation)
         run: node scripts/verify-linux-package.mjs
@@ -454,6 +455,9 @@ jobs:
         if: inputs.native_inline_react
         with:
           toolchain: 1.100.0
+      - name: Register fixed host compiler error annotations
+        if: inputs.native_inline_react
+        run: echo '::add-matcher::.github/native-problem-matcher.json'
       - name: Compile only the fixed diagnostic host (not the product application)
         if: inputs.native_inline_react
         env:

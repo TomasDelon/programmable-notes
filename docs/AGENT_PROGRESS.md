@@ -2682,3 +2682,15 @@ unlocked negative controls RED then GREEN12 routing cases. Full rerun exited0:
 814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 local cloud cases plus
 format/lint/types/build. Functional hashes stayed fixed; documentation formatted
 separately. History/archive and staged scans found zero findings before commits.
+
+### Locked WebKitGTK import correction
+
+The instrumented candidatecac8399 failed hosted compilation before any guest.
+Independent source review confirmed locked WebKitGTK2.0.2 exports WebViewExt
+at crate root and has no prelude module. Corrected only the import; moved the
+existing compiler matcher before both host builds, retaining optional guards.
+All12 routing controls and independent review passed. Full local check exited0:
+814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 cloud-local cases plus
+format/lint/types/build. Real GTK compilation still requires the hosted gate.
+Local SDK setup is separate; bounded archive downloads have not produced an SDK
+or any compiler result. No new native execution or startup fix is claimed.

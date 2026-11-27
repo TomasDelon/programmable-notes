@@ -20,6 +20,20 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## GTK import correction — verification in progress
+
+On cac8399, required CI's check job passed but native-check and optional
+run45947395962 failed host compilation, exit101, before any guest allocation.
+Independent locked-source review found that WebKitGTK2.0.2 exports WebViewExt
+at crate root, not under a prelude module. The import-only correction and early
+compiler annotations passed the complete local check:814 unit,133 tooling/zero
+skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus formatting,
+lint, types and production build. Actual GTK compilation remains pending; no
+native runtime fix is claimed.
+An isolated SDK is being prepared with genuine GTK/WebKit development packages
+to eliminate avoidable remote compiler round trips. It never runs authored code
+or substitutes container compilation for the real native security matrix.
+
 ## Shared navigation and native-load observation — local verification
 
 The existing web document row is now the same stateless presentation leaf used

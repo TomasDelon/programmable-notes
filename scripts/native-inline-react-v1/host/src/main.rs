@@ -5,7 +5,7 @@ compile_error!("The fixed inline diagnostic requires Linux/X11");
 use gtk::prelude::*;
 use native_snapshot::{Event as NativeEvent, Snapshot, Termination};
 use std::{cell::RefCell, io::Read, rc::Rc};
-use webkit2gtk::{prelude::WebViewExt, LoadEvent, WebProcessTerminationReason};
+use webkit2gtk::{LoadEvent, WebProcessTerminationReason, WebViewExt};
 use wry::{
     dpi::{LogicalPosition, LogicalSize},
     Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
