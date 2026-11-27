@@ -176,6 +176,36 @@ test('runtime host has only fixed input, own-window diagnostics and trusted nati
     /static BUILD_EVIDENCE: &\[u8\] = include_bytes!\(concat!\(env!\("OUT_DIR"\), "\/fixture-evidence\.bin"\)\);/,
   );
   assert.match(source, /std::hint::black_box\(BUILD_EVIDENCE\)/);
+  assert.match(source, /println!\("HOST_SUPERVISOR_START"\)/);
+  assert.match(
+    source,
+    /println!\("HOST_START_FAILURE \{\}", start_failure\(&error\)\)/,
+  );
+  const mapping = source.slice(
+    source.indexOf('fn start_failure('),
+    source.indexOf('fn host()'),
+  );
+  assert.match(mapping, /match error/);
+  assert.match(mapping, /_ => "unknown"/);
+  assert.doesNotMatch(mapping, /contains\(|starts_with\(|format!|println!/);
+  const policy = await readFile('native-policy/src/lib.rs', 'utf8');
+  const arms = [
+    ...mapping.matchAll(/((?:"[^"\n]+"\s*\|?\s*)+) => "([a-z_]+)"/g),
+  ];
+  assert.deepEqual([...new Set(arms.map((arm) => arm[2]))].sort(), [
+    'input_rejected',
+    'invalid_limits',
+    'network_not_isolated',
+    'privileges_missing',
+    'unit_not_active',
+  ]);
+  for (const arm of arms) {
+    for (const literal of arm[1].matchAll(/"([^"\n]+)"/g))
+      assert.ok(
+        policy.includes(literal[0]),
+        'Only exact current native-policy messages are classified.',
+      );
+  }
   assert.doesNotMatch(
     source,
     /\/repo|\/mnt|1000|with_ipc_handler|evaluate_script|grab_focus|native_documents|std::fs::write/,

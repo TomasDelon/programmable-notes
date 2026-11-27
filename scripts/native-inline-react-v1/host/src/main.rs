@@ -95,6 +95,19 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn start_failure(error: &str) -> &'static str {
+    match error {
+        "Preview resource unit did not become active" | "Preview process is not active" => "unit_not_active",
+        "Preview network namespace is not isolated; systemd may have silently skipped PrivateNetwork" => "network_not_isolated",
+        "Preview NoNewPrivileges is not active" | "Preview must run as the same non-root desktop user" => "privileges_missing",
+        "memory.max is not bounded" | "pids.max is not bounded" | "Invalid cpu.max"
+        | "cpu.max is not bounded" | "Invalid cpu.max period"
+        | "Effective cgroup limits exceed preview policy" => "invalid_limits",
+        "Resource-isolated preview rejected input" => "input_rejected",
+        _ => "unknown",
+    }
+}
+
 fn host() -> Result<(), Box<dyn std::error::Error>> {
     gtk::init()?;
     let window = gtk::Window::new(gtk::WindowType::Toplevel);
@@ -142,9 +155,16 @@ fn host() -> Result<(), Box<dyn std::error::Error>> {
         "HOST_READY pid={} trusted_parent={xid} host_xid={host_xid}",
         std::process::id()
     );
-    let unit = supervisor
-        .borrow_mut()
-        .start(&std::env::current_exe()?, &xid.to_string())?;
+    let executable = std::env::current_exe()?;
+    println!("HOST_SUPERVISOR_START");
+    let started = supervisor.borrow_mut().start(&executable, &xid.to_string());
+    let unit = match started {
+        Ok(unit) => unit,
+        Err(error) => {
+            println!("HOST_START_FAILURE {}", start_failure(&error));
+            return Err(error.into());
+        }
+    };
     println!("HOST_UNIT {unit}");
     gtk::main();
     supervisor.borrow_mut().stop()?;

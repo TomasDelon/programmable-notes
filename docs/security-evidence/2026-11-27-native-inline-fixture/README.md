@@ -198,3 +198,42 @@ include the three exact new failure enums and injection refusals. Independent
 review repeated both groups. The next native run distinguishes `xauth_deadline`,
 `display_readiness_deadline` and `xvfb_exited`; none is retroactively assigned to
 run45931348826. This local control correction is not a native startup pass.
+
+## Second actual native profile: host observation and cleanup failed
+
+At **30daf57**, [run45932957386](https://github.com/TomasDelon/programmable-notes/actions/runs/45932957386)
+**failed** after desktop startup completed. The Stop case reported
+`phase=host`, `reason=observer_error`, with all five observations `not_run`;
+expiry was not run. Session cleanup reported `cleanup_failed`. OS admission and
+normal guest shutdown passed. [Exact annotation summary](native-profile-45932957386.json)
+keeps application teardown failure distinct from hypervisor shutdown.
+
+No parser defect, namespace cause or original host exit is established. A
+controlled signal to an observer waiting for its host reproduced the same
+observer receipt, so it could be a consequence of session teardown after early
+host exit. Separately, a nonzero host exit without a confirmed unit record
+correctly retains unproven cleanup. These local reproductions do not identify
+the actual run's cause. Existing private exception events were not included in
+the public summary; the next diagnostic packet exports only validated own-source
+frames, exception type/errno and bounded host stage/exit fields. Raw logs and
+credentials stay private. No isolation, cleanup criterion or deadline changes.
+
+## Bounded startup and exception diagnostics
+
+The next packet preserves each case's original reason and host/observer exit
+state **before teardown**. Fixed native startup markers distinguish supervisor
+entry and exact known static error categories; unknown or malformed markers
+remain unknown. These categories are diagnostic only and cannot authorize
+cleanup, retry or document operations. No raw stderr capture was introduced.
+
+The controller separately extracts only validated exception type, errno and
+at most eight own-source function/line frames from existing private JSONL.
+Parsing uses bounded JSON and AST data only. Notices revalidate source identity
+against the frozen transferred observer. Missing/malformed diagnostics are
+omitted while the original outcome remains intact. Raw messages, paths,
+credentials and guest trees are not uploaded.
+
+Independent controls passed:19 driver,13 diagnostic helper,33 session and3 host
+groups. Review found no remaining blocker. These diagnostic controls do not
+establish the actual host cause or successful native cleanup; both earlier runs
+remain failed until separate new execution is recorded.

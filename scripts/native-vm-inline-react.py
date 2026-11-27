@@ -60,6 +60,9 @@ SESSION_PHASES = {"preflight", "desktop", "stop", "expiry", "cleanup", "complete
 SESSION_REASONS = {"none", "preflight_refused", "desktop_failed", "observer_failed", "receipt_invalid",
                    "output_limit", "deadline", "interrupted", "cleanup_failed", "internal_error",
                    "xauth_deadline", "display_readiness_deadline", "xvfb_exited"}
+HOST_STAGES = {"not_run", "unknown", "ready", "supervisor_start", "unit_ready", "start_failed"}
+START_FAILURES = {"not_run", "none", "unknown", "unit_not_active", "network_not_isolated",
+                  "privileges_missing", "invalid_limits", "input_rejected"}
 EVIDENCE = MappingProxyType({
     "session.json": ("run/session.json", 16384),
     **{f"{case}-{name}": (f"run/evidence/{case}/{name}", limit)
@@ -338,10 +341,41 @@ def _case_receipt(raw, case):
     return value
 
 
+def _case_diagnostics(value):
+    """Optional advisory data: invalid details cannot alter the core outcome."""
+    if type(value) is not dict or set(value) != {"stop", "expiry"}:
+        return None
+    result = {}
+    for case in ("stop", "expiry"):
+        item = value[case]
+        if (type(item) is not dict or set(item) != {"original_reason", "host_exit", "observer_exit", "host_stage", "start_failure"}
+                or type(item["original_reason"]) is not str or item["original_reason"] not in SESSION_REASONS | {"not_run"}
+                or type(item["host_stage"]) is not str or item["host_stage"] not in HOST_STAGES
+                or type(item["start_failure"]) is not str or item["start_failure"] not in START_FAILURES):
+            return None
+        copied = {name: item[name] for name in ("original_reason", "host_stage", "start_failure")}
+        for name in ("host_exit", "observer_exit"):
+            exit_value = item[name]
+            if (type(exit_value) is not dict or set(exit_value) != {"state", "code"}
+                    or type(exit_value["state"]) is not str
+                    or exit_value["state"] not in {"not_started", "running", "exited", "unknown"}):
+                return None
+            code = exit_value["code"]
+            if exit_value["state"] == "exited":
+                if type(code) is not int or not -64 <= code <= 255:
+                    return None
+            elif code is not None:
+                return None
+            copied[name] = {"state": exit_value["state"], "code": code}
+        result[case] = copied
+    return result
+
+
 def _session_receipt(raw):
     value = _json(raw, 16384)
     _base(value)
-    if (set(value) != {"version", "profile", "scope", "native_app_tested", "status", "phase", "reason", "cases", "cleanup"}
+    required = {"version", "profile", "scope", "native_app_tested", "status", "phase", "reason", "cases", "cleanup"}
+    if (not required <= set(value) or set(value) - required - {"diagnostics"}
             or value["phase"] not in SESSION_PHASES or value["reason"] not in SESSION_REASONS
             or type(value["cases"]) is not dict or set(value["cases"]) != {"stop", "expiry"}
             or any(state not in STATES for state in value["cases"].values()) or value["cleanup"] not in STATES):
@@ -349,6 +383,10 @@ def _session_receipt(raw):
     if value["status"] == "passed" and (value["phase"] != "complete" or value["reason"] != "none"
             or set(value["cases"].values()) != {"passed"} or value["cleanup"] != "passed"):
         raise Refused()
+    if "diagnostics" in value:
+        diagnostic = _case_diagnostics(value.pop("diagnostics"))
+        if diagnostic is not None:
+            value["diagnostics"] = diagnostic
     return value
 
 
@@ -441,6 +479,30 @@ def _collection(raw):
     return result
 
 
+def _diagnostic_module():
+    spec = importlib.util.spec_from_file_location(
+        "fixed_observer_diagnostics", Path(__file__).with_name("native-inline-react-diagnostics.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _observer_exceptions(collected, cases, source):
+    result = {}
+    try:
+        helper = _diagnostic_module()
+        for case in ("stop", "expiry"):
+            value = cases.get(case)
+            if value is not None and value["status"] == "failed":
+                detail = helper.extract_observer_exception(
+                    collected.get(case + "-events.jsonl", b""), source, value["phase"])
+                if detail is not None:
+                    result[case] = detail
+    except Exception:
+        return {}  # Optional diagnosis never replaces the original witness.
+    return result
+
+
 def _run_admitted(root_path, witnesses, guard_process, prepared):
     # This private entry is called only by the sealed smoke branch after all OS
     # and pin/key controls. Every new connection rechecks host identity witnesses.
@@ -503,16 +565,47 @@ def _run_admitted(root_path, witnesses, guard_process, prepared):
                 stream.write(raw)
         passed = (session["status"] == "passed" and len(cases) == 2
                   and all(value["status"] == "passed" for value in cases.values()))
-        return {"version": 1, "profile": PROFILE, "scope": SCOPE, "native_app_tested": False,
+        result = {"version": 1, "profile": PROFILE, "scope": SCOPE, "native_app_tested": False,
                 "status": "passed" if passed else "failed", "session": session, "cases": cases,
                 "build": prepared.build_evidence,
                 "payload": _json(prepared.files["manifest.json"], 16384),
                 "manifest_sha256": prepared.manifest_sha256,
                 "evidence_sha256": {name: _digest(raw) for name, raw in collected.items()}}
+        exceptions = _observer_exceptions(collected, cases, prepared.files["observer.py"])
+        if exceptions:
+            result["observer_exceptions"] = exceptions
+        return result
     except transport.CleanupFailed:
         raise CleanupFailed() from None
     except transport.TimedOut:
         raise TimeoutError() from None
+
+
+def _observer_exception_notices(result, cases, prefix):
+    values = result.get("observer_exceptions")
+    if type(values) is not dict or set(values) - {"stop", "expiry"} or not values:
+        return []
+    try:
+        expected = result["payload"]["files"]["observer.py"]["sha256"]
+        source = _capture(REPOSITORY / PAYLOAD["observer.py"][0], PAYLOAD["observer.py"][1])
+        if type(expected) is not str or _digest(source) != expected:
+            return []
+        helper = _diagnostic_module()
+        notices = []
+        for case in ("stop", "expiry"):
+            if case not in values or cases[case]["status"] != "failed":
+                continue
+            detail = helper.validate_observer_exception(values[case], source, cases[case]["phase"])
+            if detail is None:
+                continue
+            frames = ",".join(frame["function"] + ":" + str(frame["line"]) for frame in detail["frames"])
+            notices.append(prefix + "case=" + case + " observer_exception_phase=" + detail["phase"]
+                           + " error_type=" + detail["error_type"]
+                           + " errno=" + ("none" if detail["errno"] is None else str(detail["errno"]))
+                           + " frames=" + (frames or "none"))
+        return notices
+    except Exception:
+        return []  # Changed/missing source or invalid details omit only diagnosis.
 
 
 def _summary_notices(result):
@@ -546,6 +639,15 @@ def _summary_notices(result):
         fields = ["case=" + case] + [name + "=" + value[name]
                                     for name in ("status", "phase", "reason", *OBSERVATIONS)]
         notices.append(prefix + " ".join(fields))
+    for case, diagnostic in session.get("diagnostics", {}).items():
+        fields = ["case=" + case, "diagnostic_original_reason=" + diagnostic["original_reason"]]
+        for process in ("host", "observer"):
+            value = diagnostic[process + "_exit"]
+            fields.extend((process + "_state=" + value["state"],
+                           process + "_code=" + ("none" if value["code"] is None else str(value["code"]))))
+        fields.extend(("host_stage=" + diagnostic["host_stage"], "start_failure=" + diagnostic["start_failure"]))
+        notices.append(prefix + " ".join(fields))
+    notices.extend(_observer_exception_notices(result, cases, prefix))
     return notices
 
 

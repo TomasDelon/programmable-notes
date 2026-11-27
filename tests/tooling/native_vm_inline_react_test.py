@@ -345,6 +345,86 @@ while True:
                     self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
                 self.assertEqual(output.getvalue(), "NATIVE_INLINE_REACT_FIXTURE_REFUSED\n")
 
+    def diagnostics(self):
+        return {case: {"original_reason": "observer_failed" if case == "stop" else "not_run",
+                       "host_exit": {"state": "exited", "code": 1} if case == "stop" else {"state": "not_started", "code": None},
+                       "observer_exit": {"state": "exited", "code": 2} if case == "stop" else {"state": "not_started", "code": None},
+                       "host_stage": "start_failed" if case == "stop" else "not_run",
+                       "start_failure": "network_not_isolated" if case == "stop" else "not_run"}
+                for case in ("stop", "expiry")}
+
+    def test_case_diagnostics_emit_only_bounded_enums_and_original_failed_result_remains_failed(self):
+        result = self.summary(False)
+        result["session"]["diagnostics"] = self.diagnostics()
+        with patch.object(self.driver.transport, "_smoke", return_value=result), redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
+        text = output.getvalue()
+        self.assertEqual(text.count("::notice "), 5)
+        self.assertIn("diagnostic_original_reason=observer_failed host_state=exited host_code=1", text)
+        self.assertIn("observer_state=exited observer_code=2 host_stage=start_failed start_failure=network_not_isolated", text)
+        self.assertNotIn("PRIVATE", text)
+
+    def test_malformed_optional_diagnostics_omit_without_changing_core_result(self):
+        import copy
+        malformed = [None, {}, {**self.diagnostics(), "PRIVATE_CANARY": "PRIVATE_CANARY"}]
+        for field, value in (("original_reason", "PRIVATE_CANARY%0A::error::injected"),
+                             ("host_stage", "PRIVATE_CANARY"), ("start_failure", []),
+                             ("host_exit", {"state": "running", "code": 0}),
+                             ("host_exit", {"state": "exited", "code": True}),
+                             ("host_exit", {"state": "exited", "code": -65}),
+                             ("observer_exit", {"state": "exited", "code": 256}),
+                             ("observer_exit", {"state": "exited", "code": None})):
+            diagnostic = copy.deepcopy(self.diagnostics())
+            diagnostic["stop"][field] = value
+            malformed.append(diagnostic)
+        for diagnostic in malformed:
+            result = self.summary(False)
+            result["session"]["diagnostics"] = diagnostic
+            parsed = self.driver._session_receipt(json.dumps(result["session"]).encode())
+            self.assertEqual(parsed["status"], "failed")
+            self.assertNotIn("diagnostics", parsed)
+            notices = self.driver._summary_notices(result)
+            self.assertEqual(len(notices), 3)
+            self.assertNotIn("PRIVATE", " ".join(notices))
+
+    def test_observer_exception_diagnostic_is_bound_to_frozen_source_and_failed_phase(self):
+        source = b"def own():\n    raise RuntimeError()\n"
+        path = self.repo / self.driver.PAYLOAD["observer.py"][0]
+        path.write_bytes(source)
+        event = {"event": "observer_exception", "elapsed": 1.25, "phase": "keyboard",
+                 "error_type": "RuntimeError", "errno": None,
+                 "frames": [{"function": "own", "line": 2}]}
+        case = self.summary(False)["cases"]["stop"]
+        details = self.driver._observer_exceptions(
+            {"stop-events.jsonl": (json.dumps(event) + "\n").encode()}, {"stop": case}, source)
+        self.assertEqual(details, {"stop": {name: event[name] for name in ("phase", "error_type", "errno", "frames")}})
+        result = self.summary(False)
+        result.update(observer_exceptions=details,
+                      payload={"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}})
+        text = " ".join(self.driver._summary_notices(result))
+        self.assertIn("observer_exception_phase=keyboard error_type=RuntimeError errno=none frames=own:2", text)
+        self.assertNotIn("PRIVATE", text)
+        path.write_bytes(b"def changed():\n    pass\n")
+        self.assertNotIn("observer_exception_phase=", " ".join(self.driver._summary_notices(result)))
+
+    def test_invalid_observer_exception_omits_diagnostic_not_original_failure(self):
+        source = b"def own():\n    raise RuntimeError()\n"
+        (self.repo / self.driver.PAYLOAD["observer.py"][0]).write_bytes(source)
+        result = self.summary(False)
+        result["payload"] = {"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}}
+        for invalid in (None, [], {"stop": {"phase": "keyboard", "error_type": "PRIVATE_CANARY%0A::error",
+                                           "errno": None, "frames": []}},
+                        {"stop": {"phase": "keyboard", "error_type": "RuntimeError", "errno": True,
+                                  "frames": [{"function": "own", "line": 2}]}},
+                        {"stop": {"phase": "keyboard", "error_type": "RuntimeError", "errno": None,
+                                  "frames": [{"function": "PRIVATE_CANARY", "line": 2}]}}):
+            result["observer_exceptions"] = invalid
+            with patch.object(self.driver.transport, "_smoke", return_value=result), redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
+            self.assertNotIn("observer_exception_phase=", output.getvalue())
+            self.assertNotIn("PRIVATE", output.getvalue())
+            self.assertEqual(output.getvalue().count("::notice "), 3)
+
     @staticmethod
     def packet(kind, data):
         return struct.pack(">I", 1 + len(data)) + bytes([kind]) + data

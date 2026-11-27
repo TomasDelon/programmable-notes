@@ -1,0 +1,36 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not the raw private receipt",
+  "run_id": 45932957386,
+  "job_id": 140289560034,
+  "source_commit": "30daf57be55452d91e3067725fe8dbf16d11b962",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "os_admission": "passed",
+  "normal_shutdown": "passed",
+  "session": {
+    "status": "failed",
+    "phase": "cleanup",
+    "reason": "cleanup_failed",
+    "cleanup": "failed"
+  },
+  "cases": {
+    "stop": {
+      "status": "failed",
+      "phase": "host",
+      "reason": "observer_error",
+      "bridge": "not_run",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "not_run",
+      "host_input": "not_run"
+    },
+    "expiry": "not_run"
+  },
+  "limitations": [
+    "Desktop startup completed; the exact host/observer failure cause is unknown.",
+    "Application process cleanup was not confirmed and is not relabelled by VM shutdown.",
+    "No React input, native Stop or expiry passed."
+  ]
+}

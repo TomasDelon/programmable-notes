@@ -405,6 +405,94 @@ class SessionControls(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 1)
         self.assertEqual(calls, ['xvfb', 'probe'])
 
+    def test_host_start_diagnostic_known_marker_and_unknown_malformed_markers(self):
+        ready = b'HOST_READY pid=1234 trusted_parent=100 host_xid=200\nHOST_SUPERVISOR_START\n'
+        for code in session.START_FAILURES - {'none', 'not_run'}:
+            value = session.host_markers(ready + b'HOST_START_FAILURE ' + code.encode() + b'\n', 1234)
+            self.assertEqual(value, ('start_failed', code))
+        for malformed in (b'HOST_START_FAILURE forged\n', b'HOST_START_FAILURE unit_not_active extra\n',
+                          b'HOST_SUPERVISOR_START extra\n', b'HOST_START_FAILURE\n',
+                          b'HOST_START_FAILURE unit_not_active'):
+            self.assertEqual(session.host_markers(ready + malformed, 1234), ('unknown', 'unknown'))
+        self.assertEqual(session.host_markers(b'', 1234), ('unknown', 'unknown'))
+
+    def test_parent_interruption_cannot_replace_original_host_failure_diagnostic(self):
+        runner = self.runner()
+        host, observer = Mock(), Mock()
+        host.process.poll.return_value = 1
+        observer.process.poll.return_value = None
+        runner.capture_diagnostic('stop', session.Refused('observer_failed'), host, observer)
+        # Session teardown now terminates the observer. Its later signal exit is not the original failure.
+        observer.process.poll.return_value = -signal.SIGTERM
+        host.process.poll.return_value = 0
+        value = runner.diagnostics['stop']
+        self.assertEqual(value['original_reason'], 'observer_failed')
+        self.assertEqual(value['host_exit'], {'state': 'exited', 'code': 1})
+        self.assertEqual(value['observer_exit'], {'state': 'running', 'code': None})
+        self.assertEqual(runner.cases['stop'], 'not_run')
+
+    def test_diagnostics_never_export_unknown_exception_text_or_invalid_exit_codes(self):
+        runner = self.runner()
+        host = Mock()
+        host.process.poll.return_value = True
+        runner.capture_diagnostic('stop', RuntimeError('secret/private/path'), host, None)
+        value = runner.diagnostics['stop']
+        self.assertEqual(value['original_reason'], 'internal_error')
+        self.assertEqual(value['host_exit'], {'state': 'unknown', 'code': None})
+        self.assertEqual(value['observer_exit'], {'state': 'not_started', 'code': None})
+        self.assertNotIn('secret', json.dumps(value))
+
+    def test_success_diagnostics_do_not_promote_an_unproven_case(self):
+        runner = self.runner()
+        host = Mock()
+        host.process.poll.return_value = 0
+        runner.capture_diagnostic('stop', None, host, None)
+        runner.cleanup_failed = True
+        self.assertEqual(runner.diagnostics['stop']['original_reason'], 'none')
+        with self.assertRaisesRegex(session.Refused, 'cleanup_failed'):
+            runner.close()
+        self.assertEqual(runner.cases, {'stop': 'not_run', 'expiry': 'not_run'})
+
+    def test_early_host_exit_freezes_observer_running_before_parent_interrupts_it(self):
+        with session.Artifacts() as artifacts:
+            session.create_layout(artifacts)
+            runner = session.Runner(artifacts)
+            real_spawn = subprocess.Popen
+            marker = self.root / 'run/evidence/stop/interrupted-control'
+            children = []
+            def spawn(argv, **options):
+                if argv == [str(self.root / 'host')]:
+                    program = ('import os,sys,time;'
+                               'print(f"HOST_READY pid={os.getpid()} trusted_parent=100 host_xid=200",flush=True);'
+                               'print("HOST_SUPERVISOR_START",flush=True);'
+                               'print("HOST_START_FAILURE unit_not_active",flush=True);'
+                               'time.sleep(.2);sys.exit(1)')
+                    selected = [sys.executable, '-I', '-c', program]
+                else:
+                    self.assertEqual(argv[-2:], ['--case', 'stop'])
+                    program = ('import pathlib,signal,sys,time;'
+                               'p=pathlib.Path(sys.argv[1]);'
+                               '\ndef stop(*_):\n p.write_text("parent-interrupted");sys.exit(2)'
+                               '\nsignal.signal(signal.SIGTERM,stop)'
+                               '\nwhile True: time.sleep(.01)')
+                    selected = [sys.executable, '-I', '-c', program, str(marker)]
+                child = real_spawn(selected, **options)
+                children.append(child)
+                return child
+            with patch.object(session.subprocess, 'Popen', side_effect=spawn):
+                with self.assertRaisesRegex(session.Refused, '^cleanup_failed$'):
+                    runner.case('stop')
+            value = runner.diagnostics['stop']
+            self.assertEqual(value['original_reason'], 'observer_failed')
+            self.assertEqual(value['host_exit'], {'state': 'exited', 'code': 1})
+            self.assertEqual(value['observer_exit'], {'state': 'running', 'code': None})
+            self.assertEqual((value['host_stage'], value['start_failure']), ('start_failed', 'unit_not_active'))
+            self.assertEqual(marker.read_text(), 'parent-interrupted')
+            self.assertEqual(runner.cases, {'stop': 'failed', 'expiry': 'not_run'})
+            self.assertTrue(all(child.poll() is not None for child in children))
+            with self.assertRaisesRegex(session.Refused, '^cleanup_failed$'):
+                runner.close()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,6 +17,11 @@ UID = 1001
 LOG_LIMIT = 256 * 1024
 JSON_LIMIT = 16 * 1024
 OBSERVATIONS = ('bridge', 'pointer', 'keyboard', 'termination', 'host_input')
+REASONS = frozenset(('none', 'not_run', 'preflight_refused', 'desktop_failed', 'observer_failed',
+                     'receipt_invalid', 'output_limit', 'deadline', 'interrupted', 'cleanup_failed',
+                     'xauth_deadline', 'display_readiness_deadline', 'xvfb_exited', 'internal_error'))
+START_FAILURES = frozenset(('not_run', 'none', 'unknown', 'unit_not_active', 'network_not_isolated',
+                            'privileges_missing', 'invalid_limits', 'input_rejected'))
 SOURCES = (
     'scripts/native-inline-react-v1/host/src/main.rs',
     'scripts/native-inline-react-v1/host/build.rs',
@@ -228,6 +233,54 @@ def validate_receipt(value, case):
         check(value[field] == expected, 'receipt_invalid')
 
 
+def exit_diagnostic(owned):
+    if owned is None:
+        return {'state': 'not_started', 'code': None}
+    try:
+        code = owned.process.poll()
+        if code is None:
+            return {'state': 'running', 'code': None}
+        if type(code) is int and -64 <= code <= 255:
+            return {'state': 'exited', 'code': code}
+    except Exception:
+        pass
+    return {'state': 'unknown', 'code': None}
+
+
+def empty_diagnostic():
+    return {'original_reason': 'not_run', 'host_exit': exit_diagnostic(None),
+            'observer_exit': exit_diagnostic(None), 'host_stage': 'not_run', 'start_failure': 'not_run'}
+
+
+def host_markers(raw, pid):
+    """Diagnostics only. These markers confer no process or cleanup authority."""
+    unknown = ('unknown', 'unknown')
+    if type(raw) is not bytes or not raw.endswith(b'\n') or len(raw) > LOG_LIMIT or type(pid) is not int or not 1 < pid < 2**31:
+        return unknown
+    stage, failure = 'unknown', 'unknown'
+    for line in raw.splitlines():
+        if line.startswith(b'HOST_READY'):
+            if stage != 'unknown' or not re.fullmatch(rb'HOST_READY pid=' + str(pid).encode() + rb' trusted_parent=[1-9][0-9]{0,19} host_xid=[1-9][0-9]{0,19}', line):
+                return unknown
+            stage = 'ready'
+        elif line.startswith(b'HOST_SUPERVISOR_START'):
+            if stage != 'ready' or line != b'HOST_SUPERVISOR_START':
+                return unknown
+            stage = 'supervisor_start'
+        elif line.startswith(b'HOST_START_FAILURE'):
+            if stage != 'supervisor_start':
+                return unknown
+            values = line.split(b' ')
+            if len(values) != 2 or values[1] not in {code.encode() for code in START_FAILURES - {'none', 'not_run'}}:
+                return unknown
+            stage, failure = 'start_failed', values[1].decode('ascii')
+        elif line.startswith(b'HOST_UNIT'):
+            if stage != 'supervisor_start' or not re.fullmatch(rb'HOST_UNIT programmable-notes-preview-' + str(pid).encode() + rb'-[0-9]{1,30}\.service', line):
+                return unknown
+            stage, failure = 'unit_ready', 'none'
+    return stage, failure
+
+
 class Runner:
     def __init__(self, artifacts):
         self.artifacts = artifacts
@@ -235,8 +288,29 @@ class Runner:
         self.owned = []
         self.deadline = time.monotonic() + 190
         self.cases = {'stop': 'not_run', 'expiry': 'not_run'}
+        self.diagnostics = {case: empty_diagnostic() for case in ('stop', 'expiry')}
         self.cleanup_failed = False
         self.cleaning = False
+
+    def capture_diagnostic(self, case, error, host, observer):
+        value = self.diagnostics[case]
+        reason = 'none' if error is None else str(error) if type(error) is Refused else 'internal_error'
+        value['original_reason'] = reason if reason in REASONS else 'internal_error'
+        # Frozen once before any teardown can signal or reap either child.
+        value['host_exit'] = exit_diagnostic(host)
+        value['observer_exit'] = exit_diagnostic(observer)
+        if host is not None:
+            value.update(host_stage='unknown', start_failure='unknown')
+
+    def capture_markers(self, case, host, logpath):
+        if host is None:
+            return
+        try:
+            raw, _ = read_file(logpath, LOG_LIMIT)
+            stage, failure = host_markers(raw, host.process.pid)
+            self.diagnostics[case].update(host_stage=stage, start_failure=failure)
+        except Exception:
+            self.diagnostics[case].update(host_stage='unknown', start_failure='unknown')
 
     def remaining(self, deadline):
         check(self.cleaning or not INTERRUPTED, 'interrupted')
@@ -403,6 +477,7 @@ class Runner:
                 self.cases[case] = 'failed'
                 phase_error = error
             finally:
+                self.capture_diagnostic(case, phase_error, host, observer)
                 self.cleaning = True
                 if observer is not None:
                     try:
@@ -433,6 +508,7 @@ class Runner:
                     finally:
                         host.close()
                         host.process.stdout.close()
+                        self.capture_markers(case, host, logpath)
                 self.cleaning = False
             if phase_error is not None:
                 raise phase_error
@@ -481,7 +557,8 @@ def main(arguments):
     os.umask(0o077)
     result = dict(version=1, profile='inline-react-v1', scope='fixed-native-diagnostic-only',
                   native_app_tested=False, status='failed', phase='preflight',
-                  reason='preflight_refused', cases={'stop': 'not_run', 'expiry': 'not_run'}, cleanup='not_run')
+                  reason='preflight_refused', cases={'stop': 'not_run', 'expiry': 'not_run'}, cleanup='not_run',
+                  diagnostics={case: empty_diagnostic() for case in ('stop', 'expiry')})
     runner = None
     layout = False
     previous = {}
@@ -501,15 +578,13 @@ def main(arguments):
             run_cases(runner, result)
             result.update(status='passed', phase='complete', reason='none')
     except BaseException as error:
-        allowed = {'preflight_refused', 'desktop_failed', 'observer_failed', 'receipt_invalid',
-                   'output_limit', 'deadline', 'interrupted', 'cleanup_failed',
-                   'xauth_deadline', 'display_readiness_deadline', 'xvfb_exited'}
         reason = str(error) if type(error) is Refused else 'internal_error'
-        result['reason'] = reason if reason in allowed else 'internal_error'
+        result['reason'] = reason if reason in REASONS - {'none', 'not_run'} else 'internal_error'
     finally:
         try:
             if runner is not None:
                 result['cases'] = dict(runner.cases)
+                result['diagnostics'] = runner.diagnostics
                 try:
                     runner.close()
                     result['cleanup'] = 'passed'

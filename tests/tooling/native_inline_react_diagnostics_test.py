@@ -1,0 +1,141 @@
+"""Pure sanitizer controls: no guest, display, subprocess or source evaluation."""
+import ast
+import importlib.util
+import json
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location("observer_diagnostics", ROOT / "scripts/native-inline-react-diagnostics.py")
+diagnostics = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(diagnostics)
+SOURCE = b'''def run():
+    value = 1
+    def nested():
+        return 2
+    return value
+
+def interrupted():
+    raise ValueError()
+
+def sibling():
+    return 3
+
+def factory():
+    return lambda: 1 / 0
+'''
+
+
+def value(**changes):
+    return {"phase": "host", "error_type": "Refused", "errno": None,
+            "frames": [{"function": "run", "line": 2}, {"function": "interrupted", "line": 8}], **changes}
+
+
+def event(**changes):
+    return {"event": "observer_exception", "elapsed": 1.5, **value(), **changes}
+
+
+def wire(*rows):
+    return b"".join((json.dumps(row) + "\n").encode() for row in rows)
+
+
+class Diagnostics(unittest.TestCase):
+    def extract(self, raw=None, source=SOURCE, phase="host"):
+        return diagnostics.extract_observer_exception(wire(event()) if raw is None else raw, source, phase)
+
+    def test_valid_interruption_frames_are_distinguished_without_messages(self):
+        result = self.extract()
+        self.assertEqual(result, value())
+        self.assertEqual(result["frames"][-1], {"function": "interrupted", "line": 8})
+        self.assertNotIn("elapsed", result)
+        self.assertNotIn("event", result)
+        self.assertNotIn("message", result)
+
+    def test_actual_frozen_observer_own_function_and_line_are_accepted(self):
+        source = (ROOT / "scripts/native-inline-react-v1/observer.py").read_bytes()
+        tree = ast.parse(source)
+        interrupted = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == "interrupted")
+        frame = {"function": "interrupted", "line": interrupted.body[0].lineno}
+        self.assertEqual(self.extract(wire(event(frames=[frame])), source)["frames"], [frame])
+
+    def test_first_matching_failure_is_retained_and_not_replaced_by_later_cause(self):
+        rows = [event(phase="cleanup", error_type="PermissionError", errno=13),
+                {"event": "pointer_ack", "count": 2}, event(), event(error_type="OSError", errno=5)]
+        self.assertEqual(self.extract(wire(*rows)), value())
+        # Invalid first matching evidence cannot be replaced with a later cause.
+        self.assertIsNone(self.extract(wire(event(message="PRIVATE"), event())))
+
+    def test_missing_wrong_phase_and_unrecognized_event_are_omitted(self):
+        for raw in (b"", wire({"event": "other"}), wire(event(phase="cleanup")), wire({"event": "observer_exception"})):
+            self.assertIsNone(self.extract(raw))
+        self.assertIsNone(self.extract(phase="complete"))
+        self.assertIsNone(self.extract(phase="PRIVATE"))
+
+    def test_exact_event_and_exception_fields_only(self):
+        for extra in ("message", "path", "source", "stack", "private", "status"):
+            with self.subTest(extra=extra):
+                self.assertIsNone(self.extract(wire(event(**{extra: "PRIVATE"}))))
+                self.assertIsNone(diagnostics.validate_observer_exception(value(**{extra: "PRIVATE"}), SOURCE, "host"))
+        for key in event():
+            missing = event(); del missing[key]
+            self.assertIsNone(self.extract(wire(missing)))
+
+    def test_finite_closed_error_types_errno_and_phase(self):
+        for kind in diagnostics.ERROR_TYPES:
+            self.assertEqual(self.extract(wire(event(error_type=kind)))["error_type"], kind)
+        for field, bad in (("error_type", "PRIVATE"), ("error_type", True), ("phase", "PRIVATE"), ("errno", -1),
+                           ("errno", 4097), ("errno", True), ("errno", 1.0), ("errno", "13")):
+            self.assertIsNone(self.extract(wire(event(**{field: bad}))))
+        for number in (None, 0, 3, 13, 4096):
+            self.assertEqual(self.extract(wire(event(errno=number)))["errno"], number)
+
+    def test_elapsed_must_be_finite_bounded_numeric_and_never_republished(self):
+        for bad in (-1, 191, True, "1", float("nan"), float("inf"), float("-inf")):
+            self.assertIsNone(self.extract(wire(event(elapsed=bad))))
+        for number in (0, 190, .5):
+            self.assertEqual(self.extract(wire(event(elapsed=number))), value())
+
+    def test_frames_require_actual_own_function_body_not_signature_sibling_or_nested_body(self):
+        for frame in ({"function": "run", "line": 1}, {"function": "run", "line": 4},
+                      {"function": "run", "line": 11}, {"function": "interrupted", "line": 2},
+                      {"function": "module", "line": 2}, {"function": "/PRIVATE", "line": 2},
+                      {"function": "run", "line": True}, {"function": "run", "line": 2.0},
+                      {"function": "run", "line": 2, "path": "PRIVATE"}):
+            self.assertIsNone(self.extract(wire(event(frames=[frame]))))
+        self.assertEqual(self.extract(wire(event(frames=[{"function": "nested", "line": 4}])))["frames"], [{"function": "nested", "line": 4}])
+        self.assertEqual(self.extract(wire(event(frames=[{"function": "callback", "line": 14}])))["frames"], [{"function": "callback", "line": 14}])
+
+    def test_frames_and_source_bounds_and_wrong_types_omit(self):
+        for frames in (None, {}, "PRIVATE", [value()["frames"][0]] * 9):
+            self.assertIsNone(self.extract(wire(event(frames=frames))))
+        self.assertEqual(self.extract(wire(event(frames=[])))["frames"], [])
+        for source in (b"", b"x" * (diagnostics.SOURCE_LIMIT + 1), b"\xff", b"not valid python (", "def run(): pass"):
+            self.assertIsNone(self.extract(source=source))
+
+    def test_unicode_or_unbounded_function_names_never_enter_notice_data(self):
+        for name in ("sëcret", "x" * 41):
+            source = ("def " + name + "():\n    return 1\n").encode()
+            self.assertIsNone(self.extract(wire(event(frames=[{"function": name, "line": 2}])), source))
+
+    def test_source_is_parsed_without_executing_top_level_or_callbacks(self):
+        source = b"raise RuntimeError('MUST NOT EXECUTE')\n" + SOURCE
+        result = self.extract(wire(event(frames=[{"function": "run", "line": 3}])), source)
+        self.assertEqual(result["frames"], [{"function": "run", "line": 3}])
+
+    def test_bounded_jsonl_rejects_duplicates_malformed_unicode_nonfinite_and_large_rows(self):
+        raw = wire(event())
+        for bad in (raw[:-1], b"\xff\n", b"{broken\n", b"[]\n", raw.replace(b'"errno": null', b'"errno": null, "errno": 13'),
+                    b'{"event":"other","value":NaN}\n' + raw, b"x" * 8193 + b"\n", b"{}\n" * 4097,
+                    b"x" * (diagnostics.EVENT_LIMIT + 1), raw + b"{broken\n", raw + b"x" * 8193 + b"\n"):
+            self.assertIsNone(self.extract(bad))
+
+    def test_validation_returns_fresh_detached_plain_data(self):
+        original = value()
+        result = diagnostics.validate_observer_exception(original, SOURCE, "host")
+        original["frames"][0]["line"] = 999
+        self.assertEqual(result["frames"][0]["line"], 2)
+        self.assertIsNone(diagnostics.validate_observer_exception(result, SOURCE, "cleanup"))
+
+
+if __name__ == "__main__":
+    unittest.main()
