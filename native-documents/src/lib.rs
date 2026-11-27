@@ -38,8 +38,8 @@ pub const MAX_TOTAL_BYTES: usize = 8 * 1024 * 1024;
 pub enum Error {
     Rejected(&'static str),
     Io(std::io::Error),
-    /// A rename was attempted; its failure does not establish non-publication.
-    /// Reconcile the target before retrying, even though no new grant was returned.
+    /// A filesystem publication was attempted; failure does not establish non-publication.
+    /// Reconcile the target before retrying, even though no mutation was acknowledged.
     PublicationUncertain(std::io::Error),
     UnknownGrant,
     StaleRevision,
@@ -93,6 +93,14 @@ pub struct Saved {
 pub struct InventoryEntry {
     pub logical_path: String,
     pub bytes: u64,
+}
+
+/// Acknowledged directory publication, not a child capability or current-path snapshot.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatedDirectory {
+    pub logical_path: String,
+    pub durability_warning: bool,
 }
 
 #[cfg(target_os = "linux")]

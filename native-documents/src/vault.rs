@@ -2,7 +2,8 @@
 //! Skip only real directories named .git, node_modules, or .programmable-notes.
 //! Other regular non-source files are ignored; symlinks and special entries fail closed.
 use crate::{
-    linux::AuthorizedFile, Error, InventoryEntry, MAX_DOCUMENTS, MAX_SOURCE_BYTES, MAX_TOTAL_BYTES,
+    linux::AuthorizedFile, CreatedDirectory, Error, InventoryEntry, MAX_DOCUMENTS,
+    MAX_SOURCE_BYTES, MAX_TOTAL_BYTES,
 };
 use std::{
     collections::HashSet,
@@ -22,15 +23,19 @@ const MAX_ENTRIES: usize = 4096;
 const MAX_RELATIVE_BYTES: usize = 4096;
 const EXCLUDED_DIRECTORIES: [&str; 3] = [".git", "node_modules", ".programmable-notes"];
 
-pub(crate) fn validate_source_path(path: &str) -> Result<(), Error> {
-    if path.is_empty()
-        || path.len() > MAX_RELATIVE_BYTES
-        || path.contains(['\0', '\\'])
-        || Path::new(path).is_absolute()
-        || path.split('/').any(|part| {
+fn valid_relative_components(path: &str, max_components: usize) -> bool {
+    !path.is_empty()
+        && path.len() <= MAX_RELATIVE_BYTES
+        && !path.contains(['\0', '\\'])
+        && !Path::new(path).is_absolute()
+        && !path.split('/').any(|part| {
             part.is_empty() || part == "." || part == ".." || EXCLUDED_DIRECTORIES.contains(&part)
         })
-        || path.split('/').count() > MAX_DEPTH + 1
+        && path.split('/').count() <= max_components
+}
+
+pub(crate) fn validate_source_path(path: &str) -> Result<(), Error> {
+    if !valid_relative_components(path, MAX_DEPTH + 1)
         || !Path::new(path)
             .extension()
             .and_then(OsStr::to_str)
@@ -245,6 +250,46 @@ impl Vault {
         Ok(entries)
     }
 
+    /// Create one directory in a captured parent; never create parents or replace entries.
+    /// The logical path is a label, not a child grant or a live ancestry guarantee.
+    /// On uncertain publication, reconcile rather than automatically retrying.
+    pub fn create_directory(&self, path: &str) -> Result<CreatedDirectory, Error> {
+        if !valid_relative_components(path, MAX_DEPTH) {
+            return Err(Error::Rejected("Unsupported vault directory path"));
+        }
+        let mut created = CreatedDirectory {
+            logical_path: path.to_owned(),
+            durability_warning: false,
+        };
+        let (directory, name) = self.resolve_validated_parent(path)?;
+        let name = CString::new(name.as_bytes())
+            .map_err(|_| Error::Rejected("Invalid folder entry name"))?;
+        // SAFETY: live captured directory descriptor and validated NUL-terminated
+        // basename. mkdirat atomically refuses every existing destination kind.
+        let result = unsafe { libc::mkdirat(directory.as_raw_fd(), name.as_ptr(), 0o700) };
+        let result = if result == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        };
+        #[cfg(test)]
+        let result = tests::directory_mkdir_result(result);
+        if let Err(error) = result {
+            return Err(if error.kind() == std::io::ErrorKind::AlreadyExists {
+                Error::Conflict
+            } else {
+                Error::PublicationUncertain(error)
+            });
+        }
+        // Creation was acknowledged. A sync failure must not erase that fact or
+        // trigger rollback against a possibly replaced pathname.
+        let synced = directory.sync_all();
+        #[cfg(test)]
+        let synced = tests::directory_sync_result(synced);
+        created.durability_warning = synced.is_err();
+        Ok(created)
+    }
+
     pub(crate) fn display_root(&self) -> &Path {
         &self.display_root
     }
@@ -269,9 +314,15 @@ impl Vault {
 
     fn resolve_parent<'a>(&self, path: &'a str) -> Result<(File, &'a OsStr), Error> {
         validate_source_path(path)?;
+        self.resolve_validated_parent(path)
+    }
+
+    // Both callers validate before any I/O; source extension/depth policy stays
+    // in resolve_parent, while directory creation uses its own stricter depth.
+    fn resolve_validated_parent<'a>(&self, path: &'a str) -> Result<(File, &'a OsStr), Error> {
         let mut directory = self.directory.try_clone()?;
         let mut components = path.split('/');
-        let name = components.next_back().unwrap(); // Nonempty, validated source path.
+        let name = components.next_back().unwrap(); // Nonempty, validated relative path.
         for parent in components {
             let pinned = open_at(&directory, OsStr::new(parent), libc::O_PATH)?;
             let metadata = pinned.metadata()?;
@@ -329,11 +380,83 @@ mod tests {
     use crate::{random_id, Error};
     use std::{fs, path::PathBuf};
 
+    #[derive(Clone, Copy, PartialEq)]
+    enum DirectoryFault {
+        None,
+        MkdirReply,
+        SyncReply,
+    }
+    thread_local! {
+        static DIRECTORY_FAULT: std::cell::Cell<DirectoryFault> = const {
+            std::cell::Cell::new(DirectoryFault::None)
+        };
+    }
+    pub(super) fn directory_mkdir_result(result: std::io::Result<()>) -> std::io::Result<()> {
+        if result.is_ok() && DIRECTORY_FAULT.with(|fault| fault.get() == DirectoryFault::MkdirReply)
+        {
+            Err(std::io::Error::from_raw_os_error(libc::EIO))
+        } else {
+            result
+        }
+    }
+    pub(super) fn directory_sync_result(result: std::io::Result<()>) -> std::io::Result<()> {
+        if DIRECTORY_FAULT.with(|fault| fault.get() == DirectoryFault::SyncReply) {
+            Err(std::io::Error::from_raw_os_error(libc::EIO))
+        } else {
+            result
+        }
+    }
+    struct Fault;
+    impl Fault {
+        fn inject(value: DirectoryFault) -> Self {
+            DIRECTORY_FAULT.with(|fault| {
+                assert!(fault.get() == DirectoryFault::None);
+                fault.set(value);
+            });
+            Self
+        }
+    }
+    impl Drop for Fault {
+        fn drop(&mut self) {
+            DIRECTORY_FAULT.with(|fault| fault.set(DirectoryFault::None));
+        }
+    }
+
     struct Fixture(PathBuf);
     impl Drop for Fixture {
         fn drop(&mut self) {
             fs::remove_dir_all(&self.0).unwrap();
         }
+    }
+
+    #[test]
+    fn injected_mkdir_error_after_real_publication_reports_uncertainty_without_rollback() {
+        let fixture = Fixture(
+            PathBuf::from("/tmp").join(format!("pn-directory-uncertain-{}", random_id().unwrap())),
+        );
+        fs::create_dir(&fixture.0).unwrap();
+        let vault = Vault::select_authorized(&fixture.0).unwrap();
+        let _fault = Fault::inject(DirectoryFault::MkdirReply);
+        assert!(
+            matches!(vault.create_directory("published"), Err(Error::PublicationUncertain(error)) if error.raw_os_error() == Some(libc::EIO))
+        );
+        assert!(fixture.0.join("published").is_dir());
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn injected_parent_sync_failure_returns_acknowledged_creation_with_warning() {
+        let fixture = Fixture(
+            PathBuf::from("/tmp").join(format!("pn-directory-sync-{}", random_id().unwrap())),
+        );
+        fs::create_dir(&fixture.0).unwrap();
+        let vault = Vault::select_authorized(&fixture.0).unwrap();
+        let _fault = Fault::inject(DirectoryFault::SyncReply);
+        let created = vault.create_directory("published").unwrap();
+        assert_eq!(created.logical_path, "published");
+        assert!(created.durability_warning);
+        assert!(fixture.0.join("published").is_dir());
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 1);
     }
 
     #[test]
