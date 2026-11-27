@@ -3,7 +3,11 @@ mod documents;
 mod downloads;
 mod editor_close;
 #[cfg(target_os = "linux")]
+mod preview_activation;
+#[cfg(target_os = "linux")]
 mod preview_failure;
+#[cfg(target_os = "linux")]
+mod preview_permissions;
 #[cfg(target_os = "linux")]
 mod renderer_failure;
 mod updates;
@@ -168,12 +172,23 @@ fn main() {
             .manage(std::sync::Arc::new(documents::Documents::default()))
             .on_window_event(documents::close_requested);
     }
-    let app=builder
+    let app = builder
         .setup(move |app| {
-            let label=if child {"preview"} else {"editor"};
-            let url=WebviewUrl::App(if child || editor_probe {"native-preview.html"} else {"index.html"}.into());
-            let mut builder=WebviewWindowBuilder::new(app,label,url)
-                .title(if child {"Unprivileged document preview"} else {"Programmable Notes"})
+            let label = if child { "preview" } else { "editor" };
+            let url = WebviewUrl::App(
+                if child || editor_probe {
+                    "native-preview.html"
+                } else {
+                    "index.html"
+                }
+                .into(),
+            );
+            let mut builder = WebviewWindowBuilder::new(app, label, url)
+                .title(if child {
+                    "Unprivileged document preview"
+                } else {
+                    "Programmable Notes"
+                })
                 .disable_drag_drop_handler()
                 // Rebuilding untrusted output must not take source typing focus.
                 // The user can still explicitly activate and interact with it.
@@ -182,23 +197,53 @@ fn main() {
                 .on_navigation(allowed_navigation);
             if child {
                 // Native download handling is independent of IPC and iframe permissions.
-                builder=builder.on_download(downloads::deny);
+                builder = builder.on_download(downloads::deny);
             }
-            if let Some(html)=html.as_ref() {
-                let value=serde_json::to_string(html)?;
-                // The value is serialized data; it is never evaluated as document JavaScript in this shell.
-                builder=builder.initialization_script(format!("addEventListener('DOMContentLoaded',()=>{{document.querySelector('iframe').srcdoc={value};}},{{once:true}});"));
+            #[cfg(target_os = "linux")]
+            let renderer_hook = std::sync::Arc::new(std::sync::Once::new());
+            #[cfg(target_os = "linux")]
+            if child {
+                let html = html.clone();
+                let activation = std::sync::Arc::new(preview_activation::Activation::default());
+                let renderer_hook = renderer_hook.clone();
+                // The shell stays empty until this native callback installs all
+                // guards. Neither DOMContentLoaded nor a renderer message admits author code.
+                builder = builder.on_page_load(move |window, payload| {
+                    if child
+                        && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished)
+                        && preview_activation::trusted_shell(
+                            payload.url().as_str(),
+                            cfg!(feature = "custom-protocol"),
+                        )
+                    {
+                        if preview_permissions::activate(
+                            &window,
+                            child,
+                            activation.clone(),
+                            renderer_hook.clone(),
+                            html.clone(),
+                        )
+                        .is_err()
+                        {
+                            eprintln!("NATIVE_PREVIEW_ACTIVATION_FAILED reason=dispatch");
+                            window.app_handle().exit(1);
+                        }
+                    }
+                });
             }
             let _window = builder.build()?;
             #[cfg(target_os = "linux")]
             if child {
-                preview_failure::install(&_window)?;
+                // Observe startup loss as before. The activation callback repeats
+                // this installation through the same native Once before author code.
+                preview_failure::install_once(&_window, renderer_hook)?;
             } else {
                 renderer_failure::install(&_window)?;
             }
             Ok(())
         })
-        .build(context).expect("Failed to start native runtime");
+        .build(context)
+        .expect("Failed to start native runtime");
     app.run(|app, event| {
         if matches!(event, tauri::RunEvent::Exit) {
             if let Ok(mut supervisor) = app.state::<Host>().supervisor.lock() {
