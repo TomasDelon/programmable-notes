@@ -1,0 +1,78 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not raw private logs",
+  "run_id": 45943438955,
+  "job_id": 140322662111,
+  "source_commit": "190dbf0c45f9429f168c13ccdc8a2b5903cd3616",
+  "source_profile": "debian13",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "passed",
+  "os_admission": "passed",
+  "session": {
+    "phase": "complete",
+    "reason": "none",
+    "cleanup": "passed"
+  },
+  "stop": {
+    "status": "passed",
+    "phase": "complete",
+    "reason": "none",
+    "bridge": "passed",
+    "pointer": "passed",
+    "keyboard": "passed",
+    "termination": "passed",
+    "host_input": "passed",
+    "original_reason": "none",
+    "host_before_teardown": "running",
+    "observer_before_teardown": "exited",
+    "observer_exit": 0,
+    "host_stage": "unit_ready",
+    "start_failure": "none"
+  },
+  "expiry": {
+    "status": "passed",
+    "phase": "complete",
+    "reason": "none",
+    "bridge": "passed",
+    "pointer": "not_run",
+    "keyboard": "not_run",
+    "termination": "passed",
+    "host_input": "not_run",
+    "original_reason": "none",
+    "host_before_teardown": "running",
+    "observer_before_teardown": "exited",
+    "observer_exit": 0,
+    "host_stage": "unit_ready",
+    "start_failure": "none"
+  },
+  "limitations": [
+    "This verifies one fixed diagnostic artifact/environment, not the product application or full malicious-document security matrix.",
+    "The earlier readiness timeout remains unexplained; one passing fresh run does not establish startup reliability.",
+    "Prior failed runs, including the Ubuntu namespace refusal, remain failed."
+  ],
+  "environment": {
+    "id": "debian",
+    "version": "13",
+    "kernel_release": "6.12.118+deb13-amd64",
+    "packages": {
+      "libc6": "2.41-12+deb13u5",
+      "libgtk-3-0t64": "3.24.49-3",
+      "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+      "linux-image-amd64": "6.12.118-1",
+      "systemd": "257.13-1~deb13u1"
+    }
+  },
+  "artifacts": [
+    {
+      "name": "fixed-native-inline-react-diagnostic",
+      "id": 15173897103,
+      "scope": "validated-summary-only"
+    },
+    {
+      "name": "native-vm-os-admission",
+      "id": 15173817304,
+      "scope": "validated-os-receipt-only"
+    }
+  ]
+}

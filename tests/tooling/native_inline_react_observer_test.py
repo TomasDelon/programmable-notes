@@ -38,6 +38,22 @@ class Clock:
 
 
 class Titles(unittest.TestCase):
+    def test_native_snapshot_decoder_accepts_only_exact_quoted_xprop_fixed_schema(self):
+        snapshot = {"version": 1, "built": True, "committed": False, "finished": False,
+                    "navigation_denied": False, "load_failed": False, "termination": "none"}
+        def output(value):
+            return ("_PN_FIXTURE_NATIVE = " + json.dumps(json.dumps(value, separators=(",", ":"))) + "\n").encode()
+        self.assertEqual(observer.decode_native_snapshot(output(snapshot)), snapshot)
+        self.assertEqual(observer.decode_native_snapshot(output(snapshot)[:-1]), snapshot)
+        for extra in (b" ", b"\t", b"\r", b"\n", b"\n\n"):
+            self.assertIsNone(observer.decode_native_snapshot(output(snapshot) + extra))
+            self.assertIsNone(observer.decode_native_snapshot(output(snapshot).replace(b" = ", b" = " + extra)))
+
+        for changes in ({"version": True}, {"built": 1}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
+            self.assertIsNone(observer.decode_native_snapshot(output({**snapshot, **changes})))
+        for raw in (b"", b"x" * 1025, output(snapshot).replace(b"_PN_FIXTURE_NATIVE", b"OTHER"),
+                    output(snapshot) + b"PRIVATE\n", b'_PN_FIXTURE_NATIVE = "PRIVATE"\n'):
+            self.assertIsNone(observer.decode_native_snapshot(raw))
     def test_last_state_has_only_fixed_categories_and_known_errors_still_refuse(self):
         cases = [(None, "missing"), (b"", "empty"), (b'{"bridge":"native-before-webkit"}', "native_only"),
                  (title(ready=False), "bootstrap_pending"), (title(), "react_ready"),
@@ -327,6 +343,7 @@ class FakeBackend:
         self.state_value = json.loads(title())
         self.reads = []
         self.last_readiness = "not_observed"
+        self.snapshot_calls = []
     def host(self): return {"unit": UNIT, "host_pid": 42, "host_xid": 100, "socket": 200}
     def target(self, unit):
         self.target_calls += 1
@@ -338,6 +355,9 @@ class FakeBackend:
         self.last_readiness = "bootstrap_pending" if not self.ready else "react_ready"
         return {**self.state_value, "ready": self.ready}
     def readiness_state(self): return self.last_readiness
+    def native_snapshot(self, child, start):
+        self.snapshot_calls.append((child, start))
+        return None
     def gui(self, *args, deadline):
         self.calls.append(args)
         self.clock.now += .01
@@ -351,6 +371,36 @@ class FakeBackend:
 
 
 class Flow(unittest.TestCase):
+    def test_native_probe_records_once_only_for_cached_missing_or_native_only(self):
+        snapshot = {"version": 1, **{key: False for key in observer.NATIVE_FLAGS}, "termination": "none"}
+        for state in ("native_only", "missing", "bootstrap_pending", "react_ready"):
+            def adjust(backend):
+                backend.ready = False
+                backend.readiness_state = lambda: state
+                def probe(child, start):
+                    backend.snapshot_calls.append((child, start))
+                    return snapshot
+                backend.native_snapshot = probe
+            result, backend, evidence, _ = self.run_case("stop", adjust)
+            expected = state in ("native_only", "missing")
+            self.assertEqual(len(backend.snapshot_calls), int(expected))
+            self.assertEqual(sum(kind == "native_snapshot" for kind, _ in evidence.events), int(expected))
+            self.assertEqual(result["reason"], "readiness_deadline")
+            self.assertEqual(result["termination"], "passed")
+
+    def test_native_probe_is_optional_and_cannot_waive_original_stop_50_gate(self):
+        def adjust(backend):
+            backend.ready = False
+            backend.readiness_state = lambda: "native_only"
+            def late(child, start):
+                backend.clock.now = 150
+                return None
+            backend.native_snapshot = late
+        result, backend, _, _ = self.run_case("stop", adjust)
+        self.assertEqual(result["phase"], "ready")
+        self.assertEqual(result["reason"], "readiness_deadline")
+        self.assertEqual(result["termination"], "failed")
+        self.assertFalse(any(call[:4] == ("mousemove", "--window", 100, 50) for call in backend.calls))
     def test_readiness_diagnostic_is_one_cached_enum_without_new_read_or_deadline_change(self):
         result, backend, evidence, clock = self.run_case("stop", lambda backend: setattr(backend, "ready", False))
         self.assertEqual(result["phase"], "ready")
@@ -450,6 +500,43 @@ class Flow(unittest.TestCase):
 
 
 class Commands(unittest.TestCase):
+    def test_native_probe_start_cutoff_normal_deadline_and_late_omission(self):
+        backend = object.__new__(observer.Backend)
+        backend.absolute = 185
+        clock = Clock(); clock.now = 144
+        raw = b'_PN_FIXTURE_NATIVE = "{\\"version\\":1,\\"built\\":true,\\"committed\\":false,\\"finished\\":false,\\"navigation_denied\\":false,\\"load_failed\\":false,\\"termination\\":\\"none\\"}"\n'
+        calls = []
+        def command(args, deadline, limit):
+            calls.append((args, deadline, limit))
+            return raw
+        with patch.object(observer.time, "monotonic", clock.monotonic), patch.object(observer, "_command", side_effect=command):
+            self.assertTrue(backend.native_snapshot(123, 100)["built"])
+            self.assertEqual(calls[0], (["/usr/bin/xprop", "-id", "123", "-notype", "-f", "_PN_FIXTURE_NATIVE", "8s", "_PN_FIXTURE_NATIVE"], 144.5, 1024))
+            clock.now = 144.5
+            self.assertIsNone(backend.native_snapshot(123, 100))
+            self.assertEqual(len(calls), 1)
+        def late(*_args):
+            clock.now = 146
+            return raw
+        clock.now = 144
+        with patch.object(observer.time, "monotonic", clock.monotonic), patch.object(observer, "_command", side_effect=late):
+            self.assertIsNone(backend.native_snapshot(123, 100))
+
+    def test_native_probe_timeout_kills_and_reaps_owned_child_without_native_execution(self):
+        import time
+        backend = object.__new__(observer.Backend)
+        backend.absolute = time.monotonic() + 85
+        processes = []
+        original = subprocess.Popen
+        def spawn(args, **kwargs):
+            self.assertEqual(args[0], "/usr/bin/xprop")
+            process = original([sys.executable, "-I", "-c", "import time;time.sleep(10)"], **kwargs)
+            processes.append(process)
+            return process
+        with patch.object(observer.subprocess, "Popen", side_effect=spawn):
+            self.assertIsNone(backend.native_snapshot(123, time.monotonic() - 44))
+        self.assertEqual(len(processes), 1)
+        self.assertIsNotNone(processes[0].poll())
     def test_actual_pipe_bound_timeout_and_sanitized_cli(self):
         import time
         self.assertEqual(observer._command([sys.executable, "-I", "-c", "print('fixed')"], time.monotonic() + 2), b"fixed\n")

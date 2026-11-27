@@ -20,6 +20,30 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Shared navigation and native-load observation — local verification
+
+The existing web document row is now the same stateless presentation leaf used
+by the controlled NativeWorkspace/DocumentSurface host. Host-owned selection,
+draft admission, drag callbacks, source/history and persistence remain. Three
+row and ten surface controls passed independently; ten actual Chromium
+navigation/tree-drag cases passed. No replacement shell or native boot is enabled.
+
+The next native probe adds a separate fixed construction/load/termination
+property, not a startup repair. Four actual std-only Rust state controls cover
+all160 states; observer/sanitizer/driver controls passed36/15/22. The optional
+fixed xprop child has bounded work/cleanup and preserves the original Stop
+check. Post-build missed events remain unknown; Finished is not JS success.
+Host compilation needs the hosted GTK dependencies and is not claimed locally.
+
+The first combined check passed814 unit tests but failed one of133 tooling
+controls: the workflow guard oracle omitted the new optional Rust-test step.
+The oracle was strengthened with the new guarded step and omitted/unlocked
+negative controls; all12 routing cases then passed. The complete rerun exited0:
+**814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 local cloud cases**,
+plus format/lint/types/build. All functional input hashes remained unchanged;
+only the observation plan received separately formatted documentation during it.
+No new native probe has executed, and the earlier2/3 startup result remains failed.
+
 ## Hosted dependency-source failure and correction
 
 Required CI on fd6f7f2 passed the browser/check job but failed native dependency
@@ -35,9 +59,9 @@ that omitting the filter exposes unrelated sources. Four targeted controls and
 independent review passed. The complete local check exited0:808 unit,133
 tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus
 formatting/lint/types/production build. History/archive and staged patch scans
-found zero findings. Actual hosted execution remains pending. Required run45942471204 has passed
-both source-selection and dependency-installation stages; full jobs are still
-running.
+found zero findings. Actual hosted required run45942471204 passed both jobs on3c59a50.
+Required run45943437218 then passed both jobs on190dbf0, including production
+packaging; the runner dependency failure is corrected.
 
 ## Native diagnostic correction — local checks complete
 
@@ -55,8 +79,16 @@ controls passed31/14/21. Core acceptance, cleanup and isolation remain unchanged
 The complete frozen-functional-input check exited0:808 unit,133 tooling/zero
 skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus formatting,
 lint, types and production build. Documentation corrections were formatted
-separately. Neither correction has yet run in a fresh guest; all earlier
-failures remain failed. The native product itself remains unaccepted.
+separately. Fresh Debian run45943438955 then passed the fixed diagnostic: actual React
+pointer/keyboard, Stop, trusted-host input, expiry and session cleanup. This
+exercises the close correction but does not explain the earlier readiness
+timeout. The predefined three-run sequence finished2/3:45943438955 and45944086321
+passed,45944129836 failed the original ready deadline with last state
+`native_only`. Stop/host input/session cleanup passed in all three; the third
+run did not execute React input or expiry. Startup reliability fails acceptance;
+no unchanged retry is planned. The next probe must distinguish native building,
+loading and process termination. The actual native product and all earlier
+failures remain unaccepted.
 
 ## Captured-vault directory creation and sealed validation profile
 

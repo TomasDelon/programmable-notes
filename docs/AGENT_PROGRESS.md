@@ -2661,3 +2661,24 @@ limit, cleanup or title acceptance was relaxed. Historical failure evidence stay
 README/Linux guide now accurately mark the rejected legacy installer, existing
 notice-bearing artifact and explicit demo-dispatch condition. Independent
 contract/workflow review cleared those documentation corrections.
+
+### Shared navigation leaf and passive native-load observation
+
+190dbf0 required CI45943437218 passed both jobs. Its predefined fixed native
+sequence finished2/3:45943438955 and45944086321 passed all fixed observations;
+45944129836 failed the original ready deadline with last state native_only.
+Stop, host input and session cleanup passed in all three. Keep every receipt;
+startup reliability failed acceptance and no unchanged retry is planned.
+
+The shared document row is extracted without host authority or DOM changes.
+Independent13 row/surface tests and10 real Chromium navigation/drag cases pass.
+The next passive native probe records only bounded sticky lifecycle flags; four
+actual-module Rust controls and36 observer/15 sanitizer/22 driver controls pass.
+Hosted GTK compilation/runtime remains pending; no readiness repair is claimed.
+
+Combined full check first failed one tooling guard-oracle gap after814 unit
+passes. The new lifecycle unit step was added to the oracle, with omitted and
+unlocked negative controls RED then GREEN12 routing cases. Full rerun exited0:
+814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 local cloud cases plus
+format/lint/types/build. Functional hashes stayed fixed; documentation formatted
+separately. History/archive and staged scans found zero findings before commits.

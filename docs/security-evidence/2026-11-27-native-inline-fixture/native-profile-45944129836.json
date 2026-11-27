@@ -1,0 +1,84 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not raw private logs",
+  "run_id": 45944129836,
+  "job_id": 140324844449,
+  "source_commit": "190dbf0c45f9429f168c13ccdc8a2b5903cd3616",
+  "source_profile": "debian13",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "os_admission": "passed",
+  "session": {
+    "phase": "stop",
+    "reason": "observer_failed",
+    "cleanup": "passed"
+  },
+  "stop": {
+    "status": "failed",
+    "phase": "ready",
+    "reason": "readiness_deadline",
+    "bridge": "passed",
+    "pointer": "not_run",
+    "keyboard": "not_run",
+    "termination": "passed",
+    "host_input": "passed",
+    "original_reason": "observer_failed",
+    "host_before_teardown": "running",
+    "observer_before_teardown": "exited",
+    "observer_exit": 2,
+    "host_stage": "unit_ready",
+    "start_failure": "none",
+    "readiness_state": "native_only",
+    "observer_exception": {
+      "phase": "ready",
+      "error_type": "Refused",
+      "errno": null,
+      "frames": [
+        {
+          "function": "run",
+          "line": 685
+        },
+        {
+          "function": "state_until",
+          "line": 666
+        },
+        {
+          "function": "_wait",
+          "line": 643
+        }
+      ]
+    }
+  },
+  "expiry": "not_run",
+  "limitations": [
+    "Third run in the predefined sequence failed; batch outcome is two passes out of three and is not startup acceptance.",
+    "The last observed state was the native bridge only; no JavaScript title/bootstrap receipt was observed. Native construction, load, termination or scheduling cause is not yet established.",
+    "Stop termination, trusted-host input and session cleanup passed individually; React pointer/keyboard and expiry did not run.",
+    "Fixed diagnostic only: no product application or complete native security matrix acceptance."
+  ],
+  "environment": {
+    "id": "debian",
+    "version": "13",
+    "kernel_release": "6.12.118+deb13-amd64",
+    "packages": {
+      "libc6": "2.41-12+deb13u5",
+      "libgtk-3-0t64": "3.24.49-3",
+      "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+      "linux-image-amd64": "6.12.118-1",
+      "systemd": "257.13-1~deb13u1"
+    }
+  },
+  "artifacts": [
+    {
+      "name": "fixed-native-inline-react-diagnostic",
+      "id": 15174256819,
+      "scope": "validated-summary-only"
+    },
+    {
+      "name": "native-vm-os-admission",
+      "id": 15174456556,
+      "scope": "validated-os-receipt-only"
+    }
+  ]
+}

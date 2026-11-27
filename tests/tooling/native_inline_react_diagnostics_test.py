@@ -40,6 +40,26 @@ def wire(*rows):
 
 
 class Diagnostics(unittest.TestCase):
+    def test_native_snapshot_is_exact_detached_and_category_gated(self):
+        value = {"version": 1, **{key: False for key in diagnostics.NATIVE_FLAGS}, "termination": "none"}
+        row = {"event": "native_snapshot", "elapsed": 44.1, "phase": "ready", "snapshot": value}
+        extract = lambda raw=wire(row), phase="ready", state="native_only": diagnostics.extract_native_snapshot(raw, SOURCE, phase, state)
+        self.assertEqual(extract(), value)
+        for state in ("missing",):
+            self.assertEqual(extract(state=state), value)
+        for state in ("react_ready", "bootstrap_pending", "PRIVATE"):
+            self.assertIsNone(extract(state=state))
+        self.assertIsNone(extract(phase="stop"))
+        for changes in ({"version": True}, {"built": 1}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
+            bad = {**row, "snapshot": {**value, **changes}}
+            self.assertIsNone(extract(wire(bad, row)))
+        for bad in (wire({**row, "message": "PRIVATE"}), wire({**row, "elapsed": float("nan")}),
+                    wire(row) + b"{broken\n", wire(row)[:-1], wire({**row, "snapshot": []})):
+            self.assertIsNone(extract(bad))
+        copy = diagnostics.validate_native_snapshot(value, SOURCE, "ready", "missing")
+        value["built"] = True
+        self.assertFalse(copy["built"])
+
     def test_readiness_state_is_fixed_enum_and_only_for_ready_failure(self):
         for state in diagnostics.READINESS_STATES:
             row = {"event": "readiness_state", "elapsed": 44, "phase": "ready", "state": state}

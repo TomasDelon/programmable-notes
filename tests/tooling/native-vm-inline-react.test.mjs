@@ -13,6 +13,6 @@ test('fixed inline driver validates synthetic artifacts and transport without a 
   );
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stderr, /Ran 21 tests/);
+  assert.match(result.stderr, /Ran 22 tests/);
   assert.match(result.stderr, /\bOK\b/);
 });

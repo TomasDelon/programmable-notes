@@ -260,3 +260,31 @@ from VM/full security acceptance. Stop cleanup also remains unproven after ESRCH
 Before more native tests, correct/version/review share-free provisioning with
 negative preflight controls. Shared UI/data work can remain independent; do not
 promote another installer or treat these partial observations as product readiness.
+
+## Current checkpoint after shared surface and Debian validation
+
+The share-free provisioning gate is now versioned, independently reviewed and
+actually exercised. Ubuntu still refuses effective network isolation; its
+failures are retained. Debian OS-only admission passed, followed by a fixed
+native run that admitted isolation/embedding but failed React readiness and
+application cleanup. The earlier shared-key pointer observation remains excluded.
+The reviewed close-protocol correction and passive readiness category are
+published in190dbf0. Its predefined fresh-guest sequence finished2/3: two
+complete fixed-helper passes and one native-only React-ready timeout. Stop,
+host input and session cleanup passed in all three. Startup reliability remains
+failed; the next probe must distinguish native building/loading/termination.
+
+The shared DocumentSurface and cached DocumentSessions observation hook now
+reuse existing panels/controller authority without a replacement UI. Real Store
+autosave/session tests remain separate from injected UI/controller tests. Real
+Vault directory creation is published; empty directories are not yet discoverable
+through the inventory protocol. Avoid adding an unused parallel inventory API:
+when needed, extend the existing secure walker and separated directory data
+through the existing wire/controller together.
+
+Next gates: finish native inline interaction/geometry/lifecycle proof and its
+security matrix; compose the shared product root with explicit platform services;
+prove native vault autosave/recovery in that actual interface. Scoped uncertainty
+reconciliation and real rename/move/recoverable Trash remain unimplemented. A
+Store-wide write freeze was rejected because it would block unrelated notes.
+No corrected installer or accepted native product is delivered by these foundations.

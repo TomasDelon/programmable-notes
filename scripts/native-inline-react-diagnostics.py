@@ -168,3 +168,51 @@ def extract_readiness_state(events, observer_source, failed_phase):
         return selected
     except Exception:
         return None
+
+
+NATIVE_FLAGS = ("built", "committed", "finished", "navigation_denied", "load_failed")
+NATIVE_TERMINATIONS = frozenset(("none", "crashed", "memory_limit", "api_terminated", "unknown"))
+
+
+def validate_native_snapshot(value, observer_source, failed_phase, readiness_state):
+    try:
+        if (failed_phase != "ready" or readiness_state not in ("native_only", "missing")
+                or _source_frames(observer_source) is None or type(value) is not dict
+                or set(value) != {"version", *NATIVE_FLAGS, "termination"}
+                or type(value["version"]) is not int or value["version"] != 1
+                or any(type(value[key]) is not bool for key in NATIVE_FLAGS)
+                or type(value["termination"]) is not str or value["termination"] not in NATIVE_TERMINATIONS):
+            return None
+        return dict(value)
+    except Exception:
+        return None
+
+
+def extract_native_snapshot(events, observer_source, failed_phase, readiness_state):
+    try:
+        if (type(events) is not bytes or not 0 < len(events) <= EVENT_LIMIT or not events.endswith(b"\n")
+                or failed_phase != "ready" or readiness_state not in ("native_only", "missing")
+                or _source_frames(observer_source) is None):
+            return None
+        rows = events.splitlines()
+        if len(rows) > 4096:
+            return None
+        selected = None
+        for raw in rows:
+            if not 0 < len(raw) <= ROW_LIMIT:
+                return None
+            value = json.loads(raw.decode("utf8"), object_pairs_hook=_pairs, parse_constant=_constant)
+            if type(value) is not dict:
+                return None
+            if selected is not None or value.get("event") != "native_snapshot":
+                continue
+            if (set(value) != {"event", "elapsed", "phase", "snapshot"} or value["phase"] != "ready"
+                    or type(value["elapsed"]) not in (int, float) or not math.isfinite(value["elapsed"])
+                    or not 0 <= value["elapsed"] <= 190):
+                return None
+            selected = validate_native_snapshot(value["snapshot"], observer_source, failed_phase, readiness_state)
+            if selected is None:
+                return None
+        return selected
+    except Exception:
+        return None

@@ -4,8 +4,12 @@
 Ubuntu's observed `network_not_isolated` refusal remains unchanged. Neither the
 image pin nor this plan establishes Debian namespace or application acceptance.
 
-Status: source implementation and independent review complete; actual packaging,
-OS admission, ABI and namespace validation remain pending.
+Status: source implementation and independent review complete. Actual OS-only
+admission passed on fd6f7f2 in run45939785719. Separate native run45940249067
+passed effective isolation and the native bridge, then failed React readiness
+and session cleanup. This narrows ABI/namespace uncertainty for that fixed helper
+and environment; it does not verify the product application or Ubuntu support.
+See [dated evidence](../security-evidence/2026-11-27-native-inline-fixture/README.md).
 
 ## Fixed source profile
 

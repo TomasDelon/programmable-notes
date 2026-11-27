@@ -1256,6 +1256,7 @@ dependencies = [
  "gtk",
  "libc",
  "preview-policy",
+ "webkit2gtk",
  "wry",
 ]
 

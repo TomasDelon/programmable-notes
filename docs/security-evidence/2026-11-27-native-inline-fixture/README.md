@@ -309,3 +309,64 @@ they cannot change case status, cleanup authority or the original deadline.
 
 This is a discriminating probe for the next fresh guest run. It does not establish
 why run45940249067 lacked React readiness, or claim that rendering is repaired.
+
+## First complete fixed native pass
+
+[Run45943438955](https://github.com/TomasDelon/programmable-notes/actions/runs/45943438955)
+on190dbf0 passed same-lifecycle Debian OS admission, the effective isolation
+gate, native bridge, actual React pointer/keyboard input, Stop, trusted-host
+input, fresh-case expiry and session cleanup. The corrected close protocol was
+therefore exercised in the actual guest. [Bounded receipt](native-profile-45943438955.json).
+
+This is one fixed-helper pass. The earlier ready timeout is still unexplained;
+no readiness repair or stable startup is inferred from this fresh pass. A
+predefined pair of additional fresh guests on the same source tests repetition,
+without selective retries or changed limits; all outcomes will be retained.
+The actual application, arbitrary geometry, malicious workload/IPC matrix and
+shared product integration remain separate acceptance gates. Ubuntu failures
+and all preceding failed observations remain unchanged.
+
+The passing run retains GitHub-accessible sanitized artifacts
+[fixed-native-inline-react-diagnostic](https://github.com/TomasDelon/programmable-notes/actions/runs/45943438955/artifacts/15173897103)
+and [native-vm-os-admission](https://github.com/TomasDelon/programmable-notes/actions/runs/45943438955/artifacts/15173817304)
+for seven days. These contain validated summaries, not raw private session
+logs, transport credentials, Xauthority or a product demo. Permanent bounded
+annotation evidence and environment identity are retained alongside this guide.
+
+## Predefined repetition result: two passes, one failure
+
+The same190dbf0 source ran in three fresh guests with unchanged limits:
+
+| Run                                            | Fixed case outcome                                       | Stop / host input / session cleanup |
+| ---------------------------------------------- | -------------------------------------------------------- | ----------------------------------- |
+| [45943438955](native-profile-45943438955.json) | Pointer, keyboard and expiry passed                      | Passed                              |
+| [45944086321](native-profile-45944086321.json) | Pointer, keyboard and expiry passed                      | Passed                              |
+| [45944129836](native-profile-45944129836.json) | Ready deadline; last state `native_only`; expiry not run | Passed                              |
+
+This sequence **fails startup reliability acceptance**. It is not three passing
+retries: all predefined outcomes are retained, and no further unchanged retry is
+planned. The last state narrows the third failure to absence of a JavaScript
+bootstrap/title receipt; it cannot establish whether native construction, loading,
+process termination or scheduling caused that absence. Native page/load/termination
+observation is the next discriminating probe. The corrected close protocol
+completed cleanup in both passes and the failed startup.
+
+All three use the same recorded Debian13 kernel/package versions. Their linked
+Actions runs retain sanitized summary/OS artifacts for seven days. No raw logs or
+credentials are published. The current product application remains unaccepted.
+
+## Next discriminating native-load probe
+
+The reviewed [passive observation plan](../../plans/native-load-observation.md)
+adds a separate bounded native construction/load/termination property. STATE,
+BRIDGE, title acceptance and all core deadlines remain. A failed ready phase
+with native-only/missing title may read it through a fixed bounded xprop child
+when sufficient original Stop headroom remains. Invalid, absent or late data is
+omitted; raw output and callback URI/error strings are not published.
+
+The std-only state/serializer used by the actual host passed four Rust controls
+covering all160 states. CI now runs these as headless unit tests after host
+compilation, before any optional guest. This is not GTK/native runtime evidence.
+Post-construction signals can miss earlier events, and Finished is not JavaScript
+success. Full host compilation requires the hosted GTK dependencies; no new
+native probe has yet executed.

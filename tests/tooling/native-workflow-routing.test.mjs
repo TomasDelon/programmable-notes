@@ -80,7 +80,9 @@ const inlineGate =
   '      - name: Check the fixed inline host Rust formatting\n' +
   `        run: cargo fmt --manifest-path ${inlineManifest} -- --check\n` +
   '      - name: Compile the fixed inline host (not GUI acceptance)\n' +
-  `        run: cargo build --manifest-path ${inlineManifest} --release --locked --target-dir src-tauri/target\n`;
+  `        run: cargo build --manifest-path ${inlineManifest} --release --locked --target-dir src-tauri/target\n` +
+  '      - name: Test fixed native lifecycle state (headless logic, not GUI acceptance)\n' +
+  `        run: cargo test --manifest-path ${inlineManifest} --release --locked --target-dir src-tauri/target\n`;
 function assertInlineHostCompileGate(text) {
   const section = text.slice(
     text.indexOf('\n  native-check:'),
@@ -130,6 +132,15 @@ test('the inline host compile control rejects missing formatting, unlocked build
       '--target-dir other-target',
     ),
     workflow.replace(`, '${inlineLock}'`, ''),
+    workflow.replace(
+      `cargo test --manifest-path ${inlineManifest} --release --locked`,
+      `cargo test --manifest-path ${inlineManifest} --release`,
+    ),
+    workflow.replace(
+      '      - name: Test fixed native lifecycle state (headless logic, not GUI acceptance)\n' +
+        `        run: cargo test --manifest-path ${inlineManifest} --release --locked --target-dir src-tauri/target\n`,
+      '',
+    ),
     workflow.replace(
       '      - name: Compile the fixed inline host (not GUI acceptance)\n',
       '      - name: Compile the fixed inline host (not GUI acceptance)\n        if: false\n',
@@ -368,6 +379,7 @@ function assertInlineStepGuards(text) {
   for (const name of [
     'Prepare locked native diagnostic dependencies',
     'Compile only the fixed diagnostic host (not the product application)',
+    'Test fixed native lifecycle state before guest admission (headless logic only)',
     'Run the fixed native diagnostic after same-lifecycle OS admission',
   ]) {
     assert.ok(

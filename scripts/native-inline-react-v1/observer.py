@@ -106,6 +106,53 @@ def title_state(raw):
     return "react_ready" if value["count"] == 0 and value["field"] == "" else "react_noninitial"
 
 
+NATIVE_FLAGS = ("built", "committed", "finished", "navigation_denied", "load_failed")
+NATIVE_TERMINATIONS = frozenset(("none", "crashed", "memory_limit", "api_terminated", "unknown"))
+
+
+def _native_value(value):
+    if (type(value) is not dict or set(value) != {"version", *NATIVE_FLAGS, "termination"}
+            or type(value["version"]) is not int or value["version"] != 1
+            or any(type(value[key]) is not bool for key in NATIVE_FLAGS)
+            or type(value["termination"]) is not str or value["termination"] not in NATIVE_TERMINATIONS):
+        return None
+    return dict(value)
+
+
+def decode_native_snapshot(raw):
+    """Only the fixed xprop quoted ASCII representation; no raw strings escape."""
+    try:
+        if type(raw) is not bytes or not 0 < len(raw) <= 1024:
+            return None
+        text = raw.decode("ascii")
+        prefix = "_PN_FIXTURE_NATIVE = "
+        if not text.startswith(prefix):
+            return None
+        line = text[len(prefix):]
+        if line.endswith("\n"):
+            line = line[:-1]
+        if (not line.startswith('"') or not line.endswith('"')
+                or any(char in line for char in "\r\n\t")):
+            return None
+        quoted = json.loads(line, object_pairs_hook=_pairs)
+        if type(quoted) is not str or not 0 < len(quoted.encode("ascii")) <= 256:
+            return None
+        return _native_value(json.loads(quoted, object_pairs_hook=_pairs))
+    except Exception:
+        return None
+
+
+def native_snapshot_event(evidence, backend, target, child, phase):
+    try:
+        if phase != "ready" or target is None or backend.readiness_state() not in ("native_only", "missing"):
+            return
+        value = _native_value(backend.native_snapshot(child, target["start"]))
+        if value is not None:
+            evidence.event("native_snapshot", phase="ready", snapshot=value)
+    except Exception:
+        pass  # Optional fixed diagnosis cannot affect Stop or the original failure.
+
+
 def readiness_event(evidence, backend, phase):
     if phase != "ready":
         return
@@ -623,6 +670,23 @@ class Backend:
     def readiness_state(self):
         return self.x.last_state
 
+    def native_snapshot(self, child, start):
+        # Existing _command permits a further one-second kill/reap wait. This is
+        # nominally .5s work + 1s cleanup, not a hard realtime scheduling promise.
+        try:
+            now = time.monotonic()
+            if (type(child) is not int or not 0 < child < 2**64
+                    or not 0 <= now - start < 44.5 or self.absolute - now < 1.5):
+                return None
+            raw = _command(["/usr/bin/xprop", "-id", str(child), "-notype", "-f",
+                            "_PN_FIXTURE_NATIVE", "8s", "_PN_FIXTURE_NATIVE"],
+                           min(now + .5, start + 45, self.absolute), 1024)
+            if time.monotonic() >= min(start + 46, self.absolute):
+                return None
+            return decode_native_snapshot(raw)
+        except Exception:
+            return None
+
     def gui(self, *args, deadline):
         _command(["/usr/bin/xdotool", *map(str, args)], min(self.absolute, deadline, time.monotonic() + 2))
 
@@ -651,7 +715,7 @@ def run(case, evidence, backend, absolute):
     result = {"version": 1, "profile": "inline-react-v1", "case": case, "scope": "fixed-native-diagnostic-only",
               "native_app_tested": False, "status": "failed", "phase": "host", "reason": "none",
               **{key: "not_run" for key in OBSERVATIONS}}
-    target = host = renderer = None
+    target = host = renderer = child = None
     known, unresolved = {}, set()
     failure = None
     def phase(value):
@@ -701,10 +765,12 @@ def run(case, evidence, backend, absolute):
             evidence.event("keyboard_ack", field="hello", focus="field")
     except Refused as error:
         readiness_event(evidence, backend, result["phase"])
+        native_snapshot_event(evidence, backend, target, child, result["phase"])
         exception_event(evidence, result["phase"], error)
         failure = (result["phase"], error.reason)
     except Exception as error:
         readiness_event(evidence, backend, result["phase"])
+        native_snapshot_event(evidence, backend, target, child, result["phase"])
         exception_event(evidence, result["phase"], error)
         failure = (result["phase"], "observer_error")
     if target is not None:

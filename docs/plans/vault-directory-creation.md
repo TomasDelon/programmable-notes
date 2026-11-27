@@ -27,6 +27,11 @@ Requested private mode remains subject to process umask and filesystem inheritan
 - [x] Add failing real-file tests for successful simple/nested creation, exact name/private permissions, collisions including broken symlinks, concurrent creators and existing payloads never opened.
 - [x] Cover invalid names/depth/byte limits, reserved names, missing/symlink/FIFO parents, read-only policy and unchanged source-extension validation. Root rename/replaced display spelling must not redirect writes.
 - [x] Implement the minimal descriptor-relative operation; test uncertainty and post-publication sync failure through private compile-time test adapters, never production flags/IPC switches. Distinguish injection from actual filesystem success.
-- [ ] Run Rust formatting and affected native-document tests with the existing pinned toolchain; independent review then root final checks/scans/commit/push.
+- [x] Run Rust formatting and affected native-document tests with the existing pinned toolchain; independent review then root final checks/scans/commit/push.
 
 Existing inventory reports source files, so this method does not make empty folders appear in a tree. Do not silently widen its protocol in this packet. A crash or lost reply may leave a created directory without an acknowledgement; future callers must inspect/reconcile rather than automatically retry. Relocation, Trash, references and mutation of unrelated notes are outside scope.
+
+Published in fe590b5. Full native-documents verification passed91 tests with7
+pre-existing ignores; the eight directory filesystem cases also passed
+independently. Root full-check/scans completed before publication. The absence
+of empty-folder inventory, Store/IPC activation and installed UI evidence remains.

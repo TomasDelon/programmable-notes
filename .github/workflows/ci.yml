@@ -198,6 +198,8 @@ jobs:
         run: cargo fmt --manifest-path scripts/native-inline-react-v1/host/Cargo.toml -- --check
       - name: Compile the fixed inline host (not GUI acceptance)
         run: cargo build --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Test fixed native lifecycle state (headless logic, not GUI acceptance)
+        run: cargo test --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
       - name: Build the production Linux package
         shell: bash
         run: |
@@ -457,6 +459,11 @@ jobs:
         env:
           CARGO_BUILD_JOBS: 2
         run: cargo build --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Test fixed native lifecycle state before guest admission (headless logic only)
+        if: inputs.native_inline_react
+        env:
+          CARGO_BUILD_JOBS: 2
+        run: cargo test --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
       - name: Allocate a private fixture parent
         id: fixture
         run: |

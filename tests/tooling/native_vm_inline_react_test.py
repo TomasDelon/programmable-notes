@@ -20,6 +20,33 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts/native-vm-inline-react.p
 
 
 class Driver(unittest.TestCase):
+    def test_native_snapshot_is_failure_only_category_and_source_bound(self):
+        source = b"def own():\n    pass\n"
+        path = self.repo / self.driver.PAYLOAD["observer.py"][0]
+        path.write_bytes(source)
+        result = self.summary(False)
+        result["cases"]["stop"].update(phase="ready", reason="readiness_deadline")
+        snapshot = {"version": 1, "built": True, "committed": False, "finished": False,
+                    "navigation_denied": False, "load_failed": False, "termination": "none"}
+        readiness = {"stop": {"phase": "ready", "state": "native_only"}}
+        event = {"event": "native_snapshot", "elapsed": 44.1, "phase": "ready", "snapshot": snapshot}
+        collected = {"stop-events.jsonl": (json.dumps(event) + "\n").encode()}
+        details = self.driver._native_snapshots(collected, result["cases"], source, readiness)
+        self.assertEqual(details, {"stop": snapshot})
+        result.update(native_snapshots=details, readiness_states=readiness,
+                      payload={"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}})
+        self.assertIn("native_built=true", " ".join(self.driver._summary_notices(result)))
+        for state in ("bootstrap_pending", "react_ready"):
+            result["readiness_states"]["stop"]["state"] = state
+            self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))
+        result["readiness_states"]["stop"]["state"] = "missing"
+        result["native_snapshots"]["stop"]["uri"] = "PRIVATE"
+        self.assertNotIn("PRIVATE", " ".join(self.driver._summary_notices(result)))
+        del result["native_snapshots"]["stop"]["uri"]
+        path.write_bytes(b"def changed():\n    pass\n")
+        self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))
+        self.assertIn("scripts/native-inline-react-v1/host/src/native_snapshot.rs", self.driver.SOURCES)
+
     def test_readiness_enum_is_failed_ready_only_and_frozen_source_bound(self):
         source = b"def own():\n    pass\n"
         path = self.repo / self.driver.PAYLOAD["observer.py"][0]

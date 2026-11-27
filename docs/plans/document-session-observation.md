@@ -38,4 +38,8 @@
 - [x] Implement cached observation bound to controller identity/session ID. Subscribe/reread without side-effectful render subscriptions; retire callbacks on cleanup. Unknown controller failures are not silent persistence fallback.
 - [x] Replace manual source/status rerenders in the existing controlled DocumentSurface host with this hook. Prove `writing` to `saved` after a held writer resolves without rerender/edit; A saving cannot replace B; retained draft/failure state remains visible. Keep injected-writer evidence distinct from real Store or native GUI.
 - [x] Run focused hook/surface/controller tests, types, lint and formatting; freeze and obtain independent review.
-- [ ] Root runs required `npm run check`, verifies unchanged functional inputs, scans secrets, updates status/decision evidence, commits and pushes the reviewed packet. Native renderer acceptance remains an independent gate.
+- [x] Root runs required `npm run check`, verifies unchanged functional inputs, scans secrets, updates status/decision evidence, commits and pushes the reviewed packet. Native renderer acceptance remains an independent gate.
+
+Published in f7d6853 after the full check (808 unit,126 tooling,153 Chromium,
+9 Pages,4 local cloud cases), independent review and secret scans. Later packets
+retain this hook; native GUI acceptance remains pending.

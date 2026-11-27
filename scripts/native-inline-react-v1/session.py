@@ -24,6 +24,7 @@ START_FAILURES = frozenset(('not_run', 'none', 'unknown', 'unit_not_active', 'ne
                             'privileges_missing', 'invalid_limits', 'input_rejected'))
 SOURCES = (
     'scripts/native-inline-react-v1/host/src/main.rs',
+    'scripts/native-inline-react-v1/host/src/native_snapshot.rs',
     'scripts/native-inline-react-v1/host/build.rs',
     'scripts/native-inline-react-v1/host/Cargo.toml',
     'scripts/native-inline-react-v1/host/Cargo.lock',

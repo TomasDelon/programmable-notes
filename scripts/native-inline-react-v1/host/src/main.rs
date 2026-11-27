@@ -3,11 +3,15 @@
 compile_error!("The fixed inline diagnostic requires Linux/X11");
 
 use gtk::prelude::*;
+use native_snapshot::{Event as NativeEvent, Snapshot, Termination};
 use std::{cell::RefCell, io::Read, rc::Rc};
+use webkit2gtk::{prelude::WebViewExt, LoadEvent, WebProcessTerminationReason};
 use wry::{
     dpi::{LogicalPosition, LogicalSize},
-    Rect, WebViewBuilder, WebViewBuilderExtUnix,
+    Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
 };
+
+mod native_snapshot;
 
 const FIXTURE: &str = include_str!(concat!(env!("OUT_DIR"), "/fixture.html"));
 static BUILD_EVIDENCE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/fixture-evidence.bin"));
@@ -53,6 +57,30 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
         gtk::gdk::ChangeData::UChars(br#"{"bridge":"native-before-webkit"}"#),
     );
     receipt_window.display().flush();
+    let native_window = receipt_window.clone();
+    let native_atom = gtk::gdk::Atom::intern("_PN_FIXTURE_NATIVE");
+    let native_utf8 = gtk::gdk::Atom::intern("UTF8_STRING");
+    let native_state = RefCell::new(Snapshot::default());
+    let native_update = Rc::new(move |event: Option<NativeEvent>| {
+        let json = {
+            let mut state = native_state.borrow_mut();
+            if let Some(event) = event {
+                state.record(event);
+            }
+            state.json()
+        };
+        gtk::gdk::property_change(
+            &native_window,
+            &native_atom,
+            &native_utf8,
+            8,
+            gtk::gdk::PropMode::Replace,
+            gtk::gdk::ChangeData::UChars(json.as_bytes()),
+        );
+        native_window.display().flush();
+    });
+    native_update(None);
+    let native_navigation = native_update.clone();
     let _view = WebViewBuilder::new()
         .with_incognito(true)
         .with_devtools(false)
@@ -60,7 +88,13 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
             position: LogicalPosition::new(0, 0).into(),
             size: LogicalSize::new(300, 120).into(),
         })
-        .with_navigation_handler(|url| matches!(url.as_str(), "about:blank"))
+        .with_navigation_handler(move |url| {
+            let allowed = matches!(url.as_str(), "about:blank");
+            if !allowed {
+                native_navigation(Some(NativeEvent::NavigationDenied));
+            }
+            allowed
+        })
         .with_download_started_handler(|_, _| false)
         .with_document_title_changed_handler(move |title| {
             // An empty initial title must not erase the independent native sentinel.
@@ -86,6 +120,30 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
         })
         .with_html(FIXTURE)
         .build_gtk(&plug)?;
+    // All three signals attach after construction: absence cannot rule out an earlier event.
+    let webkit = _view.webview();
+    let native_page = native_update.clone();
+    webkit.connect_load_changed(move |_, event| match event {
+        LoadEvent::Committed => native_page(Some(NativeEvent::Committed)),
+        LoadEvent::Finished => native_page(Some(NativeEvent::Finished)),
+        _ => (),
+    });
+    let native_failure = native_update.clone();
+    webkit.connect_load_failed(move |_, _, _, _| {
+        native_failure(Some(NativeEvent::LoadFailed));
+        false
+    });
+    let native_termination = native_update.clone();
+    webkit.connect_web_process_terminated(move |_, reason| {
+        let reason = match reason {
+            WebProcessTerminationReason::Crashed => Termination::Crashed,
+            WebProcessTerminationReason::ExceededMemoryLimit => Termination::MemoryLimit,
+            WebProcessTerminationReason::TerminatedByApi => Termination::ApiTerminated,
+            _ => Termination::Unknown,
+        };
+        native_termination(Some(NativeEvent::Terminated(reason)));
+    });
+    native_update(Some(NativeEvent::Built));
     plug.show_all();
     println!(
         "CHILD_READY pid={} trusted_parent={parent}",

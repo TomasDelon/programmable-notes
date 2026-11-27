@@ -10,6 +10,7 @@ preview-policy = { path = "../../../native-policy" }
 gtk = "=0.18.2"
 gdkx11 = "=0.18.2"
 libc = "=0.2.191"
+webkit2gtk = "=2.0.2"
 
 [profile.release]
 opt-level = 0

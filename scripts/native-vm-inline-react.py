@@ -36,6 +36,7 @@ ROOT = "/home/fixture/native-inline-react-v1"
 PROFILE = "inline-react-v1"
 SCOPE = "fixed-native-diagnostic-only"
 SOURCES = (
+    "scripts/native-inline-react-v1/host/src/native_snapshot.rs",
     "scripts/native-inline-react-v1/host/src/main.rs", "scripts/native-inline-react-v1/host/build.rs",
     "scripts/native-inline-react-v1/host/Cargo.toml", "scripts/native-inline-react-v1/host/Cargo.lock",
     "scripts/native-inline-react-v1/compile.mjs", "scripts/native-inline-react-v1/document.mdx",
@@ -514,6 +515,18 @@ def _readiness_states(collected, cases, source):
         return {}  # Optional diagnosis never changes admission or the outcome.
 
 
+def _native_snapshots(collected, cases, source, readiness):
+    try:
+        case = cases.get("stop")
+        if case is None or case["status"] != "failed" or case["phase"] != "ready":
+            return {}
+        state = readiness["stop"]["state"]
+        detail = _diagnostic_module().extract_native_snapshot(collected.get("stop-events.jsonl", b""), source, "ready", state)
+        return {"stop": detail} if detail is not None else {}
+    except Exception:
+        return {}
+
+
 def _run_admitted(root_path, witnesses, guard_process, prepared):
     # This private entry is called only by the sealed smoke branch after all OS
     # and pin/key controls. Every new connection rechecks host identity witnesses.
@@ -588,6 +601,9 @@ def _run_admitted(root_path, witnesses, guard_process, prepared):
         readiness = _readiness_states(collected, cases, prepared.files["observer.py"])
         if readiness:
             result["readiness_states"] = readiness
+        snapshots = _native_snapshots(collected, cases, prepared.files["observer.py"], readiness)
+        if snapshots:
+            result["native_snapshots"] = snapshots
         return result
     except transport.CleanupFailed:
         raise CleanupFailed() from None
@@ -639,6 +655,32 @@ def _readiness_state_notices(result, cases, prefix):
         return []  # No raw title, field or script/error string is ever printed.
 
 
+def _native_snapshot_notices(result, cases, prefix):
+    try:
+        values = result.get("native_snapshots")
+        if (type(values) is not dict or set(values) != {"stop"}
+                or cases["stop"]["status"] != "failed" or cases["stop"]["phase"] != "ready"):
+            return []
+        expected = result["payload"]["files"]["observer.py"]["sha256"]
+        source = _capture(REPOSITORY / PAYLOAD["observer.py"][0], PAYLOAD["observer.py"][1])
+        if type(expected) is not str or _digest(source) != expected:
+            return []
+        helper = _diagnostic_module()
+        readiness = result.get("readiness_states")
+        if type(readiness) is not dict or set(readiness) != {"stop"}:
+            return []
+        state = helper.validate_readiness_state(readiness["stop"], source, "ready")
+        if state is None:
+            return []
+        detail = helper.validate_native_snapshot(values["stop"], source, "ready", state["state"])
+        if detail is None:
+            return []
+        fields = ["native_" + key + "=" + str(detail[key]).lower() for key in helper.NATIVE_FLAGS]
+        return [prefix + "case=stop " + " ".join(fields) + " native_termination=" + detail["termination"]]
+    except Exception:
+        return []  # Advisory only: no raw property/URI/error enters annotations.
+
+
 def _summary_notices(result):
     # Build the entire fixed-enum output before printing anything. An invalid
     # later case must not leave a partial annotation that looks validated.
@@ -680,6 +722,7 @@ def _summary_notices(result):
         notices.append(prefix + " ".join(fields))
     notices.extend(_observer_exception_notices(result, cases, prefix))
     notices.extend(_readiness_state_notices(result, cases, prefix))
+    notices.extend(_native_snapshot_notices(result, cases, prefix))
     return notices
 
 
