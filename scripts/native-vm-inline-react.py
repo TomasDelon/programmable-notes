@@ -604,6 +604,9 @@ def _run_admitted(root_path, witnesses, guard_process, prepared):
         snapshots = _native_snapshots(collected, cases, prepared.files["observer.py"], readiness)
         if snapshots:
             result["native_snapshots"] = snapshots
+        keyboard = _keyboard_attempts(collected, cases, prepared.files["observer.py"])
+        if keyboard:
+            result["keyboard_attempts"] = keyboard
         return result
     except transport.CleanupFailed:
         raise CleanupFailed() from None
@@ -681,6 +684,39 @@ def _native_snapshot_notices(result, cases, prefix):
         return []  # Advisory only: no raw property/URI/error enters annotations.
 
 
+def _keyboard_attempts(collected, cases, source):
+    try:
+        case = cases.get("stop")
+        if case is None or case["pointer"] != "passed" or case["bridge"] != "passed":
+            return {}
+        detail = _diagnostic_module().extract_keyboard_attempt(collected.get("stop-events.jsonl", b""), source, case["phase"])
+        return {"stop": detail} if detail is not None else {}
+    except Exception:
+        return {}
+
+
+def _keyboard_attempt_notices(result, cases, prefix):
+    try:
+        values = result.get("keyboard_attempts")
+        if (type(values) is not dict or set(values) != {"stop"}
+                or cases["stop"]["pointer"] != "passed" or cases["stop"]["bridge"] != "passed"):
+            return []
+        expected = result["payload"]["files"]["observer.py"]["sha256"]
+        source = _capture(REPOSITORY / PAYLOAD["observer.py"][0], PAYLOAD["observer.py"][1])
+        if type(expected) is not str or _digest(source) != expected:
+            return []
+        detail = _diagnostic_module().validate_keyboard_attempt(values["stop"], source, cases["stop"]["phase"])
+        if detail is None:
+            return []
+        return [prefix + "case=stop keyboard_available_ms=" + str(detail["availableMs"])
+                + " keyboard_limiting_clock=" + detail["limitingClock"]
+                + " keyboard_elapsed_ms=" + str(detail["elapsedMs"])
+                + " keyboard_timeout_kind=" + detail["timeoutKind"]
+                + " keyboard_outcome=" + detail["outcome"]]
+    except Exception:
+        return []  # No raw argv/output/exception/diagnostic data enters notices.
+
+
 def _summary_notices(result):
     # Build the entire fixed-enum output before printing anything. An invalid
     # later case must not leave a partial annotation that looks validated.
@@ -723,6 +759,7 @@ def _summary_notices(result):
     notices.extend(_observer_exception_notices(result, cases, prefix))
     notices.extend(_readiness_state_notices(result, cases, prefix))
     notices.extend(_native_snapshot_notices(result, cases, prefix))
+    notices.extend(_keyboard_attempt_notices(result, cases, prefix))
     return notices
 
 

@@ -500,6 +500,47 @@ class Flow(unittest.TestCase):
 
 
 class Commands(unittest.TestCase):
+    def test_keyboard_measurement_keeps_existing_argv_deadline_and_captures_limiting_clock(self):
+        for absolute, until, expected, available in ((190, 149, "local", 2000), (190, 100.5, "unit_input", 500), (100.25, 100.5, "session", 250)):
+            clock = Clock(); evidence = FakeEvidence()
+            backend = object.__new__(observer.Backend)
+            backend.absolute, backend.evidence = absolute, evidence
+            calls = []
+            def command(args, deadline, limit=8192, timing=None):
+                calls.append((args, deadline))
+                clock.now += .125
+                return b""
+            with patch.object(observer.time, "monotonic", clock.monotonic), patch.object(observer, "_command", side_effect=command):
+                backend.gui("type", "--clearmodifiers", "--delay", 1, "hello", deadline=until)
+            self.assertEqual(calls, [(["/usr/bin/xdotool", "type", "--clearmodifiers", "--delay", "1", "hello"], min(absolute, until, 102))])
+            self.assertEqual(evidence.events, [("keyboard_attempt", {"phase": "keyboard", "availableMs": available, "limitingClock": expected, "elapsedMs": 125, "timeoutKind": "none", "outcome": "returned"})])
+
+    def test_keyboard_measurement_preserves_failure_and_excludes_other_commands(self):
+        clock = Clock(); evidence = FakeEvidence()
+        backend = object.__new__(observer.Backend)
+        backend.absolute, backend.evidence = 190, evidence
+        def failed(args, deadline, limit=8192, timing=None):
+            if timing is not None: timing["timeoutKind"] = "pipe_wait"
+            clock.now = deadline
+            raise observer.Refused("command_failed")
+        with patch.object(observer.time, "monotonic", clock.monotonic), patch.object(observer, "_command", side_effect=failed):
+            with self.assertRaises(observer.Refused) as caught:
+                backend.gui("type", "--clearmodifiers", "--delay", 1, "hello", deadline=100.5)
+            self.assertEqual(caught.exception.reason, "command_failed")
+        self.assertEqual(evidence.events, [("keyboard_attempt", {"phase": "keyboard", "availableMs": 500, "limitingClock": "unit_input", "elapsedMs": 500, "timeoutKind": "pipe_wait", "outcome": "failed"})])
+        evidence.events.clear()
+        with patch.object(observer, "_command", return_value=b""):
+            backend.gui("type", "--clearmodifiers", "--delay", 1, "hostok", deadline=103)
+        self.assertEqual(evidence.events, [])
+
+    def test_real_command_timeout_timing_never_changes_its_refusal_or_cleanup(self):
+        import time
+        timing = {"timeoutKind": "none"}
+        with self.assertRaises(observer.Refused) as caught:
+            observer._command([sys.executable, "-I", "-c", "import time;time.sleep(5)"], time.monotonic() + .03, timing=timing)
+        self.assertEqual(caught.exception.reason, "command_failed")
+        self.assertEqual(timing, {"timeoutKind": "pipe_wait"})
+
     def test_native_probe_start_cutoff_normal_deadline_and_late_omission(self):
         backend = object.__new__(observer.Backend)
         backend.absolute = 185

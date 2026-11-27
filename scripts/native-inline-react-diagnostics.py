@@ -216,3 +216,60 @@ def extract_native_snapshot(events, observer_source, failed_phase, readiness_sta
         return selected
     except Exception:
         return None
+
+
+KEYBOARD_PHASES = frozenset(("keyboard", "stop", "cleanup", "host_input", "complete"))
+KEYBOARD_FIELDS = frozenset(("phase", "availableMs", "limitingClock", "elapsedMs", "timeoutKind", "outcome"))
+KEYBOARD_CLOCKS = frozenset(("local", "unit_input", "session"))
+KEYBOARD_TIMEOUTS = frozenset(("none", "before_start", "pipe_wait", "process_wait", "after_wait", "cleanup"))
+
+
+def validate_keyboard_attempt(value, observer_source, observed_phase):
+    try:
+        if (type(observed_phase) is not str or observed_phase not in KEYBOARD_PHASES
+                or _source_frames(observer_source) is None or type(value) is not dict
+                or set(value) != KEYBOARD_FIELDS or type(value["phase"]) is not str or value["phase"] != "keyboard"
+                or type(value["availableMs"]) is not int or not 0 <= value["availableMs"] <= 2000
+                or type(value["elapsedMs"]) is not int or not 0 <= value["elapsedMs"] <= 190000
+                or type(value["limitingClock"]) is not str or value["limitingClock"] not in KEYBOARD_CLOCKS
+                or type(value["timeoutKind"]) is not str or value["timeoutKind"] not in KEYBOARD_TIMEOUTS
+                or type(value["outcome"]) is not str or value["outcome"] not in ("returned", "failed")
+                or value["limitingClock"] == "local" and value["availableMs"] != 2000
+                or value["outcome"] == "returned" and value["timeoutKind"] != "none"
+                or value["timeoutKind"] == "before_start" and value["availableMs"] != 0
+                or value["timeoutKind"] in ("pipe_wait", "process_wait", "after_wait")
+                   and value["elapsedMs"] + 1 < value["availableMs"]):
+            return None
+        return dict(value)
+    except Exception:
+        return None
+
+
+def extract_keyboard_attempt(events, observer_source, observed_phase):
+    try:
+        if (type(events) is not bytes or not 0 < len(events) <= EVENT_LIMIT or not events.endswith(b"\n")
+                or type(observed_phase) is not str or observed_phase not in KEYBOARD_PHASES
+                or _source_frames(observer_source) is None):
+            return None
+        rows = events.splitlines()
+        if len(rows) > 4096:
+            return None
+        selected = None
+        for raw in rows:
+            if not 0 < len(raw) <= ROW_LIMIT:
+                return None
+            value = json.loads(raw.decode("utf8"), object_pairs_hook=_pairs, parse_constant=_constant)
+            if type(value) is not dict:
+                return None
+            if value.get("event") != "keyboard_attempt":
+                continue
+            if (selected is not None or set(value) != KEYBOARD_FIELDS | {"event", "elapsed"}
+                    or type(value["elapsed"]) not in (int, float) or not math.isfinite(value["elapsed"])
+                    or not 0 <= value["elapsed"] <= 190):
+                return None
+            selected = validate_keyboard_attempt({key: value[key] for key in KEYBOARD_FIELDS}, observer_source, observed_phase)
+            if selected is None:
+                return None
+        return selected
+    except Exception:
+        return None

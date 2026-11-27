@@ -264,9 +264,11 @@ def _write(fd, raw):
         view = view[count:]
 
 
-def _command(args, deadline, limit=8192):
+def _command(args, deadline, limit=8192, timing=None):
     """Only internal fixed argv call sites; bounded owned children, no shell."""
     if time.monotonic() >= deadline:
+        if timing is not None:
+            timing["timeoutKind"] = "before_start"
         raise Refused("command_failed")
     process = None
     caught = []
@@ -289,6 +291,8 @@ def _command(args, deadline, limit=8192):
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0 or not poll.select(remaining):
+                    if timing is not None and time.monotonic() >= deadline:
+                        timing["timeoutKind"] = "pipe_wait"
                     raise Refused("command_failed")
                 raw = os.read(process.stdout.fileno(), 65536)
                 if not raw:
@@ -297,7 +301,19 @@ def _command(args, deadline, limit=8192):
                 if len(output) > limit:
                     raise Refused("command_failed")
         remaining = deadline - time.monotonic()
-        if remaining <= 0 or process.wait(timeout=remaining) != 0 or time.monotonic() >= deadline:
+        if remaining <= 0:
+            if timing is not None:
+                timing["timeoutKind"] = "after_wait"
+            raise Refused("command_failed")
+        try:
+            code = process.wait(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            if timing is not None:
+                timing["timeoutKind"] = "process_wait"
+            raise
+        if code != 0 or time.monotonic() >= deadline:
+            if timing is not None and code == 0:
+                timing["timeoutKind"] = "after_wait"
             raise Refused("command_failed")
         return bytes(output)
     finally:
@@ -309,7 +325,12 @@ def _command(args, deadline, limit=8192):
                         os.killpg(process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-                    process.wait(timeout=1)
+                    try:
+                        process.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        if timing is not None:
+                            timing["timeoutKind"] = "cleanup"
+                        raise
                 process.stdout.close()
             finally:
                 for number, handler in ignored.items():
@@ -688,7 +709,33 @@ class Backend:
             return None
 
     def gui(self, *args, deadline):
-        _command(["/usr/bin/xdotool", *map(str, args)], min(self.absolute, deadline, time.monotonic() + 2))
+        argv = ["/usr/bin/xdotool", *map(str, args)]
+        measured = args == ("type", "--clearmodifiers", "--delay", 1, "hello")
+        timing = {"timeoutKind": "none"} if measured else None
+        outcome = "failed"
+        # Keep the original argv-before-clock ordering and exact effective bound.
+        started = time.monotonic()
+        effective = min(self.absolute, deadline, started + 2)
+        if not measured:
+            _command(argv, effective)
+            return
+        # One fixed command only; never publish argv/output/exception text.
+        try:
+            _command(argv, effective, timing=timing)
+            outcome = "returned"
+        finally:
+            try:
+                limiting = "session" if self.absolute <= min(deadline, started + 2) else "unit_input" if deadline <= started + 2 else "local"
+                available = int(round(max(0, effective - started) * 1000))
+                # Includes _command's existing kill/reap cleanup, not just typing.
+                elapsed = int(round((time.monotonic() - started) * 1000))
+                if 0 <= available <= 2000 and 0 <= elapsed <= 190000:
+                    self.evidence.event("keyboard_attempt", phase="keyboard", availableMs=available,
+                                        limitingClock=limiting, elapsedMs=elapsed,
+                                        timeoutKind=timing["timeoutKind"], outcome=outcome)
+            except Exception:
+                pass  # Advisory timing cannot change input/Stop admission or failure.
+
 
     def journal(self, target, deadline):
         raw = _command(["/usr/bin/journalctl", "--user", "--user-unit=" + target["unit"], "--output=json", "--no-pager", "-n", "64"], min(deadline, self.absolute, time.monotonic() + 2), HOST_LIMIT)

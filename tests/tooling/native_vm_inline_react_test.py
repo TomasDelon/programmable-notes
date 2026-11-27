@@ -20,6 +20,31 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts/native-vm-inline-react.p
 
 
 class Driver(unittest.TestCase):
+    def test_keyboard_attempt_notices_are_optional_closed_and_frozen_source_bound(self):
+        source = b"def own():\n    pass\n"
+        path = self.repo / self.driver.PAYLOAD["observer.py"][0]
+        path.write_bytes(source)
+        result = self.summary(False)
+        result["cases"]["stop"]["reason"] = "command_failed"
+        detail = {"phase": "keyboard", "availableMs": 2000, "limitingClock": "local", "elapsedMs": 2010, "timeoutKind": "pipe_wait", "outcome": "failed"}
+        row = {"event": "keyboard_attempt", "elapsed": 44, **detail}
+        collected = {"stop-events.jsonl": (json.dumps(row) + "\n").encode()}
+        details = self.driver._keyboard_attempts(collected, result["cases"], source)
+        self.assertEqual(details, {"stop": detail})
+        result.update(keyboard_attempts=details, payload={"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}})
+        text = " ".join(self.driver._summary_notices(result))
+        self.assertIn("keyboard_available_ms=2000 keyboard_limiting_clock=local keyboard_elapsed_ms=2010 keyboard_timeout_kind=pipe_wait keyboard_outcome=failed", text)
+        self.assertIn("reason=command_failed", text)
+        result["keyboard_attempts"]["stop"]["raw"] = "PRIVATE%0A::error"
+        text = " ".join(self.driver._summary_notices(result))
+        self.assertNotIn("keyboard_available_ms=", text)
+        self.assertNotIn("PRIVATE", text)
+        del result["keyboard_attempts"]["stop"]["raw"]
+        path.write_bytes(b"def changed():\n    pass\n")
+        self.assertNotIn("keyboard_available_ms=", " ".join(self.driver._summary_notices(result)))
+        del result["keyboard_attempts"]
+        self.assertEqual(len(self.driver._summary_notices(result)), 3)
+
     def test_native_snapshot_is_failure_only_category_and_source_bound(self):
         source = b"def own():\n    pass\n"
         path = self.repo / self.driver.PAYLOAD["observer.py"][0]

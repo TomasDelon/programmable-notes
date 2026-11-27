@@ -40,6 +40,29 @@ def wire(*rows):
 
 
 class Diagnostics(unittest.TestCase):
+    def test_keyboard_attempt_is_exact_bounded_and_old_events_remain_optional(self):
+        detail = {"phase": "keyboard", "availableMs": 500, "limitingClock": "unit_input", "elapsedMs": 510, "timeoutKind": "pipe_wait", "outcome": "failed"}
+        row = {"event": "keyboard_attempt", "elapsed": 49.01, **detail}
+        self.assertEqual(diagnostics.extract_keyboard_attempt(wire(row), SOURCE, "keyboard"), detail)
+        for phase in ("stop", "cleanup", "host_input", "complete"):
+            self.assertEqual(diagnostics.validate_keyboard_attempt(detail, SOURCE, phase), detail)
+        self.assertIsNone(diagnostics.extract_keyboard_attempt(wire(event()), SOURCE, "keyboard"))
+        self.assertIsNone(diagnostics.extract_keyboard_attempt(wire(row), SOURCE, "ready"))
+        self.assertIsNone(diagnostics.extract_keyboard_attempt(wire(row, row), SOURCE, "keyboard"))
+        self.assertIsNone(diagnostics.extract_keyboard_attempt(wire(row) + b"{broken\n", SOURCE, "keyboard"))
+        self.assertIsNone(diagnostics.validate_keyboard_attempt(detail, b"invalid (", "keyboard"))
+        saved = diagnostics.validate_keyboard_attempt(detail, SOURCE, "keyboard")
+        detail["availableMs"] = 0
+        self.assertEqual(saved["availableMs"], 500)
+
+    def test_keyboard_attempt_refuses_injected_or_noncanonical_values(self):
+        detail = {"phase": "keyboard", "availableMs": 2000, "limitingClock": "local", "elapsedMs": 2010, "timeoutKind": "pipe_wait", "outcome": "failed"}
+        for changes in ({"phase": "host"}, {"availableMs": True}, {"availableMs": -1}, {"availableMs": 2001}, {"availableMs": 1.5}, {"availableMs": 500}, {"elapsedMs": True}, {"elapsedMs": -1}, {"elapsedMs": 190001}, {"elapsedMs": 1}, {"elapsedMs": float("nan")}, {"limitingClock": "PRIVATE%0A::error"}, {"timeoutKind": "PRIVATE"}, {"outcome": "PRIVATE"}, {"outcome": "returned"}, {"timeoutKind": "before_start"}, {"raw": "PRIVATE"}):
+            self.assertIsNone(diagnostics.validate_keyboard_attempt({**detail, **changes}, SOURCE, "keyboard"))
+        row = {"event": "keyboard_attempt", "elapsed": 49.01, **detail}
+        for raw in (wire({**row, "elapsed": True}), wire({**row, "elapsed": float("nan")}), wire({**row, "raw": "PRIVATE"}), wire(row)[:-1], wire(row).replace(b'"availableMs": 2000', b'"availableMs": 2000, "availableMs": 2')):
+            self.assertIsNone(diagnostics.extract_keyboard_attempt(raw, SOURCE, "keyboard"))
+
     def test_native_snapshot_is_exact_detached_and_category_gated(self):
         value = {"version": 1, **{key: False for key in diagnostics.NATIVE_FLAGS}, "termination": "none"}
         row = {"event": "native_snapshot", "elapsed": 44.1, "phase": "ready", "snapshot": value}
