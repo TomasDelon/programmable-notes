@@ -82,3 +82,24 @@ hostile CPU/memory test or production permission check was implemented or run by
 this packet. Native payload execution still depends on successful reviewed stock
 OS admission and the remaining fixed-profile plan gates. The earlier deviating
 native result remains unchanged.
+
+## Native host source preparation
+
+The isolated `host/` crate embeds only these fixed compiler artifacts through its
+trusted build script. It reuses the reviewed GtkSocket/Plug and Supervisor path;
+stdin remains blocked until actual resource/namespace checks pass, before WebKit
+starts. Own-Plug native sentinel/title metadata is bounded to256 UTF-8 bytes and
+never dispatches actions. Runtime UID1001 and exact arguments are required.
+Navigation/download/devtools restrictions, clipping and trusted native Stop remain.
+
+All235 registry lock records match the application lock. The actual Rust build
+script compiled and generated fixed public artifacts; Node-specific preload
+options are removed while registry/proxy/CA settings remain. This is not general
+build-environment sanitization or host evaluation of the generated document.
+
+Three host tooling groups passed. The complete local regression packet passed
+**793 unit, 119 tooling / zero skips, 153 Chromium, 9 Pages and 4 inactive-cloud
+cases**, plus formatting/lint/types/build. GTK host compilation is not a local pass:
+GLib development metadata is missing. A locked release build was added to the
+existing native CI job, reusing its target/cache without another job or installer.
+No native host execution, driver, containment or product acceptance is implied.

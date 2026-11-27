@@ -1,0 +1,19 @@
+[package]
+name = "pn-native-inline-react-v1"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+wry = { path = "../../../src-tauri/vendor/wry" }
+preview-policy = { path = "../../../native-policy" }
+gtk = "=0.18.2"
+gdkx11 = "=0.18.2"
+libc = "=0.2.191"
+
+[profile.release]
+opt-level = 0
+debug = 0
+debug-assertions = false
+overflow-checks = true
+strip = "debuginfo"

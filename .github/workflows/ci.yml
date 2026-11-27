@@ -172,7 +172,7 @@ jobs:
             native-documents/target
             native-policy/target
             native-updates/target
-          key: ${{ runner.os }}-${{ runner.arch }}-native-${{ hashFiles('rust-toolchain.toml', 'src-tauri/Cargo.lock', 'native-documents/Cargo.lock', 'native-policy/Cargo.lock', 'native-updates/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-native-${{ hashFiles('rust-toolchain.toml', 'src-tauri/Cargo.lock', 'native-documents/Cargo.lock', 'native-policy/Cargo.lock', 'native-updates/Cargo.lock', 'scripts/native-inline-react-v1/host/Cargo.lock') }}
       - name: Install native dependencies with bounded network retries
         shell: bash
         run: |
@@ -182,6 +182,10 @@ jobs:
           echo '::remove-matcher owner=programmable-notes-apt::'
       - run: npm ci
       - run: npm run native:wry:verify
+      - name: Check the fixed inline host Rust formatting
+        run: cargo fmt --manifest-path scripts/native-inline-react-v1/host/Cargo.toml -- --check
+      - name: Compile the fixed inline host (not GUI acceptance)
+        run: cargo build --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
       - name: Build the production Linux package
         shell: bash
         run: |

@@ -8,7 +8,7 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
        ca-certificates systemd systemd-sysv dbus dbus-user-session e2fsprogs tar coreutils \
        openssh-server linux-image-generic initramfs-tools apparmor \
        libgtk-3-0 libwebkit2gtk-4.1-0 xvfb xauth openbox at-spi2-core \
-       python3 python3-pyatspi gir1.2-atspi-2.0 bubblewrap xdg-dbus-proxy \
+       python3 python3-pyatspi gir1.2-atspi-2.0 gir1.2-gtk-3.0 bubblewrap xdg-dbus-proxy \
        xdotool x11-utils tesseract-ocr tesseract-ocr-eng acl \
     && rm -f /etc/ssh/ssh_host_* /usr/sbin/policy-rc.d \
     && truncate -s 0 /etc/machine-id \

@@ -74,6 +74,70 @@ function evaluate(script, sandbox) {
   return script.runInContext(sandbox, { timeout: 100 });
 }
 
+const inlineManifest = 'scripts/native-inline-react-v1/host/Cargo.toml';
+const inlineLock = 'scripts/native-inline-react-v1/host/Cargo.lock';
+const inlineGate =
+  '      - name: Check the fixed inline host Rust formatting\n' +
+  `        run: cargo fmt --manifest-path ${inlineManifest} -- --check\n` +
+  '      - name: Compile the fixed inline host (not GUI acceptance)\n' +
+  `        run: cargo build --manifest-path ${inlineManifest} --release --locked --target-dir src-tauri/target\n`;
+function assertInlineHostCompileGate(text) {
+  const section = text.slice(
+    text.indexOf('\n  native-check:'),
+    text.indexOf('\n  deployment-check:'),
+  );
+  assert.ok(section.includes(inlineGate));
+  const gateIndex = section.indexOf(inlineGate);
+  for (const setup of [
+    'install -y libwebkit2gtk-4.1-dev',
+    '      - run: npm ci\n',
+  ]) {
+    const index = section.indexOf(setup);
+    assert.ok(index >= 0 && index < gateIndex);
+  }
+  assert.ok(
+    gateIndex < section.indexOf('name: Build the production Linux package'),
+  );
+  assert.match(section, /runs-on: ubuntu-24\.04/);
+  assert.match(section, /CARGO_BUILD_JOBS: 2/);
+  const cacheKey = section.match(/^ {10}key: (.+)$/m)?.[1];
+  assert.ok(cacheKey?.includes(`'${inlineLock}'`));
+  assert.doesNotMatch(section, /continue-on-error:\s*true/);
+  for (const mandatory of [
+    'npm run native:package',
+    'node scripts/verify-linux-package.mjs',
+    'npm run native:autosave:test',
+    'cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol,security-test --locked',
+  ])
+    assert.ok(section.includes(mandatory));
+}
+
+test('the mandatory native job compiles the fixed inline host after setup with locked shared-target dependencies', () => {
+  assertInlineHostCompileGate(workflow);
+});
+test('the inline host compile control rejects missing formatting, unlocked builds, separate targets and stale cache keys', () => {
+  for (const broken of [
+    workflow.replace(
+      `cargo fmt --manifest-path ${inlineManifest} -- --check`,
+      'true',
+    ),
+    workflow.replace(
+      `cargo build --manifest-path ${inlineManifest} --release --locked`,
+      `cargo build --manifest-path ${inlineManifest} --release`,
+    ),
+    workflow.replace(
+      '--target-dir src-tauri/target',
+      '--target-dir other-target',
+    ),
+    workflow.replace(`, '${inlineLock}'`, ''),
+    workflow.replace(
+      '      - name: Compile the fixed inline host (not GUI acceptance)\n',
+      '      - name: Compile the fixed inline host (not GUI acceptance)\n        if: false\n',
+    ),
+  ])
+    assert.throws(() => assertInlineHostCompileGate(broken));
+});
+
 test('the visible run title and scheduler use the same concurrency decision', () => {
   assert.equal(normalize(lastExpression(runName)), normalize(groupText));
 });

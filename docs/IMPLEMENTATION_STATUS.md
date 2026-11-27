@@ -20,6 +20,30 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Native host source and successful OS admission — 27 November 2026
+
+Actual [OS admission45923910293](https://github.com/TomasDelon/programmable-notes/actions/runs/45923910293)
+at **1396e48** passed the complete fixed gate, including strict identity/refusal
+brackets, no-container/logind facts and acknowledged QMP followed by normal guard
+exit. Required [CI45923844209](https://github.com/TomasDelon/programmable-notes/actions/runs/45923844209)
+also passed both jobs. This validates the fixture environment, **not native React,
+Stop/expiry or production application security**. No native payload ran.
+
+The fixed native host source is now prepared: current Wry GtkSocket/Plug,
+pre-WebKit native sentinel, byte-bounded own-window title diagnostics, exact
+fixture UID/arguments and unchanged Supervisor gating before WebKit. A trusted
+build script embeds only the fixed compiler output; all 235 registry lock records
+are a subset of the application lock. No arbitrary payload/path API is added.
+Its actual build script compiled and generated public artifacts; the GTK host
+has **not been compiled or run locally** because GLib development metadata is
+absent. The existing native CI job now has a locked release compile gate sharing
+its target/cache; compilation is distinct from runtime acceptance.
+
+The local complete check exited **0**: **793 unit, 119 tooling / zero skips,
+153 Chromium, 9 Pages and 4 inactive-cloud cases**, plus format/lint/types/build.
+The guest recipe explicitly includes the observer's GTK typelib dependency; its
+changed source requires fresh OS admission before any native payload.
+
 ## Fixed React fixture and acknowledged VM lifecycle — 27 November 2026
 
 The fixed MDX/React counter/input fixture compiles without host evaluation and

@@ -179,6 +179,27 @@ The complete local regression packet passed **793 unit, 114 tooling / zero skips
 153 Chromium, 9 Pages and 4 cloud browser cases**; the final affected-tooling rerun
 also passed114/zero skips. Actual QMP/full-OS execution remains the next gate.
 
+## Complete real OS admission passed
+
+The fresh [run45923910293](https://github.com/TomasDelon/programmable-notes/actions/runs/45923910293)
+at **1396e48** passed. The [source-validated annotation summary](os-admission-45923910293.json)
+records the scope: UID1001, systemd/cgroup/root/mount checks, actual no-container
+and active-logind predicates, correct key hash, no agent, wrong pin/key refusals
+bracketed by positive probes, and acknowledged QMP followed by normal guard exit.
+This summary is not the raw private receipt; no credential or key-hash value is
+reproduced. Required [CI45923844209](https://github.com/TomasDelon/programmable-notes/actions/runs/45923844209)
+also passed both jobs. Earlier failed runs remain unchanged.
+
+**No native application payload, input, containment attack, Stop, expiry or recovery
+was executed by this OS-only run.** It makes the reviewed environment eligible for
+the fixed native diagnostic, whose child still must pass actual namespace/cgroup
+admission before WebKit interprets its embedded document.
+
+The next source packet adds the passive `gir1.2-gtk-3.0` dependency for the
+observer's Gdk3 APIs. This changes the recipe hash; a fresh OS-only run must verify
+that exact recipe before the native profile is enabled. No key, SSH, kernel,
+namespace, resource or application permission is changed by this dependency.
+
 ## Reproduce
 
 On a disposable Linux host with Docker, Python and OpenSSH client:
