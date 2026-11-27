@@ -14,6 +14,20 @@ failed its resident-page OOM case and remains retained under its own binary
 scope. New observations do not explain historical crashes or certify other
 binaries/environments.
 
+## Current fixture infrastructure scope — 27 November 2026
+
+Share-free guest OS admission passed on the exact sources and updated GTK recipe
+recorded in [the provisioning evidence](security-evidence/2026-11-27-vm-provisioning/README.md).
+This includes strict SSH identity, bracketed wrong-key/pin refusals, actual
+systemd/cgroup/mount facts and acknowledged normal shutdown. It does not execute
+the native application or supersede failed application observations below.
+
+The [fixed inline React diagnostic](plans/native-inline-react-v1.md) is a separate
+engineering probe, not an accepted product. Even a successful helper run cannot
+prove production IPC/filesystem denial, arbitrary geometry, hostile workloads or
+the complete recovery/security matrix. Its native results must be recorded only
+after actual execution; builds and synthetic control tests remain separate.
+
 ## New vault-service validation gate — 26 November 2026
 
 The new `choose_vault`, `vault_inventory`, `open_vault_sources` and

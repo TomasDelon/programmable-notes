@@ -2,7 +2,7 @@
 
 import base64
 import builtins
-from contextlib import redirect_stdout
+from contextlib import contextmanager, redirect_stdout
 import hashlib
 import importlib.util
 import io
@@ -170,6 +170,75 @@ class Smoke(unittest.TestCase):
                 patch.object(smoke, "_powerdown", side_effect=monitor or (lambda *_args: None)), redirect_stdout(output):
             result = smoke.main(["--smoke", str(self.root)])
         return result, output.getvalue()
+
+    def test_default_os_smoke_never_imports_or_prepares_inline_payload(self):
+        with patch.object(smoke, "_module") as module:
+            self.assertEqual(self.run_mocked()[0], 0)
+            module.assert_not_called()
+
+    def test_inline_payload_freezes_before_launch_runs_after_brackets_and_failed_case_stays_failed(self):
+        events = []
+        @contextmanager
+        def prepare():
+            events.append("prepare")
+            try:
+                yield "frozen"
+            finally:
+                events.append("release")
+        def admitted(root, witnesses, process, prepared):
+            self.assertEqual(prepared, "frozen")
+            self.assertIs(process, self.guard)
+            self.assertNotIn(str(self.root / "guest/root.ext4"), witnesses)
+            self.assertEqual(len([args for args, _ in self.calls if args[0] == "/usr/bin/ssh"]), 5)
+            events.append("fixture")
+            return {"status": "failed", "native_app_tested": False}
+        profile = SimpleNamespace(_prepare=prepare, _run_admitted=admitted, CleanupFailed=RuntimeError)
+        actual = self.dispatch
+        def dispatch(args, **options):
+            if args[0] == "/usr/bin/python3":
+                self.assertEqual(events, ["prepare"])
+                events.append("launch")
+            return actual(args, **options)
+        with patch.object(smoke, "_module", return_value=profile), \
+                patch.object(subprocess, "Popen", side_effect=dispatch), \
+                patch.object(smoke, "_powerdown", side_effect=lambda *_: events.append("qmp")):
+            result = smoke._smoke(str(self.root), inline_react=True)
+        self.assertEqual(events, ["prepare", "launch", "fixture", "qmp", "release"])
+        self.assertEqual(result["status"], "failed")
+        self.assertIs(result["guard_normal_exit"], True)
+        self.assertEqual(json.loads((self.root / "smoke-receipt.json").read_bytes())["status"], "passed")
+        self.assertEqual(json.loads((self.root / "inline-react-receipt.json").read_bytes())["status"], "failed")
+
+    def test_inline_transport_cleanup_failure_remains_lifecycle_failure(self):
+        @contextmanager
+        def prepare():
+            yield "frozen"
+        class ProfileCleanup(Exception):
+            pass
+        profile = SimpleNamespace(_prepare=prepare, CleanupFailed=ProfileCleanup,
+                                  _run_admitted=MagicMock(side_effect=ProfileCleanup()))
+        with patch.object(smoke, "_module", return_value=profile), \
+                patch.object(subprocess, "Popen", side_effect=self.dispatch), patch.object(smoke, "_powerdown") as powerdown:
+            with self.assertRaises(smoke.CleanupFailed):
+                smoke._smoke(str(self.root), inline_react=True)
+            powerdown.assert_not_called()
+        self.assertEqual(self.guard.terminated, 1)
+        receipt = self.failure_receipt("cleanup")
+        self.assertEqual(receipt["origin_stage"], "fixture")
+        self.assertFalse((self.root / "inline-react-receipt.json").exists())
+
+    def test_inline_freeze_failure_and_nonboolean_modes_cannot_launch_guest(self):
+        for mode in ("inline", None, lambda: None, 1):
+            with patch.object(subprocess, "Popen") as spawn:
+                with self.assertRaises(smoke.Refused):
+                    smoke._smoke(str(self.root), inline_react=mode)
+                spawn.assert_not_called()
+        profile = SimpleNamespace(_prepare=MagicMock(side_effect=smoke.Refused()))
+        with patch.object(smoke, "_module", return_value=profile), \
+                patch.object(subprocess, "Popen", side_effect=self.dispatch):
+            with self.assertRaises(smoke.Refused):
+                smoke._smoke(str(self.root), inline_react=True)
+        self.assertIsNone(self.guard)
 
     def failure_receipt(self, stage):
         path = self.root / "smoke-receipt.json"

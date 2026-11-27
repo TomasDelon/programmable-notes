@@ -291,3 +291,105 @@ test('role opt-in is guarded before checkout and remains a fixed optional comman
     /kvm_role_probe:\n {8}description:.+\n {8}type: boolean\n {8}default: false/,
   );
 });
+
+test('the fixed inline diagnostic requires explicit VM mode and cannot duplicate application jobs', () => {
+  for (const native_vm of [false, true]) {
+    const inputs = Object.fromEntries(flags.map((flag) => [flag, false]));
+    Object.assign(inputs, {
+      native_vm,
+      native_inline_react: true,
+      editing_scope: 'all',
+      editing_browser: 'all',
+      deployment_url: '',
+    });
+    const sandbox = context(inputs);
+    assert.equal(evaluate(group, sandbox), 'native-vm-47');
+    for (const name of names)
+      assert.equal(
+        Boolean(evaluate(jobs[name], sandbox)),
+        name === 'native-vm',
+      );
+    assert.equal(Boolean(evaluate(rejectVm, sandbox)), !native_vm);
+  }
+  assert.match(vmSection, /if: inputs\.native_inline_react\n/);
+  assert.match(
+    vmSection,
+    /cargo build --manifest-path scripts\/native-inline-react-v1\/host\/Cargo.toml --release --locked --target-dir src-tauri\/target/,
+  );
+  assert.match(
+    vmSection,
+    /python3 -I -B scripts\/native-vm-inline-react.py --run "\$PN_VM_ROOT"/,
+  );
+  assert.match(vmSection, /if: \$\{\{ !inputs\.native_inline_react \}\}/);
+});
+
+test('inline diagnostics reject mixed inputs before checkout and retain only fixed public summaries', () => {
+  for (const id of ['os_evidence', 'inline_evidence']) {
+    assert.match(vmSection, new RegExp(`id: ${id}\\n`));
+    assert.ok(
+      vmSection.includes(
+        `if: always() && steps.${id}.outputs.copied == 'true'`,
+      ),
+    );
+  }
+  assert.doesNotMatch(vmSection, /if:.*hashFiles/);
+  for (let mask = 1; mask < 128; mask++) {
+    const inputs = Object.fromEntries(
+      flags.map((flag, bit) => [flag, Boolean(mask & (1 << bit))]),
+    );
+    Object.assign(inputs, {
+      native_vm: true,
+      native_inline_react: true,
+      editing_scope: 'all',
+      editing_browser: 'all',
+      deployment_url: mask & 64 ? 'https://fixture.example/' : '',
+    });
+    const sandbox = context(inputs);
+    assert.equal(Boolean(evaluate(rejectVm, sandbox)), true);
+    for (const name of names)
+      assert.equal(
+        Boolean(evaluate(jobs[name], sandbox)),
+        name === 'native-vm',
+      );
+  }
+  assert.match(
+    vmSection,
+    /path: \.cache\/native-vm-evidence\/inline-react\.json\n/,
+  );
+  assert.doesNotMatch(vmSection, /path:.*(?:auth|host\.log|PN_VM_ROOT|\*)/);
+  assert.ok(
+    vmSection.indexOf('Reject combined VM') <
+      vmSection.indexOf('uses: actions/checkout@'),
+  );
+});
+
+function assertInlineStepGuards(text) {
+  for (const name of [
+    'Prepare locked native diagnostic dependencies',
+    'Compile only the fixed diagnostic host (not the product application)',
+    'Run the fixed native diagnostic after same-lifecycle OS admission',
+  ]) {
+    assert.ok(
+      text.includes(
+        `- name: ${name}\n        if: inputs.native_inline_react\n`,
+      ),
+    );
+  }
+  assert.ok(
+    text.includes(
+      '- name: Verify boot, SSH identity and OS admission (not native application acceptance)\n        if: ${{ !inputs.native_inline_react }}\n',
+    ),
+  );
+}
+test('each optional payload step is guarded and OS-only smoke remains mutually exclusive', () => {
+  assertInlineStepGuards(vmSection);
+  for (const fragment of vmSection.matchAll(
+    /- name: .+\n {8}if: (?:inputs\.native_inline_react|\$\{\{ !inputs\.native_inline_react \}\})\n/g,
+  )) {
+    assert.throws(() =>
+      assertInlineStepGuards(
+        vmSection.replace(fragment[0], fragment[0].replace(/ {8}if: .+\n/, '')),
+      ),
+    );
+  }
+});

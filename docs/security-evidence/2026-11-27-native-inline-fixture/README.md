@@ -103,3 +103,61 @@ cases**, plus formatting/lint/types/build. GTK host compilation is not a local p
 GLib development metadata is missing. A locked release build was added to the
 existing native CI job, reusing its target/cache without another job or installer.
 No native host execution, driver, containment or product acceptance is implied.
+
+## Actual hosted host compilation
+
+At **37e45f4**, [native CI job140274299391](https://github.com/TomasDelon/programmable-notes/actions/runs/45928155833/job/140274299391)
+completed the locked fixed-host release compilation successfully on Ubuntu24.04.
+This observation is the host compilation step, not a claim about the whole job's
+final outcome or native rendering/input. The independently completed OS-only
+[run45928250450](https://github.com/TomasDelon/programmable-notes/actions/runs/45928250450)
+also passed the updated Gdk-enabled guest recipe. Pointer, keyboard, Stop and
+expiry remain unexecuted until the reviewed fixed profile runs.
+
+## Fixed guest input and termination profile
+
+The successor profile transfers only the immutable helper, session, observer and
+integrity manifest after the same fresh guest passes OS admission and bracketed
+SSH identity refusals. No controller private key, repository, compiler cache,
+owner vault or host filesystem share enters the guest. Authenticated Xvfb uses a
+fresh guest-only cookie; the existing user manager and delegated controllers are
+required. No namespace policy or resource bound is relaxed.
+
+The first case observes the persistent native bridge, actual React counter
+clicks and explicit field focus before one ordinary keyboard typing sequence.
+It checks the live unit identity/policy immediately before Stop, then historical
+process identities and group cleanup within the original five seconds, followed
+by real trusted-host input. The second case uses a fresh unit and requires the
+authenticated systemd runtime-timeout cause before closing its host. Disappearance
+or a later Stop cannot stand in for expiry. Renderer UID, NoNewPrivs, distinct
+network namespace and seccomp-filter observations are separate from title data.
+
+Synthetic controls cover contaminated inputs, fixed framing and stale build
+metadata, bounded real pipes, process reuse/zombies, migration, cleanup races,
+missing expiry cause, stale artifacts and individual CI step guards. They do not
+establish native behavior. The helper's manifest is inspected without executing
+it on the controller and records its actual embedded compiler/dependency/bundle
+identities under the trusted-build assumption.
+
+The explicitly optional command is:
+
+```sh
+gh workflow run ci.yml --ref fix/preview-markdown-input -f native_vm=true -f native_inline_react=true
+```
+
+All unrelated dispatch inputs retain defaults. OS-only mode remains available
+without the inline flag. The `fixed-native-inline-react-diagnostic` artifact
+contains only the validated aggregate/case summary and public hashes; private
+host logs, authentication data, screenshots and guest trees are excluded. GitHub
+notices retain fixed enum-only diagnosis without depending on artifact download
+access. **No native profile result is claimed until its completed run is recorded.**
+Even a passing helper is not the product application or full security acceptance.
+
+The complete local packet check exited **0**: **793 unit, 125 tooling / zero
+skips, 153 Chromium, 9 Pages and 4 local cloud-storage browser cases**, plus
+formatting, lint, strict types and production build. The three new wrappers
+exercise **14 driver, 28 observer and 23 session controls**; the smoke wrapper
+exercises51 controls and the receipt reporter10. Independent review repeated the
+native control cases and found no remaining blocker. These are source/control
+and browser observations, not native runtime passes. Functional file identities
+were checked unchanged after the complete run.

@@ -17,7 +17,7 @@ spec = importlib.util.spec_from_file_location(
     "receipt_guard", Path(__file__).with_name("native-vm-launch.py"))
 guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(guard)
-STAGES = {"boot_wait", "probe", "pin", "key", "powerdown", "guard_exit"}
+STAGES = {"boot_wait", "probe", "pin", "key", "fixture", "powerdown", "guard_exit"}
 SSH = {"none", "host_key", "authentication", "timeout", "connection", "protocol", "other"}
 BASE = {"version", "scope", "native_app_tested", "status"}
 PROBE_CHECKS = {"schema", "version", "uid", "authorized_count", "authorized_sha256",

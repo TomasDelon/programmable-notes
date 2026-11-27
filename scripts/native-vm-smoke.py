@@ -485,7 +485,10 @@ def _powerdown(root_path):
             remaining()
 
 
-def _smoke(root_path):
+def _smoke(root_path, *, inline_react=False):
+    # Private sealed mode, never a callback or caller-selected payload API.
+    if type(inline_react) is not bool:
+        raise Refused()
     guard._absolute(root_path)
     with ExitStack() as stack:
         directories, witnesses, config, expected_hash, expected_pin = _capture(root_path, stack)
@@ -534,6 +537,10 @@ def _smoke(root_path):
         # must never exclude auth/config/root witnesses from revalidation.
         active_witnesses = {path: value for path, value in witnesses.items()
                             if path != root_path + "/guest/root.ext4"}
+        profile = prepared = fixture = None
+        if inline_react:
+            profile = _module("fixed_inline_profile", "native-vm-inline-react.py")
+            prepared = stack.enter_context(profile._prepare())
         with _owned(launch, guarded=True) as process:
             progress["guard"] = process
             def call(identity=controller, pin=known, timeout=10):
@@ -600,6 +607,12 @@ def _smoke(root_path):
                 if status != 0:
                     raise Refused()
                 accept_probe(data)
+            if inline_react:
+                progress["stage"] = "fixture"
+                try:
+                    fixture = profile._run_admitted(root_path, active_witnesses, process, prepared)
+                except profile.CleanupFailed:
+                    raise CleanupFailed() from None
             progress["stage"] = "powerdown"
             _powerdown(root_path)
             progress["stage"] = "guard_exit"
@@ -613,6 +626,13 @@ def _smoke(root_path):
                    "logind_active": True, "authorized_count": 1,
                    "authorized_sha256": expected_hash}
         preparation._write(root, "smoke-receipt.json", (json.dumps(receipt, sort_keys=True) + "\n").encode())
+        if inline_react:
+            fixture["guard_normal_exit"] = True
+            encoded_fixture = (json.dumps(fixture, sort_keys=True) + "\n").encode()
+            if len(encoded_fixture) > 16384:
+                raise Refused()
+            preparation._write(root, "inline-react-receipt.json", encoded_fixture)
+        return fixture
 
 
 def main(argv=None):

@@ -101,3 +101,39 @@ Retain bounded sanitized receipts, hashes, screenshots and failures; clean only
 new owned runtime resources and keys through reviewed lifecycle handling. This
 profile cannot establish application ACLs, arbitrary document geometry, hostile
 CPU/memory denial or the full security matrix. Those remain separate gates.
+
+## Fixed execution interface and evidence scope
+
+The manual CI opt-in is `native_vm=true` together with
+`native_inline_react=true`; every unrelated input retains its default. Inline
+mode alone is rejected before checkout. Ordinary PR jobs remain mandatory and
+are not duplicated by this optional diagnostic. OS-only admission remains the
+default `native_vm=true` mode.
+
+The fixed driver owns one guest lifecycle: it freezes only the compiled helper,
+versioned session, observer and generated integrity manifest before launch;
+performs the existing OS admission and bracketed SSH negative controls; transfers
+the four files; and runs Stop followed by expiry. It accepts no executable,
+command, destination or payload argument. Controller private keys remain on the
+host. File transfers use one directly owned pinned SSH subsystem process with
+bounded SFTP-v3 packets; collection uses fixed no-follow descriptor traversal,
+not archive extraction or unrestricted download.
+
+The helper embeds its exact compiler manifest in an unambiguous bounded frame.
+The driver inspects bytes without executing the helper, validates current source,
+lock and installed package metadata, and records compiler/dependency/bundle and
+binary identities. This assumes the reviewed trusted build producer; it is not
+an independent supply-chain attestation. The native bridge property is separate
+from title state, so fast React startup cannot erase the pre-WebKit sentinel.
+
+Only strict enum-based aggregate/case summaries and public hashes are uploaded.
+Raw host logs, authentication files and guest trees are excluded. Each upload
+requires a receipt copied during that run. The helper is **not the production
+application**: `native_app_tested` stays false even if both fixed diagnostic cases
+pass. Pointer/keyboard, termination and host responsiveness are separate fields;
+an OS pass, compilation, screenshot or spoofable title cannot stand in for them.
+
+Implementation and control-test evidence precede runtime execution. Until an
+actual completed run is recorded, all native diagnostic observations remain
+unexecuted; no changed deadline, forced focus or relaxed namespace policy is an
+acceptable workaround.

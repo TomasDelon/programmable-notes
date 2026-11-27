@@ -48,8 +48,8 @@ The admission tool also retains failed-run receipts after validating the private
 fixture root. They contain fixed stage/error categories and bounded return codes,
 not raw SSH output, keys, mount paths or exception text. Cleanup failure stays a
 failed result; invalid preflight writes no receipt. These failure controls have
-been tested locally. The actual hosted attempt below failed; successful guest
-admission remains unproven.
+been tested locally. The first hosted attempts below failed; the later complete passing runs are
+recorded separately and do not relabel those failures.
 
 The complete required `npm run check` exited 0: **739 unit, 101 tooling (zero
 skips), 152 Chromium, 9 local Pages and 4 inactive-cloud browser tests passed**,
@@ -195,10 +195,12 @@ was executed by this OS-only run.** It makes the reviewed environment eligible f
 the fixed native diagnostic, whose child still must pass actual namespace/cgroup
 admission before WebKit interprets its embedded document.
 
-The next source packet adds the passive `gir1.2-gtk-3.0` dependency for the
-observer's Gdk3 APIs. This changes the recipe hash; a fresh OS-only run must verify
-that exact recipe before the native profile is enabled. No key, SSH, kernel,
-namespace, resource or application permission is changed by this dependency.
+Source **37e45f4** adds the passive `gir1.2-gtk-3.0` dependency for the
+observer's Gdk3 APIs. Its fresh [OS-only run45928250450](https://github.com/TomasDelon/programmable-notes/actions/runs/45928250450)
+**passed**, including the same strict OS checks, bracketed authentication denials
+and normal QMP shutdown. The [validated annotation summary](os-admission-45928250450.json)
+records that new source and job. No native payload ran. No key, SSH, kernel,
+namespace, resource or application permission changed with this dependency.
 
 ## Reproduce
 
@@ -230,10 +232,10 @@ secrets, a paid runner, a release or a merge.
 
 ## Current limits
 
-Local image preparation and launcher layout checks have executed. A hosted OS
-admission attempt failed; successful guest boot, authenticated OS admission and
-normal shutdown must be demonstrated by their own complete runner result before
-being claimed. The managed host has no host QEMU, sudo or package helper; no
+Local image preparation and launcher layout checks have executed. Hosted OS
+admission passed at the two exact sources recorded above, including guest boot,
+authenticated admission and normal shutdown. Earlier failed attempts remain
+failed. Native payload behavior is a separate, still unexecuted gate. The managed host has no host QEMU, sudo or package helper; no
 unchecked container launch was substituted.
 
 OS admission does not test the native application, malicious MDX, IPC/filesystem

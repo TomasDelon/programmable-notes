@@ -41,6 +41,12 @@ try {
   }
   await publish('fixture.html', html);
   await publish('fixture-manifest.json', manifest);
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(manifest.length);
+  await publish('fixture-evidence.bin', Buffer.concat([
+    Buffer.from('PN_INLINE_REACT_V1_BUILD\0'), length, manifest,
+    Buffer.from('\0PN_INLINE_REACT_V1_BUILD_END\0'),
+  ]));
 } catch {
   process.exitCode = 2;
 }

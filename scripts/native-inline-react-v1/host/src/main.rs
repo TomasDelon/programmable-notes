@@ -10,6 +10,7 @@ use wry::{
 };
 
 const FIXTURE: &str = include_str!(concat!(env!("OUT_DIR"), "/fixture.html"));
+static BUILD_EVIDENCE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/fixture-evidence.bin"));
 const REJECTED_TITLE: &[u8] =
     br#"{"fixture":"inline-react-v1","ready":false,"error":"receipt-overflow"}"#;
 
@@ -32,7 +33,17 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
     plug.realize();
     let receipt_window = plug.window().ok_or("Own Plug native window missing")?;
     let receipt_atom = gtk::gdk::Atom::intern("_PN_FIXTURE_STATE");
+    let bridge_atom = gtk::gdk::Atom::intern("_PN_FIXTURE_BRIDGE");
     let utf8_atom = gtk::gdk::Atom::intern("UTF8_STRING");
+    // This independent sentinel persists even if React updates STATE before observation.
+    gtk::gdk::property_change(
+        &receipt_window,
+        &bridge_atom,
+        &utf8_atom,
+        8,
+        gtk::gdk::PropMode::Replace,
+        gtk::gdk::ChangeData::UChars(br#"{"bridge":"native-before-webkit"}"#),
+    );
     gtk::gdk::property_change(
         &receipt_window,
         &receipt_atom,
@@ -141,6 +152,8 @@ fn host() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Public immutable build provenance only; inspection needs no native execution.
+    std::hint::black_box(BUILD_EVIDENCE);
     // This fixed guest profile has no root or owner-desktop mode.
     if unsafe { libc::getuid() } != 1001 || unsafe { libc::geteuid() } != 1001 {
         return Err("Fixed diagnostic requires fixture UID 1001".into());

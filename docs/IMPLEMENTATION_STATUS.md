@@ -20,6 +20,40 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Fixed native interaction profile — 27 November 2026
+
+Required [CI45928155833](https://github.com/TomasDelon/programmable-notes/actions/runs/45928155833)
+at **37e45f4** passed both mandatory jobs, including the actual locked GTK host
+compilation. The updated Gdk-enabled guest recipe passed fresh
+[OS-only admission45928250450](https://github.com/TomasDelon/programmable-notes/actions/runs/45928250450),
+including normal QMP shutdown. No native payload ran in that admission.
+
+The next fixed diagnostic packet adds share-free authenticated transfer, an
+owned authenticated X11 session, strict native input/Stop and separate expiry
+observers, and an explicit optional CI mode. Its helper embeds the exact compile
+manifest; source/package checks reject stale build inputs without executing the
+binary on the controller. A persistent pre-WebKit bridge avoids a transient
+sentinel race. Process identities, effective policy, historical cleanup and
+trusted systemd timeout attribution remain independent of spoofable React title
+data. Failed or missing observations cannot become successful cases.
+
+This is engineering test infrastructure, **not the shared product UI or native
+application acceptance**. The optional mode leaves normal PR jobs and the
+OS-only default intact, uploads only bounded public summaries, and never stages
+controller private keys or host shares. Native interaction observations remain
+unexecuted until an actual completed profile run is recorded. See the
+[fixed plan](plans/native-inline-react-v1.md) and
+[fixture evidence](security-evidence/2026-11-27-native-inline-fixture/README.md).
+
+The complete local packet check exited **0**: **793 unit, 125 tooling / zero
+skips, 153 Chromium, 9 Pages and 4 local cloud-storage browser cases**, plus
+formatting, lint, strict types and production build. The three new wrappers
+exercise **14 driver, 28 observer and 23 session controls**; the smoke wrapper
+exercises51 controls and the receipt reporter10. Independent review repeated the
+native control cases and found no remaining blocker. These are source/control
+and browser observations, not native runtime passes. Functional file identities
+were checked unchanged after the complete run.
+
 ## Native host source and successful OS admission — 27 November 2026
 
 Actual [OS admission45923910293](https://github.com/TomasDelon/programmable-notes/actions/runs/45923910293)

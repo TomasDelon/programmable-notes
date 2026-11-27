@@ -93,12 +93,30 @@ test('actual build program produces only bounded public OUT_DIR artifacts withou
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual((await readdir(output)).sort(), [
+    'fixture-evidence.bin',
     'fixture-manifest.json',
     'fixture.html',
   ]);
   const html = await readFile(join(output, 'fixture.html'));
   const manifest = JSON.parse(
     await readFile(join(output, 'fixture-manifest.json'), 'utf8'),
+  );
+  const manifestBytes = await readFile(join(output, 'fixture-manifest.json'));
+  const evidence = await readFile(join(output, 'fixture-evidence.bin'));
+  const prefix = Buffer.from('PN_INLINE_REACT_V1_BUILD\0');
+  const suffix = Buffer.from('\0PN_INLINE_REACT_V1_BUILD_END\0');
+  assert.deepEqual(evidence.subarray(0, prefix.length), prefix);
+  assert.equal(evidence.readUInt32BE(prefix.length), manifestBytes.length);
+  assert.deepEqual(
+    evidence.subarray(prefix.length + 4, -suffix.length),
+    manifestBytes,
+  );
+  assert.deepEqual(evidence.subarray(-suffix.length), suffix);
+  assert.equal(evidence.indexOf(prefix, prefix.length), -1);
+  assert.equal(evidence.indexOf(suffix), evidence.length - suffix.length);
+  assert.equal(
+    (await stat(join(output, 'fixture-evidence.bin'))).mode & 0o777,
+    0o600,
   );
   assert.equal(manifest.nativeTested, false);
   assert.equal(manifest.generatedCodeEvaluatedOnHost, false);
@@ -131,6 +149,18 @@ test('runtime host has only fixed input, own-window diagnostics and trusted nati
   assert.match(source, /title\.len\(\) <= 256/);
   assert.match(source, /native-before-webkit/);
   assert.match(source, /_PN_FIXTURE_STATE/);
+  const beforeWebkit = source.slice(0, source.indexOf('let _view ='));
+  assert.match(
+    beforeWebkit,
+    /let bridge_atom = gtk::gdk::Atom::intern\("_PN_FIXTURE_BRIDGE"\)/,
+  );
+  assert.match(beforeWebkit, /&receipt_window,\s*&bridge_atom,/);
+  const titleCallback = source.slice(
+    source.indexOf('.with_document_title_changed_handler'),
+    source.indexOf('.with_html(FIXTURE)'),
+  );
+  assert.match(titleCallback, /&receipt_atom,/);
+  assert.doesNotMatch(titleCallback, /bridge_atom|_PN_FIXTURE_BRIDGE/);
   assert.match(source, /\.build_gtk\(&plug\)/);
   assert.match(source, /\.with_devtools\(false\)/);
   assert.match(source, /\.with_incognito\(true\)/);
@@ -141,6 +171,11 @@ test('runtime host has only fixed input, own-window diagnostics and trusted nati
   assert.match(source, /HOST_BUTTON_STOP/);
   assert.match(source, /HOST_ENTRY/);
   assert.match(source, /1001/);
+  assert.match(
+    source,
+    /static BUILD_EVIDENCE: &\[u8\] = include_bytes!\(concat!\(env!\("OUT_DIR"\), "\/fixture-evidence\.bin"\)\);/,
+  );
+  assert.match(source, /std::hint::black_box\(BUILD_EVIDENCE\)/);
   assert.doesNotMatch(
     source,
     /\/repo|\/mnt|1000|with_ipc_handler|evaluate_script|grab_focus|native_documents|std::fs::write/,
