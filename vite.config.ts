@@ -1,7 +1,9 @@
 import mdx from '@mdx-js/rollup';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
-import { loadEnv } from 'vite';
+import { loadEnv, normalizePath } from 'vite';
+import { resolve } from 'node:path';
+import { privateDevCacheDeny } from './scripts/dev-cache-policy.ts';
 import { storageMode } from './src/web/storageMode.ts';
 
 export default defineConfig(({ mode }) => {
@@ -9,8 +11,8 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       fs: {
-        // Custom arrays replace Vite defaults: preserve them, then protect private
-        // audit output even when a developer explicitly enables network serving.
+        // Custom arrays replace Vite defaults: retain them here. The post-config
+        // hook anchors private cache policy to the actual configured project root.
         deny: [
           '.env',
           '.env.*',
@@ -19,7 +21,6 @@ export default defineConfig(({ mode }) => {
           '.yarnrc.yml',
           '**/.git/**',
           '**/public-audit/**',
-          '**/.cache/security-scan-*/**',
         ],
       },
     },
@@ -27,6 +28,23 @@ export default defineConfig(({ mode }) => {
       conditions: ['worker', 'module', 'browser', 'development|production'],
     },
     plugins: [
+      {
+        name: 'private-dev-cache',
+        config: {
+          order: 'post',
+          handler(config) {
+            return {
+              server: {
+                fs: {
+                  deny: privateDevCacheDeny(
+                    normalizePath(resolve(config.root ?? '.')),
+                  ),
+                },
+              },
+            };
+          },
+        },
+      },
       { ...mdx({ include: '**/src/**/*.mdx' }), enforce: 'pre' },
       react({ include: /\.(jsx|tsx|mdx)$/ }),
     ],
