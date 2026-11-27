@@ -207,8 +207,68 @@ def _safe_code(value):
     return value if type(value) is int and -255 <= value <= 255 else None
 
 
+BOOT_PATTERNS = {
+    "linux_kernel_started": (b"Linux version ",),
+    "systemd_started": (b"systemd[1]:",),
+    "multiuser": (b"Reached target multi-user.target", b"Reached target Multi-User System"),
+    "sshd_started": (b"Started ssh.service", b"Started OpenBSD Secure Shell server"),
+    "kernel_panic": (b"Kernel panic - not syncing",),
+    "emergency": (b"You are in emergency mode.", b"Entering emergency mode."),
+    "network_wait": (b"systemd-networkd-wait-online.service", b"Wait for Network to be Configured"),
+    "crng_ready": (b"random: crng init done",),
+    "root_device_timeout": (b"Gave up waiting for root file system device", b"ALERT! /dev/vda does not exist"),
+    "initramfs_shell": (b"(initramfs)",),
+}
+
+
+def _serial_observations(runtime):
+    """Advisory presence only, after cleanup attempts; never raw output or admission."""
+    try:
+        with ExitStack() as stack:
+            directory = os.fstat(runtime)
+            if (not stat.S_ISDIR(directory.st_mode) or directory.st_uid != os.getuid()
+                    or stat.S_IMODE(directory.st_mode) != 0o700):
+                return None
+            directory_identity = _identity(directory, True)
+            fd = os.open("serial.log", os.O_RDONLY | guard.FLAGS, dir_fd=runtime)
+            stack.callback(os.close, fd)
+            before = os.fstat(fd)
+            if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.getuid()
+                    or before.st_nlink != 1 or stat.S_IMODE(before.st_mode) != 0o600
+                    or not 0 <= before.st_size <= guard.SERIAL_LIMIT):
+                return None
+            found, tail, total = set(), b"", 0
+            overlap = max(len(pattern) for patterns in BOOT_PATTERNS.values() for pattern in patterns) - 1
+            deadline = time.monotonic() + 2
+            while True:
+                if time.monotonic() >= deadline:
+                    return None
+                raw = os.read(fd, min(65536, guard.SERIAL_LIMIT + 1 - total))
+                if not raw:
+                    break
+                total += len(raw)
+                if total > guard.SERIAL_LIMIT:
+                    return None
+                window = tail + raw
+                for marker, patterns in BOOT_PATTERNS.items():
+                    if any(pattern in window for pattern in patterns):
+                        found.add(marker)
+                tail = window[-overlap:]
+            after = os.fstat(fd)
+            named = os.stat("serial.log", dir_fd=runtime, follow_symlinks=False)
+            if (total != before.st_size or _identity(before) != _identity(after)
+                    or _identity(before) != _identity(named)
+                    or directory_identity != _identity(os.fstat(runtime), True)):
+                return None
+            if time.monotonic() >= deadline:
+                return None
+            return {"boot_markers": sorted(found), "serial_bytes": total}
+    except (Exception, KeyboardInterrupt):
+        return None
+
+
 @contextmanager
-def _failure_receipt(root, progress):
+def _failure_receipt(root, progress, runtime):
     """Entered only after complete root validation, before any child starts."""
     try:
         yield
@@ -233,6 +293,14 @@ def _failure_receipt(root, progress):
         guard_status = _safe_code(process.returncode) if process is not None else None
         if guard_status is not None:
             receipt["guard_status"] = guard_status
+        if ((stage == "boot_wait" and reason in ("refused", "timeout"))
+                or (cleanup and progress["stage"] == "boot_wait")):
+            try:
+                observations = _serial_observations(runtime)
+                if observations is not None:
+                    receipt.update(observations)
+            except (Exception, KeyboardInterrupt):
+                pass  # Diagnostic failure must preserve the original refusal.
         try:
             preparation._write(root, "smoke-receipt.json", (json.dumps(receipt, sort_keys=True) + "\n").encode())
         except (Exception, KeyboardInterrupt):
@@ -353,7 +421,7 @@ def _smoke(root_path):
         directories, witnesses, config, expected_hash, expected_pin = _capture(root_path, stack)
         root = directories[""]
         progress = {"stage": "boot_wait", "ssh_error": "none", "returncode": None, "guard": None}
-        stack.enter_context(_failure_receipt(root, progress))
+        stack.enter_context(_failure_receipt(root, progress, directories["runtime"]))
         os.mkdir("checks", 0o700, dir_fd=root)  # Refuse a previous partial attempt.
         checks = os.open("checks", os.O_RDONLY | os.O_DIRECTORY | guard.FLAGS, dir_fd=root)
         stack.callback(os.close, checks)

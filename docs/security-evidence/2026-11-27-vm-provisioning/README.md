@@ -95,6 +95,26 @@ is no `continue-on-error` or rewritten old result. This delivery change does not
 fix the unknown cause, establish the original failure stage or demonstrate a new
 successful VM run. Native application acceptance remains outside OS admission.
 
+The next actual run at **584631f**,
+[45916879926](https://github.com/TomasDelon/programmable-notes/actions/runs/45916879926),
+also **failed**. This time the validated check annotation was accessible:
+`stage=boot_wait reason=timeout ssh_error=timeout returncode=255 guard_status=2`.
+The [fixed annotation receipt](os-admission-45916879926.json) records its scope and
+source commit. SSH admission timed out before any native application payload.
+This establishes the failure category, not the guest-startup cause. Boot, pin/key
+negative controls and normal shutdown are not reported as passing. Required
+application/build CI for that source passed in
+[45916875245](https://github.com/TomasDelon/programmable-notes/actions/runs/45916875245).
+
+The follow-up diagnostic reports only ten fixed literal boot-marker names and
+a serial byte count, together and only on boot failure. It reads the private
+regular log through the pinned runtime directory after owned cleanup attempts,
+with byte/time bounds and descriptor/path identity checks. Missing, changed,
+unsafe or late evidence is omitted without masking the original failure. Raw
+serial output is never published. Presence is advisory; absence does not establish
+a cause, and no marker can pass admission. **42 Python controls and 9 reporter
+CLI tests passed**; actual marker observations await the next runner execution.
+
 ## Reproduce
 
 On a disposable Linux host with Docker, Python and OpenSSH client:

@@ -468,6 +468,160 @@ class Smoke(unittest.TestCase):
         self.assertEqual(receipt["returncode"], 255)
         self.assertEqual(receipt["guard_status"], 2)
 
+    def test_boot_failure_retains_only_fixed_advisory_serial_markers_after_cleanup(self):
+        raw = b"PRIVATE_SERIAL_PATH\x1b[31m Linux version synthetic\nsystemd[1]: starting\nStarted ssh.service\nLinux version repeated\n::error::PRIVATE_INJECTION\n"
+        actual = self.dispatch
+        def dispatch(args, **options):
+            if args[0] == "/usr/bin/python3":
+                path = self.root / "runtime/serial.log"
+                path.write_bytes(raw)
+                path.chmod(0o600)
+            return actual(args, **options)
+        self.ssh_transform = lambda *_args: (255, b"Permission denied (publickey).")
+        with patch.object(self, "dispatch", side_effect=dispatch):
+            self.assertEqual(self.run_mocked()[0], 2)
+        receipt = self.failure_receipt("boot_wait")
+        self.assertEqual(receipt.get("boot_markers"), ["linux_kernel_started", "sshd_started", "systemd_started"])
+        self.assertEqual(receipt.get("serial_bytes"), len(raw))
+        self.assertEqual(self.guard.terminated, 1)
+
+    def test_serial_observations_handle_short_reads_and_never_emit_untrusted_bytes(self):
+        path = self.root / "runtime/serial.log"
+        raw = (b"PRIVATE\x1b[31m::error::INJECTION\nLinux version synthetic\nsystemd[1]: starting\n"
+               b"Reached target multi-user.target\nStarted ssh.service\nKernel panic - not syncing\n"
+               b"You are in emergency mode.\nsystemd-networkd-wait-online.service\nrandom: crng init done\n"
+               b"Gave up waiting for root file system device\n(initramfs)\n")
+        path.write_bytes(raw)
+        path.chmod(0o600)
+        runtime = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        actual = os.read
+        with patch.object(os, "read", side_effect=lambda fd, size: actual(fd, min(size, 3))):
+            result = smoke._serial_observations(runtime)
+        self.assertEqual(result, {"boot_markers": ["crng_ready", "emergency", "initramfs_shell", "kernel_panic", "linux_kernel_started", "multiuser", "network_wait", "root_device_timeout", "sshd_started", "systemd_started"], "serial_bytes": len(raw)})
+        self.assertNotIn("PRIVATE", json.dumps(result))
+        self.assertNotIn("\x1b", json.dumps(result))
+
+    def test_serial_missing_unsafe_and_oversized_files_are_omitted_before_any_read(self):
+        runtime = os.open(self.root / "runtime", os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        path = self.root / "runtime/serial.log"
+        self.assertIsNone(smoke._serial_observations(runtime))
+        path.symlink_to(self.root / "auth/controller_ed25519")
+        with patch.object(os, "read", side_effect=AssertionError("must not read private target")) as reader:
+            self.assertIsNone(smoke._serial_observations(runtime))
+            reader.assert_not_called()
+        path.unlink()
+        path.write_bytes(b"private")
+        path.chmod(0o644)
+        with patch.object(os, "read", side_effect=AssertionError("must not read unsafe evidence")) as reader:
+            self.assertIsNone(smoke._serial_observations(runtime))
+            reader.assert_not_called()
+        path.chmod(0o600)
+        os.link(path, self.root / "runtime/alias")
+        with patch.object(os, "read", side_effect=AssertionError("must not read hardlink evidence")) as reader:
+            self.assertIsNone(smoke._serial_observations(runtime))
+            reader.assert_not_called()
+        (self.root / "runtime/alias").unlink()
+        with path.open("wb") as stream:
+            stream.truncate(smoke.guard.SERIAL_LIMIT + 1)
+        with patch.object(os, "read", side_effect=AssertionError("must not read oversized evidence")) as reader:
+            self.assertIsNone(smoke._serial_observations(runtime))
+            reader.assert_not_called()
+
+    def test_serial_empty_file_has_distinct_valid_zero_byte_observation(self):
+        path = self.root / "runtime/serial.log"
+        path.write_bytes(b"")
+        path.chmod(0o600)
+        runtime = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        self.assertEqual(smoke._serial_observations(runtime), {"boot_markers": [], "serial_bytes": 0})
+
+    def test_serial_exact_size_limit_remains_a_bounded_valid_observation(self):
+        path = self.root / "runtime/serial.log"
+        with path.open("wb") as stream:
+            stream.truncate(smoke.guard.SERIAL_LIMIT)
+        path.chmod(0o600)
+        runtime = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        self.assertEqual(smoke._serial_observations(runtime), {"boot_markers": [], "serial_bytes": smoke.guard.SERIAL_LIMIT})
+
+    def test_serial_replacement_or_metadata_change_during_read_is_omitted(self):
+        path = self.root / "runtime/serial.log"
+        runtime = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        actual = os.read
+        for replace in (True, False):
+            path.write_bytes(b"Linux version synthetic\n")
+            path.chmod(0o600)
+            changed = False
+            def mutate(fd, size):
+                nonlocal changed
+                raw = actual(fd, size)
+                if raw and not changed:
+                    changed = True
+                    if replace:
+                        replacement = path.parent / "replacement"
+                        replacement.write_bytes(b"Linux version synthetic\n")
+                        replacement.chmod(0o600)
+                        replacement.replace(path)
+                    else:
+                        path.chmod(0o400)
+                return raw
+            with patch.object(os, "read", side_effect=mutate):
+                self.assertIsNone(smoke._serial_observations(runtime))
+
+    def test_serial_eof_metadata_time_jump_omits_observation(self):
+        path = self.root / "runtime/serial.log"
+        path.write_bytes(b"Linux version synthetic\n")
+        path.chmod(0o600)
+        runtime = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, runtime)
+        clock = [0.0]
+        actual = os.stat
+        def delayed_metadata(*args, **kwargs):
+            result = actual(*args, **kwargs)
+            clock[0] = 3.0
+            return result
+        with patch.object(smoke.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(os, "stat", side_effect=delayed_metadata):
+            self.assertIsNone(smoke._serial_observations(runtime))
+
+    def test_boot_cleanup_failure_keeps_origin_and_advisory_serial_fields(self):
+        actual = self.dispatch
+        def dispatch(args, **options):
+            process = actual(args, **options)
+            if process is self.guard:
+                path = self.root / "runtime/serial.log"
+                path.write_bytes(b"Linux version synthetic\n")
+                path.chmod(0o600)
+                process.wait = lambda timeout: (_ for _ in ()).throw(subprocess.TimeoutExpired("PRIVATE", timeout))
+            return process
+        self.ssh_transform = lambda *_args: (255, b"Permission denied (publickey).")
+        with patch.object(self, "dispatch", side_effect=dispatch):
+            self.assertEqual(self.run_mocked()[0], 2)
+        receipt = self.failure_receipt("cleanup")
+        self.assertEqual(receipt["origin_stage"], "boot_wait")
+        self.assertEqual(receipt.get("boot_markers"), ["linux_kernel_started"])
+
+    def test_bad_serial_reader_never_masks_original_failure(self):
+        self.ssh_transform = lambda *_args: (255, b"Permission denied (publickey).")
+        with patch.object(smoke, "_serial_observations", side_effect=OSError("PRIVATE")):
+            self.assertEqual(self.run_mocked()[0], 2)
+        receipt = self.failure_receipt("boot_wait")
+        self.assertEqual(receipt["ssh_error"], "authentication")
+        self.assertNotIn("boot_markers", receipt)
+        self.assertNotIn("serial_bytes", receipt)
+
+    def test_nonboot_failure_never_reads_or_emits_serial_observations(self):
+        self.facts["mounts_allowed"] = False
+        with patch.object(smoke, "_serial_observations", side_effect=AssertionError("not boot evidence")) as reader:
+            self.assertEqual(self.run_mocked()[0], 2)
+            reader.assert_not_called()
+        receipt = self.failure_receipt("probe")
+        self.assertNotIn("boot_markers", receipt)
+        self.assertNotIn("serial_bytes", receipt)
+
     def test_powerdown_timeout_records_failure_after_owned_guard_cleanup(self):
         def timeout(*_args):
             raise TimeoutError("PRIVATE_MONITOR_PATH")

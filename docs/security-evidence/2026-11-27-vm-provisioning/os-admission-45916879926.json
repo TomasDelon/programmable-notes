@@ -1,0 +1,21 @@
+{
+  "evidence_source": "validated GitHub check annotation",
+  "run_id": 45916879926,
+  "source_commit": "584631f2d8ce67e567151e5801c1af1c0d3a2cfd",
+  "job_id": 140238132164,
+  "run_conclusion": "failure",
+  "scope": "guest-os-admission-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "stage": "boot_wait",
+  "reason": "timeout",
+  "ssh_error": "timeout",
+  "returncode": 255,
+  "guard_status": 2,
+  "native_payload_executed": false,
+  "limitations": [
+    "No successful boot, SSH admission or normal shutdown established.",
+    "Guest startup cause is not established by the timeout category.",
+    "Earlier failed run remains a separate observation."
+  ]
+}

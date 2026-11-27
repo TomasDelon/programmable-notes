@@ -88,6 +88,81 @@ test('reports OS-only success without promoting native application security or p
   assert.doesNotMatch(result.stdout, /a{64}/);
 });
 
+test('reports only paired fixed advisory boot markers for boot failure or its cleanup', (t) => {
+  for (const scope of [
+    { ...failed, reason: 'timeout' },
+    {
+      ...failed,
+      stage: 'cleanup',
+      reason: 'cleanup_failed',
+      origin_stage: 'boot_wait',
+    },
+  ]) {
+    const result = run(
+      fixture(t, {
+        ...scope,
+        boot_markers: ['linux_kernel_started', 'sshd_started'],
+        serial_bytes: 8192,
+      }).file,
+    );
+    assert.equal(result.status, 0);
+    assert.match(
+      result.stdout,
+      /boot_markers=linux_kernel_started,sshd_started serial_bytes=8192 /,
+    );
+  }
+  const empty = run(
+    fixture(t, { ...failed, boot_markers: [], serial_bytes: 0 }).file,
+  );
+  assert.equal(empty.status, 0);
+  assert.match(empty.stdout, /boot_markers=none serial_bytes=0 /);
+  const markers = [
+    'crng_ready',
+    'emergency',
+    'initramfs_shell',
+    'kernel_panic',
+    'linux_kernel_started',
+    'multiuser',
+    'network_wait',
+    'root_device_timeout',
+    'sshd_started',
+    'systemd_started',
+  ];
+  const all = run(
+    fixture(t, { ...failed, boot_markers: markers, serial_bytes: 16777216 })
+      .file,
+  );
+  assert.equal(all.status, 0);
+  assert.ok(
+    all.stdout.includes(
+      `boot_markers=${markers.join(',')} serial_bytes=16777216 `,
+    ),
+  );
+});
+
+test('refuses injected, noncanonical, unpaired or misplaced serial observations', (t) => {
+  const observations = {
+    boot_markers: ['linux_kernel_started'],
+    serial_bytes: 1,
+  };
+  for (const change of [
+    { boot_markers: ['PRIVATE_CANARY%0A::error::injected'] },
+    { boot_markers: ['sshd_started', 'linux_kernel_started'] },
+    { boot_markers: ['linux_kernel_started', 'linux_kernel_started'] },
+    { boot_markers: 'linux_kernel_started' },
+    { boot_markers: [true] },
+    { boot_markers: undefined },
+    { serial_bytes: undefined },
+    { serial_bytes: true },
+    { serial_bytes: -1 },
+    { serial_bytes: 16777217 },
+    { stage: 'probe', ssh_error: 'protocol' },
+    { stage: 'cleanup', origin_stage: 'probe', reason: 'cleanup_failed' },
+  ])
+    refused(run(fixture(t, { ...failed, ...observations, ...change }).file));
+  refused(run(fixture(t, { ...passed, ...observations }).file));
+});
+
 test('reports only fixed failed-probe checks and rejects misplaced or injected diagnostics', (t) => {
   const probe = { ...failed, stage: 'probe', ssh_error: 'protocol' };
   for (const probe_check of [

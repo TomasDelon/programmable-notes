@@ -22,6 +22,8 @@ SSH = {"none", "host_key", "authentication", "timeout", "connection", "protocol"
 BASE = {"version", "scope", "native_app_tested", "status"}
 PROBE_CHECKS = {"schema", "version", "uid", "authorized_count", "authorized_sha256",
                 "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"}
+BOOT_MARKERS = {"linux_kernel_started", "systemd_started", "multiuser", "sshd_started",
+                "kernel_panic", "emergency", "network_wait", "crng_ready", "root_device_timeout", "initramfs_shell"}
 PASSED = {"wrong_pin_rejected", "wrong_key_rejected", "guard_normal_exit", "pid1_systemd",
           "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"}
 
@@ -45,7 +47,7 @@ def annotation(receipt):
         return "::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false"
     required = BASE | {"stage", "reason", "ssh_error"}
     if (receipt.get("status") != "failed" or not required <= set(receipt)
-            or set(receipt) - required - {"origin_stage", "returncode", "guard_status", "probe_check"}):
+            or set(receipt) - required - {"origin_stage", "returncode", "guard_status", "probe_check", "boot_markers", "serial_bytes"}):
         raise guard.Refused()
     for key, allowed in (("stage", STAGES | {"cleanup"}),
                          ("reason", {"refused", "timeout", "cleanup_failed"}),
@@ -64,6 +66,16 @@ def annotation(receipt):
                 or not ((receipt["stage"] == "probe" and receipt["reason"] == "refused")
                         or (receipt["stage"] == "cleanup" and receipt["origin_stage"] == "probe"))):
             raise guard.Refused()
+    if "boot_markers" in receipt or "serial_bytes" in receipt:
+        markers = receipt.get("boot_markers")
+        count = receipt.get("serial_bytes")
+        if (not ((receipt["stage"] == "boot_wait" and receipt["reason"] in {"refused", "timeout"})
+                 or (receipt["stage"] == "cleanup" and receipt["origin_stage"] == "boot_wait"))
+                or type(markers) is not list or len(markers) > len(BOOT_MARKERS)
+                or any(type(marker) is not str or marker not in BOOT_MARKERS for marker in markers)
+                or markers != sorted(set(markers))
+                or type(count) is not int or not 0 <= count <= guard.SERIAL_LIMIT):
+            raise guard.Refused()
     message = ["status=failed", "stage=" + receipt["stage"], "reason=" + receipt["reason"],
                "ssh_error=" + receipt["ssh_error"]]
     for key in ("origin_stage", "returncode", "guard_status", "probe_check"):
@@ -73,6 +85,9 @@ def annotation(receipt):
         if key not in {"origin_stage", "probe_check"} and (type(value) is not int or not -255 <= value <= 255):
             raise guard.Refused()
         message.append(key + "=" + str(value))
+    if "boot_markers" in receipt:
+        message.append("boot_markers=" + (",".join(receipt["boot_markers"]) or "none"))
+        message.append("serial_bytes=" + str(receipt["serial_bytes"]))
     message.append("native_app_tested=false")
     return "::error title=Guest OS admission::" + " ".join(message)
 

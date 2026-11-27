@@ -37,21 +37,26 @@ chooser/inventory ports and actual Store open/save/close: accepted BOM/CRLF/JSX 
 invalid MDX bytes appeared on disk **before flush**, close/reopen acquired a fresh
 session, and external conflict retained local text without overwriting external
 bytes or changing mode0640. This case does not demonstrate real creation or GUI
-interaction. The complete repository check exited 0: **776 unit, 107 tooling
+interaction. The latest complete repository check exited 0: **788 unit, 110 tooling
 (zero skips), 152 Chromium, 9 local Pages and 4 inactive-cloud browser tests**,
 plus formatting, lint, strict types and production build. After the final
-diagnostic-only probe changes, tooling passed again: **108 tests, zero skips**.
+diagnostic-only deadline correction, tooling passed again: **110 tests, zero skips**.
 The original no-scheduling negative control still failed as expected.
 [Reproduction and scope](security-evidence/2026-11-27-native-workspace/README.md).
 No VM success is claimed here.
 
 Lost/rejected open or create replies conservatively block new acquisitions and
 vault replacement: a native grant or created file may already exist. Error-message
-strings cannot prove a no-side-effect refusal. Known session text remains owned;
-future typed refusals/reconciliation must resolve uncertain acquisition and failed
-cleanup before normal acquisition resumes. No silent retry, grant disposal or file
-deletion is introduced. Shared product wiring, native dirty/busy acknowledgement,
-recovery and installed lifecycle/security acceptance remain separate work.
+strings cannot prove a no-side-effect refusal. The follow-up typed protocol accepts
+only resolved, exact, originating-vault/path refusals with fixed codes. Confirmed
+refusals permit another request without changing owned source or grants; malformed,
+foreign and rejected replies remain uncertain. The targeted workspace/adapter
+tests pass **52 cases**, with **123 combined targeted cases**. Four actual Tauri
+outcome tests are added but await hosted execution; local GLib packages are absent.
+Explicit reconciliation must still resolve uncertain acquisition and failed
+cleanup. No silent retry, grant disposal or file deletion is introduced. Shared
+product wiring, native dirty/busy acknowledgement, recovery and installed
+lifecycle/security acceptance remain separate work.
 
 Follow-up hardening distinguishes failed non-collision rename attempts as Rust
 `PublicationUncertain` instead of ordinary pre-publication I/O. Successful writes,
@@ -104,6 +109,16 @@ New preparation/packing/admission wrappers count 29/31/28 Python controls. Stage
 source scanning found zero secrets. These earlier local results and green required
 CI do not relabel the failed OS-admission run or certify the current workspace/
 reporter additions, which have only their separately stated targeted evidence.
+
+Required CI for **584631f** passed both jobs in
+[45916875245](https://github.com/TomasDelon/programmable-notes/actions/runs/45916875245).
+Its actual OS-admission [45916879926](https://github.com/TomasDelon/programmable-notes/actions/runs/45916879926)
+failed at boot/SSH timeout before native payload. The fixed check annotation proves
+that category, not the startup cause. A bounded private-serial diagnostic now
+exposes only advisory literal marker names/counts; 42 Python controls and 9 reporter
+CLI tests passed. Actual new marker observations await execution. The latest
+complete local check above covers the typed outcomes and diagnostic source;
+four contained Tauri outcome tests still await hosted compilation/execution.
 
 ## Explicit inline runtime and share-free fixture guard — 26 November 2026
 

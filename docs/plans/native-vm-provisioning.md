@@ -49,3 +49,10 @@ review only. Review exact file list/interfaces before code; avoid generic VM API
   message injection are refused without printing their values.
 - **Done:** regression controls, workflow integration and actual runner annotation
   observed. The original failed run/artifact remain unchanged.
+
+The actual next run reported a boot/SSH timeout before any native payload. Startup
+diagnosis now adds advisory literal boot markers and a bounded serial byte count,
+never raw output. Only a private, owned, stable regular log in the pinned runtime
+directory is eligible; missing/unsafe/late observations are omitted. These markers
+cannot authorize admission or establish the absence of an event. Boot deadlines,
+identity checks, process ownership and native isolation remain unchanged.
