@@ -1,4 +1,20 @@
-import { CORE_PLUGINS, corePluginEnabled } from '../plugins/coreRegistry';
+import {
+  useWorkspaceInteraction,
+  documentFormattingCommands,
+  filterDocumentCommands,
+} from '../product/useWorkspaceInteraction';
+import {
+  WorkspaceNavigation,
+  type WorkspaceNavigationHandle,
+} from '../product/WorkspaceNavigation';
+import { DocumentCommandPalette } from '../product/DocumentCommandPalette';
+import {
+  CorePluginSettings,
+  AppearanceSettings,
+} from '../product/CorePluginSettings';
+import { ProductDialog as Dialog } from '../ui/ProductDialog';
+import { DocumentHeader } from '../product/DocumentHeader';
+import { corePluginEnabled } from '../plugins/coreRegistry';
 import {
   useEffect,
   useLayoutEffect,
@@ -12,8 +28,6 @@ import {
 } from 'react';
 import {
   AlertCircle,
-  ArrowLeft,
-  ArrowRight,
   BookOpen,
   Check,
   ChevronDown,
@@ -33,10 +47,6 @@ import {
   LoaderCircle,
   Moon,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
   Pause,
   Paperclip,
   Pencil,
@@ -69,7 +79,6 @@ import { WebDocumentRuntime } from './WebDocumentRuntime';
 import { shouldCompileWholeDocument } from './previewExecution';
 import { WebRenderedRuntime } from './WebRenderedRuntime';
 import { useOffline, activateUpdate } from './offline';
-import { createHoverIntentController } from './hoverIntent';
 import { indexWorkspaceLinks } from '../links';
 import { NoteConnections } from './NoteConnections';
 import { AttachmentGallery } from './AttachmentGallery';
@@ -104,94 +113,6 @@ const dateLabel = (value: number) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   });
-
-function Dialog({
-  title,
-  children,
-  onClose,
-  className = '',
-}: {
-  title: string;
-  children: ReactNode;
-  onClose: () => void;
-  className?: string;
-}) {
-  const panel = useRef<HTMLDivElement>(null);
-  const close = useRef(onClose);
-  useEffect(() => {
-    close.current = onClose;
-  }, [onClose]);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const first =
-      panel.current?.querySelector<HTMLElement>('[data-autofocus]') ??
-      panel.current?.querySelector<HTMLElement>('input, button');
-    first?.focus();
-    const keydown = (event: KeyboardEvent) => {
-      // A native top-layer dialog owns its focus trap and Escape handling.
-      if (
-        event.target instanceof Element &&
-        event.target.closest('dialog[open]')
-      )
-        return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        close.current();
-      }
-      if (event.key !== 'Tab') return;
-      const elements = [
-        ...(panel.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
-        ) ?? []),
-      ].filter((element) => element.getClientRects().length > 0);
-      const firstItem = elements[0],
-        lastItem = elements[elements.length - 1];
-      if (!firstItem || !lastItem) return;
-      if (event.shiftKey && document.activeElement === firstItem) {
-        event.preventDefault();
-        lastItem.focus();
-      } else if (!event.shiftKey && document.activeElement === lastItem) {
-        event.preventDefault();
-        firstItem.focus();
-      }
-    };
-    document.addEventListener('keydown', keydown, true);
-    return () => {
-      document.removeEventListener('keydown', keydown, true);
-      previous?.focus();
-    };
-  }, []);
-  return (
-    <div
-      className="modal-overlay web-modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        ref={panel}
-        className={'web-dialog ' + className}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <header className="web-dialog-heading">
-          <h2>{title}</h2>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={'Close ' + title}
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
-        </header>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 export function WebApp() {
   const model = useWebWorkspace();
@@ -350,14 +271,6 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
   );
 }
 
-function DocumentTitle({ title }: { title: string }) {
-  return (
-    <h1 className="doc-title-text" aria-label="Document title">
-      {title}
-    </h1>
-  );
-}
-
 interface WorkspaceExecution {
   files: DocumentRuntimeInput['files'];
   images: DocumentRuntimeInput['images'];
@@ -492,16 +405,9 @@ function WorkspaceBody({
   const backupInput = useRef<HTMLInputElement>(null);
   const attachmentInput = useRef<HTMLInputElement>(null);
   const newItemInput = useRef<HTMLInputElement>(null);
-  const pendingLocation = useRef<{
-    key: string;
-    offset: number;
-    source: string;
-  } | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
 
-  const [islandOpen, setIslandOpen] = useState(false);
-  const [peekSide, setPeekSide] = useState<'left' | 'right' | null>(null);
   const [sidebarView, setSidebarView] = useState<'documents' | 'connections'>(
     'documents',
   );
@@ -541,14 +447,7 @@ function WorkspaceBody({
       setToast('A retained edit is available in Settings → Recovery.');
     }
   }, [model.attempts.length, pendingEdit]);
-  const [visitHistory, setVisitHistory] = useState({
-    entries: [selected],
-    cursor: 0,
-  });
-  const controller = useRef<ReturnType<
-    typeof createHoverIntentController
-  > | null>(null);
-  const panels = useRef({ leftExpanded: false, rightExpanded: false });
+  const navigation = useRef<WorkspaceNavigationHandle | null>(null);
   const activeKeys = Object.keys(state.documents).filter(
     (key) => !state.documents[key]!.trashedAt,
   );
@@ -613,45 +512,6 @@ function WorkspaceBody({
     document.title = metadata.title + ' · Programmable Notes';
   }, [state.theme, metadata.title]);
   useEffect(() => {
-    panels.current = { leftExpanded: leftOpen, rightExpanded: rightOpen };
-  }, [leftOpen, rightOpen]);
-  useEffect(() => {
-    const hover = createHoverIntentController({
-      onShow: (zone) =>
-        zone === 'top' ? setIslandOpen(true) : setPeekSide(zone),
-      onHide: (zone) =>
-        zone === 'top'
-          ? setIslandOpen(false)
-          : setPeekSide((old) => (old === zone ? null : old)),
-    });
-    controller.current = hover;
-    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const move = (event: PointerEvent) => {
-      if (!canHover.matches) return;
-      hover.move(
-        {
-          x: event.clientX,
-          y: event.clientY,
-          width: window.innerWidth,
-          time: performance.now(),
-          pointerType: event.pointerType,
-        },
-        panels.current,
-      );
-    };
-    const leave = (event: PointerEvent) => {
-      if (!event.relatedTarget) hover.clear();
-    };
-    window.addEventListener('pointermove', move, { passive: true });
-    document.documentElement.addEventListener('pointerleave', leave);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      document.documentElement.removeEventListener('pointerleave', leave);
-      hover.destroy();
-      controller.current = null;
-    };
-  }, []);
-  useEffect(() => {
     if (newItem) newItemInput.current?.focus();
   }, [newItem?.kind, newItem?.parent]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -660,19 +520,7 @@ function WorkspaceBody({
     const timer = setTimeout(() => setToast(''), 3500);
     return () => clearTimeout(timer);
   }, [toast, notify]);
-  useEffect(() => {
-    const location = pendingLocation.current;
-    if (location && selected === location.key && mode === 'source') {
-      commands.current?.revealSource(location.offset, location.source);
-      pendingLocation.current = null;
-    }
-  }, [selected, mode]);
-
-  const closePeek = () => {
-    controller.current?.clear();
-    setPeekSide(null);
-  };
-  const canLeaveDraft = () => {
+  const admitNavigation = () => {
     if (operationPending) {
       setToast('Wait for the current import or restore to finish.');
       return false;
@@ -683,6 +531,38 @@ function WorkspaceBody({
     );
     return false;
   };
+  const interaction = useWorkspaceInteraction({
+    selected,
+    mode,
+    canLeave: admitNavigation,
+    documentPath: (id) =>
+      state.documents[id] && !state.documents[id]!.trashedAt ? id : null,
+    selectDocument: (id) => model.select(id),
+    setMode: model.setMode,
+    sourcePanel,
+    documentScroll,
+    commands,
+    onOpened: () => {
+      if (window.innerWidth <= 720) setLeftOpen(false);
+    },
+    isCurrentSource: model.isCurrentSource,
+    onError: (reason) =>
+      setToast(
+        reason instanceof Error
+          ? reason.message
+          : 'The note could not be opened.',
+      ),
+  });
+  const {
+    canLeaveDraft,
+    switchMode,
+    openDocument,
+    moveHistory,
+    visitHistory,
+    setVisitHistory,
+    showSource,
+  } = interaction;
+  const closePeek = () => navigation.current?.closePeek();
   const importAttachments = async (files: File[]) => {
     if (!files.length || !selectedIsNote || model.conflict || !canLeaveDraft())
       return;
@@ -694,63 +574,8 @@ function WorkspaceBody({
       setOperationPending(false);
     }
   };
-  const openLeft = (view: 'documents' | 'connections' = 'documents') => {
-    closePeek();
-    setSidebarView(view);
-    setLeftOpen(true);
-    if (window.innerWidth <= 720) setRightOpen(false);
-  };
-  const openRight = () => {
-    closePeek();
-    setRightOpen(true);
-    if (window.innerWidth <= 720) setLeftOpen(false);
-  };
-  const switchMode = (next: 'source' | 'preview') => {
-    if (next !== 'source' && !selectedIsNote) return;
-    if (!canLeaveDraft()) return;
-    const initiator = document.activeElement;
-    model.setMode(next);
-    if (next === 'source') {
-      requestAnimationFrame(() => {
-        // A newer user focus choice owns the next keystroke. In particular,
-        // do not interrupt another control or IME composition after mode switching.
-        const active = document.activeElement;
-        if (active && active !== document.body && active !== initiator) return;
-        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus();
-      });
-    }
-  };
-  const openDocument = (key: string) => {
-    if (!canLeaveDraft()) return;
-    if (!state.documents[key] || state.documents[key]!.trashedAt) return;
-    model.select(key);
-    if (!isMdxSource(key)) model.setMode('source');
-    setVisitHistory((history) => {
-      if (history.entries[history.cursor] === key) return history;
-      const entries = [
-        ...history.entries.slice(0, history.cursor + 1),
-        key,
-      ].slice(-40);
-      return { entries, cursor: entries.length - 1 };
-    });
-    if (window.innerWidth <= 720) setLeftOpen(false);
-    documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-  };
-  const moveHistory = (offset: number) => {
-    if (!canLeaveDraft()) return;
-    let cursor = visitHistory.cursor + offset;
-    while (cursor >= 0 && cursor < visitHistory.entries.length) {
-      const key = visitHistory.entries[cursor]!;
-      if (state.documents[key] && !state.documents[key]!.trashedAt) {
-        model.select(key);
-        if (!isMdxSource(key)) model.setMode('source');
-        setVisitHistory((old) => ({ ...old, cursor }));
-        documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-        return;
-      }
-      cursor += offset;
-    }
-  };
+  const openLeft = (view: 'documents' | 'connections' = 'documents') =>
+    navigation.current?.openLeft(view);
   const startNew = (kind: 'note' | 'folder', parent = selectedFolder) => {
     if (!canLeaveDraft()) return;
     setSidebarQuery('');
@@ -1289,134 +1114,121 @@ function WorkspaceBody({
     .filter((key) => matches(key, commandNeedle))
     .sort((first, second) => commandMatchRank(first) - commandMatchRank(second))
     .slice(0, 30);
-  const actions = [
-    ...(selectedIsNote && mode === 'preview'
-      ? [
-          ['Insert link', 'link'],
-          ['Insert table', 'table'],
-          ['Add table row', 'row'],
-          ['Insert equation', 'math'],
-          ['Bullet list', 'bullet'],
-          ['Ordered list', 'ordered'],
-          ['Task list', 'task'],
-          ['Blockquote', 'quote'],
-        ].map(([name, action]) => ({
-          name: name!,
-          description: 'Format the selected Markdown',
-          icon: Pencil,
-          actionId: 'format:' + action,
-        }))
-      : []),
-    {
-      name: 'New document',
-      description: 'Create a note in this workspace',
-      icon: FilePlus2,
-      actionId: 'new',
-    },
-    {
-      name: 'Import notes or modules',
-      description: 'Choose related MDX and React files together',
-      icon: Upload,
-      actionId: 'import',
-    },
-    {
-      name: 'Import a folder',
-      description: 'Keep relative module paths together',
-      icon: FolderInput,
-      actionId: 'folder',
-    },
-    ...(selectedIsNote
-      ? [
-          {
-            name: 'Add image or PDF',
-            description: 'Attach files to this note, including them in backups',
-            icon: Paperclip,
-            actionId: 'attachment',
-          },
-        ]
-      : []),
-    {
-      name: 'Edit source',
-      description: 'Open the source editor',
-      icon: Code2,
-      actionId: 'source',
-    },
-    ...(selectedIsNote
-      ? [
-          {
-            name: 'Preview document',
-            description:
-              'Edit the rendered note with live Markdown and equations',
-            icon: Eye,
-            actionId: 'preview',
-          },
-        ]
-      : []),
-    {
-      name: 'Save workspace',
-      description: cloudStorageEnabled
-        ? 'Save all changes to cloud storage'
-        : 'Save all changes in this browser',
-      icon: Save,
-      actionId: 'save',
-    },
-    {
-      name: 'Export current source',
-      description: 'Download the exact source text',
-      icon: Download,
-      actionId: 'export',
-    },
-    {
-      name: 'Export workspace backup',
-      description: 'Download every note, folder, and setting',
-      icon: HardDrive,
-      actionId: 'backup',
-    },
-    {
-      name: 'Rename document',
-      description: metadata.title,
-      icon: Pencil,
-      actionId: 'rename',
-    },
-    {
-      name: 'Move document',
-      description: 'Choose a workspace folder',
-      icon: FolderInput,
-      actionId: 'move',
-    },
-    {
-      name: 'Recovery history',
-      description: 'Restore a previous workspace snapshot',
-      icon: RotateCcw,
-      actionId: 'recovery',
-    },
-    {
-      name: 'Open Trash',
-      description: 'Restore removed documents',
-      icon: Trash2,
-      actionId: 'trash',
-    },
-    {
-      name:
-        state.theme === 'dark'
-          ? 'Switch to light theme'
-          : 'Switch to dark theme',
-      description: 'Change appearance',
-      icon: state.theme === 'dark' ? Sun : Moon,
-      actionId: 'theme',
-    },
-    {
-      name: 'Settings',
-      description: 'Storage, backups, and keyboard shortcuts',
-      icon: Settings2,
-      actionId: 'settings',
-    },
-  ].filter(
-    (action) =>
-      !commandNeedle ||
-      (action.name + ' ' + action.description)
-        .toLocaleLowerCase()
-        .includes(commandNeedle),
+  const actions = filterDocumentCommands(
+    [
+      ...documentFormattingCommands(selectedIsNote, mode).map((command) => ({
+        name: command.name,
+        description: command.description,
+        icon: command.icon,
+        actionId: command.id.slice('action:'.length),
+      })),
+      {
+        name: 'New document',
+        description: 'Create a note in this workspace',
+        icon: FilePlus2,
+        actionId: 'new',
+      },
+      {
+        name: 'Import notes or modules',
+        description: 'Choose related MDX and React files together',
+        icon: Upload,
+        actionId: 'import',
+      },
+      {
+        name: 'Import a folder',
+        description: 'Keep relative module paths together',
+        icon: FolderInput,
+        actionId: 'folder',
+      },
+      ...(selectedIsNote
+        ? [
+            {
+              name: 'Add image or PDF',
+              description:
+                'Attach files to this note, including them in backups',
+              icon: Paperclip,
+              actionId: 'attachment',
+            },
+          ]
+        : []),
+      {
+        name: 'Edit source',
+        description: 'Open the source editor',
+        icon: Code2,
+        actionId: 'source',
+      },
+      ...(selectedIsNote
+        ? [
+            {
+              name: 'Preview document',
+              description:
+                'Edit the rendered note with live Markdown and equations',
+              icon: Eye,
+              actionId: 'preview',
+            },
+          ]
+        : []),
+      {
+        name: 'Save workspace',
+        description: cloudStorageEnabled
+          ? 'Save all changes to cloud storage'
+          : 'Save all changes in this browser',
+        icon: Save,
+        actionId: 'save',
+      },
+      {
+        name: 'Export current source',
+        description: 'Download the exact source text',
+        icon: Download,
+        actionId: 'export',
+      },
+      {
+        name: 'Export workspace backup',
+        description: 'Download every note, folder, and setting',
+        icon: HardDrive,
+        actionId: 'backup',
+      },
+      {
+        name: 'Rename document',
+        description: metadata.title,
+        icon: Pencil,
+        actionId: 'rename',
+      },
+      {
+        name: 'Move document',
+        description: 'Choose a workspace folder',
+        icon: FolderInput,
+        actionId: 'move',
+      },
+      {
+        name: 'Recovery history',
+        description: 'Restore a previous workspace snapshot',
+        icon: RotateCcw,
+        actionId: 'recovery',
+      },
+      {
+        name: 'Open Trash',
+        description: 'Restore removed documents',
+        icon: Trash2,
+        actionId: 'trash',
+      },
+      {
+        name:
+          state.theme === 'dark'
+            ? 'Switch to light theme'
+            : 'Switch to dark theme',
+        description: 'Change appearance',
+        icon: state.theme === 'dark' ? Sun : Moon,
+        actionId: 'theme',
+      },
+      {
+        name: 'Settings',
+        description: 'Storage, backups, and keyboard shortcuts',
+        icon: Settings2,
+        actionId: 'settings',
+      },
+    ],
+    commandNeedle,
   );
   const commandResults = [
     ...commandDocuments.map((key) => ({
@@ -1430,72 +1242,54 @@ function WorkspaceBody({
       id: 'action:' + action.actionId,
     })),
   ];
-  const runCommand = (result: { id: string }) => {
-    setCommandOpen(false);
-    if (result.id.startsWith('action:format:')) {
-      const action = result.id.slice('action:format:'.length);
-      requestAnimationFrame(() => commands.current?.formatRendered?.(action));
-      return;
-    }
-    if (result.id.startsWith('document:')) {
-      openDocument(result.id.slice('document:'.length));
-      return;
-    }
-    switch (result.id.slice('action:'.length)) {
-      case 'new':
-        startNew('note', '');
-        break;
-      case 'import':
-        noteInput.current?.click();
-        break;
-      case 'folder':
-        folderInput.current?.click();
-        break;
-      case 'attachment':
-        if (canLeaveDraft()) attachmentInput.current?.click();
-        break;
-      case 'source':
-        switchMode('source');
-        break;
-      case 'preview':
-        switchMode('preview');
-        break;
-      case 'save':
-        if (canLeaveDraft()) void model.saveNow();
-        break;
-      case 'export':
-        exportSource();
-        break;
-      case 'backup':
-        model.exportBackup();
-        break;
-      case 'rename':
-        openDocumentAction('rename');
-        break;
-      case 'move':
-        openDocumentAction('move');
-        break;
-      case 'recovery':
-        showSettings('recovery');
-        break;
-      case 'trash':
-        showSettings('trash');
-        break;
-      case 'theme':
-        model.setTheme(state.theme === 'dark' ? 'light' : 'dark');
-        break;
-      case 'settings':
-        showSettings();
-        break;
-    }
-  };
-  useEffect(() => {
-    if (commandOpen)
-      document
-        .querySelector('.web-command-dialog .keyboard-selected')
-        ?.scrollIntoView({ block: 'nearest' });
-  }, [commandIndex, commandOpen]);
-
+  const runCommand = (result: { id: string }) =>
+    interaction.runCommand(
+      result,
+      () => setCommandOpen(false),
+      (action) => {
+        switch (action) {
+          case 'new':
+            startNew('note', '');
+            break;
+          case 'import':
+            noteInput.current?.click();
+            break;
+          case 'folder':
+            folderInput.current?.click();
+            break;
+          case 'attachment':
+            if (canLeaveDraft()) attachmentInput.current?.click();
+            break;
+          case 'save':
+            if (canLeaveDraft()) void model.saveNow();
+            break;
+          case 'export':
+            exportSource();
+            break;
+          case 'backup':
+            model.exportBackup();
+            break;
+          case 'rename':
+            openDocumentAction('rename');
+            break;
+          case 'move':
+            openDocumentAction('move');
+            break;
+          case 'recovery':
+            showSettings('recovery');
+            break;
+          case 'trash':
+            showSettings('trash');
+            break;
+          case 'theme':
+            model.setTheme(state.theme === 'dark' ? 'light' : 'dark');
+            break;
+          case 'settings':
+            showSettings();
+            break;
+        }
+      },
+    );
   useEffect(() => {
     if (offline.error)
       notify({
@@ -1507,9 +1301,21 @@ function WorkspaceBody({
       });
     else dismiss('app-offline');
   }, [offline.error, notify, dismiss]);
-  const latestActions = useRef({ model, canLeaveDraft, preview, switchMode });
+  const latestActions = useRef({
+    model,
+    canLeaveDraft,
+    preview,
+    switchMode,
+    showSource,
+  });
   useLayoutEffect(() => {
-    latestActions.current = { model, canLeaveDraft, preview, switchMode };
+    latestActions.current = {
+      model,
+      canLeaveDraft,
+      preview,
+      switchMode,
+      showSource,
+    };
   });
   useEffect(() => {
     if (model.error || model.conflict)
@@ -1586,25 +1392,23 @@ function WorkspaceBody({
           {
             label: 'Show source',
             run: () => {
-              const { model, preview, canLeaveDraft, switchMode } =
+              const { preview, canLeaveDraft, switchMode, showSource } =
                 latestActions.current;
               if (!canLeaveDraft()) return;
               const location = preview.locations[0];
-              if (location) {
-                pendingLocation.current = {
-                  key: location.file,
-                  offset: location.offset,
-                  source: location.source,
-                };
-                model.select(location.file);
-                model.setMode('source');
-                requestAnimationFrame(() =>
-                  commands.current?.revealSource(
-                    location.offset,
-                    location.source,
+              if (location)
+                void showSource(
+                  location.file,
+                  location.offset,
+                  location.source,
+                ).catch((reason) =>
+                  setToast(
+                    reason instanceof Error
+                      ? reason.message
+                      : 'The source could not be opened.',
                   ),
                 );
-              } else switchMode('source');
+              else switchMode('source');
             },
           },
         ],
@@ -1621,206 +1425,22 @@ function WorkspaceBody({
       data-save-status={model.saveStatus}
       data-editor-mode={mode}
     >
-      <div className={'mode-island ' + (islandOpen ? 'is-open' : '')}>
-        <div className="mode-island-surface">
-          <div
-            id="mode-island-actions"
-            className={'mode-island-actions mode-is-' + mode}
-            role="group"
-            aria-label="Document mode"
-          >
-            <span className="mode-island-selection" aria-hidden="true" />
-            {(['source', 'preview'] as const).map((value) => (
-              <button
-                type="button"
-                key={value}
-                className={mode === value ? 'selected' : ''}
-                aria-pressed={mode === value}
-                disabled={value !== 'source' && !selectedIsNote}
-                title={
-                  value === 'preview' && !selectedIsNote
-                    ? 'Select a Markdown or MDX note to preview'
-                    : undefined
-                }
-                onClick={(event) => {
-                  switchMode(value);
-                  event.currentTarget.blur();
-                }}
-              >
-                {value === 'source' ? 'Source' : 'Preview'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button
-          type="button"
-          className="mode-island-handle"
-          aria-label="Show document modes"
-          title="Document modes"
-          aria-controls="mode-island-actions"
-          aria-expanded={islandOpen}
-          onClick={() => {
-            const next = !islandOpen;
-            if (next) controller.current?.markShown('top');
-            else controller.current?.clear('top');
-            setIslandOpen(next);
-          }}
-        />
-      </div>
-      <nav
-        className={
-          'peek-rail peek-rail-left ' +
-          (peekSide === 'left' && !leftOpen ? 'visible' : '')
-        }
-        aria-label="Left quick-access panel"
-        aria-hidden={peekSide !== 'left' || leftOpen}
-        inert={peekSide !== 'left' || leftOpen}
-      >
-        <div className="peek-rail-top">
-          <button
-            type="button"
-            className={sidebarView === 'documents' ? 'active' : ''}
-            aria-label="Open documents"
-            title="Documents"
-            onClick={() => openLeft()}
-          >
-            <BookOpen size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            className={sidebarView === 'connections' ? 'active' : ''}
-            aria-label="Open connections"
-            title="Connections"
-            onClick={() => openLeft('connections')}
-          >
-            <Network size={18} strokeWidth={1.7} />
-          </button>
-          <span className="peek-rail-divider" aria-hidden="true" />
-          <button
-            type="button"
-            aria-label="Search documents"
-            title="Search documents"
-            onClick={() => {
-              openLeft();
-              requestAnimationFrame(() =>
-                document
-                  .querySelector<HTMLInputElement>('.left-panel-search input')
-                  ?.focus(),
-              );
-            }}
-          >
-            <Search size={18} strokeWidth={1.7} />
-          </button>
-        </div>
-        <div className="peek-rail-bottom">
-          <button
-            type="button"
-            aria-label="Open settings"
-            title="Settings"
-            onClick={() => showSettings()}
-          >
-            <Settings2 size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            aria-label="Workspace storage"
-            title="Personal workspace"
-            onClick={() => showSettings()}
-          >
-            <span className="peek-rail-avatar" aria-hidden="true">
-              T
-            </span>
-          </button>
-        </div>
-      </nav>
-      <nav
-        className={
-          'peek-rail peek-rail-right ' +
-          (peekSide === 'right' && !rightOpen ? 'visible' : '')
-        }
-        aria-label="Right quick-access panel"
-        aria-hidden={peekSide !== 'right' || rightOpen}
-        inert={peekSide !== 'right' || rightOpen}
-      >
-        <div className="peek-rail-top">
-          <button
-            type="button"
-            aria-label="Open right panel"
-            title="Open right panel"
-            onClick={openRight}
-          >
-            <PanelRightOpen size={18} strokeWidth={1.7} />
-          </button>
-          <span className="peek-rail-divider" />
-          <button
-            type="button"
-            aria-label="Previous document"
-            title="Previous document"
-            disabled={visitHistory.cursor <= 0}
-            onClick={() => moveHistory(-1)}
-          >
-            <ArrowLeft size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            aria-label="Next document"
-            title="Next document"
-            disabled={visitHistory.cursor >= visitHistory.entries.length - 1}
-            onClick={() => moveHistory(1)}
-          >
-            <ArrowRight size={18} strokeWidth={1.7} />
-          </button>
-        </div>
-      </nav>
-      <button
-        type="button"
-        className="floating-toggle floating-left"
-        aria-label={leftOpen ? 'Close navigation' : 'Open navigation'}
-        title="Navigation (Ctrl/Cmd + \)"
-        aria-expanded={leftOpen}
-        aria-controls="notes-navigation"
-        onClick={() => {
-          closePeek();
-          setLeftOpen((open) => !open);
-          if (window.innerWidth <= 720) setRightOpen(false);
-        }}
-      >
-        {leftOpen ? (
-          <PanelLeftClose size={19} strokeWidth={1.65} />
-        ) : (
-          <PanelLeftOpen size={19} strokeWidth={1.65} />
-        )}
-      </button>
-      <button
-        type="button"
-        className="floating-toggle floating-right"
-        aria-label={rightOpen ? 'Close right panel' : 'Open right panel'}
-        title="Right panel"
-        aria-expanded={rightOpen}
-        aria-controls="notes-details"
-        onClick={() => {
-          closePeek();
-          setRightOpen((open) => !open);
-          if (window.innerWidth <= 720) setLeftOpen(false);
-        }}
-      >
-        {rightOpen ? (
-          <PanelRightClose size={19} strokeWidth={1.65} />
-        ) : (
-          <PanelRightOpen size={19} strokeWidth={1.65} />
-        )}
-      </button>
-      {(leftOpen || rightOpen) && (
-        <button
-          type="button"
-          className="mobile-scrim"
-          onClick={() => {
-            setLeftOpen(false);
-            setRightOpen(false);
-          }}
-          aria-label="Close open panel"
-        />
-      )}
+      <WorkspaceNavigation
+        mode={mode}
+        selectedIsNote={selectedIsNote}
+        switchMode={switchMode}
+        leftOpen={leftOpen}
+        rightOpen={rightOpen}
+        setLeftOpen={setLeftOpen}
+        setRightOpen={setRightOpen}
+        sidebarView={sidebarView}
+        setSidebarView={setSidebarView}
+        showSettings={() => showSettings()}
+        moveHistory={moveHistory}
+        canBack={visitHistory.cursor > 0}
+        canForward={visitHistory.cursor < visitHistory.entries.length - 1}
+        controlsRef={navigation}
+      />
       <aside
         id="notes-navigation"
         className="sidebar workspace-sidebar"
@@ -2128,7 +1748,7 @@ function WorkspaceBody({
           <div className="document-wrap">
             <div className="document-heading">
               <div className="doc-title-row">
-                <DocumentTitle title={metadata.title} />
+                <DocumentHeader title={metadata.title} />
               </div>
             </div>
             <div
@@ -2210,10 +1830,13 @@ function WorkspaceBody({
                     model.canUpdateSource(selected, value),
                   onChange: (value) => model.updateSource(selected, value),
                   onShowSource: (offset, snapshot) => {
-                    if (!canLeaveDraft()) return;
-                    model.setMode('source');
-                    requestAnimationFrame(() =>
-                      commands.current?.revealSource(offset, snapshot),
+                    void showSource(selected, offset, snapshot).catch(
+                      (reason) =>
+                        setToast(
+                          reason instanceof Error
+                            ? reason.message
+                            : 'The source could not be opened.',
+                        ),
                     );
                   },
                 }}
@@ -2416,77 +2039,15 @@ function WorkspaceBody({
       />
 
       {commandOpen && (
-        <Dialog
-          title="Command palette"
+        <DocumentCommandPalette
+          query={commandQuery}
+          index={commandIndex}
+          results={commandResults}
+          onQuery={setCommandQuery}
+          onIndex={setCommandIndex}
+          onRun={runCommand}
           onClose={() => setCommandOpen(false)}
-          className="web-command-dialog"
-        >
-          <div className="modal-search">
-            <Search size={20} />
-            <input
-              data-autofocus
-              placeholder="Search notes or run a command…"
-              aria-label="Search commands and notes"
-              value={commandQuery}
-              onChange={(event) => {
-                setCommandQuery(event.target.value);
-                setCommandIndex(0);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault();
-                  setCommandIndex((old) =>
-                    Math.min(old + 1, commandResults.length - 1),
-                  );
-                }
-                if (event.key === 'ArrowUp') {
-                  event.preventDefault();
-                  setCommandIndex((old) => Math.max(0, old - 1));
-                }
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  const result = commandResults[commandIndex];
-                  if (result) runCommand(result);
-                }
-              }}
-            />
-            <kbd>ESC</kbd>
-          </div>
-          <div className="modal-content">
-            {commandResults.map((result, index) => (
-              <button
-                type="button"
-                key={result.id}
-                className={
-                  'cmd-result ' +
-                  (index === commandIndex ? 'keyboard-selected' : '')
-                }
-                onClick={() => runCommand(result)}
-              >
-                <result.icon size={16} />
-                <span>
-                  {result.name}
-                  <small>{result.description}</small>
-                </span>
-                <ArrowRight size={14} />
-              </button>
-            ))}
-            {!commandResults.length && (
-              <p className="no-results">No matching notes or commands.</p>
-            )}
-          </div>
-          <div className="modal-footer">
-            <span>
-              <kbd>↑ ↓</kbd> Navigate
-            </span>
-            <span>
-              <kbd>↵</kbd> Select
-            </span>
-            <span>
-              <kbd>ESC</kbd> Close
-            </span>
-          </div>
-        </Dialog>
+        />
       )}
       {modal === 'settings' && (
         <Dialog
@@ -2521,76 +2082,20 @@ function WorkspaceBody({
           </nav>
           <div className="web-settings-content">
             {settingsTab === 'plugins' && (
-              <section>
-                <h3>Core plugins</h3>
-                <p>
-                  Built into the application. Disabling a plugin changes
-                  presentation and execution, never your original note source.
-                </p>
-                {CORE_PLUGINS.map((plugin) => (
-                  <label key={plugin.id} className="web-plugin-setting">
-                    <input
-                      type="checkbox"
-                      checked={corePluginEnabled(state.corePlugins, plugin.id)}
-                      onChange={(event) => {
-                        if (plugin.id === 'react' && !event.target.checked)
-                          execution.setRequested(false);
-                        model.setCorePlugin(plugin.id, event.target.checked);
-                      }}
-                    />
-                    <span>
-                      <strong>{plugin.name}</strong>
-                      <small>{plugin.description}</small>
-                    </span>
-                  </label>
-                ))}
-                <p>
-                  Source editing, persistence and sandbox restrictions are
-                  always enforced. Only built-in core plugins are supported.
-                </p>
-              </section>
+              <CorePluginSettings
+                plugins={state.corePlugins}
+                onPlugin={model.setCorePlugin}
+                onReactDisabled={() => execution.setRequested(false)}
+              />
             )}
             {settingsTab === 'storage' && (
               <>
-                <section>
-                  <h3>Appearance</h3>
-                  <label className="web-plugin-setting">
-                    <input
-                      type="checkbox"
-                      checked={
-                        state.previewPreferences?.showComponentSource === true
-                      }
-                      onChange={(event) =>
-                        model.setShowComponentSource(event.target.checked)
-                      }
-                    />
-                    <span>
-                      Show component source in Preview
-                      <small>
-                        Show declarations and JSX as ordinary code blocks
-                        alongside rendered components.
-                      </small>
-                    </span>
-                  </label>
-                  <div className="left-panel-theme-buttons">
-                    <button
-                      type="button"
-                      className={state.theme === 'dark' ? 'selected' : ''}
-                      onClick={() => model.setTheme('dark')}
-                      aria-pressed={state.theme === 'dark'}
-                    >
-                      <Moon size={15} /> Dark
-                    </button>
-                    <button
-                      type="button"
-                      className={state.theme === 'light' ? 'selected' : ''}
-                      onClick={() => model.setTheme('light')}
-                      aria-pressed={state.theme === 'light'}
-                    >
-                      <Sun size={15} /> Light
-                    </button>
-                  </div>
-                </section>
+                <AppearanceSettings
+                  preferences={state.previewPreferences}
+                  theme={state.theme}
+                  onSource={model.setShowComponentSource}
+                  onTheme={model.setTheme}
+                />
                 <section>
                   <h3>Current document</h3>
                   <button

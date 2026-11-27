@@ -288,3 +288,27 @@ prove native vault autosave/recovery in that actual interface. Scoped uncertaint
 reconciliation and real rename/move/recoverable Trash remain unimplemented. A
 Store-wide write freeze was rejected because it would block unrelated notes.
 No corrected installer or accepted native product is delivered by these foundations.
+
+## Shared product packet — 27 November 2026
+
+ProductRoot now consumes extracted WebApp interaction/navigation/header/settings
+and composes the actual NativeWorkspace/DocumentSessions source authority through
+nativeProduct. The logical source path no longer has to double as the editor's
+history identity. The original browser storage and entry points are preserved.
+Injected-port UI/controller tests cover autosave, mode/history, pending IME,
+loaded documents absent from refreshed inventory, recovery acknowledgements and
+fresh-session reopen. They do not establish actual disk/OS-dialog acceptance.
+
+Independent review found no new Important/Critical issue in this inactive packet.
+A deferred robustness issue remains: direct choose/create completion UI updates
+are not scoped to a replacement application instance. Source writes remain bound
+to the original application; guard those UI completions before supporting live
+bootstrap replacement. The aggregate close protocol deliberately refuses final
+release; its design is in native-editor-close-handshake.md. Native entry activation
+and installed acceptance remain blocked until that protocol and real editor
+quiescence are implemented and validated. Do not promote the old installer.
+
+The latest native diagnostic on ad0ffca compiled and reached React/pointer/focus,
+but failed its keyboard command deadline; Stop, host input and cleanup passed,
+expiry did not run. This does not repair the earlier intermittent startup failure.
+Required CI on that commit passed both jobs. No unchanged runtime retry follows.

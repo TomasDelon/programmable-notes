@@ -72,6 +72,95 @@ function setup() {
 }
 
 describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
+  it('holds direct source publication and all structural workspace operations during aggregate close', async () => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    const a = await w.open('a.mdx');
+    const b = await w.open('b.mdx');
+    const session = w.session(a);
+    const admission = w.beginAggregateClose();
+    expect(w.controller.state(a).phase).toBe('closing');
+    expect(w.controller.state(b).phase).toBe('closing');
+    expect(() =>
+      session.publish({ expected: session.witness, source: 'blocked' }),
+    ).toThrow();
+    expect(() => w.select(a)).toThrow();
+    for (const request of [
+      () => w.choose(),
+      () => w.refreshInventory(),
+      () => w.open('c.mdx'),
+      () => w.create('c.mdx', 'new'),
+      () => w.close(a),
+    ])
+      await expect(request()).rejects.toThrow();
+    expect(ports.chooseVault).toHaveBeenCalledTimes(1);
+    expect(ports.vaultInventory).toHaveBeenCalledTimes(1);
+    expect(ports.openVaultSources).toHaveBeenCalledTimes(2);
+    expect(ports.createVaultSource).not.toHaveBeenCalled();
+    expect(ports.close).not.toHaveBeenCalled();
+    await admission.flush();
+    admission.abort();
+    w.select(a);
+    expect(w.state().selectedSessionId).toBe(a);
+  });
+
+  it('refuses aggregate admission during acquisition rather than losing a late native grant', async () => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    const reply =
+      deferred<Awaited<ReturnType<NativeWorkspacePorts['openVaultSources']>>>();
+    ports.openVaultSources.mockReturnValueOnce(reply.promise);
+    const opening = w.open('a.mdx');
+    expect(() => w.beginAggregateClose()).toThrow();
+    reply.resolve({
+      status: 'acquired',
+      vaultId: 'vault-a',
+      documents: [document()],
+    });
+    const id = await opening;
+    expect(w.session(id).witness.source).toBe('source a.mdx');
+    expect(w.controller.state(id).phase).toBe('open');
+    expect(ports.close).not.toHaveBeenCalled();
+  });
+
+  it('refuses aggregate admission when acquisition ownership is unresolved', async () => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    ports.openVaultSources.mockRejectedValueOnce(Error('reply lost'));
+    await expect(w.open('a.mdx')).rejects.toThrow();
+    expect(w.state().unresolvedCleanup).toBe(1);
+    expect(() => w.beginAggregateClose()).toThrow();
+    expect(ports.close).not.toHaveBeenCalled();
+  });
+
+  it('does not reopen or replace uncertain aggregate sessions and retains late exact attempted source', async () => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    const id = await w.open('a.mdx');
+    const session = w.session(id);
+    const admission = w.beginAggregateClose();
+    await admission.flush();
+    admission.markUncertain(Error('close acknowledgement lost'));
+    const batch = {
+      expected: session.witness,
+      source: '\uFEFFlate\r\n<Broken',
+    };
+    session.retainFailure(batch);
+    w.controller.setUnapplied(id, true);
+    expect(() => admission.abort()).toThrow();
+    expect(() => w.beginAggregateClose()).toThrow();
+    await expect(w.close(id)).rejects.toThrow();
+    await expect(w.create('other.mdx', 'other')).rejects.toThrow();
+    expect(w.controller.state(id)).toMatchObject({
+      phase: 'close-uncertain',
+      unapplied: true,
+      retainedFailures: [batch],
+    });
+    expect(w.state().sessions).toEqual([
+      { sessionId: id, vaultId: 'vault-a', logicalPath: 'a.mdx' },
+    ]);
+    expect(ports.close).not.toHaveBeenCalled();
+  });
   it('chooses/indexes selectively, reuses a loaded path and publishes exact autosaved source without another model', async () => {
     const { ports, workspace: w } = setup();
     await w.choose();

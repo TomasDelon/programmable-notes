@@ -1,0 +1,115 @@
+# Quiescent native editor close handshake
+
+Design only; DATA-01/02, EDIT-01, SECURITY-01. Native vault entry activation stays
+blocked until implementation, independent review and installed acceptance. No
+native run or default-entry activation is performed by this document.
+
+## Concrete gap and reviewed design
+
+The existing documents.rs close callback permits a clean OS close from boolean
+hints and can destroy a dirty editor after its legacy discard dialog. An async
+set_documents_dirty acknowledgement is not aggregate editor admission. The new
+nativeProduct therefore keeps protection asserted and refuses final release.
+
+Read-only integration review on 27 November established an additional frontend
+constraint. RenderedEditor intentionally permits an active composition while
+readOnly, and its finalizer is deferred to an animation frame. Its ordinary
+cleanup cancels that frame and clears the pending report. Blindly unmounting or
+setting readOnly can therefore discard text not yet published to canonical source.
+
+The smallest proposed path is **clean synchronous editor detachment, aggregate
+flush, then one exact native close commit**. A generation CAS or additional RPC
+cannot protect an editor producer still running after irreversible window close.
+This replaces the earlier six-command prepare/invalidate design; no commands have
+been implemented or enabled by either design.
+
+## Frontend barrier
+
+1. Add an imperative detachIfClean operation to the existing owning editor. Refuse
+   active or ending composition, pending/unapplied/link/retained text, publication
+   failure/in-progress, unresolved recovery work and tracked deferred producers.
+   Use immediate owning refs and the public composition observations, not only
+   state from the last React render.
+2. Observe character-data and child-list mutations in each owning editable DOM
+   with an application-owned MutationObserver. Refuse detachment if takeRecords
+   contains unprocessed DOM changes. This observer neither edits source nor
+   replaces the editors' observers. Avoid private version-specific library APIs.
+3. Scope this reasoning to supported Linux engines: ordinary mutation processing
+   completes at the task's microtask checkpoint, while composition must be gated
+   explicitly. An empty observer queue or a delay is not a cross-platform proof.
+4. On clean detachment, synchronously retire editor callbacks/commands, snapshot
+   the existing immutable CodeMirror history/selection, cancel harmless owned
+   timers and destroy both owning views. Make disposal idempotent. Captured old
+   callbacks must not publish or retarget newly mounted sessions afterward.
+5. In the same JavaScript task obtain the existing aggregate session admission.
+   If admission refuses, remount from the same source/history. Otherwise hold the
+   admission, flush originals and relevant recovery acknowledgements, recheck all
+   exact witnesses, then request native commit. No fallback browser persistence.
+6. On a proved precommit refusal, abort admission and remount exact sessions/history.
+   A lost/malformed commit response remains uncertain: retain closed admission and
+   identities, and never blindly retry or pretend saved data is safe.
+
+This barrier retires the actual editor producers. It does not claim protection
+from arbitrary future trusted application code inventing a new retained draft
+after the final seal. Preexisting producer work must finish or force refusal.
+
+## Minimal native protocol
+
+Negotiate before mounting ProductRoot or acquiring any vault/file authority. Check
+real editor label and !Host.child before state access. Latch authority use before
+legacy acquisition so negotiation cannot race a chooser. Lost/malformed bootstrap
+acknowledgement blocks mounting; it must not fall back to the legacy close path.
+
+Only three fixed editor-only commands are proposed, without source/path/grant
+arguments or generic event/window permissions:
+
+- enable_editor_close_guard({version:1}) -> opaque lifetime-bound epoch.
+- editor_close_state({epoch}) -> native phase and current opaque request identity.
+- resolve_editor_close({epoch,request,action:'cancel'|'commit'}) -> exact echoed
+  identities and typed resolved/refused state.
+
+Guarded mode is irreversible for this window. Every ordinary CloseRequested is
+vetoed and creates/coalesces a request; booleans never authorize release. The
+frontend owns bounded polling of the fixed state, not a generic event permission.
+A renderer restart cannot inherit a permit or silently renegotiate an acquired
+workspace. The mode is checked again by queued legacy discard callbacks, so an
+old confirmation cannot destroy a newly guarded editor.
+
+Commit verifies the exact current epoch/request and zero active operations,
+dialogs/update and stopped renderer under one native reservation gate. In the
+same gate it freezes new operations and arms one one-shot close permit, then
+queues native window.close rather than destroy. The next CloseRequested consumes
+that stored permit only after rechecking its conditions. WindowEvent has no
+request token: do not invent an event identity. Duplicate/stale requests cannot
+rearm permits. Existing operation completion remains allowed; prepare the flush
+before commit, never check atomics and reserve later. Lock poison fails closed.
+
+A matching acknowledged cancel before commit releases the request. An uncertain
+commit remains protected/read-only in frontend; state reconciliation may report
+only recorded facts. Preserve existing install/reservation ordering and include
+guarded close in install admission. Legacy callers that never negotiate retain
+their reference behavior; no filesystem grants or renderer permissions expand.
+
+## Required implementation and verification
+
+- Frontend: SourceEditor/RenderedEditor lifecycle and commands, ProductRoot's
+  barrier orchestration, nativeProduct/native services, exact native wire records
+  and native bootstrap. Reuse existing source/history and aggregate phases.
+- Rust: documents.rs state/reservation/close callback, main/build command
+  registration and editor-only ACL. Existing Store semantics remain unchanged.
+- Same-stack raw DOM mutation then close refuses without losing text; normal
+  next-task close after publication detaches and flushes.
+- Active IME, compositionend before finalizer, link/unapplied/retained draft,
+  publication failure and pending recovery each refuse detachment.
+- Captured format/insert/reveal callbacks after detachment cannot publish. Hold
+  native commit while real DOM/keyboard input is attempted; no new accepted text.
+- Test in-flight saves, external conflicts, abort/remount with exact undo/selection,
+  duplicate/stale/wrong-epoch close, lost commit acknowledgement, operation/dialog/
+  update races, renderer death and a queued legacy discard callback.
+- Test actual Rust guards, editor registration and preview/child denial before
+  effects. Run focused/full checks, real hosted Tauri compilation and independent
+  data-safety review before native entry activation.
+- Installed Linux remains a separate gate: mixed-EOL typing/immediate OS-close,
+  pending composition, conflict, failed recovery, repeated/no-change close,
+  restart/reopen and preserved legacy reference behavior. Mocks and a compilation
+  pass cannot satisfy installed filesystem or runtime security acceptance.

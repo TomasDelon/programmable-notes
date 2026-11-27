@@ -20,19 +20,59 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
-## GTK import correction — verification in progress
+## Shared product/local-vault integration — 27 November 2026
+
+The pending ProductRoot slice extracts actual document navigation, mode/history
+interaction, header, settings and command UI from WebApp. Both callers consume
+those implementations. The native product adapter composes the existing
+NativeWorkspace, DocumentSessions and SourceSession; it does not create another
+source or history store. Logical source paths are independent of opaque session
+identities. Browser storage, backup and Trash remain in the existing browser
+reference; no migration, clearing or default-entry change has occurred.
+
+Targeted development tests exercise real editor transactions, switching,
+undo/redo, exact BOM/CRLF writes with injected OS ports, retained-text recovery
+acknowledgement and fresh sessions on reopening. These are controller/UI tests,
+not installed Linux or real OS-dialog evidence. The full integration check exited0:864 unit,133 tooling (two scanner controls
+skipped in that process),153 Chromium,9 Pages and4 local cloud-storage cases,
+plus format/lint/types/build. Both scanner controls then passed explicitly with
+the pinned scanner. The Rust document suite passed91 with7 ignored specialized/
+helper cases. See the [packet evidence](security-evidence/2026-11-27-shared-product/README.md)
+for commands, failures and limits.
+
+Whole-application native close is a concrete activation blocker: the legacy
+asynchronous dirty/busy booleans cannot safely release all-session protection
+against a late unapplied draft. Aggregate controller admission now holds all
+session publication and captures late reports. The product adapter deliberately
+refuses final release instead of reporting a false safe close. The
+[close handshake design](plans/native-editor-close-handshake.md) records the
+remaining native/editor barrier work. ProductRoot is not the default entry, the
+rejected installer is not corrected, and native React remains unavailable.
+
+## GTK import correction — hosted compilation verified
 
 On cac8399, required CI's check job passed but native-check and optional
 run45947395962 failed host compilation, exit101, before any guest allocation.
 Independent locked-source review found that WebKitGTK2.0.2 exports WebViewExt
-at crate root, not under a prelude module. The import-only correction and early
-compiler annotations passed the complete local check:814 unit,133 tooling/zero
-skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus formatting,
-lint, types and production build. Actual GTK compilation remains pending; no
-native runtime fix is claimed.
-An isolated SDK is being prepared with genuine GTK/WebKit development packages
-to eliminate avoidable remote compiler round trips. It never runs authored code
-or substitutes container compilation for the real native security matrix.
+at crate root, not under a prelude module. Commit ad0ffca corrects the import
+and surfaces early compiler failures. Required run45964406075 passed both jobs,
+including actual GTK host compilation. The complete local check passed814 unit,
+133 tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage cases,
+plus formatting, lint, types and production build.
+
+Optional run45964414560 compiled the fixed GTK host, passed its four native
+lifecycle tests and effective Debian containment admission, and observed React
+readiness, pointer and field focus. The keyboard command timed out; Stop,
+trusted-host input and session cleanup passed, and expiry was not executed.
+This is a failed native interaction profile, not a startup/security acceptance.
+The exact scope is retained in the
+[dated evidence](security-evidence/2026-11-27-native-inline-fixture/README.md).
+No unchanged native runtime retry is planned.
+
+Local isolated SDK preparation verified authenticated package metadata but
+package transfer stalled. The task was stopped after hosted compilation
+succeeded; no SDK image or local GTK compile completed. This optional setup is
+not a prerequisite for the shared editor's integrated tests.
 
 ## Shared navigation and native-load observation — local verification
 

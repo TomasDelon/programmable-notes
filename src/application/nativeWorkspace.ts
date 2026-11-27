@@ -203,6 +203,8 @@ export function createNativeWorkspace(
     );
   }
   function select(sessionId: string) {
+    if (controller.aggregateCloseHeld)
+      throw Error('Aggregate close admission is held.');
     if (!associations.has(sessionId))
       throw Error('Document session is not in this workspace.');
     if (selected === sessionId) return;
@@ -215,6 +217,8 @@ export function createNativeWorkspace(
     notify();
   }
   async function run<T>(kind: Operation, action: () => Promise<T>): Promise<T> {
+    if (controller.aggregateCloseHeld)
+      throw Error('Aggregate close admission is held.');
     if (operation) throw Error('A workspace operation is already running.');
     operation = kind;
     error = null;
@@ -371,8 +375,20 @@ export function createNativeWorkspace(
     // are trusted host services, never a document-runtime capability facade.
     controller: controller as Pick<
       typeof controller,
-      'state' | 'subscribe' | 'setUnapplied' | 'flush'
+      | 'state'
+      | 'subscribe'
+      | 'setUnapplied'
+      | 'flush'
+      | 'retrySave'
+      | 'resolveRetained'
     >,
+    beginAggregateClose() {
+      if (operation || cleanupCount())
+        throw Error(
+          'Resolve workspace operations and native cleanup before aggregate close.',
+        );
+      return controller.beginAggregateClose();
+    },
     state,
     subscribe(listener: Listener): () => void {
       const subscription = { listener };

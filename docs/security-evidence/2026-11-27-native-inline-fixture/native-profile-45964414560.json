@@ -1,0 +1,76 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations and job/step metadata; not raw logs",
+  "run_id": 45964414560,
+  "job_id": 140389561344,
+  "source_commit": "ad0ffcae46e67c9949484fdb5360fdc7350c9575",
+  "source_profile": "debian13",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "host_compilation": "passed",
+  "headless_native_state_tests": "passed",
+  "status": "failed",
+  "os_admission": "passed",
+  "session": {
+    "phase": "stop",
+    "reason": "observer_failed",
+    "cleanup": "passed"
+  },
+  "stop": {
+    "status": "failed",
+    "phase": "keyboard",
+    "reason": "command_failed",
+    "bridge": "passed",
+    "pointer": "passed",
+    "keyboard": "failed",
+    "termination": "passed",
+    "host_input": "passed",
+    "original_reason": "observer_failed",
+    "host_before_teardown": "running",
+    "observer_before_teardown": "exited",
+    "observer_exit": 2,
+    "host_stage": "unit_ready",
+    "start_failure": "none",
+    "observer_exception": {
+      "phase": "keyboard",
+      "error_type": "Refused",
+      "errno": null,
+      "frames": [
+        {
+          "function": "run",
+          "line": 762
+        },
+        {
+          "function": "gui",
+          "line": 691
+        },
+        {
+          "function": "_command",
+          "line": 292
+        }
+      ]
+    }
+  },
+  "expiry": "not_run",
+  "native_snapshot": "not_attempted: failure phase was keyboard, not ready",
+  "artifacts": [
+    {
+      "name": "fixed-native-inline-react-diagnostic",
+      "id": 15182775754
+    },
+    {
+      "name": "native-vm-os-admission",
+      "id": 15182089008
+    }
+  ],
+  "interpretation": [
+    "The corrected host compiled and its four pure state tests passed on the real GTK runner.",
+    "React reached readiness, pointer interaction and field-focus acknowledgement before the keyboard command failed.",
+    "The frozen source frame at _command:292 is the bounded pipe wait; it does not distinguish command-local expiry from the shared input deadline or establish an OS/renderer cause.",
+    "Stop, trusted-host typing and session cleanup passed; the full case failed and expiry did not run."
+  ],
+  "limitations": [
+    "The previous intermittent ready failures remain unresolved; this run is not startup reliability acceptance.",
+    "No product application, arbitrary geometry or complete malicious-workload security acceptance is established."
+  ]
+}

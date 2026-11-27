@@ -39,6 +39,220 @@ const saved = async (): Promise<WriteReceipt> => ({
 });
 
 describe('accepted document sessions', () => {
+  it('gates every issued SourceSession synchronously during aggregate flush and restores them on abort', async () => {
+    const write = deferred<WriteReceipt>();
+    const writer = vi.fn(() => write.promise);
+    const closed = vi.fn(async () => {});
+    const controller = new DocumentSessions(writer, closed);
+    const a = controller.attach(baseline('a', '\uFEFFa\r\n'));
+    const b = controller.attach(baseline('b', 'b\r'));
+    publish(a, '\uFEFFchanged\r\n');
+    const admission = controller.beginAggregateClose();
+    expect(controller.state('a').phase).toBe('closing');
+    expect(controller.state('b').phase).toBe('closing');
+    expect(() => publish(a, 'blocked a')).toThrow();
+    expect(() => publish(b, 'blocked b')).toThrow();
+    expect(() => controller.attach(baseline('c'))).toThrow();
+    await expect(controller.close('a')).rejects.toThrow();
+    const flushing = admission.flush();
+    await tick();
+    expect(writer).toHaveBeenCalledTimes(1);
+    expect(closed).not.toHaveBeenCalled();
+    write.resolve({ diskRevision: 'new-disk', durable: true });
+    await flushing;
+    admission.assertCurrent();
+    admission.abort();
+    expect(controller.state('a').phase).toBe('open');
+    expect(a.witness.source).toBe('\uFEFFchanged\r\n');
+    expect(b.witness.source).toBe('b\r');
+    publish(b, 'allowed after abort');
+    await controller.flush();
+  });
+
+  it('retains late draft and failed exact text reports and permanently invalidates their held admission', async () => {
+    const controller = new DocumentSessions(saved, async () => {});
+    controller.attach(baseline('a'));
+    const b = controller.attach(baseline('b', 'b\r\n'));
+    const admission = controller.beginAggregateClose();
+    await admission.flush();
+    const failed = { expected: b.witness, source: '\uFEFFlate\r\n<Broken\r' };
+    controller.setUnapplied('b', true);
+    controller.setUnapplied('b', false);
+    b.retainFailure(failed);
+    expect(() => admission.assertCurrent()).toThrow();
+    await expect(admission.flush()).rejects.toThrow();
+    expect(controller.state('b').retainedFailures).toEqual([failed]);
+    admission.abort();
+    expect(controller.state('b').phase).toBe('open');
+    expect(controller.state('b').retainedFailures[0]?.source).toBe(
+      failed.source,
+    );
+    expect(b.witness.source).toBe('b\r\n');
+  });
+
+  it('rejects a held flush when another loaded editor reports exact text while its write acknowledgement awaits', async () => {
+    const write = deferred<WriteReceipt>();
+    const closed = vi.fn(async () => {});
+    const controller = new DocumentSessions(() => write.promise, closed);
+    const a = controller.attach(baseline('a'));
+    const b = controller.attach(baseline('b', 'other\r\n'));
+    publish(a, 'accepted\r');
+    const admission = controller.beginAggregateClose();
+    const flushing = admission.flush();
+    await tick();
+    const failed = { expected: b.witness, source: '\uFEFFIME attempt\r\n' };
+    expect(() => b.publish(failed)).toThrow();
+    b.retainFailure(failed);
+    controller.setUnapplied('b', true);
+    write.resolve({ diskRevision: 'new-disk', durable: true });
+    await expect(flushing).rejects.toThrow();
+    expect(closed).not.toHaveBeenCalled();
+    admission.abort();
+    expect(controller.state('b')).toMatchObject({
+      phase: 'open',
+      unapplied: true,
+      retainedFailures: [failed],
+    });
+    expect(a.witness.source).toBe('accepted\r');
+    expect(b.witness.source).toBe('other\r\n');
+  });
+
+  it('cannot let a late old flush or uncertain handle affect a replacement admission', async () => {
+    const write = deferred<WriteReceipt>();
+    const controller = new DocumentSessions(
+      () => write.promise,
+      async () => {},
+    );
+    const session = controller.attach(baseline());
+    publish(session, 'pending');
+    const old = controller.beginAggregateClose();
+    const flushing = old.flush();
+    await tick();
+    old.abort();
+    const current = controller.beginAggregateClose();
+    write.resolve({ diskRevision: 'new-disk', durable: true });
+    await expect(flushing).rejects.toThrow();
+    expect(() => old.markUncertain()).toThrow();
+    expect(controller.state('a').phase).toBe('closing');
+    await current.flush();
+    current.abort();
+    expect(controller.state('a').phase).toBe('open');
+  });
+
+  it('does not freeze unrelated source publication after an individual uncertain close', async () => {
+    const controller = new DocumentSessions(saved, async () => {
+      throw Error('lost individual close');
+    });
+    controller.attach(baseline('a'));
+    const other = controller.attach(baseline('b'));
+    await expect(controller.close('a')).rejects.toThrow();
+    expect(controller.state('a').phase).toBe('close-uncertain');
+    publish(other, 'unrelated exact\r\n');
+    await controller.flush('b');
+    expect(other.witness.source).toBe('unrelated exact\r\n');
+    expect(controller.state('b').autosave.status).toBe('saved');
+  });
+
+  it('does not revive a permanently invalidated admission after a transient draft signal clears', async () => {
+    const controller = new DocumentSessions(saved, async () => {});
+    controller.attach(baseline());
+    const admission = controller.beginAggregateClose();
+    await admission.flush();
+    controller.setUnapplied('a', true);
+    controller.setUnapplied('a', false);
+    expect(() => admission.assertCurrent()).toThrow();
+    admission.abort();
+    const next = controller.beginAggregateClose();
+    expect(() => admission.abort()).toThrow();
+    expect(controller.state('a').phase).toBe('closing');
+    await next.flush();
+    next.abort();
+  });
+
+  it('keeps uncertain aggregate close held and records reports without reopening identities', async () => {
+    const controller = new DocumentSessions(saved, async () => {});
+    const session = controller.attach(baseline());
+    const admission = controller.beginAggregateClose();
+    await admission.flush();
+    const uncertainty = Error('lost native acknowledgement');
+    admission.markUncertain(uncertainty);
+    expect(controller.state('a')).toMatchObject({
+      phase: 'close-uncertain',
+      closeError: uncertainty,
+    });
+    expect(() => admission.abort()).toThrow();
+    expect(() => controller.beginAggregateClose()).toThrow();
+    expect(() => publish(session, 'must retain')).toThrow();
+    const failed = { expected: session.witness, source: 'must retain\r\n' };
+    session.retainFailure(failed);
+    controller.setUnapplied('a', true);
+    expect(controller.state('a')).toMatchObject({
+      unapplied: true,
+      retainedFailures: [failed],
+    });
+    expect(() => admission.assertCurrent()).toThrow();
+  });
+
+  it('aborts a failed aggregate write without releasing grants or changing the disk CAS baseline on retry', async () => {
+    const writer = vi
+      .fn()
+      .mockRejectedValueOnce(Error('conflict'))
+      .mockResolvedValueOnce({ diskRevision: 'disk-1', durable: true });
+    const closed = vi.fn(async () => {});
+    const controller = new DocumentSessions(writer, closed);
+    const session = controller.attach(baseline());
+    publish(session, 'exact\r\n');
+    const admission = controller.beginAggregateClose();
+    await expect(admission.flush()).rejects.toThrow();
+    admission.abort();
+    expect(session.witness.source).toBe('exact\r\n');
+    await controller.retrySave('a');
+    expect(
+      writer.mock.calls.map(([input]) => input.expectedDiskRevision),
+    ).toEqual(['disk-0', 'disk-0']);
+    expect(closed).not.toHaveBeenCalled();
+  });
+
+  it('resolves only one exact retained batch and refuses resolution or retry during close admission', async () => {
+    const controller = new DocumentSessions(saved, async () => {});
+    const session = controller.attach(baseline());
+    const first = { expected: session.witness, source: 'failed\r\n' };
+    const second = { expected: session.witness, source: 'other\r' };
+    session.retainFailure(first);
+    session.retainFailure(second);
+    expect(() =>
+      controller.resolveRetained('a', { ...first, source: 'foreign' }),
+    ).toThrow();
+    controller.resolveRetained('a', first);
+    expect(controller.state('a').retainedFailures).toEqual([second]);
+    expect(() => controller.resolveRetained('a', first)).toThrow();
+    controller.resolveRetained('a', second);
+    const admission = controller.beginAggregateClose();
+    await expect(controller.retrySave('a')).rejects.toThrow();
+    expect(() => controller.resolveRetained('a', second)).toThrow();
+    admission.abort();
+  });
+
+  it('admits clean empty and unchanged sets without writers and refuses partially closing sets atomically', async () => {
+    const writer = vi.fn(saved);
+    const close = deferred<void>();
+    const controller = new DocumentSessions(writer, () => close.promise);
+    const empty = controller.beginAggregateClose();
+    await empty.flush();
+    empty.abort();
+    controller.attach(baseline('a'));
+    controller.attach(baseline('b'));
+    const closing = controller.close('a');
+    expect(() => controller.beginAggregateClose()).toThrow();
+    expect(controller.state('b').phase).toBe('open');
+    close.resolve();
+    await closing;
+    const clean = controller.beginAggregateClose();
+    await clean.flush();
+    clean.assertCurrent();
+    clean.abort();
+    expect(writer).not.toHaveBeenCalled();
+  });
   it('retains limits supplied through inherited budget properties', () => {
     const budgets = Object.create({
       maxDocumentBytes: 4,

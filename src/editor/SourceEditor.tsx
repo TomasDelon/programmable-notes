@@ -81,6 +81,7 @@ export function SourceEditor({
   visual,
   live = false,
   documentKey,
+  sourcePath,
   histories,
   commandsRef,
   busy,
@@ -101,6 +102,8 @@ export function SourceEditor({
   /** Host-owned freshness witness for deferred React source echoes. */
   sourceIsCurrent?: (snapshot: string) => boolean;
   documentKey?: string;
+  /** Logical syntax/import path only; document/session identity owns history. */
+  sourcePath?: string;
   histories?: React.RefObject<EditorHistory>;
   onChange: (value: string) => void;
   busy?: boolean;
@@ -184,7 +187,7 @@ export function SourceEditor({
   const legacyPending = useRef(false);
   const renderedPending = useRef(false);
   const [draft, setDraft] = useState<MathDraft | null>(null);
-  const path = documentKey ?? 'note.mdx';
+  const path = sourcePath ?? documentKey ?? 'note.mdx';
   const renderedCommands = useRef<RenderedCommands | null>(null);
   const renderedActive = useRef(Boolean(rendered?.active));
   useLayoutEffect(() => {

@@ -384,3 +384,21 @@ at the crate root, with no `prelude` module. The correction changes only that
 import. Early compiler annotations now precede the host build so future compiler
 errors are visible without downloading private logs. Actual GTK compilation and
 a new guest remain required; source review is not reported as a build pass.
+
+## Import correction compiled; keyboard command timed out
+
+On ad0ffca, [run45964414560](https://github.com/TomasDelon/programmable-notes/actions/runs/45964414560)
+passed actual GTK host compilation and four native state tests, then admitted
+the fresh Debian guest. React readiness and pointer interaction passed, followed
+by a keyboard `command_failed` at the bounded pipe-wait source frame. Stop,
+trusted-host input and session cleanup passed; expiry did not run.
+[Bounded receipt](native-profile-45964414560.json).
+
+This verifies the import correction, not runtime reliability. The source trace
+does not establish whether the command-local or shared input deadline expired,
+nor its OS/renderer cause. The native-load snapshot is intentionally omitted
+for this keyboard-phase failure; it is not a missing ready-phase result. No
+unchanged retry is planned, and the earlier2/3 startup failure remains.
+Required CI45964406075 passed both jobs independently. Local SDK package downloads
+were stopped after very slow/nonadvancing archive transfer; no local GTK SDK or
+compiler run was produced. No sandbox, trust or deadline setting was weakened.

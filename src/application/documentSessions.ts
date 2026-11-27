@@ -40,6 +40,14 @@ export interface DocumentSessionState {
   readonly closeError: unknown;
 }
 
+export interface AggregateCloseAdmission {
+  flush(): Promise<void>;
+  assertCurrent(): void;
+  abort(): void;
+  /** Native release may have happened: retain identities and never reopen this scope. */
+  markUncertain(reason?: unknown): void;
+}
+
 type Listener = (state: DocumentSessionState) => void;
 interface Entry {
   witness: SourceWitness;
@@ -52,6 +60,12 @@ interface Entry {
   pendingListeners: Set<{ listener: Listener }>;
   notificationPending: boolean;
   unsubscribeAutosave: () => void;
+}
+
+interface AggregateClose {
+  readonly captured: readonly { entry: Entry; witness: SourceWitness }[];
+  invalidated: boolean;
+  uncertain: boolean;
 }
 
 const copyBatch = (batch: SourceBatch): SourceBatch => ({
@@ -67,6 +81,11 @@ export class DocumentSessions {
   private readonly autosave: AutosaveCoordinator;
   private readonly entries = new Map<string, Entry>();
   private readonly retired = new Set<string>();
+  private aggregateClose: AggregateClose | null = null;
+
+  get aggregateCloseHeld(): boolean {
+    return this.aggregateClose !== null;
+  }
 
   constructor(
     write: DocumentWriter,
@@ -97,6 +116,7 @@ export class DocumentSessions {
 
   attach(input: DocumentSessionInput): SourceSession {
     if (
+      this.aggregateClose ||
       !validSourceWitness(input.witness) ||
       typeof input.logicalPath !== 'string' ||
       !input.logicalPath ||
@@ -165,6 +185,7 @@ export class DocumentSessions {
         )
           throw Error('Retained attempt does not belong to an active session.');
         entry.retainedFailures.push(copyBatch(batch));
+        this.invalidateAggregate(entry);
         this.notify(entry);
       },
     };
@@ -199,6 +220,7 @@ export class DocumentSessions {
     const entry = this.get(documentId);
     if (entry.unapplied === pending) return;
     entry.unapplied = pending;
+    this.invalidateAggregate(entry);
     this.notify(entry);
   }
 
@@ -206,7 +228,122 @@ export class DocumentSessions {
     return this.autosave.flush(documentId);
   }
 
+  async retrySave(documentId: string): Promise<void> {
+    const entry = this.get(documentId);
+    if (this.aggregateClose || entry.phase !== 'open')
+      throw Error('Document close is pending or uncertain.');
+    this.autosave.retry(documentId);
+    await this.autosave.flush(documentId);
+  }
+
+  /** Called only after acknowledged recovery or the user's explicit warned discard. */
+  resolveRetained(documentId: string, batch: SourceBatch): void {
+    const entry = this.get(documentId);
+    if (
+      this.aggregateClose ||
+      entry.phase !== 'open' ||
+      !validSourceWitness(batch.expected) ||
+      batch.expected.sessionId !== documentId ||
+      typeof batch.source !== 'string'
+    )
+      throw Error('Retained attempt resolution refused.');
+    const index = entry.retainedFailures.findIndex(
+      (retained) =>
+        sameSourceWitness(retained.expected, batch.expected) &&
+        retained.source === batch.source,
+    );
+    if (index < 0) throw Error('Retained attempt is no longer present.');
+    entry.retainedFailures.splice(index, 1);
+    this.notify(entry);
+  }
+
+  beginAggregateClose(): AggregateCloseAdmission {
+    if (this.aggregateClose) throw Error('Aggregate close is already held.');
+    const captured = [...this.entries.values()].map((entry) => ({
+      entry,
+      witness: { ...entry.witness },
+    }));
+    // Admission is atomic: reject the whole set before changing any phase.
+    for (const { entry } of captured) {
+      if (entry.phase !== 'open')
+        throw Error('Document close is pending or uncertain.');
+      this.requireApplied(entry);
+    }
+    const scope: AggregateClose = {
+      captured,
+      invalidated: false,
+      uncertain: false,
+    };
+    this.aggregateClose = scope;
+    for (const { entry } of captured) entry.phase = 'closing';
+    for (const { entry } of captured) this.notify(entry);
+    const requireHeld = () => {
+      if (this.aggregateClose !== scope)
+        throw Error('Aggregate close admission is no longer current.');
+    };
+    const requireIdentity = () => {
+      requireHeld();
+      if (this.entries.size !== captured.length)
+        throw Error('Aggregate close identities changed.');
+      for (const { entry, witness } of captured)
+        if (
+          this.entries.get(witness.sessionId) !== entry ||
+          !sameSourceWitness(entry.witness, witness)
+        )
+          throw Error('Aggregate close identities changed.');
+    };
+    const requireApplied = () => {
+      requireIdentity();
+      if (scope.uncertain || scope.invalidated)
+        throw Error('Aggregate close is invalidated or uncertain.');
+      for (const { entry } of captured) {
+        if (entry.phase !== 'closing')
+          throw Error('Aggregate close phase changed.');
+        this.requireApplied(entry);
+      }
+    };
+    const assertCurrent = () => {
+      requireApplied();
+      for (const { witness } of captured) {
+        const saved = this.autosave.state(witness.sessionId);
+        if (saved.status !== 'saved' || !saved.durable || saved.error)
+          throw Error('Aggregate close requires durable original-file writes.');
+      }
+    };
+    return {
+      flush: async () => {
+        requireApplied();
+        await this.autosave.flush();
+        assertCurrent();
+      },
+      assertCurrent,
+      abort: () => {
+        requireIdentity();
+        if (scope.uncertain)
+          throw Error('Uncertain aggregate close cannot reopen documents.');
+        for (const { entry } of captured)
+          if (entry.phase !== 'closing')
+            throw Error('Aggregate close phase changed.');
+        this.aggregateClose = null;
+        for (const { entry } of captured) entry.phase = 'open';
+        for (const { entry } of captured) this.notify(entry);
+      },
+      markUncertain: (
+        reason = Error('Aggregate native close acknowledgement is uncertain.'),
+      ) => {
+        requireIdentity();
+        scope.uncertain = true;
+        for (const { entry } of captured) {
+          entry.phase = 'close-uncertain';
+          entry.closeError = reason;
+          this.notify(entry);
+        }
+      },
+    };
+  }
+
   async close(documentId: string): Promise<void> {
+    if (this.aggregateClose) throw Error('Aggregate close admission is held.');
     const entry = this.get(documentId);
     if (entry.phase !== 'open')
       throw Error('Session close is pending or uncertain.');
@@ -240,6 +377,13 @@ export class DocumentSessions {
   private requireApplied(entry: Entry) {
     if (entry.unapplied || entry.retainedFailures.length)
       throw Error('Unapplied editor text prevents normal close.');
+  }
+
+  private invalidateAggregate(entry: Entry) {
+    if (
+      this.aggregateClose?.captured.some((captured) => captured.entry === entry)
+    )
+      this.aggregateClose.invalidated = true;
   }
 
   private current(entry: Entry, expected: SourceWitness): boolean {
