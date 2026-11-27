@@ -148,6 +148,7 @@ jobs:
           path: |
             .cache/native-shared-evidence/infrastructure.json
             .cache/native-shared-evidence/native-shared-editor.json
+            .cache/native-shared-evidence/screenshot-startup.png
             .cache/native-shared-evidence/screenshot-source.png
             .cache/native-shared-evidence/screenshot-preview.png
           if-no-files-found: warn

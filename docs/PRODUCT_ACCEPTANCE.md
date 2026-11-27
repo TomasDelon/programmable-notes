@@ -56,7 +56,7 @@ to produce a pass. Only owner-directed product changes can amend these obligatio
   scoped vault autosave and guarded close. Controlled-IPC/browser tests support
   that composition; A03–A07 still require actual installed real-file witnesses.
 - Native inline React remains unavailable. A09/A11 are unresolved, and no legacy
-  separate-window fallback can satisfy them. File lifecycle, restart recovery
-  discovery, continuous external observation and update integration remain pending.
+  separate-window fallback can satisfy them. File lifecycle, installed recovery/restart
+  validation, continuous external observation and update integration remain pending.
 - The setup itself did not implement or establish installed acceptance. Later
   development evidence is recorded in IMPLEMENTATION_STATUS, not inferred here.

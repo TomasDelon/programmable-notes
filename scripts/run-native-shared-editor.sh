@@ -54,7 +54,7 @@ cleanup() {
     if pgrep -u "$pn_uid" >/dev/null; then pn_clean=false; fi
     # Read only as the ordinary role: a changed path cannot turn collection into
     # root access to another user's data. Never copy a home/profile/log tree.
-    for pn_name in native-shared-editor.json screenshot-source.png screenshot-preview.png; do
+    for pn_name in native-shared-editor.json screenshot-startup.png screenshot-source.png screenshot-preview.png; do
       if sudo -H -u "$pn_role" test -f "$pn_home/evidence/$pn_name" && sudo -H -u "$pn_role" test ! -L "$pn_home/evidence/$pn_name"; then
         sudo -H -u "$pn_role" head -c 5242881 "$pn_home/evidence/$pn_name" > "$pn_evidence/$pn_name"
       fi
@@ -93,6 +93,7 @@ const failureKinds = new Set(['none', 'webdriver_session_not_created', 'webdrive
 let journeyStage = 'unknown';
 let startupPhase;
 let failureKind;
+let dialogEligible = false;
 async function collectedReceipt() {
   const handle = await open(join(directory, 'native-shared-editor.json'), constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
@@ -120,10 +121,11 @@ try {
     journeyStage = receipt.stage;
     if (startupPhases.has(receipt.startupPhase)) startupPhase = receipt.startupPhase;
     if (failureKinds.has(receipt.failureKind)) failureKind = receipt.failureKind;
+    dialogEligible = receipt.result === 'failed' && ['authorized_vault_chooser', 'fresh_launch_reopen'].includes(journeyStage) && startupPhase === 'complete' && failureKind === 'other';
   }
   if (receipt.schema === 1 && receipt.result === 'passed' && receipt.cleanupVerified === true && receipt.forcedCleanup === false && process.env.PN_HOST_STATUS === '0' && cleanupVerified && process.env.PN_HOST_FORCED === 'false' && process.env.PN_HOST_RESIDUAL === 'false') result = 'passed';
 } catch { /* Missing/malformed evidence is a failed observation. */ }
-for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
+for (const name of ['screenshot-startup.png', 'screenshot-source.png', 'screenshot-preview.png']) {
   const path = join(directory, name);
   try {
     const bytes = await readFile(path);
@@ -133,11 +135,22 @@ for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
 try {if ((await stat(join(directory, 'native-shared-editor.json'))).size > 65536) {await unlink(join(directory, 'native-shared-editor.json')); result = 'failed';}} catch {result = 'failed';}
 const raw = await readFile(diagnostic, 'utf8');
 const denials = [['bubblewrap_message', /bwrap:/], ['namespace_permission', /[Nn]amespace.*[Pp]ermission/], ['sandbox_failure', /[Ss]andbox.*[Ff]ail/], ['operation_not_permitted', /Operation not permitted/], ['bubblewrap_namespace_denied', /^bwrap: Creating new namespace failed: Operation not permitted\r?$/m]].filter(([, pattern]) => pattern.test(raw)).map(([name]) => name);
-await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
+// Advisory classification of terminal Python exceptions, never traceback source
+// lines or raw paths/arguments. This cannot authorize success or infer a cause.
+const dialogClasses = dialogEligible ? [
+  ['dialog_window_missing', /^AssertionError: Native dialog not visible for PID [1-9][0-9]{0,9}: Choose local vault\r?$/m],
+  ['dialog_window_ambiguous', /^AssertionError: Ambiguous native dialogs for PID [1-9][0-9]{0,9}: Choose local vault\r?$/m],
+  ['dialog_location_unfocused', /^AssertionError: Native location entry did not focus\r?$/m],
+  ['dialog_location_echo_mismatch', /^AssertionError: Native location entry did not echo the exact fixture path\r?$/m],
+  ['dialog_dismissal_unconfirmed', /^AssertionError: Native dialog did not acknowledge choose-folder: Choose local vault\r?$/m],
+  ['dialog_pyatspi_missing', /^ModuleNotFoundError: No module named 'pyatspi'\r?$/m],
+  ['dialog_window_query_failed', /^RuntimeError: Native window query failed: [^\r\n]{1,2048}\r?$/m],
+].filter(([, pattern]) => pattern.test(raw)).map(([name]) => name) : [];
+await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, dialogClasses, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
 if (result !== 'passed') {
   // Only closed stage names, numeric codes and booleans reach the public API.
   // Never publish diagnostic text, paths, source or framework replies here.
-  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}`);
+  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}; dialogClasses=${dialogClasses.join(',') || 'none'}`);
   process.exitCode = 1;
 }
 REPORT

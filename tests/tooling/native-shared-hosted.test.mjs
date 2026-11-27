@@ -570,7 +570,7 @@ test('host annotations expose only closed stages, codes and denial categories ra
     assert.match(
       result.stdout,
       new RegExp(
-        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown\\n$`,
+        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none\\n$`,
       ),
     );
     assert.doesNotMatch(
@@ -724,11 +724,14 @@ async function runJourneyReport(
   receipt,
   diagnosticText = '',
   outerStage = 'journey',
+  startupPng,
 ) {
   const directory = await mkdtemp(join(tmpdir(), 'pn-journey-report-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const diagnostic = join(directory, 'diagnostic');
   await writeFile(diagnostic, diagnosticText);
+  if (startupPng !== undefined)
+    await writeFile(join(directory, 'screenshot-startup.png'), startupPng);
   if (receipt !== undefined)
     await writeFile(
       join(directory, 'native-shared-editor.json'),
@@ -758,6 +761,7 @@ async function runJourneyReport(
   assert.equal(result.status, 1);
   return {
     ...result,
+    directory,
     record: JSON.parse(
       await readFile(join(directory, 'infrastructure.json'), 'utf8'),
     ),
@@ -773,6 +777,162 @@ const failedJourney = (values = {}) => ({
   startupPhase: 'driver_session',
   failureKind: 'webdriver_unknown_error',
   ...values,
+});
+
+test('chooser advisory classes recognize only fixed terminal helper exceptions', async (t) => {
+  const terminals = [
+    [
+      'AssertionError: Native dialog not visible for PID 123: Choose local vault',
+      'dialog_window_missing',
+    ],
+    [
+      'AssertionError: Ambiguous native dialogs for PID 123: Choose local vault',
+      'dialog_window_ambiguous',
+    ],
+    [
+      'AssertionError: Native location entry did not focus',
+      'dialog_location_unfocused',
+    ],
+    [
+      'AssertionError: Native location entry did not echo the exact fixture path',
+      'dialog_location_echo_mismatch',
+    ],
+    [
+      'AssertionError: Native dialog did not acknowledge choose-folder: Choose local vault',
+      'dialog_dismissal_unconfirmed',
+    ],
+    [
+      "ModuleNotFoundError: No module named 'pyatspi'",
+      'dialog_pyatspi_missing',
+    ],
+    [
+      "RuntimeError: Native window query failed: '' 'private-helper-sentinel'",
+      'dialog_window_query_failed',
+    ],
+  ];
+  for (const stage of ['authorized_vault_chooser', 'fresh_launch_reopen']) {
+    for (const [terminal, category] of terminals) {
+      const observed = await runJourneyReport(
+        t,
+        failedJourney({
+          stage,
+          startupPhase: 'complete',
+          failureKind: 'other',
+        }),
+        terminal + '\n',
+      );
+      assert.deepEqual(observed.record.dialogClasses, [category]);
+      assert.match(
+        observed.stdout,
+        new RegExp(`; dialogClasses=${category}\\n$`),
+      );
+      assert.equal(observed.record.result, 'failed');
+      assert.doesNotMatch(
+        observed.stdout + observed.stderr + JSON.stringify(observed.record),
+        /private-helper-sentinel|PID 123|AssertionError|ModuleNotFoundError|RuntimeError/,
+      );
+    }
+  }
+});
+
+test('chooser diagnostics reject source lines, injected near-matches and foreign or unfinished journeys', async (t) => {
+  const terminal = 'AssertionError: Native location entry did not focus';
+  const receipt = failedJourney({
+    stage: 'authorized_vault_chooser',
+    startupPhase: 'complete',
+    failureKind: 'other',
+  });
+  for (const diagnostic of [
+    `    ${terminal}\n`,
+    `'${terminal}'\n`,
+    `assert False, '${terminal}'\n`,
+    terminal + ' private-helper-sentinel\n',
+    terminal + '%0A::error::private-helper-sentinel\n',
+    'AssertionError:\nNative location entry did not focus\n',
+    'Operation not permitted\n',
+    'dbus.exceptions.DBusException: Operation not permitted\n',
+    "ModuleNotFoundError: No module named 'private-helper-sentinel'\n",
+    'AssertionError: Native dialog not visible for PID 123: foreign title\n',
+  ]) {
+    const observed = await runJourneyReport(t, receipt, diagnostic);
+    assert.deepEqual(observed.record.dialogClasses, []);
+    assert.doesNotMatch(
+      observed.stdout + observed.stderr + JSON.stringify(observed.record),
+      /private-helper-sentinel|%0A|foreign title/,
+    );
+  }
+  for (const foreign of [
+    undefined,
+    'not JSON',
+    failedJourney({ ...receipt, scope: 'foreign' }),
+    failedJourney({ ...receipt, result: 'passed' }),
+    failedJourney({ ...receipt, startupPhase: 'product_ready' }),
+    failedJourney({ ...receipt, failureKind: 'os_eperm' }),
+    failedJourney({ ...receipt, stage: 'source_autosave' }),
+  ]) {
+    const observed = await runJourneyReport(t, foreign, terminal + '\n');
+    assert.deepEqual(observed.record.dialogClasses, []);
+  }
+  const setup = await runJourneyReport(
+    t,
+    receipt,
+    terminal + '\n',
+    'driver_start',
+  );
+  assert.deepEqual(setup.record.dialogClasses, []);
+});
+
+test('startup screenshot is captured once after product readiness and all fixed artifact lists include it', async () => {
+  const script = await readFile('scripts/native-shared-editor.mjs', 'utf8');
+  const capture = "await screenshot('screenshot-startup.png')";
+  const at = script.indexOf(capture);
+  assert.ok(at > script.indexOf('const first = await start()'));
+  assert.ok(at < script.indexOf("stage = 'authorized_vault_chooser'"));
+  assert.equal(script.split(capture).length - 1, 1);
+  const launcher = await readFile(
+    'scripts/run-native-shared-editor.sh',
+    'utf8',
+  );
+  assert.match(
+    launcher,
+    /for pn_name in native-shared-editor\.json screenshot-startup\.png screenshot-source\.png screenshot-preview\.png;/,
+  );
+  assert.match(
+    launcher,
+    /for \(const name of \['screenshot-startup\.png', 'screenshot-source\.png', 'screenshot-preview\.png'\]\)/,
+  );
+  const workflow = await readFile('.github/workflows/ci.yml', 'utf8');
+  assert.equal(
+    workflow.split('.cache/native-shared-evidence/screenshot-startup.png')
+      .length - 1,
+    1,
+  );
+});
+
+test('startup PNG remains available after a chooser failure only within the existing header and size bounds', async (t) => {
+  const receipt = failedJourney({
+    stage: 'authorized_vault_chooser',
+    startupPhase: 'complete',
+    failureKind: 'other',
+  });
+  const png = Buffer.from('89504e470d0a1a0a00000000', 'hex');
+  const valid = await runJourneyReport(t, receipt, '', 'journey', png);
+  assert.deepEqual(
+    await readFile(join(valid.directory, 'screenshot-startup.png')),
+    png,
+  );
+  assert.equal(valid.record.result, 'failed');
+  for (const bytes of [
+    Buffer.from('private-not-a-png'),
+    Buffer.concat([png, Buffer.alloc(5 * 1024 * 1024)]),
+  ]) {
+    const invalid = await runJourneyReport(t, receipt, '', 'journey', bytes);
+    await assert.rejects(
+      stat(join(invalid.directory, 'screenshot-startup.png')),
+      { code: 'ENOENT' },
+    );
+    assert.equal(invalid.record.result, 'failed');
+  }
 });
 test('host publishes only this journey scope and exact closed inner diagnostics', async (t) => {
   for (const stage of [

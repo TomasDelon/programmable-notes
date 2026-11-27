@@ -458,3 +458,18 @@ Independent product/security review found no remaining Important issue. Native
 GTK command compilation and actual installed recovery/restart remain separate
 pending gates. The packaged observation above predates this recovery candidate;
 controlled-IPC browser journeys and real backend files do not replace it.
+
+The next hosted observer projects only fixed terminal helper signatures from its
+existing bounded private diagnostic input, gated to a validated failed chooser or
+reopen journey after complete startup. These advisory categories do not prove
+that the application omitted a dialog, identify a namespace cause, or change the
+failed result. Python helper actions and all PID/title/path/acknowledgement checks
+are unchanged. A new fixed startup PNG is captured once, before vault selection,
+using existing size/signature bounds and explicit artifact whitelists. It proves
+startup presentation only, not editing or filesystem acceptance.
+
+After that harness-only addition, the entire tooling suite passed177 cases with
+zero skips, and format/lint/types passed. Application inputs remain those of the
+fully checked recovery candidate. Independent source review found no Important
+issue. A new required CI build and actual changed observation are still needed;
+the helper signatures and startup image have not yet been observed natively.

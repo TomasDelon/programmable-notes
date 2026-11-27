@@ -324,3 +324,32 @@ The latest native diagnostic on ad0ffca compiled and reached React/pointer/focus
 but failed its keyboard command deadline; Stop, host input and cleanup passed,
 expiry did not run. This does not repair the earlier intermittent startup failure.
 Required CI on that commit passed both jobs. No unchanged runtime retry follows.
+
+## Current checkpoint: shared native startup and recovery copies
+
+The native entry now activates the guarded shared ProductRoot; it no longer waits
+for the inactive packet described above. Singleton startup, editor quiescence and
+the exact close protocol are implemented. They still require installed close and
+restart acceptance, not just browser/controller/backend evidence.
+
+Required CI46062811208 passed both jobs onacbec3a. The actual installed Ubuntu
+observation46064143844 reached shared ProductRoot readiness and passed process
+identity checks, then failed during the vault-chooser journey. Cleanup passed.
+The generic permission substring is not a namespace diagnosis. Next expose only
+closed helper signatures and a bounded startup image; do not relax PID/title/path,
+chooser acknowledgement, sandbox or deadline checks to claim acceptance.
+
+Explicit recovery-copy discovery/read and new-file creation are implemented in
+4bbc739. Read-only opening cannot initialize or prune the snapshot store. Captured
+vault/selection/generation/cancellation checks guard creation; uncertain outcomes
+retain source and destination and block retry. Local full checks and independent
+review passed; installed recovery/restart and native command compilation remain
+separate gates at this checkpoint. See ADR042 and the dated evidence.
+
+A fixed sealed Debian React helper passed real input, Stop, expiry and cleanup,
+while general native React remains disabled. Inline Wry native browser guards,
+actual editor integration/geometry, the full hostile-workload matrix and repeatable
+startup are required before activation. Physical GPU/Wayland coverage is separate.
+Real rename/move/recoverable Trash, continuous external observation and configured
+signed updates remain pending. No new installer is promoted as accepted, and no
+release, merge or PR readiness change follows from this checkpoint.

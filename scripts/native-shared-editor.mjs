@@ -399,6 +399,7 @@ try {
   );
   stage = 'installed_startup';
   const first = await start();
+  await screenshot('screenshot-startup.png');
   stage = 'authorized_vault_chooser';
   await chooseAndOpen();
   await sourceShows(original);
