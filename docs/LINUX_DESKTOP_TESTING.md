@@ -469,3 +469,13 @@ searched every same-PID window, which could act on a different window or spend
 the observation budget traversing WebKit. Duplicate matching roots fail before
 any action; there is no global fallback. This is a proven selector narrowing,
 not proof that it caused or fixes the observed native dismissal failure.
+
+When the acceptance state is not_found, a second closed lookup marker now
+separates an unobserved owned-title root, an unobserved matching button, an
+unreadable matching button state, or the last matching candidate's four native
+flags (visible/showing/enabled/sensitive, in that order). It reuses the same
+StateSet and traversal. It does not prove complete-tree absence or explain a GTK
+cause. The reporter validates the complete paired marker frame and withholds
+lookup values outside a failed not-found context; impossible all-eligible or
+not-attempted combinations remain unknown. No raw names, paths or exceptions are
+published, and no state predicate or action is bypassed.

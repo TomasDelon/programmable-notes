@@ -20,6 +20,33 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Current tested head and remaining selector blocker — 27 November 2026
+
+Both required CI jobs passed on3b92912 in46074514226, including real SDK
+compilation of the schema2 fixed host, production packaging and native backend
+failure-injection tests. Full local application evidence remains1014 unit,
+159 Chromium,9 Pages and4 local cloud; final helper tooling191/zero skips and
+static checks passed. Browser screenshots and the inspected engineering package
+are downloadable through that CI run.
+
+Actual sealed Debian13/WebKitGTK2.54.3 guarded-v2 run46075399735 passed fixed
+React pointer input, actual keyboard acknowledgement, Stop, expiry and cleanup.
+Keyboard returned in93ms within its2000ms local budget; acknowledgement is a
+separate passed observation. Expiry intentionally omits pointer/keyboard/host
+input. This is one fixed helper pass, not a causal startup fix, repeatability,
+packaged application or complete security acceptance. Schema2 native flags are
+exported only on failed readiness; no actual flag values were observed here.
+The earlier guarded-v2 failure is retained. General native React stays disabled.
+
+Installed run46075394392 passed shared startup and exact path echo, but failed
+chooser dismissal with acceptState=not_found. Cleanup passed without force or
+residuals. This means no eligible matching acceptance button was found, not that
+the path or filesystem failed. Missing owned-title/button, state ineligibility and
+accessibility-read errors remain distinct unknowns. The next bounded observation
+reuses existing selector/state reads; no alternate label, action or weaker state
+check is justified. Installed editing/save/close/restart/recovery remain unverified.
+See the chronological evidence and source-bound receipts below.
+
 ## Recovery discovery and current native observation — 27 November 2026
 
 Required CI46072131165 passed both jobs on25041e7, including actual GTK SDK

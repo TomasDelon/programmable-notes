@@ -615,3 +615,55 @@ passed, including all512 boolean combinations across five termination labels;
 Rustfmt passed. Independent source review found no blocking issue. Application
 source inputs remain those of the1014-unit/159-Chromium/9-Pages/4-cloud full run;
 these helper-only changes do not claim new native execution or handler denial.
+
+## Current CI and guarded-v2 fixed helper pass
+
+Both mandatory jobs in [CI46074514226](https://github.com/TomasDelon/programmable-notes/actions/runs/46074514226)
+passed on3b92912, including schema2 host SDK compilation, native failure injection
+and production packaging. Download [browser screenshots](https://github.com/TomasDelon/programmable-notes/actions/runs/46074514226/artifacts/15234598581)
+and [the inspected engineering package](https://github.com/TomasDelon/programmable-notes/actions/runs/46074514226/artifacts/15234418499).
+Neither artifact is promoted as an accepted product.
+
+Actual sealed [Debian guarded-v2 run46075399735](https://github.com/TomasDelon/programmable-notes/actions/runs/46075399735)
+passed fixed input/Stop and natural expiry, with cleanup. The
+[validated receipt](react-46075399735.json) records actual pointer input and
+keyboard acknowledgement, bridge, termination and trusted host input for Stop.
+Keyboard returned in93ms within its2000ms local budget; command return is not
+substituted for acknowledgement. Expiry exercises bridge and termination only.
+The stack was Debian13/GTK3.24.49/WebKitGTK2.54.3. This is one changed fixed-helper
+success, not repeatability, arbitrary native React, handler denial, hostile
+workloads or packaged application acceptance. The previous readiness failure is
+retained and its cause remains unknown. Schema2 snapshots are emitted only on
+failed readiness, so no actual new flag values were inspected on this pass.
+
+Only source-pinned fixed annotations/API metadata were inspected. The
+[diagnostic artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46075399735/artifacts/15235490053)
+and [OS admission artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46075399735/artifacts/15235145624)
+were not downloaded; no raw logs, unchanged retry or policy relaxation occurred.
+
+## Installed selector still does not find an eligible button
+
+[Installed run46075394392](https://github.com/TomasDelon/programmable-notes/actions/runs/46075394392)
+on3b92912 reached shared startup and exact path echo, then failed final chooser
+dismissal with dialogAcceptState=not_found. Cleanup passed without force or
+residuals. The [fixed receipt](installed-46075394392.json) does not identify
+whether the owned title/button was absent, an expected native state was false,
+or an accessibility read failed. No filesystem or namespace cause is inferred.
+Editing/disk/close/restart/recovery still did not execute. The retained
+[startup artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46075394392/artifacts/15234638211)
+was not downloaded or visually inspected in this cloud workspace.
+
+Pinned plugin/rfd source still selects GTK SELECT_FOLDER with null acceptance
+labels. Upstream GTK uses Open, and widget accessibility publishes the four
+required eligibility states. Source review does not justify an alternative label
+or weaker state check. The next probe records only already-observed owned-root,
+button-match and native-state categories, without another walk, action or deadline.
+
+After the paired lookup probe froze, the entire tooling suite passed194 cases
+with zero failures/skips, and formatting/lint/types passed. Producer tests execute
+the actual finder for all16 eligibility combinations and state-read failures;
+consumer tests reject malformed/ambiguous paired frames and impossible context
+combinations. Independent source review found no blocking issue. Application and
+fixed React helper inputs did not change: no new full browser or guarded native
+retry is implied. The next installed observation will exercise this changed
+measurement; the current not-found result remains a failure.

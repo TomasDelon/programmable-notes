@@ -1,0 +1,130 @@
+{
+  "evidence_source": "Strict source-pinned check annotations and API metadata only; no artifacts/raw logs downloaded",
+  "run_id": 46075399735,
+  "job_id": 140761849479,
+  "source_commit": "3b92912e0cbf95c4c3d4d8456ca9e5227c2ead82",
+  "workflow_conclusion": "success",
+  "native_app_tested": false,
+  "profile": "inline-react-guarded-v2",
+  "session": {
+    "version": 1,
+    "profile": "inline-react-guarded-v2",
+    "scope": "fixed-native-diagnostic-only",
+    "native_app_tested": false,
+    "status": "passed",
+    "phase": "complete",
+    "reason": "none",
+    "cleanup": "passed",
+    "cases": {
+      "expiry": "passed",
+      "stop": "passed"
+    },
+    "diagnostics": {
+      "stop": {
+        "original_reason": "none",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 0
+        }
+      },
+      "expiry": {
+        "original_reason": "none",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 0
+        }
+      }
+    }
+  },
+  "cases": {
+    "expiry": {
+      "version": 1,
+      "profile": "inline-react-guarded-v2",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "expiry",
+      "status": "passed",
+      "phase": "complete",
+      "reason": "none",
+      "bridge": "passed",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "passed",
+      "host_input": "not_run"
+    },
+    "stop": {
+      "version": 1,
+      "profile": "inline-react-guarded-v2",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "stop",
+      "status": "passed",
+      "phase": "complete",
+      "reason": "none",
+      "bridge": "passed",
+      "pointer": "passed",
+      "keyboard": "passed",
+      "termination": "passed",
+      "host_input": "passed"
+    }
+  },
+  "keyboard_attempt": {
+    "phase": "keyboard",
+    "availableMs": 2000,
+    "limitingClock": "local",
+    "elapsedMs": 93,
+    "timeoutKind": "none",
+    "outcome": "returned"
+  },
+  "os_admission": {
+    "status": "passed",
+    "scope": "guest-os-admission-only",
+    "source_profile": "debian13",
+    "environment": {
+      "id": "debian",
+      "version": "13",
+      "kernel_release": "6.12.118+deb13-amd64",
+      "packages": {
+        "libc6": "2.41-12+deb13u5",
+        "libgtk-3-0t64": "3.24.49-3",
+        "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+        "linux-image-amd64": "6.12.118-1",
+        "systemd": "257.13-1~deb13u1"
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "id": 15235490053,
+      "name": "fixed-native-inline-react-diagnostic",
+      "expired": false,
+      "size_in_bytes": 2533
+    },
+    {
+      "id": 15235145624,
+      "name": "native-vm-os-admission",
+      "expired": false,
+      "size_in_bytes": 551
+    }
+  ],
+  "native_snapshot_observed": false,
+  "limitations": [
+    "One changed fixed helper run, not packaged application, repeatability or general native/security acceptance.",
+    "Native schema2 snapshot annotations are emitted only after failed readiness; no actual flag values were observed on this passing run.",
+    "The previous guarded-v2 readiness failure remains retained; passive diagnostic changes are not a demonstrated causal repair.",
+    "Expiry intentionally does not exercise pointer, keyboard or trusted host input.",
+    "No artifact/raw-log download or unchanged retry."
+  ]
+}
