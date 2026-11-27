@@ -34,6 +34,45 @@ SOURCES = (
 )
 INTERRUPTED = False
 
+# Fixed native test-driver protocol, adapted from scripts/native-close-window.py.
+# Runs through the same bounded owned-child tool path; never destroys the window.
+CLOSE_HOST = r'''
+import ctypes as c
+import sys
+assert len(sys.argv) == 2
+raw = sys.argv[1]
+assert raw.isascii() and raw.isdecimal() and 1 <= len(raw) <= 20
+window = int(raw)
+assert 0 < window < 2**64 and str(window) == raw
+x11 = c.CDLL('libX11.so.6')
+x11.XOpenDisplay.argtypes = [c.c_char_p]
+x11.XOpenDisplay.restype = c.c_void_p
+x11.XInternAtom.argtypes = [c.c_void_p, c.c_char_p, c.c_int]
+x11.XInternAtom.restype = c.c_ulong
+class ClientMessage(c.Structure):
+    _fields_ = [('type', c.c_int), ('serial', c.c_ulong), ('send_event', c.c_int),
+               ('display', c.c_void_p), ('window', c.c_ulong),
+               ('message_type', c.c_ulong), ('format', c.c_int),
+               ('data', c.c_long * 5)]
+class Event(c.Union):
+    _fields_ = [('client', ClientMessage), ('pad', c.c_long * 24)]
+x11.XSendEvent.argtypes = [c.c_void_p, c.c_ulong, c.c_int, c.c_long, c.POINTER(Event)]
+x11.XSendEvent.restype = c.c_int
+x11.XFlush.argtypes = [c.c_void_p]
+x11.XCloseDisplay.argtypes = [c.c_void_p]
+display = x11.XOpenDisplay(None)
+assert display
+try:
+    event = Event()
+    event.client = ClientMessage(33, 0, 1, display, window,
+        x11.XInternAtom(display, b'WM_PROTOCOLS', 0), 32,
+        (c.c_long * 5)(x11.XInternAtom(display, b'WM_DELETE_WINDOW', 0), 0, 0, 0, 0))
+    assert x11.XSendEvent(display, window, 0, 0, c.byref(event)) != 0
+    x11.XFlush(display)
+finally:
+    x11.XCloseDisplay(display)
+'''
+
 
 class Refused(Exception):
     pass
@@ -443,9 +482,10 @@ class Runner:
         matches = re.findall(rb'^HOST_READY pid=([0-9]+) trusted_parent=[0-9]+ host_xid=([0-9]+)$', data, re.M)
         check(len(matches) == 1 and int(matches[0][0]) == host.process.pid, 'cleanup_failed')
         xid = matches[0][1].decode()
+        check(1 <= len(xid) <= 20 and not xid.startswith('0') and int(xid) < 2**64, 'cleanup_failed')
         code, pid = self.tool(['/usr/bin/xdotool', 'getwindowpid', xid])
         check(code == 0 and pid.strip() == str(host.process.pid).encode(), 'cleanup_failed')
-        code, _ = self.tool(['/usr/bin/xdotool', 'windowclose', xid])
+        code, _ = self.tool(['/usr/bin/python3', '-I', '-c', CLOSE_HOST, xid])
         check(code == 0, 'cleanup_failed')
 
     def case(self, case):

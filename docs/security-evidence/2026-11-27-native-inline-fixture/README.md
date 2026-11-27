@@ -278,3 +278,34 @@ WebKit, rendering, policy or window-manager behavior.
 
 [Bounded annotation receipt](native-profile-45940249067.json). Existing Ubuntu
 namespace failures remain failed. No isolation setting or deadline was relaxed.
+
+## Test-driver close protocol correction
+
+The session used `xdotool windowclose`, whose
+[pinned upstream implementation](https://github.com/jordansissel/xdotool/blob/v3.20160805.1/xdo.c#L1838-L1841)
+uses `XDestroyWindow`. The fixed host exits its GTK loop in its delete-event
+handler; server-side window destruction bypasses that close-request protocol.
+This is a concrete source mismatch, not proof that it caused every previous
+cleanup failure. The driver now sends `WM_PROTOCOLS` / `WM_DELETE_WINDOW` to
+the host PID/XID-verified owned window, using the existing bounded tool path.
+There is no destroy fallback, relaxed exit check or changed cleanup deadline.
+
+Thirty-eight session controls pass, including execution of the fixed client
+message against a mocked Xlib boundary, a destructive negative control and
+foreign/noncanonical window refusal. These are protocol/source controls, not
+real X11/GTK or native shutdown evidence. A fresh guest run remains required.
+
+## Readiness failure diagnostic
+
+A failed ready-phase observation can now export the last already-read STATE
+property as a fixed category: missing/empty, native bridge only, bootstrap
+pending, initial/noninitial React, known fixed error category or invalid data.
+It performs no additional native property read, JavaScript evaluation or wait.
+The existing strict title validator and failure behavior are preserved.
+The host accepts this optional category only for the failed ready phase and
+revalidates the exact frozen observer hash. Raw titles, field contents and
+exception text are never exported. Missing/invalid diagnostics are omitted;
+they cannot change case status, cleanup authority or the original deadline.
+
+This is a discriminating probe for the next fresh guest run. It does not establish
+why run45940249067 lacked React readiness, or claim that rendering is repaired.

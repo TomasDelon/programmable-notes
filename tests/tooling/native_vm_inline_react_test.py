@@ -20,6 +20,36 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts/native-vm-inline-react.p
 
 
 class Driver(unittest.TestCase):
+    def test_readiness_enum_is_failed_ready_only_and_frozen_source_bound(self):
+        source = b"def own():\n    pass\n"
+        path = self.repo / self.driver.PAYLOAD["observer.py"][0]
+        path.write_bytes(source)
+        result = self.summary(False)
+        result["cases"]["stop"].update(phase="ready", reason="readiness_deadline")
+        event = {"event": "readiness_state", "elapsed": 44, "phase": "ready", "state": "bootstrap_pending"}
+        details = self.driver._readiness_states({"stop-events.jsonl": (json.dumps(event) + "\n").encode()}, result["cases"], source)
+        self.assertEqual(details, {"stop": {"phase": "ready", "state": "bootstrap_pending"}})
+        result.update(readiness_states=details, payload={"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}})
+        text = " ".join(self.driver._summary_notices(result))
+        self.assertIn("case=stop readiness_phase=ready readiness_state=bootstrap_pending", text)
+        path.write_bytes(b"def changed():\n    pass\n")
+        self.assertNotIn("readiness_state=", " ".join(self.driver._summary_notices(result)))
+
+    def test_unsafe_or_misplaced_readiness_omits_diagnostic_without_changing_failure(self):
+        source = b"def own():\n    pass\n"
+        (self.repo / self.driver.PAYLOAD["observer.py"][0]).write_bytes(source)
+        result = self.summary(False)
+        result["cases"]["stop"].update(phase="ready", reason="readiness_deadline")
+        result["payload"] = {"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}}
+        for value in (None, {"expiry": {"phase": "ready", "state": "native_only"}},
+                      {"stop": {"phase": "ready", "state": "PRIVATE%0A::error"}},
+                      {"stop": {"phase": "ready", "state": "native_only", "title": "PRIVATE"}}):
+            result["readiness_states"] = value
+            with patch.object(self.driver.transport, "_smoke", return_value=result), redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
+            self.assertNotIn("readiness_state=", output.getvalue())
+            self.assertNotIn("PRIVATE", output.getvalue())
+            self.assertIn("reason=readiness_deadline", output.getvalue())
     @classmethod
     def setUpClass(cls):
         spec = importlib.util.spec_from_file_location("inline_driver_test", SCRIPT)

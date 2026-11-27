@@ -38,6 +38,22 @@ class Clock:
 
 
 class Titles(unittest.TestCase):
+    def test_last_state_has_only_fixed_categories_and_known_errors_still_refuse(self):
+        cases = [(None, "missing"), (b"", "empty"), (b'{"bridge":"native-before-webkit"}', "native_only"),
+                 (title(ready=False), "bootstrap_pending"), (title(), "react_ready"),
+                 (title(count=2), "react_noninitial"), (b"PRIVATE_INVALID_TITLE", "invalid"),
+                 (b"x" * 257, "invalid"), (title(field="x" * 17), "invalid")]
+        for raw, expected in cases:
+            self.assertEqual(observer.title_state(raw), expected)
+        for error in observer.ERRORS - {""}:
+            self.assertEqual(observer.title_state(title(error=error)), error.replace("-", "_"))
+            with self.assertRaises(observer.Refused) as failure: observer.decode_title(title(error=error))
+            self.assertEqual(failure.exception.reason, "fixture_error")
+        overflow = b'{"fixture":"inline-react-v1","ready":false,"error":"receipt-overflow"}'
+        self.assertEqual(observer.title_state(overflow), "receipt_overflow")
+        with self.assertRaises(observer.Refused) as failure: observer.decode_title(overflow)
+        self.assertEqual(failure.exception.reason, "fixture_error")
+        self.assertEqual(observer.title_state(overflow.replace(b"false", b"0")), "invalid")
     def test_exact_bridge_and_initial_or_ready_receipt(self):
         self.assertEqual(observer.decode_title(b'{"bridge":"native-before-webkit"}'), "bridge")
         self.assertEqual(observer.decode_title(title())["count"], 0)
@@ -81,6 +97,7 @@ class Titles(unittest.TestCase):
         x = object.__new__(observer.X11)
         x.x, x.display, x.atom, x.bridge_atom, x.utf8, x.unexpected = Library(), 1, 3, 4, 2, False
         self.assertTrue(x.state(20)["ready"])
+        self.assertEqual(x.last_state, "react_ready")
         self.assertTrue(x.bridge(20))
         self.assertTrue(x.state(20)["ready"])
 
@@ -308,13 +325,19 @@ class FakeBackend:
         self.stopped, self.calls, self.target_calls = False, [], 0
         self.focus_ok, self.ready, self.bridge_ok, self.cause_ok = True, True, True, True
         self.state_value = json.loads(title())
+        self.reads = []
+        self.last_readiness = "not_observed"
     def host(self): return {"unit": UNIT, "host_pid": 42, "host_xid": 100, "socket": 200}
     def target(self, unit):
         self.target_calls += 1
         return {"unit": unit, "pid": 43, "start_identity": "7", "group": GROUP, "root": Path("/synthetic-group"), "start": 100., "policy": {}, "host_net": "net:[1]", "child_net": "net:[2]"}
     def host_live(self, host): pass
     def bridge(self, host): return 300 if self.bridge_ok else None
-    def state(self, child): return {**self.state_value, "ready": self.ready}
+    def state(self, child):
+        self.reads.append(self.clock.now)
+        self.last_readiness = "bootstrap_pending" if not self.ready else "react_ready"
+        return {**self.state_value, "ready": self.ready}
+    def readiness_state(self): return self.last_readiness
     def gui(self, *args, deadline):
         self.calls.append(args)
         self.clock.now += .01
@@ -328,6 +351,25 @@ class FakeBackend:
 
 
 class Flow(unittest.TestCase):
+    def test_readiness_diagnostic_is_one_cached_enum_without_new_read_or_deadline_change(self):
+        result, backend, evidence, clock = self.run_case("stop", lambda backend: setattr(backend, "ready", False))
+        self.assertEqual(result["phase"], "ready")
+        self.assertEqual(result["reason"], "readiness_deadline")
+        self.assertEqual(result["termination"], "passed")
+        self.assertEqual(result["host_input"], "passed")
+        values = [value for kind, value in evidence.events if kind == "readiness_state"]
+        self.assertEqual(values, [{"phase": "ready", "state": "bootstrap_pending"}])
+        self.assertTrue(backend.reads)
+        self.assertLess(max(backend.reads), 144)
+        self.assertLess(clock.now, 155)
+
+    def test_optional_diagnostic_failure_cannot_mask_original_failure(self):
+        def adjust(backend):
+            backend.ready = False
+            backend.readiness_state = lambda: (_ for _ in ()).throw(ValueError("PRIVATE"))
+        result, _, evidence, _ = self.run_case("stop", adjust)
+        self.assertEqual(result["reason"], "readiness_deadline")
+        self.assertFalse(any(kind == "readiness_state" for kind, _ in evidence.events))
     def run_case(self, case, adjust=lambda _backend: None, zombie=False):
         clock, evidence = Clock(), FakeEvidence()
         backend = FakeBackend(clock, evidence, case)

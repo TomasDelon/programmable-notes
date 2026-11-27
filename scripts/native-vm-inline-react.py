@@ -503,6 +503,17 @@ def _observer_exceptions(collected, cases, source):
     return result
 
 
+def _readiness_states(collected, cases, source):
+    try:
+        value = cases.get("stop")
+        if value is None or value["status"] != "failed" or value["phase"] != "ready":
+            return {}
+        detail = _diagnostic_module().extract_readiness_state(collected.get("stop-events.jsonl", b""), source, "ready")
+        return {"stop": detail} if detail is not None else {}
+    except Exception:
+        return {}  # Optional diagnosis never changes admission or the outcome.
+
+
 def _run_admitted(root_path, witnesses, guard_process, prepared):
     # This private entry is called only by the sealed smoke branch after all OS
     # and pin/key controls. Every new connection rechecks host identity witnesses.
@@ -574,6 +585,9 @@ def _run_admitted(root_path, witnesses, guard_process, prepared):
         exceptions = _observer_exceptions(collected, cases, prepared.files["observer.py"])
         if exceptions:
             result["observer_exceptions"] = exceptions
+        readiness = _readiness_states(collected, cases, prepared.files["observer.py"])
+        if readiness:
+            result["readiness_states"] = readiness
         return result
     except transport.CleanupFailed:
         raise CleanupFailed() from None
@@ -606,6 +620,23 @@ def _observer_exception_notices(result, cases, prefix):
         return notices
     except Exception:
         return []  # Changed/missing source or invalid details omit only diagnosis.
+
+
+def _readiness_state_notices(result, cases, prefix):
+    try:
+        values = result.get("readiness_states")
+        if type(values) is not dict or set(values) != {"stop"} or cases["stop"]["status"] != "failed" or cases["stop"]["phase"] != "ready":
+            return []
+        expected = result["payload"]["files"]["observer.py"]["sha256"]
+        source = _capture(REPOSITORY / PAYLOAD["observer.py"][0], PAYLOAD["observer.py"][1])
+        if type(expected) is not str or _digest(source) != expected:
+            return []
+        detail = _diagnostic_module().validate_readiness_state(values["stop"], source, "ready")
+        if detail is None:
+            return []
+        return [prefix + "case=stop readiness_phase=ready readiness_state=" + detail["state"]]
+    except Exception:
+        return []  # No raw title, field or script/error string is ever printed.
 
 
 def _summary_notices(result):
@@ -648,6 +679,7 @@ def _summary_notices(result):
         fields.extend(("host_stage=" + diagnostic["host_stage"], "start_failure=" + diagnostic["start_failure"]))
         notices.append(prefix + " ".join(fields))
     notices.extend(_observer_exception_notices(result, cases, prefix))
+    notices.extend(_readiness_state_notices(result, cases, prefix))
     return notices
 
 

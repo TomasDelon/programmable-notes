@@ -1,5 +1,6 @@
 """Session controls only: no display, GTK host, system manager, SSH or VM runs."""
 import hashlib
+import ctypes
 import importlib.util
 import json
 import os
@@ -492,6 +493,92 @@ class SessionControls(unittest.TestCase):
             self.assertTrue(all(child.poll() is not None for child in children))
             with self.assertRaisesRegex(session.Refused, '^cleanup_failed$'):
                 runner.close()
+
+    def close_protocol(self, program):
+        # Model GTK's delete handler at the Xlib seam: server destruction is distinct.
+        library = Mock()
+        state = {'delete_requests': 0, 'destroy_requests': 0}
+        library.XOpenDisplay.return_value = 42
+        library.XInternAtom.side_effect = lambda _display, name, _exists: {
+            b'WM_PROTOCOLS': 11, b'WM_DELETE_WINDOW': 12}[name]
+        def send(display, window, propagate, mask, pointer):
+            message = pointer._obj.client
+            self.assertEqual((display, window, propagate, mask), (42, 200, 0, 0))
+            self.assertEqual((message.type, message.send_event, message.display,
+                              message.window, message.message_type, message.format),
+                             (33, 1, 42, 200, 11, 32))
+            self.assertEqual(list(message.data), [12, 0, 0, 0, 0])
+            state['delete_requests'] += 1
+            return 1
+        library.XSendEvent.side_effect = send
+        def destroy(*_args):
+            state['destroy_requests'] += 1
+            return 1
+        library.XDestroyWindow.side_effect = destroy
+        with patch.object(ctypes, 'CDLL', return_value=library), patch.object(sys, 'argv', ['-c', '200']):
+            exec(compile(program, '<fixed-close-control>', 'exec'), {})
+        library.XCloseDisplay.assert_called_once_with(42)
+        return state
+
+    def test_close_host_executes_wm_delete_protocol_for_pid_verified_window(self):
+        log = self.root / 'host.log'
+        log.write_bytes(b'HOST_READY pid=1234 trusted_parent=100 host_xid=200\n')
+        log.chmod(0o600)
+        runner = self.runner()
+        host = Mock()
+        host.process.pid = 1234
+        seen = []
+        def tool(argv):
+            seen.append(argv)
+            if len(seen) == 1:
+                self.assertEqual(argv, ['/usr/bin/xdotool', 'getwindowpid', '200'])
+                return 0, b'1234\n'
+            self.assertEqual(argv, ['/usr/bin/python3', '-I', '-c', session.CLOSE_HOST, '200'])
+            self.assertEqual(self.close_protocol(argv[3]), {'delete_requests': 1, 'destroy_requests': 0})
+            return 0, b''
+        with patch.object(runner, 'tool', side_effect=tool):
+            runner.close_host(host, log)
+        self.assertEqual(len(seen), 2)
+
+    def test_destroy_window_negative_control_does_not_invoke_delete_handler(self):
+        original = 'assert x11.XSendEvent(display, window, 0, 0, c.byref(event)) != 0'
+        self.assertEqual(session.CLOSE_HOST.count(original), 1)
+        destructive = session.CLOSE_HOST.replace(original, 'x11.XDestroyWindow(display, window)')
+        state = self.close_protocol(destructive)
+        self.assertEqual(state, {'delete_requests': 0, 'destroy_requests': 1})
+        with self.assertRaises(AssertionError):
+            self.assertEqual(state['delete_requests'], 1)
+
+    def test_foreign_window_pid_never_gets_close_protocol(self):
+        log = self.root / 'host.log'
+        log.write_bytes(b'HOST_READY pid=1234 trusted_parent=100 host_xid=200\n')
+        log.chmod(0o600)
+        runner = self.runner()
+        host = Mock()
+        host.process.pid = 1234
+        with patch.object(runner, 'tool', return_value=(0, b'999\n')) as tool:
+            with self.assertRaisesRegex(session.Refused, '^cleanup_failed$'):
+                runner.close_host(host, log)
+        tool.assert_called_once_with(['/usr/bin/xdotool', 'getwindowpid', '200'])
+
+    def test_fixed_close_rejects_invalid_xid_before_opening_display(self):
+        for xid in ('0', '-1', '0200', '200 extra', str(2**64)):
+            with patch.object(ctypes, 'CDLL') as library, patch.object(sys, 'argv', ['-c', xid]):
+                with self.assertRaises((AssertionError, ValueError)):
+                    exec(compile(session.CLOSE_HOST, '<fixed-close-control>', 'exec'), {})
+            library.assert_not_called()
+
+    def test_noncanonical_xid_cannot_target_different_xdotool_and_xlib_windows(self):
+        log = self.root / 'host.log'
+        log.write_bytes(b'HOST_READY pid=1234 trusted_parent=100 host_xid=0200\n')
+        log.chmod(0o600)
+        host = Mock()
+        host.process.pid = 1234
+        runner = self.runner()
+        with patch.object(runner, 'tool') as tool:
+            with self.assertRaisesRegex(session.Refused, '^cleanup_failed$'):
+                runner.close_host(host, log)
+        tool.assert_not_called()
 
 
 if __name__ == '__main__':

@@ -33,6 +33,9 @@ RESULT_FIELDS = frozenset(("version", "profile", "case", "scope", "native_app_te
 UNIT = re.compile(r"programmable-notes-preview-[1-9][0-9]{0,9}-[0-9]{1,30}\.service\Z")
 GROUP_PREFIX = "/user.slice/user-1001.slice/user@1001.service/"
 ERRORS = frozenset(("", "runtime-error", "react-error", "unhandled-rejection", "receipt-overflow"))
+READINESS_STATES = frozenset(("not_observed", "missing", "empty", "native_only", "bootstrap_pending",
+                              "react_ready", "react_noninitial", "runtime_error", "react_error",
+                              "unhandled_rejection", "receipt_overflow", "invalid"))
 FLAGS = os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
 RACED_PROCESS = (errno.ENOENT, errno.ESRCH)
 TRANSIENT_GROUP = (errno.ENOENT, errno.ENODEV, errno.ESRCH)
@@ -56,7 +59,7 @@ def _pairs(items):
     return result
 
 
-def decode_title(raw):
+def _validated_title(raw):
     if type(raw) is not bytes or not 0 < len(raw) <= 256:
         raise Refused("fixture_error")
     try:
@@ -65,6 +68,8 @@ def decode_title(raw):
         raise Refused("fixture_error") from None
     if value == {"bridge": "native-before-webkit"}:
         return "bridge"
+    if value == {"fixture": "inline-react-v1", "ready": False, "error": "receipt-overflow"} and type(value["ready"]) is bool:
+        return value  # Fixed compiler overflow diagnostic; never a readiness receipt.
     if (type(value) is not dict or set(value) != {"fixture", "ready", "count", "field", "focus", "error"}
             or value["fixture"] != "inline-react-v1" or type(value["ready"]) is not bool
             or type(value["count"]) is not int or not 0 <= value["count"] <= 999
@@ -72,9 +77,44 @@ def decode_title(raw):
             or type(value["focus"]) is not str or value["focus"] not in ("", "counter", "field")
             or type(value["error"]) is not str or value["error"] not in ERRORS):
         raise Refused("fixture_error")
-    if value["error"]:
+    return value
+
+
+def decode_title(raw):
+    value = _validated_title(raw)
+    if type(value) is dict and value["error"]:
         raise Refused("fixture_error")
     return value
+
+
+def title_state(raw):
+    """Lossy fixed enum only; diagnostics never make a title acceptable."""
+    if raw is None:
+        return "missing"
+    if raw == b"":
+        return "empty"
+    try:
+        value = _validated_title(raw)
+    except Exception:
+        return "invalid"
+    if value == "bridge":
+        return "native_only"
+    if value["error"]:
+        return value["error"].replace("-", "_")
+    if not value["ready"]:
+        return "bootstrap_pending"
+    return "react_ready" if value["count"] == 0 and value["field"] == "" else "react_noninitial"
+
+
+def readiness_event(evidence, backend, phase):
+    if phase != "ready":
+        return
+    try:
+        state = backend.readiness_state()  # Cached enum: no additional native read.
+        if type(state) is str and state in READINESS_STATES:
+            evidence.event("readiness_state", phase="ready", state=state)
+    except Exception:
+        pass  # Optional diagnosis cannot replace the original failed witness.
 
 
 def _open_directory(path):
@@ -460,6 +500,7 @@ class RendererPolicy:
 
 class X11:
     def __init__(self):
+        self.last_state = "not_observed"
         self.x = ctypes.CDLL("libX11.so.6")
         ulong, uint, integer, pointer = ctypes.c_ulong, ctypes.c_uint, ctypes.c_int, ctypes.c_void_p
         self.x.XOpenDisplay.argtypes, self.x.XOpenDisplay.restype = [ctypes.c_char_p], pointer
@@ -507,6 +548,8 @@ class X11:
                 raise Refused("observer_error")
             if status != 0 or actual.value == 0:
                 return None
+            if atom == self.atom and actual.value == self.utf8 and fmt.value == 8 and not remaining.value and count.value == 0:
+                self.last_state = "empty"
             if actual.value != self.utf8 or fmt.value != 8 or remaining.value or not 0 < count.value <= 256 or not value:
                 raise Refused("fixture_error")
             return ctypes.string_at(value, count.value)
@@ -515,7 +558,9 @@ class X11:
                 self.x.XFree(value)
 
     def state(self, window):
+        self.last_state = "invalid"
         raw = self._property(window, self.atom)
+        self.last_state = title_state(raw)
         return decode_title(raw) if raw is not None else None
 
     def bridge(self, window):
@@ -574,6 +619,9 @@ class Backend:
 
     def state(self, child):
         return self.x.state(child)
+
+    def readiness_state(self):
+        return self.x.last_state
 
     def gui(self, *args, deadline):
         _command(["/usr/bin/xdotool", *map(str, args)], min(self.absolute, deadline, time.monotonic() + 2))
@@ -652,9 +700,11 @@ def run(case, evidence, backend, absolute):
             result["keyboard"] = "passed"
             evidence.event("keyboard_ack", field="hello", focus="field")
     except Refused as error:
+        readiness_event(evidence, backend, result["phase"])
         exception_event(evidence, result["phase"], error)
         failure = (result["phase"], error.reason)
     except Exception as error:
+        readiness_event(evidence, backend, result["phase"])
         exception_event(evidence, result["phase"], error)
         failure = (result["phase"], "observer_error")
     if target is not None:

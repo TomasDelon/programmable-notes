@@ -40,6 +40,18 @@ def wire(*rows):
 
 
 class Diagnostics(unittest.TestCase):
+    def test_readiness_state_is_fixed_enum_and_only_for_ready_failure(self):
+        for state in diagnostics.READINESS_STATES:
+            row = {"event": "readiness_state", "elapsed": 44, "phase": "ready", "state": state}
+            self.assertEqual(diagnostics.extract_readiness_state(wire(row), SOURCE, "ready"), {"phase": "ready", "state": state})
+            self.assertIsNone(diagnostics.extract_readiness_state(wire(row), SOURCE, "keyboard"))
+        base = {"event": "readiness_state", "elapsed": 44, "phase": "ready", "state": "native_only"}
+        for changes in ({"state": "PRIVATE%0A::error"}, {"title": "PRIVATE"}, {"phase": "host"}, {"elapsed": True}, {"elapsed": float("nan")}):
+            self.assertIsNone(diagnostics.extract_readiness_state(wire({**base, **changes}), SOURCE, "ready"))
+        self.assertIsNone(diagnostics.extract_readiness_state(wire(base) + b"{broken\n", SOURCE, "ready"))
+        self.assertIsNone(diagnostics.extract_readiness_state(wire({**base, "state": "PRIVATE"}, base), SOURCE, "ready"))
+        self.assertIsNone(diagnostics.validate_readiness_state({"phase": "ready", "state": "native_only", "title": "PRIVATE"}, SOURCE, "ready"))
+        self.assertIsNone(diagnostics.validate_readiness_state({"phase": "ready", "state": "native_only"}, b"invalid syntax (", "ready"))
     def extract(self, raw=None, source=SOURCE, phase="host"):
         return diagnostics.extract_observer_exception(wire(event()) if raw is None else raw, source, phase)
 

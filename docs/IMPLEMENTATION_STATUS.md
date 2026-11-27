@@ -35,7 +35,28 @@ that omitting the filter exposes unrelated sources. Four targeted controls and
 independent review passed. The complete local check exited0:808 unit,133
 tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus
 formatting/lint/types/production build. History/archive and staged patch scans
-found zero findings. Actual hosted execution remains pending.
+found zero findings. Actual hosted execution remains pending. Required run45942471204 has passed
+both source-selection and dependency-installation stages; full jobs are still
+running.
+
+## Native diagnostic correction — local checks complete
+
+The fixed guest session now sends the desktop `WM_DELETE_WINDOW` protocol to
+its PID/XID-verified owned host instead of destroying the window. Source review
+confirmed that destruction bypassed the GTK close handler; its actual effect
+on past failed runs remains unproven. Thirty-eight session controls include a
+destructive negative control and foreign/noncanonical-window refusal.
+
+A failed React-ready observation now retains only a bounded category from the
+last already-read title state, bound to the frozen observer source hash. It
+adds no read, evaluation, wait or authority. Independent observer/helper/driver
+controls passed31/14/21. Core acceptance, cleanup and isolation remain unchanged.
+
+The complete frozen-functional-input check exited0:808 unit,133 tooling/zero
+skips,153 Chromium,9 Pages and4 local cloud-storage cases, plus formatting,
+lint, types and production build. Documentation corrections were formatted
+separately. Neither correction has yet run in a fresh guest; all earlier
+failures remain failed. The native product itself remains unaccepted.
 
 ## Captured-vault directory creation and sealed validation profile
 

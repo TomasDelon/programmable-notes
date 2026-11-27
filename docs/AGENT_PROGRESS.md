@@ -2647,3 +2647,17 @@ failed. Dated bounded evidence preserves this failure. A concrete test-driver
 shutdown defect was identified independently: XDestroyWindow bypasses the GTK
 delete-event handler. Its separate correction and discriminating readiness
 diagnostic are prepared, not yet native-verified. No product installer accepted.
+
+### Native shutdown correction and readiness probe
+
+Source-reviewed WM_DELETE_WINDOW correction and advisory cached readiness
+category are complete locally. Independent controls passed38session,31observer,
+14helper,21driver. Full check exited0 with808 unit,133 tooling/zero skips,
+153 Chromium,9 Pages,4 local cloud-storage cases; format/lint/types/build pass.
+Functional input hashes stayed fixed; only separately reviewed/formatted README
+changed during the run. Native execution remains pending. No deadline, resource
+limit, cleanup or title acceptance was relaxed. Historical failure evidence stays.
+
+README/Linux guide now accurately mark the rejected legacy installer, existing
+notice-bearing artifact and explicit demo-dispatch condition. Independent
+contract/workflow review cleared those documentation corrections.

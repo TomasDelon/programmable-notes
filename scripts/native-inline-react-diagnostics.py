@@ -16,6 +16,9 @@ PHASES = frozenset(("admission", "host", "bridge", "ready", "pointer", "focus", 
                     "stop", "cleanup", "host_input", "expiry", "complete"))
 ERROR_TYPES = frozenset(("OSError", "PermissionError", "FileNotFoundError", "ProcessLookupError",
                          "ValueError", "TypeError", "RuntimeError", "TimeoutExpired", "Refused", "Exception"))
+READINESS_STATES = frozenset(("not_observed", "missing", "empty", "native_only", "bootstrap_pending",
+                              "react_ready", "react_noninitial", "runtime_error", "react_error",
+                              "unhandled_rejection", "receipt_overflow", "invalid"))
 EXCEPTION_FIELDS = frozenset(("phase", "error_type", "errno", "frames"))
 EVENT_FIELDS = EXCEPTION_FIELDS | {"event", "elapsed"}
 SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
@@ -119,6 +122,47 @@ def extract_observer_exception(events, observer_source, failed_phase):
                     or not 0 <= value["elapsed"] <= 190):
                 return None
             selected = _validated({key: value[key] for key in EXCEPTION_FIELDS}, allowed, failed_phase)
+            if selected is None:
+                return None
+        return selected
+    except Exception:
+        return None
+
+
+def validate_readiness_state(value, observer_source, failed_phase):
+    try:
+        if (failed_phase != "ready" or type(failed_phase) is not str or _source_frames(observer_source) is None
+                or type(value) is not dict or set(value) != {"phase", "state"}
+                or type(value["phase"]) is not str or value["phase"] != "ready"
+                or type(value["state"]) is not str or value["state"] not in READINESS_STATES):
+            return None
+        return {"phase": "ready", "state": value["state"]}
+    except Exception:
+        return None
+
+
+def extract_readiness_state(events, observer_source, failed_phase):
+    try:
+        if (type(events) is not bytes or not 0 < len(events) <= EVENT_LIMIT or not events.endswith(b"\n")
+                or type(failed_phase) is not str or failed_phase != "ready" or _source_frames(observer_source) is None):
+            return None
+        rows = events.splitlines()
+        if len(rows) > 4096:
+            return None
+        selected = None
+        for raw in rows:
+            if not 0 < len(raw) <= ROW_LIMIT:
+                return None
+            value = json.loads(raw.decode("utf8"), object_pairs_hook=_pairs, parse_constant=_constant)
+            if type(value) is not dict:
+                return None
+            if selected is not None or value.get("event") != "readiness_state":
+                continue
+            if (set(value) != {"event", "elapsed", "phase", "state"}
+                    or type(value["event"]) is not str or type(value["elapsed"]) not in (int, float)
+                    or not math.isfinite(value["elapsed"]) or not 0 <= value["elapsed"] <= 190):
+                return None
+            selected = validate_readiness_state({"phase": value["phase"], "state": value["state"]}, observer_source, failed_phase)
             if selected is None:
                 return None
         return selected

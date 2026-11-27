@@ -1,12 +1,18 @@
 # Linux desktop testing package
 
+Historical implementation testing guide: the owner rejected the separate native
+interface in version0.1.2. These procedures reproduce that implementation; they
+do not install an accepted replacement. Read the [current product contract](PRODUCT_CONTRACT.md)
+and [implementation status](IMPLEMENTATION_STATUS.md) first. Preserve personal
+notes and recovery data; run acceptance procedures only in disposable profiles.
+
 Build with Node from `.nvmrc`, Rust stable and the native development packages listed in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). No test feature is included:
 
 ```sh
 npm ci
 npm run native:package
-node scripts/verify-linux-package.mjs 'src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb'
-sudo apt install './src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb'
+node scripts/verify-linux-package.mjs 'src-tauri/target/release/bundle/deb/Programmable Notes_0.1.2_amd64.deb'
+sudo apt install './src-tauri/target/release/bundle/deb/Programmable Notes_0.1.2_amd64.deb'
 programmable-notes
 ```
 
@@ -55,7 +61,9 @@ Use the installed .deb in a disposable Ubuntu desktop profile with a working use
 NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-acceptance.mjs
 ```
 
-The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is available as `playable-editor-demo` under Artifacts on successful PR workflow runs.
+The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is generated only by an explicit workflow dispatch with
+`review_artifacts=true`; after that run succeeds, download `playable-editor-demo`
+from its Artifacts section. Ordinary PR runs do not produce this demo.
 
 ## Automatic recovery after process death
 
