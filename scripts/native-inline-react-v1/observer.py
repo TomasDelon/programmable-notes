@@ -106,13 +106,14 @@ def title_state(raw):
     return "react_ready" if value["count"] == 0 and value["field"] == "" else "react_noninitial"
 
 
-NATIVE_FLAGS = ("built", "committed", "finished", "navigation_denied", "load_failed")
+NATIVE_FLAGS = ("built", "guards_installed", "publication_requested", "publication_returned",
+                "provisional_started", "committed", "finished", "navigation_denied", "load_failed")
 NATIVE_TERMINATIONS = frozenset(("none", "crashed", "memory_limit", "api_terminated", "unknown"))
 
 
 def _native_value(value):
     if (type(value) is not dict or set(value) != {"version", *NATIVE_FLAGS, "termination"}
-            or type(value["version"]) is not int or value["version"] != 1
+            or type(value["version"]) is not int or value["version"] != 2
             or any(type(value[key]) is not bool for key in NATIVE_FLAGS)
             or type(value["termination"]) is not str or value["termination"] not in NATIVE_TERMINATIONS):
         return None

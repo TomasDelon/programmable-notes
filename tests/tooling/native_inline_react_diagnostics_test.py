@@ -64,7 +64,7 @@ class Diagnostics(unittest.TestCase):
             self.assertIsNone(diagnostics.extract_keyboard_attempt(raw, SOURCE, "keyboard"))
 
     def test_native_snapshot_is_exact_detached_and_category_gated(self):
-        value = {"version": 1, **{key: False for key in diagnostics.NATIVE_FLAGS}, "termination": "none"}
+        value = {"version": 2, "guards_installed": False, "publication_requested": False, "publication_returned": False, "provisional_started": False, **{key: False for key in diagnostics.NATIVE_FLAGS}, "termination": "none"}
         row = {"event": "native_snapshot", "elapsed": 44.1, "phase": "ready", "snapshot": value}
         extract = lambda raw=wire(row), phase="ready", state="native_only": diagnostics.extract_native_snapshot(raw, SOURCE, phase, state)
         self.assertEqual(extract(), value)
@@ -73,9 +73,15 @@ class Diagnostics(unittest.TestCase):
         for state in ("react_ready", "bootstrap_pending", "PRIVATE"):
             self.assertIsNone(extract(state=state))
         self.assertIsNone(extract(phase="stop"))
-        for changes in ({"version": True}, {"built": 1}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
+        for changes in ({"version": True}, {"version": 1}, {"built": 1}, {"guards_installed": 1},
+                        {"publication_requested": "true"}, {"publication_returned": None},
+                        {"provisional_started": []}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
             bad = {**row, "snapshot": {**value, **changes}}
             self.assertIsNone(extract(wire(bad, row)))
+        for missing in value:
+            self.assertIsNone(extract(wire({**row, "snapshot": {key: detail for key, detail in value.items() if key != missing}})))
+        legacy = {key: detail for key, detail in value.items() if key not in {"guards_installed", "publication_requested", "publication_returned", "provisional_started"}}
+        self.assertIsNone(extract(wire({**row, "snapshot": {**legacy, "version": 1}})))
         for bad in (wire({**row, "message": "PRIVATE"}), wire({**row, "elapsed": float("nan")}),
                     wire(row) + b"{broken\n", wire(row)[:-1], wire({**row, "snapshot": []})):
             self.assertIsNone(extract(bad))

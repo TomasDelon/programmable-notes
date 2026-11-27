@@ -33,7 +33,7 @@ function assertEarlyObservation(source) {
     callback[0],
     /println!|eprintln!|format!|load_html|\.eval\(/,
   );
-  assert.doesNotMatch(source, /\.connect_load_changed\(/);
+  assert.equal([...source.matchAll(/\.connect_load_changed\(/g)].length, 1);
 
   // This checks source wiring, not execution of native WebKit authority signals.
   // Both setup and publication must belong to the native one-shot admission.
@@ -47,6 +47,42 @@ function assertEarlyObservation(source) {
   assert.match(setup, /preview_browser_guards::install\(&webkit\)\?;/);
   assert.match(setup, /webkit\.connect_load_failed\(/);
   assert.match(setup, /webkit\.connect_web_process_terminated\(/);
+  const provisional =
+    /webkit\.connect_load_changed\(move \|_, event\| \{([\s\S]*?)\n {12}\}\);/.exec(
+      setup,
+    );
+  assert.ok(
+    provisional,
+    'Actual GTK provisional observation must precede publication',
+  );
+  assert.match(provisional[1], /if event == LoadEvent::Started/);
+  assert.match(
+    provisional[1],
+    /native_provisional\(Some\(NativeEvent::ProvisionalStarted\)\)/,
+  );
+  assert.doesNotMatch(provisional[1], /load_html|\.eval\(|Committed|Finished/);
+  const guardsInstalled = 'native_update(Some(NativeEvent::GuardsInstalled));';
+  const installedAt = setup.indexOf(guardsInstalled);
+  for (const pattern of [
+    /preview_browser_guards::install\(&webkit\)\?;/,
+    /context\.connect_download_started\(\|_, download\| download.cancel\(\)\);/,
+    /webkit\.connect_load_failed\([\s\S]*?\n {12}\}\);/,
+    /webkit\.connect_web_process_terminated\([\s\S]*?\n {12}\}\);/,
+    /webkit\.connect_load_changed\([\s\S]*?\n {12}\}\);/,
+  ]) {
+    const hook = pattern.exec(setup);
+    assert.ok(hook && installedAt > hook.index + hook[0].length);
+  }
+  const requested = 'native_update(Some(NativeEvent::PublicationRequested));';
+  const returned = 'native_update(Some(NativeEvent::PublicationReturned));';
+  const loadAt = publication.indexOf('_view.load_html(FIXTURE)?;');
+  assert.ok(
+    publication.indexOf(requested) >= 0 &&
+      publication.indexOf(requested) < loadAt,
+  );
+  assert.ok(publication.indexOf(returned) > loadAt);
+  for (const marker of [guardsInstalled, requested, returned])
+    assert.equal(source.split(marker).length - 1, 1);
   assert.doesNotMatch(setup, /\.load_html\(|\.eval\(/);
   assert.match(publication, /_view\.load_html\(FIXTURE\)\?;/);
   assert.equal([...source.matchAll(/\.load_html\(/g)].length, 1);
@@ -183,4 +219,52 @@ test('publication controls reject constructor payloads, early or replaced public
     assert.notEqual(late, source);
     assert.throws(() => assertEarlyObservation(late));
   }
+});
+
+test('native startup milestones reject early installation claims and misplaced publication observations', async () => {
+  const source = await readFile(host, 'utf8');
+  assertEarlyObservation(source);
+  const installed = 'native_update(Some(NativeEvent::GuardsInstalled));';
+  const requested = 'native_update(Some(NativeEvent::PublicationRequested));';
+  const returned = 'native_update(Some(NativeEvent::PublicationReturned));';
+  const load = '_view.load_html(FIXTURE)?;';
+  const earlyGuardClaim = source
+    .replace(installed, '')
+    .replace(
+      'preview_browser_guards::install(&webkit)?;',
+      installed + 'preview_browser_guards::install(&webkit)?;',
+    );
+  const lateRequest = source
+    .replace(requested, '')
+    .replace(load, load + requested);
+  const earlyReturn = source
+    .replace(returned, '')
+    .replace(load, returned + load);
+  for (const changed of [
+    earlyGuardClaim,
+    lateRequest,
+    earlyReturn,
+    source.replace(
+      'event == LoadEvent::Started',
+      'event == LoadEvent::Committed',
+    ),
+    source.replace(
+      'native_provisional(Some(NativeEvent::ProvisionalStarted));',
+      '',
+    ),
+  ]) {
+    assert.notEqual(
+      changed,
+      source,
+      'Each negative control must alter its target',
+    );
+    assert.throws(() => assertEarlyObservation(changed));
+  }
+  const hook = /webkit\.connect_load_changed\([\s\S]*?\n {12}\}\);/.exec(
+    source,
+  )?.[0];
+  assert.ok(hook);
+  const lateProvisionalHook = source.replace(hook, '') + '\n' + hook;
+  assert.notEqual(lateProvisionalHook, source);
+  assert.throws(() => assertEarlyObservation(lateProvisionalHook));
 });

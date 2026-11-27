@@ -5,7 +5,7 @@ compile_error!("The fixed inline diagnostic requires Linux/X11");
 use gtk::prelude::*;
 use native_snapshot::{Event as NativeEvent, Snapshot, Termination};
 use std::{cell::RefCell, io::Read, rc::Rc};
-use webkit2gtk::{DownloadExt, WebContextExt, WebProcessTerminationReason, WebViewExt};
+use webkit2gtk::{DownloadExt, LoadEvent, WebContextExt, WebProcessTerminationReason, WebViewExt};
 use wry::{
     dpi::{LogicalPosition, LogicalSize},
     NewWindowResponse, PageLoadEvent, Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
@@ -160,10 +160,19 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 native_termination(Some(NativeEvent::Terminated(reason)));
             });
+            let native_provisional = native_update.clone();
+            webkit.connect_load_changed(move |_, event| {
+                if event == LoadEvent::Started {
+                    native_provisional(Some(NativeEvent::ProvisionalStarted));
+                }
+            });
+            native_update(Some(NativeEvent::GuardsInstalled));
             Ok::<_, Box<dyn std::error::Error>>(())
         },
         || {
+            native_update(Some(NativeEvent::PublicationRequested));
             _view.load_html(FIXTURE)?;
+            native_update(Some(NativeEvent::PublicationReturned));
             Ok(())
         },
     )?;

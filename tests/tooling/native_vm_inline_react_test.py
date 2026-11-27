@@ -51,7 +51,7 @@ class Driver(unittest.TestCase):
         path.write_bytes(source)
         result = self.summary(False)
         result["cases"]["stop"].update(phase="ready", reason="readiness_deadline")
-        snapshot = {"version": 1, "built": True, "committed": False, "finished": False,
+        snapshot = {"version": 2, "guards_installed": False, "publication_requested": False, "publication_returned": False, "provisional_started": False, "built": True, "committed": False, "finished": False,
                     "navigation_denied": False, "load_failed": False, "termination": "none"}
         readiness = {"stop": {"phase": "ready", "state": "native_only"}}
         event = {"event": "native_snapshot", "elapsed": 44.1, "phase": "ready", "snapshot": snapshot}
@@ -61,6 +61,21 @@ class Driver(unittest.TestCase):
         result.update(native_snapshots=details, readiness_states=readiness,
                       payload={"files": {"observer.py": {"sha256": hashlib.sha256(source).hexdigest()}}})
         self.assertIn("native_built=true", " ".join(self.driver._summary_notices(result)))
+        for key in ("guards_installed", "publication_requested", "publication_returned", "provisional_started"):
+            self.assertIn("native_" + key + "=false", " ".join(self.driver._summary_notices(result)))
+        for change in ({"version": 1}, {"guards_installed": 1}, {"publication_requested": "true"}, {"publication_returned": None}, {"provisional_started": []}, {"uri": "PRIVATE"}):
+            result["native_snapshots"] = {"stop": {**snapshot, **change}}
+            self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))
+        for missing in snapshot:
+            result["native_snapshots"] = {"stop": {key: value for key, value in snapshot.items() if key != missing}}
+            self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))
+        legacy = {key: value for key, value in snapshot.items() if key not in {"guards_installed", "publication_requested", "publication_returned", "provisional_started"}}
+        result["native_snapshots"] = {"stop": {**legacy, "version": 1}}
+        self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))
+        legacy_event = {**event, "snapshot": result["native_snapshots"]["stop"]}
+        self.assertEqual(self.driver._native_snapshots({"stop-events.jsonl": (json.dumps(legacy_event) + "\n").encode()}, result["cases"], source, readiness), {})
+        result["native_snapshots"] = {"stop": snapshot}
+
         for state in ("bootstrap_pending", "react_ready"):
             result["readiness_states"]["stop"]["state"] = state
             self.assertNotIn("native_built=", " ".join(self.driver._summary_notices(result)))

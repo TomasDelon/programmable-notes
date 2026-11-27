@@ -39,7 +39,7 @@ class Clock:
 
 class Titles(unittest.TestCase):
     def test_native_snapshot_decoder_accepts_only_exact_quoted_xprop_fixed_schema(self):
-        snapshot = {"version": 1, "built": True, "committed": False, "finished": False,
+        snapshot = {"version": 2, "guards_installed": False, "publication_requested": False, "publication_returned": False, "provisional_started": False, "built": True, "committed": False, "finished": False,
                     "navigation_denied": False, "load_failed": False, "termination": "none"}
         def output(value):
             return ("_PN_FIXTURE_NATIVE = " + json.dumps(json.dumps(value, separators=(",", ":"))) + "\n").encode()
@@ -49,8 +49,14 @@ class Titles(unittest.TestCase):
             self.assertIsNone(observer.decode_native_snapshot(output(snapshot) + extra))
             self.assertIsNone(observer.decode_native_snapshot(output(snapshot).replace(b" = ", b" = " + extra)))
 
-        for changes in ({"version": True}, {"built": 1}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
+        for changes in ({"version": True}, {"version": 1}, {"built": 1}, {"guards_installed": 1},
+                        {"publication_requested": "true"}, {"publication_returned": None},
+                        {"provisional_started": []}, {"termination": "PRIVATE"}, {"uri": "PRIVATE"}):
             self.assertIsNone(observer.decode_native_snapshot(output({**snapshot, **changes})))
+        for missing in snapshot:
+            self.assertIsNone(observer.decode_native_snapshot(output({key: value for key, value in snapshot.items() if key != missing})))
+        legacy = {key: value for key, value in snapshot.items() if key not in {"guards_installed", "publication_requested", "publication_returned", "provisional_started"}}
+        self.assertIsNone(observer.decode_native_snapshot(output({**legacy, "version": 1})))
         for raw in (b"", b"x" * 1025, output(snapshot).replace(b"_PN_FIXTURE_NATIVE", b"OTHER"),
                     output(snapshot) + b"PRIVATE\n", b'_PN_FIXTURE_NATIVE = "PRIVATE"\n'):
             self.assertIsNone(observer.decode_native_snapshot(raw))
@@ -372,7 +378,7 @@ class FakeBackend:
 
 class Flow(unittest.TestCase):
     def test_native_probe_records_once_only_for_cached_missing_or_native_only(self):
-        snapshot = {"version": 1, **{key: False for key in observer.NATIVE_FLAGS}, "termination": "none"}
+        snapshot = {"version": 2, "guards_installed": False, "publication_requested": False, "publication_returned": False, "provisional_started": False, **{key: False for key in observer.NATIVE_FLAGS}, "termination": "none"}
         for state in ("native_only", "missing", "bootstrap_pending", "react_ready"):
             def adjust(backend):
                 backend.ready = False
@@ -387,6 +393,24 @@ class Flow(unittest.TestCase):
             self.assertEqual(sum(kind == "native_snapshot" for kind, _ in evidence.events), int(expected))
             self.assertEqual(result["reason"], "readiness_deadline")
             self.assertEqual(result["termination"], "passed")
+
+    def test_all_native_startup_flags_cannot_authorize_react_readiness_or_input(self):
+        snapshot = {"version": 2, "built": True, "guards_installed": True,
+                    "publication_requested": True, "publication_returned": True, "provisional_started": True,
+                    "committed": True, "finished": True, "navigation_denied": True,
+                    "load_failed": True, "termination": "none"}
+        def adjust(backend):
+            backend.ready = False
+            backend.readiness_state = lambda: "native_only"
+            backend.native_snapshot = lambda *_: snapshot
+        result, _, evidence, _ = self.run_case("stop", adjust)
+        self.assertEqual(result["phase"], "ready")
+        self.assertEqual(result["reason"], "readiness_deadline")
+        self.assertEqual(result["pointer"], "not_run")
+        self.assertEqual(result["keyboard"], "not_run")
+        self.assertEqual(result["termination"], "passed")
+        self.assertEqual(result["host_input"], "passed")
+        self.assertEqual([detail["snapshot"] for kind, detail in evidence.events if kind == "native_snapshot"], [snapshot])
 
     def test_native_probe_is_optional_and_cannot_waive_original_stop_50_gate(self):
         def adjust(backend):
@@ -545,7 +569,11 @@ class Commands(unittest.TestCase):
         backend = object.__new__(observer.Backend)
         backend.absolute = 185
         clock = Clock(); clock.now = 144
-        raw = b'_PN_FIXTURE_NATIVE = "{\\"version\\":1,\\"built\\":true,\\"committed\\":false,\\"finished\\":false,\\"navigation_denied\\":false,\\"load_failed\\":false,\\"termination\\":\\"none\\"}"\n'
+        snapshot = {"version": 2, "built": True, "guards_installed": False,
+                    "publication_requested": False, "publication_returned": False, "provisional_started": False,
+                    "committed": False, "finished": False, "navigation_denied": False,
+                    "load_failed": False, "termination": "none"}
+        raw = ("_PN_FIXTURE_NATIVE = " + json.dumps(json.dumps(snapshot, separators=(",", ":"))) + "\n").encode()
         calls = []
         def command(args, deadline, limit):
             calls.append((args, deadline, limit))

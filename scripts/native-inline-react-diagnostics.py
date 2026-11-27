@@ -170,7 +170,8 @@ def extract_readiness_state(events, observer_source, failed_phase):
         return None
 
 
-NATIVE_FLAGS = ("built", "committed", "finished", "navigation_denied", "load_failed")
+NATIVE_FLAGS = ("built", "guards_installed", "publication_requested", "publication_returned",
+                "provisional_started", "committed", "finished", "navigation_denied", "load_failed")
 NATIVE_TERMINATIONS = frozenset(("none", "crashed", "memory_limit", "api_terminated", "unknown"))
 
 
@@ -179,7 +180,7 @@ def validate_native_snapshot(value, observer_source, failed_phase, readiness_sta
         if (failed_phase != "ready" or readiness_state not in ("native_only", "missing")
                 or _source_frames(observer_source) is None or type(value) is not dict
                 or set(value) != {"version", *NATIVE_FLAGS, "termination"}
-                or type(value["version"]) is not int or value["version"] != 1
+                or type(value["version"]) is not int or value["version"] != 2
                 or any(type(value[key]) is not bool for key in NATIVE_FLAGS)
                 or type(value["termination"]) is not str or value["termination"] not in NATIVE_TERMINATIONS):
             return None
