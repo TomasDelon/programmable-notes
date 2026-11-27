@@ -1,5 +1,55 @@
 # Linux desktop testing package
 
+## Shared local-vault development candidate
+
+The current native entry mounts the shared Source/Preview workspace through its
+guarded window-lifetime owner. Authorize a disposable folder using **Choose local
+vault**. Edits target original files automatically; there is no manual Save
+workflow in this candidate. Reselect the vault after restarting. React execution,
+file lifecycle/Trash, recovery discovery and update integration remain incomplete.
+Do not treat this as the accepted application or production security readiness.
+
+Actual installed validation must use a fresh ordinary account and synthetic files:
+open through the real OS folder picker; type in Source and Preview; independently
+compare original-file bytes and permissions; undo/redo; close/reopen the document;
+send a real desktop close request; wait for process exit and launch a fresh process;
+re-authorize the vault and compare the exact file. Preserve BOM, physical line
+endings, Unicode, comments and opaque JSX. Cancelled/failed writes must not silently
+overwrite originals. Compilation and injected-port tests do not satisfy this gate.
+
+The dedicated `scripts/native-shared-editor.mjs` witness targets that shared UI
+using the existing external WebKit driver and PID-bound GTK picker helper. It is
+not a document API or security-test feature. Its fixed receipt records executable
+hash, checkpoints and cleanup, with synthetic Source/Preview screenshots. Actual
+execution results are recorded separately; adding a runner is not a passing test.
+
+After both mandatory jobs pass for the current branch head, the optional hosted
+witness reuses that exact package without rebuilding the application:
+
+```sh
+gh workflow run ci.yml --ref fix/preview-markdown-input -f native_shared_run=SUCCESSFUL_CI_RUN_ID
+```
+
+Use a completed required CI run from this repository and exact branch head. The
+job rejects mismatched head/tree/digest, fork runs, missing required jobs and mixed
+dispatch modes before installation. It uses a fresh ordinary account on the
+standard ubuntu-24.04 runner and uploads only two fixed JSON receipts and synthetic
+Source/Preview PNGs as `native-shared-editor-witness`. Missing receipts, forced
+app cleanup and residual app/WebKit processes are failures. Ordinary display/driver
+service cleanup is separate. This is a free standard public-repository runner;
+there are no paid services, public releases or update feed changes.
+
+An editor-only hosted attempt does not require the separate preview's systemd
+PrivateNetwork/cgroup admission because the shared native React adapter is disabled.
+It still requires the production package policy and working WebKit sandbox, DBus,
+X display and accessibility. Never bypass sandboxing or report this limited journey
+as native React/network/resource-containment acceptance.
+
+## Historical manual-save application procedures
+
+The controls and legacy security journeys below describe the previous App/engine
+regression path. They cannot be reused unchanged as acceptance of the shared UI.
+
 Historical implementation testing guide: the owner rejected the separate native
 interface in version0.1.2. These procedures reproduce that implementation; they
 do not install an accepted replacement. Read the [current product contract](PRODUCT_CONTRACT.md)

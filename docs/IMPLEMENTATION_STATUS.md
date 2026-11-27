@@ -40,21 +40,25 @@ the owning application/session and remounts the same source/history only after a
 proved cancellation and actual clean detachment. No source or history registry is
 replaced. The legacy unguarded composition still explicitly refuses whole-app close.
 
-The combined foundation check passed966 unit,143 tooling/zero skips,153 Chromium,
+The final entry integration check passed973 unit,150 tooling/zero skips,153 Chromium,
 9 Pages and4 local cloud cases, plus format/lint/types/build. Expanded actual
 Chromium input passed13 checkpoints, including composition refusal, cancellation
 with exact undo/redo and held-commit input retirement. Close transport and storage
 in this browser witness are synthetic; physical IME, actual IPC, OS window close
 and native filesystem durability are not established by it.
 
-A single window-lifetime bootstrap and permanent fatal boundary are implemented
-and tested but not yet selected by the default native entry. Startup preloads the
+The native development entry now selects the shared ProductRoot through a single
+window-lifetime bootstrap and permanent fatal boundary. Startup preloads the
 presentation, negotiates the guard and constructs exactly one model. Failure is
 sticky; it cannot offer browser Reload, recreate authority or authorize a clean
-close. Already dispatched commits remain uncertain. The next entry packet will
-route native startup through this owner and the actual shared ProductRoot.
+close. Already dispatched commits remain uncertain. The browser reference and /engine fixture retain their routes; native cannot
+fall back to either. The installer instructions now describe scoped local vault
+autosave and the unavailable native React/update integrations accurately.
 Installed chooser/autosave/close/restart acceptance and native inline React/security
-remain pending. No corrected installer is claimed.
+remain pending. No corrected installer is claimed. A reviewed optional hosted witness now reuses
+the exact successful CI package under a fresh ordinary account. Its real GTK
+chooser, Source/Preview edits, disk bytes, OS close and fresh-process reopening
+remain an execution gate; adding the workflow does not establish a pass.
 
 ## Safe-close prerequisites and CI evidence — 27 November 2026
 

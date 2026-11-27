@@ -2,7 +2,7 @@ name: CI
 run-name: >-
   CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
   group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-  ((inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+  (inputs.native_shared_run && format('native-shared-{0}', github.run_id) || (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
   inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
   inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
   'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -14,6 +14,10 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      native_shared_run:
+        description: Installed shared-editor witness using linux-amd64-testing from this successful required CI run ID at the same branch head. All other inputs must remain defaults.
+        type: string
+        default: ''
       native_vm:
         description: Disposable share-free Ubuntu VM OS admission only; leave all other inputs at defaults.
         type: boolean
@@ -72,7 +76,7 @@ concurrency:
   # Keep the group shown in run-name aligned with the scheduler's group.
   group: >-
     ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-    ((inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+    (inputs.native_shared_run && format('native-shared-{0}', github.run_id) || (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
     inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
     inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
     'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -80,8 +84,77 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  native-shared-editor:
+    if: github.event_name == 'workflow_dispatch' && inputs.native_shared_run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Reject combined shared-editor and other dispatch modes
+        if: ${{ inputs.native_vm || inputs.native_inline_react || inputs.native_debian13 || inputs.native_preflight || inputs.kvm_role_probe || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all' }}
+        run: |
+          echo 'Shared-editor witness requires every other dispatch input at its default.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Require successful mandatory CI for this exact repository branch head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PN_NATIVE_SHARED_RUN: ${{ inputs.native_shared_run }}
+        run: node scripts/verify-native-shared-artifact.mjs --run
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: linux-amd64-testing
+          path: .cache/native-shared-package
+          run-id: ${{ inputs.native_shared_run }}
+          github-token: ${{ github.token }}
+      - name: Verify source tree, package hash and production inspection before installation
+        id: package
+        run: node scripts/verify-native-shared-artifact.mjs --artifact .cache/native-shared-package
+      - name: Select standard Ubuntu archive sources
+        run: bash scripts/ci-ubuntu-apt.sh
+      - name: Install editor-only desktop observation dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y webkit2gtk-driver xvfb xauth openbox python3-pyatspi xdotool dbus-x11 at-spi2-core libatk-adaptor gsettings-desktop-schemas x11-utils
+      - name: Install only the verified production package
+        env:
+          PN_NATIVE_PACKAGE: ${{ steps.package.outputs.package }}
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y "$PN_NATIVE_PACKAGE"
+      - name: Prepare locked observer JavaScript dependencies
+        run: |
+          npm install --global npm@11.9.0
+          npm ci
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: 1.100.0
+      - name: Build the pinned external driver, never the application
+        run: |
+          cargo install tauri-driver --version 2.1.0 --locked --root "$RUNNER_TEMP/pn-shared-driver"
+          sudo install -m 0755 "$RUNNER_TEMP/pn-shared-driver/bin/tauri-driver" /usr/local/bin/pn-shared-tauri-driver
+      - name: Run installed editor under a fresh ordinary account and clean environment
+        run: bash scripts/run-native-shared-editor.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: native-shared-editor-witness
+          include-hidden-files: true
+          path: |
+            .cache/native-shared-evidence/infrastructure.json
+            .cache/native-shared-evidence/native-shared-editor.json
+            .cache/native-shared-evidence/screenshot-source.png
+            .cache/native-shared-evidence/screenshot-preview.png
+          if-no-files-found: warn
+          retention-days: 3
+
   check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -160,7 +233,7 @@ jobs:
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -277,7 +350,7 @@ jobs:
           retention-days: 7
 
   deployment-check:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -323,7 +396,7 @@ jobs:
   # Optional, explicitly named diagnostics. Pull requests still run the complete
   # check/native-check gates above; success here is never a substitute for them.
   preview-input-regression:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -406,7 +479,7 @@ jobs:
           retention-days: 7
 
   native-preflight:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && (inputs.native_preflight || inputs.kvm_role_probe)
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && (inputs.native_preflight || inputs.kvm_role_probe)
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
@@ -435,7 +508,7 @@ jobs:
         run: bash scripts/native-hosted-preflight.sh
 
   native-vm:
-    if: github.event_name == 'workflow_dispatch' && (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13)
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

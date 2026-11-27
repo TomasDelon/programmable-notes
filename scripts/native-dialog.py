@@ -106,7 +106,7 @@ while time.monotonic() < deadline:
     time.sleep(0.1)
 assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'
 command('windowactivate', '--sync', wid)
-if mode == 'choose':
+if mode in ('choose', 'choose-folder'):
     assert argument.startswith('/'), 'Use an absolute fixture path'
     command('key', '--clearmodifiers', 'ctrl+l')
     # X11 key delivery does not acknowledge GTK focus or path-entry creation.
@@ -123,7 +123,8 @@ if mode == 'choose':
     # GtkFileChooser's location entry may first select, then require Open/Save.
     time.sleep(0.3)
     while window() is not None and time.monotonic() < deadline:
-        if click('Save' if title == 'Save source as' else 'Open'):
+        accept = 'Select' if mode == 'choose-folder' else ('Save' if title == 'Save source as' else 'Open')
+        if click(accept):
             break
         time.sleep(0.1)
 elif mode == 'cancel':

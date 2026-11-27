@@ -140,3 +140,53 @@ tests exercise one-shot activation. Rust formatting passed. These do not execute
 GTK signals. Hosted compilation and real Linux chooser/dialog/Stop/expiry tests
 remain separate requirements; no observed exploit or native readiness is claimed.
 The inline Wry host is a separate path and is not validated by this child change.
+
+Hosted CI [run46016023081](https://github.com/TomasDelon/programmable-notes/actions/runs/46016023081)
+on41091f3 subsequently passed both required jobs: real GTK compilation, optimized
+package inspection, native headless tests, real Store autosave harness and the
+shared Chromium witness. Browser screenshots/results are downloadable as
+[playwright-results](https://github.com/TomasDelon/programmable-notes/actions/runs/46016023081/artifacts/15205968992).
+That package still predates the shared native entry candidate; do not present it
+as the corrected installed UI. No actual GTK signal or installed journey follows
+from these successful build/headless jobs.
+
+## Shared native entry candidate and regression feedback
+
+The first candidate `npm run check` exited1 after973 unit and143 tooling cases
+passed:150 Chromium cases passed and3 old native-entry cases failed. Those cases
+still mocked the rejected manual-save shell and omitted guard/vault negotiation.
+Pages/cloud gates were not reached in that failed command. The fixtures were
+migrated to the actual entry and scoped grant/revision autosave rather than
+restoring the rejected shell or deleting fidelity/security coverage.
+
+The migrated browser cases then exposed a real chrome-focus history regression:
+Ctrl/Shift/Z outside an editor relied on browser contenteditable history. A trusted
+app-only fallback now invokes the existing canonical editor commands, excludes
+forms/editors/dialogs and refuses stale selection, pending or closing state.
+Synthetic key events cannot authorize source changes. The same targeted three
+cases then passed, including exact BOM/CRLF/JSX bytes, scoped revisions, document
+switch/close/reopen, no browser database or preview iframe, React unavailability
+and responsive two-mode navigation. Independent source review found no Important
+issue. These remain Chromium tests with simulated IPC, not actual native I/O.
+
+The optional-hosting tooling run first failed its APT regression control because
+the expected-job inventory omitted the new job. That inventory now includes the
+job, so removing its source setup is detected. The complete tooling suite then
+passed150 cases with zero skips. The real Store/controller autosave harness also
+exited0 locally: exact bytes/permissions, coalescing, history, restart, external
+conflict and lost acknowledgement. Its chooser is synthetic; no GUI/create or
+physical input acceptance follows from that harness.
+
+The final frozen candidate `npm run check` exited0:973 unit,150 tooling with zero
+skips,153 Chromium,9 Pages and4 disposable local cloud cases passed, together with
+format/lint/types/build. The separate shared-root browser journey again exited0
+with13 checkpoints. These local gates apply to the shared-entry/hosted-witness
+packet; native GUI and React containment remain unexecuted by these commands.
+
+The reviewed hosted witness verifies successful check/native-check jobs for the
+exact same repository/branch/head, then checks the package source tree, hash and
+production inspector before installation. A fresh ordinary desktop account cannot
+sudo and receives a clean environment, authenticated X display and existing WebKit
+sandbox. Fixed receipts/screenshots are collected; missing evidence, forced app
+cleanup or residual app/WebKit actors fail. No private provisioner, credential
+share, paid runner, release or isolation bypass is introduced.

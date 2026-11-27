@@ -206,3 +206,23 @@ one model. Fatal failure is permanent, prevents new resolve calls and does not
 revoke an already issued commit. Next: wire the real entry to this owner, cover
 Safari-detector table composition, then run installed Linux acceptance. Entry
 wiring is a development candidate, not evidence of a corrected installed product.
+
+## Native entry development candidate
+
+main.tsx now selects the permanent native owner boundary outside StrictMode;
+NativeProductStartup uses the owner's sticky promise and renders NativeProductEntry
+with its one model. EditorEntry explicitly refuses native use rather than falling
+back to browser persistence or legacy App. Browser/offline and /engine retain
+their prior routing. Initial static JavaScript asset failure necessarily precedes
+React boundary coverage; no guarded document authority exists at that point.
+
+The Safari-detector table regression now exercises real pinned ProseMirror code
+with Linux WebKit navigator values: the TR-mutation path schedules the20ms read,
+compositionend force-flush cancels it,16ms finalization preserves exact BOM/CRLF
+source and undo/redo, then clean detachment succeeds. This is jsdom input/profile
+emulation, not actual WebKitGTK or physical IME acceptance.
+
+Entry tests reproduced the rejected legacy route before the change and now mount
+the real native product under controlled IPC. Independent source review found no
+Important/Critical issue. This candidate is necessary to run the installed gate;
+activation is not a claim that the installed or complete product milestone passed.

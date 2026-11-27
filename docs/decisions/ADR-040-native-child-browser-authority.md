@@ -40,7 +40,9 @@ template with hostile content, changed location and missing/changed sandbox. Six
 direct Rust activation cases passed, and Rust formatting passed. The same six
 Rust cases are part of normal hosted production-profile Tauri tests.
 
-These are logic/template tests. Actual GTK compilation is a distinct hosted gate;
-real chooser/permission/dialog signals, dialog continuation, repeated React input,
+Hosted CI run46016023081 on41091f3 passed both required jobs, including actual
+GTK compilation, production package inspection and production-profile headless
+Tauri tests. These remain logic/template/compilation tests; real
+chooser/permission/dialog signals, dialog continuation, repeated React input,
 Stop, expiry and child cleanup require disposable Linux runtime validation. No
 production security readiness or fixed installed application is claimed.

@@ -108,6 +108,7 @@ test('shell syntax and argument validation require no privileged setup', () => {
 function assertSetupBeforePackages(workflow) {
   const jobs = [...workflow.matchAll(/^ {2}([a-z][\w-]*):\n/gm)];
   const expectedJobs = [
+    'native-shared-editor',
     'check',
     'native-check',
     'deployment-check',

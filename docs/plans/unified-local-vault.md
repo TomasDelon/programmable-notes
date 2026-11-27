@@ -1,6 +1,6 @@
 # Living plan: coherent local-vault application
 
-Updated: 26 November 2026. Scope: setup and subsequent architecture-led migration.
+Updated: 27 November 2026. Scope: setup and subsequent architecture-led migration.
 Requirements: [PRODUCT_CONTRACT](../PRODUCT_CONTRACT.md); engineering boundaries:
 [ARCHITECTURE_TARGET](../ARCHITECTURE_TARGET.md); exit gates:
 [PRODUCT_ACCEPTANCE](../PRODUCT_ACCEPTANCE.md). This plan does not authorize public
@@ -47,13 +47,25 @@ it is not a UI/product to clone.
 - [x] Extract and verify the existing document panels as one shared leaf (ADR038);
       controlled native-session bindings and actual browser interactions pass.
       This is not a shared root or installed native acceptance.
-- [ ] Extract the remaining shared product/use cases and platform ports without a
-      second UI. Live session projection now has controlled shared-surface evidence;
-      production selection, navigation/storage/root composition remain work.
-- [ ] Implement scoped local vault/index/file lifecycle and genuine autosave.
+- [x] Compose actual shared navigation, header, settings, palette and document
+      interaction in ProductRoot with existing NativeWorkspace/DocumentSessions.
+      The native development entry now selects one guarded window-lifetime owner;
+      no legacy/browser fallback is permitted. This is structural/controlled-input
+      evidence, not installed product acceptance.
+- [x] Join clean editor detachment, aggregate autosave/recovery admission and the
+      fixed native close handshake. Exact cancellation preserves history; unknown
+      outcomes remain held. Browser transport is synthetic; real installed close
+      and physical IME remain separate witnesses.
+- [ ] Complete scoped local vault/file lifecycle. Choose/inventory/selective open,
+      create and exact-byte autosave have controller/real Store evidence; native
+      installed interaction, rename/move/Trash, restart recovery discovery and
+      continuous external observation remain incomplete.
 - [ ] Adapt both inline and full-document execution paths to platform services.
 - [ ] Execute reusable interaction/fidelity acceptance and exact-package native
       persistence/security journeys; only then deliver the accepted editor candidate.
+      A reviewed optional hosted editor-only witness reuses the exact successful CI
+      package under a fresh ordinary account. Adding that runner is not execution;
+      React remains disabled and containment is not exercised by this journey.
 - [ ] Complete separately authorized signed distribution and installed updates.
 
 ## First autonomous work packet after setup
