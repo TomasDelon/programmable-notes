@@ -103,6 +103,27 @@ mod tests {
     }
 
     #[test]
+    fn page_events_during_construction_survive_the_later_built_event_in_either_order() {
+        for events in [
+            [Event::Committed, Event::Finished],
+            [Event::Finished, Event::Committed],
+        ] {
+            let mut snapshot = Snapshot::default();
+            for event in events {
+                snapshot.record(event);
+            }
+            assert!(!snapshot.built);
+            assert!(snapshot.committed && snapshot.finished);
+            snapshot.record(Event::Built);
+            snapshot.record(Event::Built);
+            assert_eq!(
+                snapshot.json(),
+                r#"{"version":1,"built":true,"committed":true,"finished":true,"navigation_denied":false,"load_failed":false,"termination":"none"}"#
+            );
+        }
+    }
+
+    #[test]
     fn first_observed_termination_including_unknown_never_resets() {
         for first in [
             Termination::Crashed,

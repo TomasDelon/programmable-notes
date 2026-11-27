@@ -5,10 +5,10 @@ compile_error!("The fixed inline diagnostic requires Linux/X11");
 use gtk::prelude::*;
 use native_snapshot::{Event as NativeEvent, Snapshot, Termination};
 use std::{cell::RefCell, io::Read, rc::Rc};
-use webkit2gtk::{LoadEvent, WebProcessTerminationReason, WebViewExt};
+use webkit2gtk::{WebProcessTerminationReason, WebViewExt};
 use wry::{
     dpi::{LogicalPosition, LogicalSize},
-    Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
+    PageLoadEvent, Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
 };
 
 mod native_snapshot;
@@ -81,6 +81,7 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
     });
     native_update(None);
     let native_navigation = native_update.clone();
+    let native_page = native_update.clone();
     let _view = WebViewBuilder::new()
         .with_incognito(true)
         .with_devtools(false)
@@ -96,6 +97,12 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
             allowed
         })
         .with_download_started_handler(|_, _| false)
+        // The pinned GTK backend installs this before initial navigation. Its
+        // Started event maps to WebKit Committed, not provisional load start.
+        .with_on_page_load_handler(move |event, _url| match event {
+            PageLoadEvent::Started => native_page(Some(NativeEvent::Committed)),
+            PageLoadEvent::Finished => native_page(Some(NativeEvent::Finished)),
+        })
         .with_document_title_changed_handler(move |title| {
             // An empty initial title must not erase the independent native sentinel.
             if title.is_empty() {
@@ -120,14 +127,9 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
         })
         .with_html(FIXTURE)
         .build_gtk(&plug)?;
-    // All three signals attach after construction: absence cannot rule out an earlier event.
+    // Failure/termination hooks still attach after construction: their absence
+    // cannot rule out an earlier event. Commit/finish observation is pre-load.
     let webkit = _view.webview();
-    let native_page = native_update.clone();
-    webkit.connect_load_changed(move |_, event| match event {
-        LoadEvent::Committed => native_page(Some(NativeEvent::Committed)),
-        LoadEvent::Finished => native_page(Some(NativeEvent::Finished)),
-        _ => (),
-    });
     let native_failure = native_update.clone();
     webkit.connect_load_failed(move |_, _, _, _| {
         native_failure(Some(NativeEvent::LoadFailed));

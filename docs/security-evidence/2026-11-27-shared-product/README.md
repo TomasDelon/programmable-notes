@@ -240,3 +240,56 @@ and4 disposable local cloud cases, plus formatting/lint/types/build. Actual API
 responses for run46020089543/workflow421740247 reproduced the original failure
 and passed the corrected verifier unchanged. Independent review found no Important
 issue. The next hosted retry remains unexecuted at this checkpoint.
+
+## Executed native attempts on6c92742
+
+Required CI [run46023414579](https://github.com/TomasDelon/programmable-notes/actions/runs/46023414579)
+passed both jobs. Packaged-editor retry
+[run46025070639](https://github.com/TomasDelon/programmable-notes/actions/runs/46025070639)
+passed provenance, source-tree/hash checks, production inspection and installation
+on the standard Ubuntu runner, then failed the desktop-session launcher step. Its
+344-byte [evidence artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46025070639/artifacts/15211852106)
+was uploaded but this cloud environment received HTTP403 from artifact storage.
+An escalation was cancelled. The exact launcher substage is unknown; neither app
+launch nor any actual editing/chooser/close journey is claimed. No blocked download
+was repeated after cancellation.
+
+The separate sealed Debian React diagnostic
+[run46025078225](https://github.com/TomasDelon/programmable-notes/actions/runs/46025078225)
+passed OS admission (Debian13, WebKitGTK2.54.3) but failed document readiness.
+[Validated check-annotation results](react-46025078225.json) retain the exact source,
+case outcomes and limitations. Bridge observation, termination, trusted host input
+and session cleanup passed; pointer/typing and expiry were not run. No keyboard
+timing record was generated because typing was never reached. Readiness failure
+remains a failure; this does not validate native React or resource containment.
+
+The observed native flags were built=true with no observed commit/finish/failure
+or termination. Existing raw hooks attach after construction, so missing flags do
+not exclude earlier events. The next probe uses the pinned Wry pre-build page-load
+callback for the existing sticky commit/finish flags, preserving the original HTML
+load, schema, deadlines and readiness oracle. On this Linux backend Wry Started
+means WebKit Committed. Late failure/termination hooks retain their limitation.
+This repairs observation, not a demonstrated cause of the startup failure.
+
+The next editor-harness packet removes brittle checkout-access assumptions by
+using five immutable public observer helpers and a verified snapshot of the
+executing pinned Node tool under the fresh UID boundary.
+It does not establish checkout permissions as the previous failure's cause. Safe
+fixed stage annotations make later failures diagnosable through the API without
+raw logs, source, credentials or signed artifact URLs. No filesystem grant,
+namespace policy, timeout, cleanup requirement or success predicate is weakened.
+
+The final application check exited0:973 unit,163 tooling with zero skips,153
+Chromium,9 Pages and4 disposable local cloud cases. The final Node-tool snapshot
+changed after that command's tooling phase; the entire163-case tooling suite and
+format/lint/types were rerun successfully on the frozen version. Five direct
+production Snapshot Rust tests and Rust formatting passed. Actual GTK compilation
+and a new installed/native attempt remain separate hosted gates.
+
+The copied Node tool is read from the preparer's own kernel executable handle,
+not an arbitrary file or process memory, and checked by bounded ELF validation,
+source/readback hashes and a clean-environment version check before the fresh UID
+exists. The role cannot modify the payload or tool. Cleanup runs the immutable
+copy, removes its own Linux payload and treats deletion failure as a failed run.
+Checkout ancestors must be unwritable to the fresh UID; failed permission queries
+refuse launch. No host cache, credentials or node_modules are copied or uploaded.

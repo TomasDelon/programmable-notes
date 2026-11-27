@@ -20,6 +20,29 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Native validation and observer corrections — 27 November 2026
+
+Required CI on6c92742 passed both jobs. The packaged Ubuntu attempt installed the
+verified production package but failed in the desktop-session launcher; the exact
+substage is unknown because artifact storage returned HTTP403 and the escalation
+was cancelled. No actual app editing/close journey is claimed.
+
+The sealed Debian React attempt passed OS admission but failed readiness. Pointer,
+typing and expiry were not run. Termination, trusted host input and session cleanup
+passed. The new probe observes commit/finish before the unchanged initial load;
+it repairs a measurement blind spot without claiming a startup fix.
+
+The observer now prepares five fixed public helpers plus a verified immutable
+copy of its executing Node tool. A fresh ordinary UID cannot traverse the checkout,
+replace any checkout ancestor or write its observer/tool payload. Safe fixed
+failure annotations support diagnosis without raw logs or artifact downloads.
+
+Local application checks passed973 unit/163 tooling,153 Chromium/9 Pages/4 local
+cloud cases. Final affected tooling and static checks reran after the tool-copy
+change; five direct Snapshot Rust cases and Rust formatting passed. Actual GTK
+compilation and corrected hosted attempts remain pending. See the
+[dated evidence](security-evidence/2026-11-27-shared-product/README.md).
+
 ## Frontend close orchestration — 27 November 2026
 
 The shared application now joins its clean editor barrier to native close
