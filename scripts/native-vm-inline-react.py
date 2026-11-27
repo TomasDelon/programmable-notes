@@ -58,7 +58,8 @@ CASE_REASONS = {"none", "profile_refused", "host_not_ready", "policy_refused", "
                 "host_input_not_acknowledged", "observer_error", "evidence_limit", "command_failed"}
 SESSION_PHASES = {"preflight", "desktop", "stop", "expiry", "cleanup", "complete"}
 SESSION_REASONS = {"none", "preflight_refused", "desktop_failed", "observer_failed", "receipt_invalid",
-                   "output_limit", "deadline", "interrupted", "cleanup_failed", "internal_error"}
+                   "output_limit", "deadline", "interrupted", "cleanup_failed", "internal_error",
+                   "xauth_deadline", "display_readiness_deadline", "xvfb_exited"}
 EVIDENCE = MappingProxyType({
     "session.json": ("run/session.json", 16384),
     **{f"{case}-{name}": (f"run/evidence/{case}/{name}", limit)

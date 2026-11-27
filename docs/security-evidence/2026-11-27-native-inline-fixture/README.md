@@ -161,3 +161,40 @@ exercises51 controls and the receipt reporter10. Independent review repeated the
 native control cases and found no remaining blocker. These are source/control
 and browser observations, not native runtime passes. Functional file identities
 were checked unchanged after the complete run.
+
+## First actual native profile: desktop startup failed
+
+At **aeff50b**, [run45931348826](https://github.com/TomasDelon/programmable-notes/actions/runs/45931348826)
+**failed**. Its helper compiled, the fresh guest passed OS admission and
+bracketed SSH identity denials, and normal QMP shutdown passed. The validated
+native notices reported `session_phase=desktop`, `session_reason=deadline`,
+`cleanup=passed`, and both cases `not_run`.
+[Annotation summary](native-profile-45931348826.json) retains those exact fields.
+No native pointer, typing, Stop, expiry or renderer-policy result is claimed.
+
+The desktop reason currently combines xauth startup, an individual display
+probe, the five-second readiness window and the overall session budget. The
+exact failed substage and original cause are **not established**. A separate
+controlled local child reproduced a real source-level issue: a first display
+probe exceeding its one-second call bound aborts the entire five-second
+readiness loop instead of becoming a failed sample within that original bound.
+This reproduces a possible failure mode, not the cause of this actual VM run.
+The next correction preserves all absolute bounds and adds fixed substage
+categories. Earlier failed observations remain failed.
+
+## Readiness-loop correction and discriminating next run
+
+Controlled real Python probes reproduced the faulty loop: a first display probe
+exceeding one second aborted before later readiness samples. The corrected loop
+treats only a cleaned-up per-call timeout as a failed sample inside the same
+original five-second absolute window. It rechecks the owned Xvfb process before
+and after probing. A separate outer deadline still wins; no unit, input, Stop,
+expiry or overall session bound changes.
+
+All28 session controls passed, including slow-first-probe then timely readiness,
+permanently slow probes failing within the existing bound, retained shorter outer
+deadlines, authentication timeout and premature Xvfb exit. Driver15 controls
+include the three exact new failure enums and injection refusals. Independent
+review repeated both groups. The next native run distinguishes `xauth_deadline`,
+`display_readiness_deadline` and `xvfb_exited`; none is retroactively assigned to
+run45931348826. This local control correction is not a native startup pass.

@@ -330,6 +330,21 @@ while True:
         self.assertNotIn("PRIVATE", output.getvalue())
         self.assertTrue(output.getvalue().endswith("NATIVE_INLINE_REACT_FIXTURE_PASSED\n"))
 
+    def test_desktop_substage_reasons_are_fixed_and_cannot_inject_notices(self):
+        for reason in ("xauth_deadline", "display_readiness_deadline", "xvfb_exited"):
+            result = self.summary(False)
+            result["session"].update(phase="desktop", reason=reason,
+                                     cases={"stop": "not_run", "expiry": "not_run"})
+            result["cases"] = {}
+            with patch.object(self.driver.transport, "_smoke", return_value=result), redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
+            self.assertIn("session_phase=desktop session_reason=" + reason + " cleanup=passed", output.getvalue())
+            for rejected in (reason + "_unknown", reason + "%0A::error::PRIVATE_CANARY", 1):
+                result["session"]["reason"] = rejected
+                with patch.object(self.driver.transport, "_smoke", return_value=result), redirect_stdout(io.StringIO()) as output:
+                    self.assertEqual(self.driver.main(["--run", "/tmp/fixed"]), 2)
+                self.assertEqual(output.getvalue(), "NATIVE_INLINE_REACT_FIXTURE_REFUSED\n")
+
     @staticmethod
     def packet(kind, data):
         return struct.pack(">I", 1 + len(data)) + bytes([kind]) + data

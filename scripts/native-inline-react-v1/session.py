@@ -310,18 +310,40 @@ class Runner:
         fd = os.open(auth, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         os.close(fd)
         cookie = os.urandom(16).hex()
-        code, _ = self.tool(['/usr/bin/xauth', '-f', str(auth)], input_data=f'add :93 MIT-MAGIC-COOKIE-1 {cookie}\n'.encode())
+        try:
+            code, _ = self.tool(['/usr/bin/xauth', '-f', str(auth)], input_data=f'add :93 MIT-MAGIC-COOKIE-1 {cookie}\n'.encode())
+        except Refused as error:
+            if str(error) == 'deadline':
+                raise Refused('xauth_deadline') from error
+            raise
+        except subprocess.TimeoutExpired as error:
+            raise Refused('xauth_deadline') from error
         check(code == 0, 'desktop_failed')
         read_file(auth, 4096)
-        self.spawn(xvfb_arguments())
+        xvfb = self.spawn(xvfb_arguments())
         deadline = time.monotonic() + 5
         # One bounded readiness window, never a host/unit relaunch.
-        while True:
-            self.remaining(deadline)
-            code, _ = self.tool(['/usr/bin/xdpyinfo', '-display', ':93'], timeout=min(1, self.remaining(deadline)))
-            if code == 0:
-                break
-            time.sleep(min(0.05, self.remaining(deadline)))
+        try:
+            while True:
+                self.remaining(deadline)
+                check(xvfb.process.poll() is None, 'xvfb_exited')
+                try:
+                    code, _ = self.tool(['/usr/bin/xdpyinfo', '-display', ':93'], timeout=min(1, self.remaining(deadline)))
+                except Refused as error:
+                    if str(error) != 'deadline':
+                        raise
+                    code = 1  # A failed sample, never a new five-second window.
+                except subprocess.TimeoutExpired:
+                    code = 1
+                self.remaining(deadline)
+                check(xvfb.process.poll() is None, 'xvfb_exited')
+                if code == 0:
+                    break
+                time.sleep(min(0.05, self.remaining(deadline)))
+        except Refused as error:
+            if str(error) == 'deadline':
+                raise Refused('display_readiness_deadline') from error
+            raise
         self.spawn(['/usr/bin/openbox', '--sm-disable'])
 
     def unit_cleanup(self, host, log):
@@ -480,7 +502,8 @@ def main(arguments):
             result.update(status='passed', phase='complete', reason='none')
     except BaseException as error:
         allowed = {'preflight_refused', 'desktop_failed', 'observer_failed', 'receipt_invalid',
-                   'output_limit', 'deadline', 'interrupted', 'cleanup_failed'}
+                   'output_limit', 'deadline', 'interrupted', 'cleanup_failed',
+                   'xauth_deadline', 'display_readiness_deadline', 'xvfb_exited'}
         reason = str(error) if type(error) is Refused else 'internal_error'
         result['reason'] = reason if reason in allowed else 'internal_error'
     finally:

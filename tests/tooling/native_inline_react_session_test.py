@@ -318,6 +318,93 @@ class SessionControls(unittest.TestCase):
         self.assertEqual(value['cases'], {'stop': 'not_run', 'expiry': 'not_run'})
         self.assertFalse(value['native_app_tested'])
 
+    def desktop_control(self, samples, xvfb_code=None, xauth_timeout=False):
+        (self.root / 'run/auth').mkdir(parents=True, mode=0o700)
+        runner = self.runner()
+        original_tool = runner.tool
+        original_spawn = runner.spawn
+        real_popen = subprocess.Popen
+        calls = []
+        server = Mock()
+        server.process.poll.return_value = xvfb_code
+        def spawn(argv, **options):
+            if argv[0] == '/usr/bin/Xvfb':
+                calls.append('xvfb')
+                return server
+            if argv[0] == '/usr/bin/openbox':
+                calls.append('openbox')
+                return Mock()
+            return original_spawn(argv, **options)
+        def tool(argv, **options):
+            if argv[0] == '/usr/bin/xauth':
+                if xauth_timeout:
+                    raise session.Refused('deadline')
+                (self.root / 'run/auth/Xauthority').write_bytes(b'owned-cookie-control')
+                return 0, b''
+            calls.append('probe')
+            return original_tool(argv, **options)
+        def popen(_argv, **options):
+            seconds = next(samples)
+            return real_popen([sys.executable, '-I', '-c',
+                               'import sys,time;time.sleep(float(sys.argv[1]));print("ready")',
+                               str(seconds)], **options)
+        return runner, calls, (patch.object(runner, 'spawn', side_effect=spawn),
+                               patch.object(runner, 'tool', side_effect=tool),
+                               patch.object(session.subprocess, 'Popen', side_effect=popen))
+
+    def test_slow_first_display_probe_then_ready_uses_same_five_second_window(self):
+        runner, calls, patches = self.desktop_control(iter((1.1, 0)))
+        started = time.monotonic()
+        with patches[0], patches[1], patches[2]:
+            runner.desktop()
+        runner.close()
+        self.assertEqual(calls, ['xvfb', 'probe', 'probe', 'openbox'])
+        self.assertLess(time.monotonic() - started, 5)
+        self.assertTrue(all(owned.process.poll() is not None for owned in runner.owned))
+
+    def test_always_slow_display_probes_fail_original_window_and_never_openbox(self):
+        runner, calls, patches = self.desktop_control(iter([10] * 10))
+        started = time.monotonic()
+        with patches[0], patches[1], patches[2]:
+            with self.assertRaisesRegex(session.Refused, '^display_readiness_deadline$'):
+                runner.desktop()
+        runner.close()
+        elapsed = time.monotonic() - started
+        self.assertGreaterEqual(elapsed, 4.9)
+        self.assertLess(elapsed, 6)
+        self.assertNotIn('openbox', calls)
+        self.assertTrue(all(owned.process.poll() is not None for owned in runner.owned))
+
+    def test_xauth_deadline_has_distinct_reason_before_xvfb(self):
+        runner, calls, patches = self.desktop_control(iter(()), xauth_timeout=True)
+        with patches[0], patches[1], patches[2]:
+            with self.assertRaisesRegex(session.Refused, '^xauth_deadline$'):
+                runner.desktop()
+        self.assertEqual(calls, [])
+
+    def test_owned_xvfb_exit_refuses_before_probe_or_openbox(self):
+        for code in (0, 1):
+            with self.subTest(code=code):
+                if (self.root / 'run').exists():
+                    import shutil
+                    shutil.rmtree(self.root / 'run')
+                runner, calls, patches = self.desktop_control(iter(()), xvfb_code=code)
+                with patches[0], patches[1], patches[2]:
+                    with self.assertRaisesRegex(session.Refused, '^xvfb_exited$'):
+                        runner.desktop()
+                self.assertEqual(calls, ['xvfb'])
+
+    def test_readiness_samples_never_extend_existing_outer_deadline(self):
+        runner, calls, patches = self.desktop_control(iter([10] * 10))
+        runner.deadline = time.monotonic() + 0.1
+        started = time.monotonic()
+        with patches[0], patches[1], patches[2]:
+            with self.assertRaisesRegex(session.Refused, '^display_readiness_deadline$'):
+                runner.desktop()
+        runner.close()
+        self.assertLess(time.monotonic() - started, 1)
+        self.assertEqual(calls, ['xvfb', 'probe'])
+
 
 if __name__ == '__main__':
     unittest.main()
