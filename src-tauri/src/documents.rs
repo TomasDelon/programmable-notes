@@ -259,11 +259,18 @@ pub async fn choose_vault(
         #[cfg(target_os = "linux")]
         {
             let _dialog = Dialog::acquire(&docs)?;
+            // Start in a real folder rather than an empty GTK Recent view.
+            // This is only the initial view; OS acceptance still grants access.
+            let start_directory = app
+                .path()
+                .home_dir()
+                .map_err(|_| "Native home directory unavailable".to_string())?;
             let Some(selected) = app
                 .dialog()
                 .file()
                 .set_parent(&window)
                 .set_title("Choose local vault")
+                .set_directory(start_directory)
                 .blocking_pick_folder()
             else {
                 return docs.activate_vault(None);
