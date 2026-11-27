@@ -68,6 +68,35 @@ class Preparation(unittest.TestCase):
         for name in ("guest", "runtime"):
             self.assertEqual(list((self.root / name).iterdir()), [])
         self.assertFalse((self.root / "launch.json").exists())
+        self.assertEqual(manifest["version"], 2)
+        self.assertEqual(manifest["source_profile"], "ubuntu24")
+
+    def test_debian_has_only_a_dedicated_closed_entry_and_three_public_inputs(self):
+        result = self.cli("--prepare-debian13", str(self.root))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        profile, context = prepare.prepared_profile_context(str(self.root))
+        self.assertEqual(profile, "debian13")
+        self.assertEqual(set(context), set(prepare.CONTEXT))
+        self.assertTrue(context["Dockerfile"].startswith(("FROM " + prepare.DEBIAN_BASE + "\n").encode()))
+        self.assertIn(b"linux-image-amd64", context["Dockerfile"])
+        self.assertNotIn(b"linux-image-generic", context["Dockerfile"])
+        self.assertNotIn(b"controller_ed25519", context["Dockerfile"])
+        self.assertEqual(prepare.prepared_context(str(self.root)), context)
+        manifest = json.loads((self.root / "preparation.json").read_text())
+        for changes in ({"source_profile": "foreign"}, {"source_profile": "ubuntu24"}, {"base_image": prepare.BASE}, {"version": 1}, {"source_profile": None}):
+            with self.subTest(changes=changes):
+                broken = {**manifest, **changes}
+                with self.assertRaises(prepare.Refused): prepare.validate_context(broken, context)
+        (self.root / "context/Dockerfile").write_bytes(prepare._sources()["Dockerfile"])
+        manifest["sha256"]["Dockerfile"] = hashlib.sha256(prepare._sources()["Dockerfile"]).hexdigest()
+        (self.root / "preparation.json").write_text(json.dumps(manifest))
+        with self.assertRaises(prepare.Refused): prepare.prepared_profile_context(str(self.root))
+
+    def test_arbitrary_profile_image_path_and_context_override_options_refuse(self):
+        for args in (("--prepare-profile", "debian13"), ("--prepare-debian13", "--image"), ("--prepare", str(self.root), "debian13")):
+            self.assertEqual(self.cli(*args).returncode, 2)
+        for value in ("../Dockerfile", "/etc", "ubuntu", "debian:13-slim", None):
+            with self.assertRaises(prepare.Refused): prepare._sources(value)
 
     def test_fresh_runs_generate_distinct_controller_identities(self):
         self.assertEqual(self.run_prepare().returncode, 0)

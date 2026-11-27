@@ -61,9 +61,51 @@ class Process:
 
 
 class Smoke(unittest.TestCase):
-    def execute_probe(self, *, mount_suffix=b"", auth_suffix=b"", command_results=None):
+    def set_debian_profile(self):
+        context = self.root / "context"
+        (context / "Dockerfile").write_bytes(prep._sources("debian13")["Dockerfile"])
+        manifest_file = self.root / "preparation.json"
+        manifest = json.loads(manifest_file.read_text())
+        manifest.update(source_profile="debian13", base_image=prep.DEBIAN_BASE)
+        manifest["sha256"] = {name: hashlib.sha256((context / name).read_bytes()).hexdigest() for name in prep.CONTEXT}
+        manifest_file.write_text(json.dumps(manifest))
+
+    def test_closed_debian_profile_is_bound_to_actual_environment_before_admission(self):
+        self.set_debian_profile()
+        self.facts["environment"] = {"id": "debian", "version": "13", "kernel_release": "6.12.1+deb13-amd64",
+                                     "packages": {name: "1.0" for name in (*prep.PACKAGES, "linux-image-amd64")}}
+        self.assertEqual(self.run_mocked()[0], 0)
+        receipt = json.loads((self.root / "smoke-receipt.json").read_text())
+        self.assertEqual(receipt["source_profile"], "debian13")
+        self.assertEqual(receipt["environment"], self.facts["environment"])
+
+    def test_debian_context_cannot_admit_ubuntu_or_malformed_environment(self):
+        self.set_debian_profile()
+        self.assertEqual(self.run_mocked()[0], 2)
+        self.assertEqual(self.failure_receipt("probe")["probe_check"], "environment")
+
+    def test_environment_identity_has_only_fixed_ascii_bounded_public_values(self):
+        original = self.facts["environment"]
+        variants = [{**original, "id": "other"}, {**original, "version": "13"}, {**original, "hostname": "PRIVATE"},
+                    {**original, "kernel_release": "PRIVATE\n::error::"}, {**original, "kernel_release": "6.12.1-amd64"},
+                    {**original, "packages": {**original["packages"], "arbitrary": "1"}},
+                    {**original, "packages": {**original["packages"], "systemd": "1%0APRIVATE"}},
+                    {**original, "packages": {**original["packages"], "systemd": "1" * 129}}]
+        for value in variants:
+            with self.assertRaises(smoke.ProbeRefused) as failure:
+                smoke._facts(json.dumps({**self.facts, "environment": value}).encode(), self.facts["authorized_sha256"])
+            self.assertEqual(failure.exception.probe_check, "environment")
+        self.assertLessEqual(len(smoke.PROBE), 4096)  # Initial fixed pipe write remains bounded.
+
+    def test_actual_fixed_probe_package_stream_rejects_overflow_duplicates_and_unlisted_names(self):
+        for raw in (b"x" * 2049, b"systemd=1\nsystemd=2\n", b"arbitrary=1\n", b"\xff\n"):
+            with self.subTest(size=len(raw)), self.assertRaises((ValueError, UnicodeError)):
+                self.execute_probe(package_output=raw)
+
+    def execute_probe(self, *, mount_suffix=b"", auth_suffix=b"", command_results=None, package_output=None):
         authorized = (self.root / "context/controller.pub").read_bytes()
         reads = {
+            "/usr/lib/os-release": [b'ID=ubuntu\nVERSION_ID="24.04"\n', b""],
             "/proc/self/mountinfo": [b"1 0 8:0 / / rw - ext4 /dev/vda rw\n2 1 0:1 / /sys/fs/cgroup rw - cgroup2 cgroup rw\n", mount_suffix, b""],
             "/home/fixture/.ssh/authorized_keys": [authorized, auth_suffix, b""],
             "/sys/fs/cgroup/cgroup.controllers": [b"cpu memory pids\n", b""],
@@ -78,7 +120,8 @@ class Smoke(unittest.TestCase):
                                O_NOFOLLOW=os.O_NOFOLLOW, O_NONBLOCK=os.O_NONBLOCK,
                                open=lambda path, flags: path, read=read, close=lambda path: None,
                                stat=lambda path, **options: SimpleNamespace(st_rdev=os.makedev(8, 0), st_mode=stat.S_IFBLK),
-                               major=os.major, minor=os.minor, getuid=lambda: 1001, environ={})
+                               major=os.major, minor=os.minor, getuid=lambda: 1001, environ={},
+                               uname=lambda: SimpleNamespace(release="6.8.0-1-generic"))
         original_import = builtins.__import__
         results = iter(command_results or [1, 0])
         def run(args, **options):
@@ -95,7 +138,16 @@ class Smoke(unittest.TestCase):
             if name == "os":
                 return fake
             if name == "subprocess":
-                return SimpleNamespace(run=run, DEVNULL=subprocess.DEVNULL,
+                def popen(argv, **kwargs):
+                    self.assertEqual(argv[:5], ['/usr/bin/dpkg-query', '--show', '--showformat=${Package}=${Version}\n', '--', 'systemd'])
+                    self.assertEqual(argv[5:], ['libc6', 'libgtk-3-0t64', 'libwebkit2gtk-4.1-0', 'linux-image-generic'])
+                    self.assertEqual(kwargs, {"stdin":subprocess.DEVNULL,"stdout":subprocess.PIPE,"stderr":subprocess.DEVNULL})
+                    raw = ''.join(name + '=1.0\n' for name in argv[4:]).encode() if package_output is None else package_output
+                    read_fd, write_fd = os.pipe()
+                    os.write(write_fd, raw); os.close(write_fd)
+                    stream = os.fdopen(read_fd, 'rb')
+                    return SimpleNamespace(stdout=stream, wait=lambda timeout: 0, poll=lambda: 0)
+                return SimpleNamespace(run=run, Popen=popen, PIPE=subprocess.PIPE, DEVNULL=subprocess.DEVNULL,
                                        TimeoutExpired=subprocess.TimeoutExpired)
             return original_import(name, *args, **options)
         output = io.StringIO()
@@ -131,7 +183,9 @@ class Smoke(unittest.TestCase):
         self.facts = {"version": 1, "uid": 1001, "pid1_systemd": True, "cgroup_v2": True,
                       "mounts_allowed": True, "root_ext4_vda": True, "authorized_count": 1,
                       "authorized_sha256": hashlib.sha256(authorization).hexdigest(), "agent_absent": True,
-                      "container_absent": True, "logind_active": True}
+                      "container_absent": True, "logind_active": True,
+                      "environment": {"id": "ubuntu", "version": "24.04", "kernel_release": "6.8.0-1-generic",
+                                      "packages": {name: "1.0" for name in (*prep.PACKAGES, "linux-image-generic")}}}
         self.calls, self.processes = [], []
         self.guard = None
         self.ssh_transform = lambda status, data, _kind: (status, data)

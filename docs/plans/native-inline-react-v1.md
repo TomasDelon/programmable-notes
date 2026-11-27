@@ -137,3 +137,13 @@ Implementation and control-test evidence precede runtime execution. Until an
 actual completed run is recorded, all native diagnostic observations remain
 unexecuted; no changed deadline, forced focus or relaxed namespace policy is an
 acceptable workaround.
+
+## Current admission blocker
+
+Run45935023462 on f7d6853 reached the real effective network-namespace check and
+refused startup before input. Its host failure and teardown interruption are
+recorded separately from earlier unknown causes. Application cleanup remains
+unproven. Do not launch another identical Ubuntu case or change the observer to
+accept the shared namespace. Investigate a stock suitable environment and record
+its separate OS/namespace admission before any new payload. Distribution-specific
+compatibility and the full production matrix remain separate gates.

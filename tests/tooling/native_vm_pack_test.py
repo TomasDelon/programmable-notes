@@ -83,6 +83,37 @@ class Packing(unittest.TestCase):
     def execute(self, docker):
         pack.pack(str(self.root), docker)
 
+    def test_debian_captured_profile_only_selects_fixed_packer_branch(self):
+        self.root = Path(self.temp.name) / "debian"
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(pack.preparation.main(["--prepare-debian13", str(self.root)]), 0)
+        docker = FakeDocker()
+        self.execute(docker)
+        self.assertTrue(any(args == ["create", "/native-pack.sh", "debian13"] for args, _ in docker.calls))
+        with tarfile.open(fileobj=io.BytesIO(docker.calls[0][1]["data"])) as tar:
+            self.assertTrue(tar.extractfile("Dockerfile").read().startswith(("FROM " + pack.preparation.DEBIAN_BASE + "\n").encode()))
+
+    def test_actual_shell_kernel_selection_never_crosses_profiles_or_accepts_bad_pair(self):
+        script = (SCRIPT.parent / "native-guest/pack.sh").read_text()
+        fragment = script[script.index("shopt -s nullglob"):script.index('cp -- "$kernel"')]
+        root = Path(self.temp.name) / "kernel-fixture"
+        boot = root / "boot"; boot.mkdir(parents=True)
+        def run(profile):
+            return subprocess.run(["/bin/bash", "-eu", "-c", "profile=" + profile + "\n" + fragment.replace("/native-root", str(root))], capture_output=True, timeout=3)
+        for profile, suffix in (("ubuntu24", "generic"), ("debian13", "amd64")):
+            kernel, initrd = boot / ("vmlinuz-6.12.1-" + suffix), boot / ("initrd.img-6.12.1-" + suffix)
+            kernel.write_bytes(b"kernel"); initrd.write_bytes(b"initrd")
+            self.assertEqual(run(profile).returncode, 0)
+            self.assertNotEqual(run("debian13" if profile == "ubuntu24" else "ubuntu24").returncode, 0)
+            initrd.unlink(); self.assertNotEqual(run(profile).returncode, 0)
+            initrd.symlink_to(kernel); self.assertNotEqual(run(profile).returncode, 0); initrd.unlink()
+            initrd.write_bytes(b"initrd")
+            second = boot / ("vmlinuz-6.12.2-" + suffix); second.write_bytes(b"other")
+            self.assertNotEqual(run(profile).returncode, 0); second.unlink()
+            kernel.unlink(); kernel.symlink_to(initrd)
+            self.assertNotEqual(run(profile).returncode, 0)
+            kernel.unlink(); initrd.unlink()
+
     def test_complete_mocked_pipeline_curates_context_pins_identity_and_guard_config(self):
         docker = FakeDocker()
         self.execute(docker)

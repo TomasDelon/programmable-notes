@@ -44,7 +44,7 @@ class CleanupFailed(Refused):
 
 
 PROBE_CHECKS = frozenset(("schema", "version", "uid", "authorized_count", "authorized_sha256",
-                          "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"))
+                          "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active", "environment"))
 
 
 class ProbeRefused(Refused):
@@ -59,8 +59,8 @@ class ProbeRefused(Refused):
 
 ENV = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
 FIELDS = {"version", "uid", "pid1_systemd", "cgroup_v2", "mounts_allowed",
-          "root_ext4_vda", "authorized_count", "authorized_sha256", "agent_absent", "container_absent", "logind_active"}
-PROBE = b'''import hashlib,json,os,stat,subprocess
+          "root_ext4_vda", "authorized_count", "authorized_sha256", "agent_absent", "container_absent", "logind_active", "environment"}
+PROBE = b'''import hashlib,json,os,stat,subprocess,selectors,time
 def read(path,limit):
  fd=os.open(path,os.O_RDONLY|os.O_CLOEXEC|os.O_NOFOLLOW|os.O_NONBLOCK)
  try:
@@ -75,6 +75,39 @@ def command_ok(args,expected):
  try:
   return subprocess.run(args,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=2).returncode==expected
  except (OSError,subprocess.TimeoutExpired): return False
+def versions(names):
+ p=subprocess.Popen(['/usr/bin/dpkg-query','--show','--showformat=${Package}=${Version}\\n','--',*names],stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+ try:
+  data=bytearray(); deadline=time.monotonic()+2
+  with selectors.DefaultSelector() as poll:
+   poll.register(p.stdout,selectors.EVENT_READ)
+   while True:
+    remaining=deadline-time.monotonic()
+    if remaining<=0 or not poll.select(remaining): raise ValueError()
+    raw=p.stdout.read1(min(1024,2049-len(data)))
+    if not raw: break
+    data.extend(raw)
+    if len(data)>2048: raise ValueError()
+  if p.wait(timeout=max(.001,deadline-time.monotonic()))!=0 or time.monotonic()>=deadline: raise ValueError()
+  result={}
+  for line in data.decode('ascii').splitlines():
+   name,value=line.split('=',1)
+   if name in result: raise ValueError()
+   result[name]=value
+  if set(result)!=set(names): raise ValueError()
+  return result
+ finally:
+  if p.poll() is None: p.kill(); p.wait(timeout=1)
+  p.stdout.close()
+identity={}
+for line in read('/usr/lib/os-release',4096).decode('ascii').splitlines():
+ if line.startswith(('ID=','VERSION_ID=')):
+  name,value=line.split('=',1)
+  if name in identity: raise ValueError()
+  identity[name]=value[1:-1] if value.startswith('"') and value.endswith('"') else value
+if identity.get('ID') not in ('ubuntu','debian'): raise ValueError()
+kernel_package='linux-image-amd64' if identity['ID']=='debian' else 'linux-image-generic'
+environment={'id':identity['ID'],'version':identity['VERSION_ID'],'kernel_release':os.uname().release,'packages':versions(['systemd','libc6','libgtk-3-0t64','libwebkit2gtk-4.1-0',kernel_package])}
 allowed={'ext4','proc','sysfs','tmpfs','devtmpfs','devpts','cgroup2','securityfs','pstore','bpf','tracefs','debugfs','configfs','hugetlbfs','mqueue','autofs','efivarfs','fusectl','binfmt_misc','ramfs','nsfs'}
 mounts=[]
 for line in read('/proc/self/mountinfo',65536).decode('ascii').splitlines():
@@ -89,11 +122,12 @@ except OSError: pass
 authorized=read('/home/fixture/.ssh/authorized_keys',256)
 controllers=read('/sys/fs/cgroup/cgroup.controllers',4096).split()
 result={'version':1,'uid':os.getuid(),'pid1_systemd':read('/proc/1/comm',32)==b'systemd\\n','cgroup_v2':any(item[2]=='cgroup2' for item in mounts) and {b'cpu',b'memory',b'pids'}.issubset(controllers),'mounts_allowed':bool(mounts) and len(mounts)<=512 and all(item[2] in allowed for item in mounts),'root_ext4_vda':root,'authorized_count':len([line for line in authorized.splitlines() if line.strip()]),'authorized_sha256':hashlib.sha256(authorized).hexdigest(),'agent_absent':'SSH_AUTH_SOCK' not in os.environ,'container_absent':command_ok(['/usr/bin/systemd-detect-virt','--container','--quiet'],1),'logind_active':command_ok(['/usr/bin/systemctl','is-active','--quiet','systemd-logind.service'],0)}
+result['environment']=environment
 print(json.dumps(result,sort_keys=True))
 '''
 
 
-def _facts(raw, expected):
+def _facts(raw, expected, profile="ubuntu24"):
     if type(raw) is not bytes or not 0 < len(raw) <= 4096:
         raise ProbeRefused("schema")
     try:
@@ -111,6 +145,10 @@ def _facts(raw, expected):
             raise ProbeRefused(field)
     if facts["authorized_sha256"] != expected:
         raise ProbeRefused("authorized_sha256")
+    try:
+        preparation.validate_environment(facts["environment"], profile)
+    except preparation.Refused:
+        raise ProbeRefused("environment") from None
     return facts
 
 
@@ -166,16 +204,11 @@ def _capture(root_path, stack):
                for name in preparation.CONTEXT}
     if set(os.listdir(directories["context"])) != set(preparation.CONTEXT):
         raise Refused()
-    reviewed = preparation._sources()
-    if any(context[name] != reviewed[name] for name in reviewed):
-        raise Refused()
     authorization = preparation.public_key(context["controller.pub"])
     if authorization != context["controller.pub"] or authorization != preparation.public_key(capture("auth/controller_ed25519.pub", 256)):
         raise Refused()
     manifest = json.loads(capture("preparation.json", 8192), object_pairs_hook=guard._pairs)
-    if (manifest.get("status") != "context-prepared-not-launchable" or manifest.get("base_image") != preparation.BASE
-            or manifest.get("sha256") != {name: hashlib.sha256(raw).hexdigest() for name, raw in context.items()}):
-        raise Refused()
+    profile = preparation.validate_context(manifest, context)
     public = capture("guest/ssh_host_ed25519_key.pub", 256)
     parts = public.rstrip(b"\n").split(b" ")
     if (len(parts) != 3 or parts[2] != b"pn-native-guest" or not public.endswith(b"\n")
@@ -194,7 +227,7 @@ def _capture(root_path, stack):
         raise Refused()
     if set(os.listdir(directories["auth"])) != {"controller_ed25519", "controller_ed25519.pub", "known_hosts"}:
         raise Refused()
-    return directories, witnesses, config, hashlib.sha256(authorization).hexdigest(), pin
+    return directories, witnesses, config, hashlib.sha256(authorization).hexdigest(), pin, profile
 
 
 def _revalidate(witnesses):
@@ -491,7 +524,7 @@ def _smoke(root_path, *, inline_react=False):
         raise Refused()
     guard._absolute(root_path)
     with ExitStack() as stack:
-        directories, witnesses, config, expected_hash, expected_pin = _capture(root_path, stack)
+        directories, witnesses, config, expected_hash, expected_pin, source_profile = _capture(root_path, stack)
         root = directories[""]
         progress = {"stage": "boot_wait", "ssh_error": "none", "returncode": None, "guard": None}
         stack.enter_context(_failure_receipt(root, progress, directories["runtime"]))
@@ -575,11 +608,12 @@ def _smoke(root_path, *, inline_react=False):
                 progress["ssh_error"] = "protocol"
                 progress.pop("probe_check", None)
                 try:
-                    _facts(data, expected_hash)
+                    facts = _facts(data, expected_hash, source_profile)
                 except ProbeRefused as error:
                     progress["probe_check"] = error.probe_check
                     raise
                 progress["ssh_error"] = "none"
+                progress["environment"] = facts["environment"]
             deadline = time.monotonic() + 180
             while True:
                 remaining = deadline - time.monotonic()
@@ -624,7 +658,7 @@ def _smoke(root_path, *, inline_react=False):
                    "uid": 1001, "pid1_systemd": True, "cgroup_v2": True, "mounts_allowed": True,
                    "root_ext4_vda": True, "agent_absent": True, "container_absent": True,
                    "logind_active": True, "authorized_count": 1,
-                   "authorized_sha256": expected_hash}
+                   "authorized_sha256": expected_hash, "source_profile": source_profile, "environment": progress["environment"]}
         preparation._write(root, "smoke-receipt.json", (json.dumps(receipt, sort_keys=True) + "\n").encode())
         if inline_react:
             fixture["guard_normal_exit"] = True

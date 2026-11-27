@@ -28,6 +28,14 @@ prove production IPC/filesystem denial, arbitrary geometry, hostile workloads or
 the complete recovery/security matrix. Its native results must be recorded only
 after actual execution; builds and synthetic control tests remain separate.
 
+The first actual fixed host attempt with complete startup diagnostics refused
+with `network_not_isolated` on the fresh Ubuntu guest; no document input was sent
+through the unchanged supervisor gate. Application teardown remained unconfirmed,
+separately from normal VM shutdown. [Exact source-pinned failure](security-evidence/2026-11-27-native-inline-fixture/native-profile-45935023462.json).
+Do not repeat an identical blocked runtime or treat an explicit namespace option
+as permission. A suitable environment must satisfy actual effective checks; no
+sysctl change, executor exemption or weaker assertion is authorized.
+
 ## New vault-service validation gate — 26 November 2026
 
 The new `choose_vault`, `vault_inventory`, `open_vault_sources` and

@@ -237,3 +237,28 @@ Independent controls passed:19 driver,13 diagnostic helper,33 session and3 host
 groups. Review found no remaining blocker. These diagnostic controls do not
 establish the actual host cause or successful native cleanup; both earlier runs
 remain failed until separate new execution is recorded.
+
+## Third actual profile: effective namespace admission refused
+
+At **f7d6853**, [run45935023462](https://github.com/TomasDelon/programmable-notes/actions/runs/45935023462)
+**failed**. The [validated annotation summary](native-profile-45935023462.json)
+now identifies the actual boundary: `host_stage=start_failed`,
+`start_failure=network_not_isolated`, host exit1 while the observer was still
+running. Its original session reason was `observer_failed`; teardown then
+interrupted the observer in `run`→`_wait`→`interrupted`, producing the secondary
+`observer_error`. The exception metadata is validated against the frozen source.
+
+The unchanged supervisor rejected actual network-namespace isolation before its
+input write. Requested PrivateNetwork alone was not accepted as evidence. No
+React input, native Stop or expiry ran, and application cleanup remained
+unconfirmed/failed. OS admission and normal VM shutdown passed independently.
+This is a real fail-closed namespace observation, not successful native product
+acceptance. Earlier failures retain their original unknown causes.
+
+The OS policy reason for the missing namespace is not directly established by
+these notices. Existing ADR004 documents Ubuntu's possible AppArmor/systemd
+silent-skip behavior; that is supporting context, not a new kernel-log diagnosis.
+No global namespace sysctl, executor exemption, isolation property or resource
+limit is changed. Further work must use an actually suitable environment or a
+separately reviewed secure backend; compilation or a weaker assertion cannot
+clear this blocker.

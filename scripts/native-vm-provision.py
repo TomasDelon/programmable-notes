@@ -1,6 +1,7 @@
 """Prepare public build inputs and a fresh host-only controller identity.
 
-Usage: --prepare /owned-0700-parent/FRESH-name. Existing paths always refuse;
+Usage: --prepare ROOT (Ubuntu default) or --prepare-debian13 ROOT. ROOT is a
+fresh name under an owned 0700 parent. Existing paths always refuse;
 failed partial roots are retained and must never be treated as prepared images.
 Only fixed system ssh-keygen runs here. No Docker/build/container/export/packer,
 guest launch or SSH transfer is implemented or invoked by this preparation slice.
@@ -24,6 +25,11 @@ import time
 from types import MappingProxyType
 
 BASE = "ubuntu@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8"
+DEBIAN_BASE = "debian@sha256:ab3b3c8c5159eebfca4376430132d53c4d425f869c765ecbe47177a030da575d"
+PROFILES = MappingProxyType({"ubuntu24": (BASE, "Dockerfile"), "debian13": (DEBIAN_BASE, "Dockerfile.debian13")})
+ENVIRONMENTS = MappingProxyType({"ubuntu24": ("ubuntu", "24.04", "generic", "linux-image-generic"),
+                                 "debian13": ("debian", "13", "amd64", "linux-image-amd64")})
+PACKAGES = ("systemd", "libc6", "libgtk-3-0t64", "libwebkit2gtk-4.1-0")
 ENV = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
 FLAGS = os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK
 COMMENT = b"pn-native-fixture"
@@ -34,6 +40,25 @@ DEFERRED = ["container-assembly", "export-and-packing", "guest-host-identity",
 
 class Refused(Exception):
     """No diagnostic values are public."""
+
+
+def validate_environment(value, profile=None):
+    """Fixed public OS/kernel/package identity only, never general guest metadata."""
+    if type(value) is not dict or set(value) != {"id", "version", "kernel_release", "packages"}:
+        raise Refused()
+    selected = next((name for name, fixed in ENVIRONMENTS.items() if (value["id"], value["version"]) == fixed[:2]), None)
+    if selected is None or profile is not None and profile != selected:
+        raise Refused()
+    fixed = ENVIRONMENTS[selected]
+    release = value["kernel_release"]
+    packages = value["packages"]
+    if (type(value["id"]) is not str or type(value["version"]) is not str
+            or type(release) is not str or not re.fullmatch(r"[0-9][A-Za-z0-9.+~_-]{0,126}", release)
+            or not release.endswith("-" + fixed[2])
+            or type(packages) is not dict or set(packages) != {*PACKAGES, fixed[3]}
+            or any(type(version) is not str or not re.fullmatch(r"[0-9][A-Za-z0-9.+:~_-]{0,127}", version) for version in packages.values())):
+        raise Refused()
+    return selected
 
 
 def public_key(raw):
@@ -185,20 +210,23 @@ def _derive(private_fd):
     return _tool(["-y", "-P", "", "-f", f"/proc/self/fd/{private_fd}"], (private_fd,), 256)
 
 
-def _sources():
+def _sources(profile="ubuntu24"):
     """Capture these two reviewed files only, never walk/copy a repository tree."""
+    if type(profile) is not str or profile not in PROFILES:
+        raise Refused()
+    base, recipe = PROFILES[profile]
     source_dir = _directory(_parts(str(Path(__file__).absolute().parent / "native-guest")))
     try:
         result = {}
         for name in CONTEXT[:2]:
-            fd = os.open(name, os.O_RDONLY | FLAGS, dir_fd=source_dir)
+            fd = os.open(recipe if name == "Dockerfile" else name, os.O_RDONLY | FLAGS, dir_fd=source_dir)
             try:
                 if _owned(fd).st_size > 32768:
                     raise Refused()
                 result[name] = _read(fd, 32768)
             finally:
                 os.close(fd)
-        if not result["Dockerfile"].startswith(("FROM " + BASE + "\n").encode()):
+        if not result["Dockerfile"].startswith(("FROM " + base + "\n").encode()):
             raise Refused()
         return result
     finally:
@@ -222,14 +250,32 @@ def _unique(items):
     return result
 
 
-def prepared_context(root_path):
+def validate_context(manifest, captured):
+    """One closed profile/base/source binding shared by preparation, packing and smoke."""
+    if (type(manifest) is not dict
+            or set(manifest) != {"version", "status", "source_profile", "base_image", "docker_executed", "sha256", "deferred"}
+            or type(manifest["version"]) is not int or manifest["version"] != 2
+            or type(manifest["source_profile"]) is not str or manifest["source_profile"] not in PROFILES
+            or manifest["status"] != "context-prepared-not-launchable" or manifest["docker_executed"] is not False
+            or manifest["deferred"] != DEFERRED or set(captured) != set(CONTEXT)):
+        raise Refused()
+    profile = manifest["source_profile"]
+    if (manifest["base_image"] != PROFILES[profile][0]
+            or manifest["sha256"] != {name: hashlib.sha256(value).hexdigest() for name, value in captured.items()}):
+        raise Refused()
+    reviewed = _sources(profile)
+    if any(captured[name] != reviewed[name] for name in CONTEXT[:2]):
+        raise Refused()
+    return profile
+
+
+def prepared_profile_context(root_path):
     """Revalidate a prepared root and return immutable captured PUBLIC bytes only.
 
     Call before packing publishes any output. This is not a directory grant or a
     Docker/launch receipt. The fixed trusted keygen may read the host private key
     to verify its public identity; Python never reads or returns private bytes.
     """
-    reviewed = _sources()
     with ExitStack() as stack:
         root = _directory(_parts(root_path))
         stack.callback(os.close, root)
@@ -275,31 +321,28 @@ def prepared_context(root_path):
             raise Refused()
         captured = {name: read_public(directories["context"], name, 256 if name == "controller.pub" else 32768)
                     for name in CONTEXT}
-        if any(captured[name] != reviewed[name] for name in CONTEXT[:2]):
-            raise Refused()
         if captured["controller.pub"] != authorized:
             raise Refused()
         manifest = json.loads(read_public(root, "preparation.json", 8192), object_pairs_hook=_unique)
-        if (type(manifest) is not dict
-                or set(manifest) != {"version", "status", "base_image", "docker_executed", "sha256", "deferred"}
-                or type(manifest["version"]) is not int or manifest["version"] != 1
-                or manifest["status"] != "context-prepared-not-launchable"
-                or manifest["base_image"] != BASE or manifest["docker_executed"] is not False
-                or manifest["deferred"] != DEFERRED
-                or manifest["sha256"] != {name: hashlib.sha256(value).hexdigest() for name, value in captured.items()}):
-            raise Refused()
-        return MappingProxyType(captured)
+        profile = validate_context(manifest, captured)
+        return profile, MappingProxyType(captured)
+
+
+def prepared_context(root_path):
+    """Compatibility API: immutable public bytes; closed profile is validated too."""
+    return prepared_profile_context(root_path)[1]
 
 
 def main(argv=None):
     created = False
     try:
         args = sys.argv[1:] if argv is None else argv
-        if (len(args) != 2 or args[0] != "--prepare" or sys.platform != "linux"
+        if (len(args) != 2 or args[0] not in ("--prepare", "--prepare-debian13") or sys.platform != "linux"
                 or os.getuid() != os.geteuid()):
             raise Refused()
         parts = _parts(args[1])
-        sources = _sources()
+        profile = "debian13" if args[0] == "--prepare-debian13" else "ubuntu24"
+        sources = _sources(profile)
         with ExitStack() as stack:
             parent = _directory(parts[:-1])
             stack.callback(os.close, parent)
@@ -339,8 +382,8 @@ def main(argv=None):
             for name, content in sources.items():
                 _write(directories["context"], name, content)
             manifest = {
-                "version": 1, "status": "context-prepared-not-launchable",
-                "base_image": BASE, "docker_executed": False,
+                "version": 2, "status": "context-prepared-not-launchable", "source_profile": profile,
+                "base_image": PROFILES[profile][0], "docker_executed": False,
                 "sha256": {name: hashlib.sha256(content).hexdigest() for name, content in sources.items()},
                 "deferred": list(DEFERRED),
             }

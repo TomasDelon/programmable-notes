@@ -20,6 +20,51 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Captured-vault directory creation and sealed validation profile
+
+The Rust Vault now creates one real directory through its retained parent
+descriptor with no overwrite or implicit parent creation. Relative-path limits
+and source-path behavior are preserved; existing payloads are not opened.
+Acknowledged creation plus failed sync returns a durability warning; ambiguous
+publication returns uncertainty without rollback. There is no new Store state,
+grant, native IPC command or UI activation. Empty-folder inventory discovery
+remains separate. [Plan and scope](plans/vault-directory-creation.md).
+
+The full native-documents suite passed **91 tests, zero failures, seven existing
+ignored tests**. Eight new filesystem cases also passed independently; two private
+compile-time fault controls exercise injected replies after real publication.
+These controls are not actual media-failure or installed-GUI acceptance.
+
+A sealed Debian13 profile uses an official pinned amd64 image, a closed CLI and
+v2 profile/base/context binding across preparation, packing and smoke validation.
+The Ubuntu default, private authentication/layout, mount-free construction and
+all isolation/deadline checks remain. Bounded receipts record actual distro,
+kernel and fixed package versions without hostname, paths or raw errors.
+Independent source controls/review passed; **no Debian image or guest has run**.
+OS-only admission must pass before the separate native diagnostic. ABI and
+namespace compatibility remain unproven. [Validation plan](plans/debian-native-validation.md).
+
+The complete frozen-source packet check exited **0**: **808 unit, 129 tooling /
+zero skips, 153 Chromium, 9 Pages and 4 local cloud-storage browser cases**,
+plus formatting, lint, strict types and production build. Rust formatting passed;
+all functional input hashes stayed unchanged. This verifies code and existing
+browser behavior, not the unexecuted Debian environment or native UI.
+
+## Native namespace admission blocker — 27 November 2026
+
+Actual [profile45935023462](https://github.com/TomasDelon/programmable-notes/actions/runs/45935023462)
+at **f7d6853** failed the unchanged effective network-namespace gate before
+sending document input. Validated diagnostics show host start failure
+`network_not_isolated`, exit1 while the observer was running, followed by
+parent-induced observer interruption. This explains this run's secondary
+`observer_error`; it does not retroactively diagnose the earlier runs.
+
+Application cleanup was not confirmed and remains failed. OS admission and
+normal VM shutdown passed separately. No native React pointer/keyboard, Stop,
+expiry or hostile-workload test passed. The underlying OS policy cause is not
+established by the notices; Ubuntu AppArmor/systemd behavior in ADR004 is context.
+No security check is relaxed. [Exact evidence](security-evidence/2026-11-27-native-inline-fixture/native-profile-45935023462.json).
+
 ## Live controller projection — 27 November 2026
 
 `workspace/useDocumentSession.ts` now observes the existing controller with a

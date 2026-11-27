@@ -213,6 +213,7 @@ test('automatic PR and main events keep both mandatory gates and cannot invoke a
       );
       Object.assign(inputs, {
         native_vm: true,
+        native_debian13: true,
         editing_scope: 'all',
         editing_browser: 'all',
         deployment_url: '',
@@ -391,5 +392,62 @@ test('each optional payload step is guarded and OS-only smoke remains mutually e
         vmSection.replace(fragment[0], fragment[0].replace(/ {8}if: .+\n/, '')),
       ),
     );
+  }
+});
+
+test('the sealed Debian flag requires VM mode and preserves exclusive profile preparation', () => {
+  for (const native_vm of [false, true]) {
+    for (const native_inline_react of [false, true]) {
+      const inputs = Object.fromEntries(flags.map((flag) => [flag, false]));
+      Object.assign(inputs, {
+        native_vm,
+        native_inline_react,
+        native_debian13: true,
+        editing_scope: 'all',
+        editing_browser: 'all',
+        deployment_url: '',
+      });
+      const sandbox = context(inputs);
+      assert.equal(evaluate(group, sandbox), 'native-vm-47');
+      for (const name of names)
+        assert.equal(
+          Boolean(evaluate(jobs[name], sandbox)),
+          name === 'native-vm',
+        );
+      assert.equal(Boolean(evaluate(rejectVm, sandbox)), !native_vm);
+    }
+  }
+  assert.ok(
+    vmSection.includes(
+      '- name: Prepare host-only authentication and public context\n        if: ${{ !inputs.native_debian13 }}\n',
+    ),
+  );
+  assert.ok(
+    vmSection.includes(
+      '- name: Prepare sealed Debian 13 context\n        if: inputs.native_debian13\n        run: python3 -I -B scripts/native-vm-provision.py --prepare-debian13 "$PN_VM_ROOT"\n',
+    ),
+  );
+});
+
+test('Debian VM mode rejects unrelated dispatch inputs before checkout', () => {
+  for (let mask = 1; mask < 128; mask++) {
+    const inputs = Object.fromEntries(
+      flags.map((flag, bit) => [flag, Boolean(mask & (1 << bit))]),
+    );
+    Object.assign(inputs, {
+      native_vm: true,
+      native_debian13: true,
+      editing_scope: 'all',
+      editing_browser: 'all',
+      deployment_url: mask & 64 ? 'https://fixture.example/' : '',
+    });
+    const sandbox = context(inputs);
+    assert.equal(evaluate(group, sandbox), 'native-vm-47');
+    assert.equal(Boolean(evaluate(rejectVm, sandbox)), true);
+    for (const name of names)
+      assert.equal(
+        Boolean(evaluate(jobs[name], sandbox)),
+        name === 'native-vm',
+      );
   }
 });

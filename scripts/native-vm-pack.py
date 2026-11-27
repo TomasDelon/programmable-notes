@@ -524,7 +524,7 @@ def _extract(reader, guest_fd):
 
 
 def pack(root_path, docker=None):
-    context = preparation.prepared_context(root_path)
+    profile, context = preparation.prepared_profile_context(root_path)
     script_fd = guard._open_absolute(str(Path(__file__).with_name("native-guest").joinpath("pack.sh")))
     try:
         if guard._regular(script_fd).st_size > 16384:
@@ -558,7 +558,7 @@ def pack(root_path, docker=None):
                        data=_tar(context), timeout=1200)
             builder = docker.create("/opt/native-fixture/configure.sh")
             docker.run(["start", "--attach", builder], timeout=120)
-            packer = docker.create("/native-pack.sh")
+            packer = docker.create("/native-pack.sh", profile)
             docker.run(["cp", "-", packer + ":/"], data=_tar({"native-pack.sh": script}))
             docker.export_into(builder, packer)
             with docker.stream(["cp", packer + ":/native-output/.", "-"],

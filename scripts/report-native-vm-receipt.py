@@ -17,11 +17,15 @@ spec = importlib.util.spec_from_file_location(
     "receipt_guard", Path(__file__).with_name("native-vm-launch.py"))
 guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(guard)
+environment_spec = importlib.util.spec_from_file_location(
+    "receipt_preparation", Path(__file__).with_name("native-vm-provision.py"))
+preparation = importlib.util.module_from_spec(environment_spec)
+environment_spec.loader.exec_module(preparation)
 STAGES = {"boot_wait", "probe", "pin", "key", "fixture", "powerdown", "guard_exit"}
 SSH = {"none", "host_key", "authentication", "timeout", "connection", "protocol", "other"}
 BASE = {"version", "scope", "native_app_tested", "status"}
 PROBE_CHECKS = {"schema", "version", "uid", "authorized_count", "authorized_sha256",
-                "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active"}
+                "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent", "container_absent", "logind_active", "environment"}
 BOOT_MARKERS = {"linux_kernel_started", "systemd_started", "multiuser", "sshd_started",
                 "kernel_panic", "emergency", "network_wait", "crng_ready", "root_device_timeout", "initramfs_shell"}
 PASSED = {"wrong_pin_rejected", "wrong_key_rejected", "guard_normal_exit", "pid1_systemd",
@@ -34,7 +38,7 @@ def annotation(receipt):
             or receipt.get("native_app_tested") is not False):
         raise guard.Refused()
     if receipt.get("status") == "passed":
-        if set(receipt) != BASE | PASSED | {"uid", "authorized_count", "authorized_sha256"}:
+        if set(receipt) != BASE | PASSED | {"uid", "authorized_count", "authorized_sha256", "source_profile", "environment"}:
             raise guard.Refused()
         if any(receipt[name] is not True for name in PASSED):
             raise guard.Refused()
@@ -44,7 +48,14 @@ def annotation(receipt):
         digest = receipt["authorized_sha256"]
         if type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
             raise guard.Refused()
-        return "::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false"
+        if type(receipt["source_profile"]) is not str or receipt["source_profile"] not in preparation.PROFILES:
+            raise guard.Refused()
+        profile = preparation.validate_environment(receipt["environment"], receipt["source_profile"])
+        environment = receipt["environment"]
+        packages = ",".join(name + ":" + environment["packages"][name] for name in sorted(environment["packages"]))
+        return ("::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false"
+                + " source_profile=" + profile + " os=" + environment["id"] + " version=" + environment["version"]
+                + " kernel_release=" + environment["kernel_release"] + " packages=" + packages)
     required = BASE | {"stage", "reason", "ssh_error"}
     if (receipt.get("status") != "failed" or not required <= set(receipt)
             or set(receipt) - required - {"origin_stage", "returncode", "guard_status", "probe_check", "boot_markers", "serial_bytes"}):

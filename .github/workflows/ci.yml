@@ -2,7 +2,7 @@ name: CI
 run-name: >-
   CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
   group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-  ((inputs.native_vm || inputs.native_inline_react) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+  ((inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
   inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
   inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
   'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -20,6 +20,10 @@ on:
         default: false
       native_inline_react:
         description: Fixed native React input/Stop/expiry diagnostic; requires native_vm and no other modes. Not application acceptance.
+        type: boolean
+        default: false
+      native_debian13:
+        description: Use the sealed Debian 13 guest; requires native_vm. Ubuntu remains the default.
         type: boolean
         default: false
       native_preflight:
@@ -68,7 +72,7 @@ concurrency:
   # Keep the group shown in run-name aligned with the scheduler's group.
   group: >-
     ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
-    ((inputs.native_vm || inputs.native_inline_react) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+    ((inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
     inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
     inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
     'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
@@ -77,7 +81,7 @@ concurrency:
 
 jobs:
   check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -144,7 +148,7 @@ jobs:
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -254,7 +258,7 @@ jobs:
           retention-days: 7
 
   deployment-check:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -298,7 +302,7 @@ jobs:
   # Optional, explicitly named diagnostics. Pull requests still run the complete
   # check/native-check gates above; success here is never a substitute for them.
   preview-input-regression:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -379,7 +383,7 @@ jobs:
           retention-days: 7
 
   native-preflight:
-    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && (inputs.native_preflight || inputs.kvm_role_probe)
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && (inputs.native_preflight || inputs.kvm_role_probe)
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
@@ -406,7 +410,7 @@ jobs:
         run: bash scripts/native-hosted-preflight.sh
 
   native-vm:
-    if: github.event_name == 'workflow_dispatch' && (inputs.native_vm || inputs.native_inline_react)
+    if: github.event_name == 'workflow_dispatch' && (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -448,7 +452,11 @@ jobs:
           printf 'PN_VM_ROOT=%s/fixture\n' "$pn_vm_parent" >> "$GITHUB_ENV"
           printf 'created=true\n' >> "$GITHUB_OUTPUT"
       - name: Prepare host-only authentication and public context
+        if: ${{ !inputs.native_debian13 }}
         run: python3 -I -B scripts/native-vm-provision.py --prepare "$PN_VM_ROOT"
+      - name: Prepare sealed Debian 13 context
+        if: inputs.native_debian13
+        run: python3 -I -B scripts/native-vm-provision.py --prepare-debian13 "$PN_VM_ROOT"
       - name: Assemble the guest without host mounts
         run: python3 -I -B scripts/native-vm-pack.py --pack "$PN_VM_ROOT"
       - name: Check the exact share-free launch layout

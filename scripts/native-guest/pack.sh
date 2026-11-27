@@ -3,6 +3,11 @@
 set -euo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
+test "$#" = 1
+case "$1" in
+  ubuntu24|debian13) profile="$1" ;;
+  *) exit 2 ;;
+esac
 test "$(id -u)" = 0
 test ! -e /native-root
 test ! -e /native-output
@@ -20,7 +25,10 @@ printf '127.0.0.1 localhost\n127.0.1.1 pn-native-fixture\n' > /native-root/etc/h
 rm -f /native-root/etc/resolv.conf
 ln -s /run/systemd/resolve/stub-resolv.conf /native-root/etc/resolv.conf
 shopt -s nullglob
-kernels=(/native-root/boot/vmlinuz-*-generic)
+case "$profile" in
+  ubuntu24) kernels=(/native-root/boot/vmlinuz-*-generic) ;;
+  debian13) kernels=(/native-root/boot/vmlinuz-*-amd64) ;;
+esac
 test "${#kernels[@]}" = 1
 kernel="${kernels[0]}"
 initrd="/native-root/boot/initrd.img-${kernel##*/vmlinuz-}"

@@ -42,6 +42,19 @@ const passed = {
   logind_active: true,
   authorized_count: 1,
   authorized_sha256: 'a'.repeat(64),
+  source_profile: 'ubuntu24',
+  environment: {
+    id: 'ubuntu',
+    version: '24.04',
+    kernel_release: '6.8.0-1-generic',
+    packages: {
+      systemd: '255.4-1ubuntu8',
+      libc6: '2.39-0ubuntu8',
+      'libgtk-3-0t64': '3.24.41-4ubuntu1',
+      'libwebkit2gtk-4.1-0': '2.50.0-1ubuntu1',
+      'linux-image-generic': '6.8.0-1.1',
+    },
+  },
 };
 
 function fixture(t, value) {
@@ -83,11 +96,54 @@ test('publishes only fixed failure categories as a GitHub check annotation', (t)
 test('reports OS-only success without promoting native application security or printing public key data', (t) => {
   const result = run(fixture(t, passed).file);
   assert.equal(result.status, 0);
-  assert.equal(
+  assert.match(
     result.stdout,
-    '::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false\n',
+    /^::notice title=Guest OS admission::status=passed scope=guest-os-admission-only native_app_tested=false source_profile=ubuntu24 os=ubuntu version=24\.04 kernel_release=6\.8\.0-1-generic packages=/,
   );
   assert.doesNotMatch(result.stdout, /a{64}/);
+});
+
+test('emits only profile-matched Debian environment identities and rejects metadata injection', (t) => {
+  const environment = {
+    id: 'debian',
+    version: '13',
+    kernel_release: '6.12.1+deb13-amd64',
+    packages: {
+      systemd: '257.9-1',
+      libc6: '2.41-1',
+      'libgtk-3-0t64': '3.24.49-1',
+      'libwebkit2gtk-4.1-0': '2.50.0-1',
+      'linux-image-amd64': '6.12.1-1',
+    },
+  };
+  const debian = { ...passed, source_profile: 'debian13', environment };
+  const result = run(fixture(t, debian).file);
+  assert.equal(result.status, 0);
+  assert.match(
+    result.stdout,
+    /source_profile=debian13 os=debian version=13 kernel_release=6\.12\.1\+deb13-amd64/,
+  );
+  for (const changes of [
+    { source_profile: 'ubuntu24' },
+    { source_profile: 'foreign' },
+    { source_profile: null },
+    { environment: { ...environment, hostname: 'PRIVATE' } },
+    { environment: { ...environment, version: '13%0APRIVATE' } },
+    { environment: { ...environment, kernel_release: '6.12.1-generic' } },
+    {
+      environment: {
+        ...environment,
+        packages: { ...environment.packages, arbitrary: '1' },
+      },
+    },
+    {
+      environment: {
+        ...environment,
+        packages: { ...environment.packages, systemd: '1\nPRIVATE' },
+      },
+    },
+  ])
+    refused(run(fixture(t, { ...debian, ...changes }).file));
 });
 
 test('requires both full OS admission facts to be present and exactly true', (t) => {

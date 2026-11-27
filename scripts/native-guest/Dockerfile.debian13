@@ -1,0 +1,21 @@
+FROM debian@sha256:ab3b3c8c5159eebfca4376430132d53c4d425f869c765ecbe47177a030da575d
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
+    && chmod 0755 /usr/sbin/policy-rc.d \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates systemd systemd-sysv dbus dbus-user-session e2fsprogs tar coreutils \
+       openssh-server linux-image-amd64 initramfs-tools apparmor systemd-resolved \
+       libgtk-3-0t64 libwebkit2gtk-4.1-0 xvfb xauth openbox at-spi2-core \
+       python3 python3-pyatspi gir1.2-atspi-2.0 gir1.2-gtk-3.0 bubblewrap xdg-dbus-proxy \
+       xdotool x11-utils tesseract-ocr tesseract-ocr-eng acl \
+    && systemctl enable systemd-resolved.service \
+    && rm -f /etc/ssh/ssh_host_* /usr/sbin/policy-rc.d \
+    && truncate -s 0 /etc/machine-id \
+    && rm -f /var/lib/dbus/machine-id \
+    && rm -rf /var/lib/apt/lists/*
+
+# Same public configure/auth inputs; server identity is generated only in a fresh container.
+COPY --chmod=0600 configure.sh controller.pub /opt/native-fixture/
+CMD ["/bin/bash", "/opt/native-fixture/configure.sh"]
