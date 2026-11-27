@@ -291,6 +291,73 @@ fn readonly_parent_failure_retains_existing_grants_and_leaves_no_temporary() {
     assert!(store.create_vault(&vault, "extra.mdx", "capacity").is_err());
 }
 
+// A real failing rename must not be advertised as a confirmed pre-publication refusal.
+#[test]
+fn failed_rename_is_uncertain_without_leaking_temporary_files_or_grants() {
+    let f = Fixture::new();
+    let vault = Vault::select_authorized(&f.0).unwrap();
+    let mut store = Store::default();
+    let original = store
+        .create_vault(&vault, "original.mdx", "original")
+        .unwrap();
+    let mut temporary_events = Watch::new(&f.0, libc::IN_CREATE | libc::IN_DELETE);
+    // Valid under the shared relative-path bound, but too long for a Linux basename.
+    // Parent resolution succeeds; the kernel refuses the eventual renameat2.
+    let path = format!("{}.mdx", "x".repeat(300));
+    let error = store
+        .create_vault(&vault, &path, "retained source")
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("publication outcome is uncertain"),
+        "{error}"
+    );
+    match error {
+        Error::PublicationUncertain(error) => {
+            assert_eq!(error.raw_os_error(), Some(libc::ENAMETOOLONG));
+        }
+        error => panic!("Expected uncertain publication after failed rename: {error:?}"),
+    }
+    temporary_events.observed();
+    assert_eq!(entries(&f.0), ["original.mdx"]);
+    assert_eq!(fds(&f.0), 2);
+    store
+        .save(&original.id, &original.revision, "still usable\r\n")
+        .unwrap();
+    for index in 0..31 {
+        store
+            .create_vault(&vault, &format!("{index}.mdx"), "ok")
+            .unwrap();
+    }
+    assert!(store
+        .create_vault(&vault, "overflow.mdx", "no room")
+        .is_err());
+}
+
+#[test]
+fn pre_rename_io_and_creation_collisions_keep_their_existing_classification() {
+    let f = Fixture::new();
+    let vault = Vault::select_authorized(&f.0).unwrap();
+    let mut store = Store::default();
+    match store.create_vault(&vault, "missing/note.mdx", "not published") {
+        Err(Error::Io(error)) => assert_eq!(error.kind(), ErrorKind::NotFound),
+        result => panic!("Expected pre-publication I/O failure: {result:?}"),
+    }
+    let created = store
+        .create_vault(&vault, "note.mdx", "original\r\n")
+        .unwrap();
+    assert!(matches!(
+        store.create_vault(&vault, "note.mdx", "must not overwrite"),
+        Err(Error::Conflict)
+    ));
+    assert_eq!(fs::read(f.0.join("note.mdx")).unwrap(), b"original\r\n");
+    store
+        .save(&created.id, &created.revision, "still authorized")
+        .unwrap();
+    assert_eq!(entries(&f.0), ["note.mdx"]);
+}
+
 // Catches aggregate byte exhaustion publishing a file or consuming a grant.
 #[test]
 fn aggregate_budget_failure_does_not_publish_and_can_retry_after_releasing_bytes() {

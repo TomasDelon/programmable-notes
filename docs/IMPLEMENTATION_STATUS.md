@@ -53,6 +53,16 @@ cleanup before normal acquisition resumes. No silent retry, grant disposal or fi
 deletion is introduced. Shared product wiring, native dirty/busy acknowledgement,
 recovery and installed lifecycle/security acceptance remain separate work.
 
+Follow-up hardening distinguishes failed non-collision rename attempts as Rust
+`PublicationUncertain` instead of ordinary pre-publication I/O. Successful writes,
+collision refusal and sync-warning behavior are unchanged, including Save/Save As.
+The locked file-store suite passed **81 tests / 7 existing ignored**; the real
+workspace harness also passed native grant revocation and reopening. A controlled
+no-op close failed that new assertion as expected. Local production Tauri checking
+was blocked by missing `glib-2.0.pc` (exit 101); hosted native compilation and
+installed behavior remain separate observations. No typed-refusal protocol or
+automatic uncertainty clearance is enabled by this lower-level classification.
+
 ## Share-free image preparation and OS admission pipeline — 27 November 2026
 
 New permanent development commands create a public-only Docker context, assemble

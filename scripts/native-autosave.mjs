@@ -473,6 +473,8 @@ try {
     true,
   );
   let sequence = 0;
+  let workspaceGrant;
+  let workspaceDiskRevision;
   const workspace = createNativeWorkspace(
     {
       chooseVault: async () => ({
@@ -487,6 +489,8 @@ try {
         assert.deepEqual(paths, ['note.mdx']);
         const receipt = await backend.request({ action: 'open' });
         assert.equal(receipt.ok, true);
+        workspaceGrant = receipt.document.id;
+        workspaceDiskRevision = receipt.document.revision;
         return { vaultId, documents: [receipt.document] };
       },
       createVaultSource: async () => {
@@ -499,6 +503,7 @@ try {
           source,
         });
         if (!receipt.ok) throw Error(receipt.error);
+        workspaceDiskRevision = receipt.diskRevision;
         return { revision: receipt.diskRevision, durable: receipt.durable };
       },
       close: async (documentId) => {
@@ -528,10 +533,25 @@ try {
     'Workspace accepted edits reach disk before explicit flush',
   );
   await workspace.controller.flush();
+  const closedWorkspaceGrant = workspaceGrant;
+  const closedWorkspaceRevision = workspaceDiskRevision;
   await workspace.close(workspaceId);
   assert.equal(workspace.state().sessions.length, 0);
+  const revoked = await backend.request({
+    documentId: closedWorkspaceGrant,
+    expectedDiskRevision: closedWorkspaceRevision,
+    source: 'A closed workspace grant must not write',
+  });
+  assert.equal(
+    revoked.ok,
+    false,
+    'Workspace close must retire the real native grant',
+  );
+  assert.match(revoked.error, /Unknown document authorization/);
+  assert.deepEqual(await readFile(note), Buffer.from(workspaceSource));
   const reopenedWorkspaceId = await workspace.open('note.mdx');
   assert.notEqual(reopenedWorkspaceId, workspaceId);
+  assert.notEqual(workspaceGrant, closedWorkspaceGrant);
   const workspaceReopened = workspace.session(reopenedWorkspaceId);
   assert.equal(workspaceReopened.witness.source, workspaceSource);
   const workspaceExternal = `${workspaceSource}Independent disk edit\r\n`;

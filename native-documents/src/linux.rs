@@ -263,7 +263,9 @@ impl AuthorizedFile {
             if e.kind() == std::io::ErrorKind::AlreadyExists {
                 return Err(Error::Conflict);
             }
-            return Err(e.into());
+            // Once publication was attempted, a failed syscall (notably I/O
+            // failure) cannot establish that the target remained unchanged.
+            return Err(Error::PublicationUncertain(e));
         }
         temporary.committed = true;
         self.snapshot = Some(Snapshot {

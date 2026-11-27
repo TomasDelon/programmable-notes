@@ -38,6 +38,9 @@ pub const MAX_TOTAL_BYTES: usize = 8 * 1024 * 1024;
 pub enum Error {
     Rejected(&'static str),
     Io(std::io::Error),
+    /// A rename was attempted; its failure does not establish non-publication.
+    /// Reconcile the target before retrying, even though no new grant was returned.
+    PublicationUncertain(std::io::Error),
     UnknownGrant,
     StaleRevision,
     Conflict,
@@ -47,6 +50,10 @@ impl fmt::Display for Error {
         match self {
             Self::Rejected(message) => write!(f, "{message}"),
             Self::Io(e) => write!(f, "File operation failed: {e}"),
+            Self::PublicationUncertain(_) => write!(
+                f,
+                "File publication outcome is uncertain; reconcile before retrying"
+            ),
             Self::UnknownGrant => write!(f, "Unknown document authorization"),
             Self::StaleRevision => write!(f, "Stale document revision; reopen before saving"),
             Self::Conflict => write!(
