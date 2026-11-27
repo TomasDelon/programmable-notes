@@ -10,6 +10,28 @@ export interface LoadedProductDocument {
   readonly sessionId: string;
   readonly logicalPath: string;
 }
+export interface ProductCloseState {
+  readonly phase: 'idle' | 'requested' | 'committing' | 'uncertain';
+  readonly request: string | null;
+}
+export interface ProductCloseResolution {
+  readonly status: 'cancelled' | 'committing' | 'refused';
+  readonly request: string;
+  readonly reason: string | null;
+  readonly state: ProductCloseState;
+}
+/** Fixed native-close lifecycle, privately bound to the negotiated epoch. */
+export interface ProductCloseGuard {
+  observe(
+    changed: (state: ProductCloseState) => void,
+    onError: (reason: unknown) => void,
+  ): () => void;
+  resolve(
+    request: string,
+    action: 'cancel' | 'commit',
+  ): Promise<ProductCloseResolution>;
+}
+export type ProductCloseOutcome = 'editing' | 'committing' | 'uncertain';
 export interface ProductSnapshot {
   readonly vaultLabel: string | null;
   readonly entries: readonly ProductNavigationEntry[];
@@ -19,6 +41,8 @@ export interface ProductSnapshot {
   readonly error: string | null;
   readonly unresolvedCleanup: number;
   readonly closing: boolean;
+  readonly closeRequestId: string | null;
+  readonly closeUncertain: boolean;
 }
 export interface ProductApplication {
   snapshot(): ProductSnapshot;
@@ -42,10 +66,11 @@ export interface ProductApplication {
     action: 'keep' | 'discard',
   ): Promise<void>;
   closeDocument(sessionId: string): Promise<void>;
-  prepareClose(): Promise<void>;
+  prepareClose(detachEditor?: () => boolean): Promise<ProductCloseOutcome>;
 }
 /** Privileged host ports; never passed to authored document code. */
 export interface NativeProductServices {
+  readonly closeGuard?: ProductCloseGuard;
   setCloseState(state: { dirty: boolean; busy: boolean }): Promise<void>;
   preserveAttempt(input: {
     sessionId: string;

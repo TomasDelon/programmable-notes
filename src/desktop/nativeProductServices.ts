@@ -5,6 +5,10 @@ import {
 import { nativeDocuments } from '../documents/native';
 import { recoveryDigest } from '../documents/recovery';
 import { validSourceWitness } from '../editor/sourceWitness';
+import {
+  negotiateNativeCloseGuard,
+  type NativeClosePorts,
+} from './nativeClose';
 import type { NativeProductServices } from '../product/productApplication';
 
 type RecoveryPorts = Pick<
@@ -91,7 +95,7 @@ export function createNativeProductServices(
     },
   };
 }
-/** Bootstrap-only factory. Creating this host performs no vault acquisition or migration. */
+/** Controlled legacy/test composition only. No close negotiation: not safe for native activation. */
 export function createNativeProductHost(
   ports: NativeWorkspacePorts & RecoveryPorts = nativeDocuments,
 ) {
@@ -99,5 +103,19 @@ export function createNativeProductHost(
   return {
     workspace: createNativeWorkspace(captured, () => crypto.randomUUID()),
     services: createNativeProductServices(captured),
+  };
+}
+
+/** Negotiated bootstrap only: construct the application model after awaiting this factory. */
+export async function createGuardedNativeProductHost(
+  ports: NativeWorkspacePorts & RecoveryPorts = nativeDocuments,
+  closePorts?: NativeClosePorts,
+): Promise<ReturnType<typeof createNativeProductHost>> {
+  const captured = { ...ports };
+  const closeGuard = await negotiateNativeCloseGuard(closePorts);
+  const host = createNativeProductHost(captured);
+  return {
+    workspace: host.workspace,
+    services: { ...host.services, closeGuard },
   };
 }

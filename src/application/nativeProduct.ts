@@ -1,10 +1,14 @@
 import type { createNativeWorkspace } from './nativeWorkspace';
+import type { AggregateCloseAdmission } from './documentSessions';
 import { sameSourceWitness, type SourceBatch } from '../editor/sourceWitness';
 import type {
   LoadedProductDocument,
   NativeProductServices,
   ProductApplication,
   ProductSnapshot,
+  ProductCloseState,
+  ProductCloseResolution,
+  ProductCloseOutcome,
 } from '../product/productApplication';
 
 /** Application projection only. Source/history/grants stay in the existing workspace. */
@@ -12,7 +16,7 @@ export function createNativeProduct(
   workspace: ReturnType<typeof createNativeWorkspace>,
   services: NativeProductServices,
 ): ProductApplication {
-  const { setCloseState, preserveAttempt } = services;
+  const { setCloseState, preserveAttempt, closeGuard } = services;
   const listeners = new Set<() => void>();
   const loaded = new Map<string, LoadedProductDocument>();
   const subscriptions = new Map<string, () => void>();
@@ -20,6 +24,18 @@ export function createNativeProduct(
   const resolving = new Set<string>();
   const pendingRecovery = new Set<string>();
   let closing = false;
+  let closeUncertain = false;
+  let closeActive = false;
+  let closeFlight: Promise<ProductCloseOutcome> | null = null;
+  let capturedCloseRequest: string | null = null;
+  let retiredCloseRequest: string | null = null;
+  let nativeCloseState: ProductCloseState = { phase: 'idle', request: null };
+  let stopCloseObserver: (() => void) | null = null;
+  let observerGeneration = 0;
+  let productOperations = 0;
+  let commitDispatched = false;
+  let heldAdmission: AggregateCloseAdmission | null = null;
+  let hintError: unknown = null;
   let localError: string | null = null;
   let cache: ProductSnapshot;
   let fingerprint = '';
@@ -62,10 +78,27 @@ export function createNativeProduct(
     );
   }
   function protect(): Promise<void> {
-    // The old boolean IPC cannot atomically release OS-close admission against a
-    // late draft. Keep protection asserted; native entry activation stays blocked.
-    const state = { dirty: dirty(), busy: true };
-    const pending = hintQueue.then(() => setCloseState(state));
+    // Boolean hints never authorize close. A negotiated guard protects the OS
+    // window independently; legacy/no-guard callers remain permanently protected.
+    const state = {
+      dirty: dirty(),
+      busy:
+        !closeGuard ||
+        closing ||
+        productOperations > 0 ||
+        !!workspace.state().operation ||
+        resolving.size > 0 ||
+        pendingRecovery.size > 0,
+    };
+    const pending = hintQueue.then(async () => {
+      try {
+        await setCloseState(state);
+        hintError = null;
+      } catch (reason) {
+        hintError = reason;
+        throw reason;
+      }
+    });
     hintQueue = pending.catch(() => {
       error(
         'Native close protection could not be acknowledged. Activation remains blocked.',
@@ -162,6 +195,12 @@ export function createNativeProduct(
       error: state.error ?? localError,
       unresolvedCleanup: state.unresolvedCleanup,
       closing,
+      closeRequestId: closeActive
+        ? capturedCloseRequest
+        : nativeCloseState.phase === 'requested'
+          ? nativeCloseState.request
+          : null,
+      closeUncertain,
     };
     const nextFingerprint = JSON.stringify(value);
     if (nextFingerprint !== fingerprint) {
@@ -180,16 +219,230 @@ export function createNativeProduct(
     return cache;
   }
   function admitted() {
-    if (closing) throw Error('Aggregate document close is pending.');
+    if (closing || closeActive)
+      throw Error('Aggregate document close is pending.');
   }
   async function perform(action: () => Promise<unknown>): Promise<void> {
     admitted();
+    productOperations++;
     try {
       await protect();
       await action();
     } finally {
+      productOperations--;
       refresh();
       void protect().catch(() => {});
+    }
+  }
+  function uncertain(reason: unknown): ProductCloseOutcome {
+    closing = true;
+    closeUncertain = true;
+    if (heldAdmission) heldAdmission.markUncertain(reason);
+    error(
+      'Native close acknowledgement is uncertain. Existing source and identities remain protected.',
+    );
+    refresh();
+    return 'uncertain';
+  }
+  function validState(state: ProductCloseState): boolean {
+    if (!state || typeof state !== 'object') return false;
+    if (state.phase === 'idle') return state.request === null;
+    if (state.phase === 'requested' || state.phase === 'committing')
+      return typeof state.request === 'string' && state.request.length > 0;
+    return (
+      state.phase === 'uncertain' &&
+      (state.request === null ||
+        (typeof state.request === 'string' && state.request.length > 0))
+    );
+  }
+  function startObserver() {
+    if (!closeGuard || stopCloseObserver) return;
+    const generation = ++observerGeneration;
+    const current = () =>
+      generation === observerGeneration && listeners.size > 0;
+    try {
+      const stop = closeGuard.observe(
+        (state) => {
+          if (!current()) return;
+          if (!validState(state)) {
+            if (commitDispatched)
+              uncertain(Error('Malformed close observation.'));
+            else
+              error(
+                'Native close state could not be verified. Window close remains guarded.',
+              );
+            return;
+          }
+          if (
+            state.phase === 'requested' &&
+            state.request === retiredCloseRequest
+          )
+            return;
+          nativeCloseState = Object.freeze({
+            phase: state.phase,
+            request: state.request,
+          });
+          if (
+            state.phase === 'uncertain' ||
+            (state.phase === 'committing' && !commitDispatched)
+          )
+            uncertain(
+              Error(
+                'Native close state changed outside the current close request.',
+              ),
+            );
+          else refresh();
+        },
+        () => {
+          if (!current()) return;
+          if (commitDispatched)
+            uncertain(Error('Native close observation was interrupted.'));
+          else
+            error(
+              'Native close state could not be read. Window close remains guarded.',
+            );
+        },
+      );
+      if (current()) stopCloseObserver = stop;
+      else stop();
+    } catch {
+      error(
+        'Native close observation could not start. Window close remains guarded.',
+      );
+    }
+  }
+  async function drainCloseWork() {
+    for (;;) {
+      const hints = hintQueue,
+        recovery = recoveryQueue;
+      await recovery;
+      await hints;
+      if (
+        hints === hintQueue &&
+        recovery === recoveryQueue &&
+        pendingRecovery.size === 0
+      )
+        break;
+    }
+    if (hintError) throw Error('Native close protection was not acknowledged.');
+    if (
+      productOperations ||
+      resolving.size ||
+      workspace.state().operation ||
+      workspace.state().unresolvedCleanup
+    )
+      throw Error('A document operation is still running.');
+  }
+  function exactReply(reply: ProductCloseResolution, request: string): boolean {
+    return (
+      !!reply &&
+      reply.request === request &&
+      validState(reply.state) &&
+      ['cancelled', 'committing', 'refused'].includes(reply.status)
+    );
+  }
+  async function guardedClose(
+    detachEditor?: () => boolean,
+  ): Promise<ProductCloseOutcome> {
+    const request = capturedCloseRequest!;
+    const requireRequest = () => {
+      if (
+        closeUncertain ||
+        nativeCloseState.phase !== 'requested' ||
+        nativeCloseState.request !== request
+      )
+        throw Error('Native close request is no longer current.');
+    };
+    const cancel = async (): Promise<ProductCloseOutcome> => {
+      try {
+        const reply = await closeGuard!.resolve(request, 'cancel');
+        if (
+          !exactReply(reply, request) ||
+          reply.status !== 'cancelled' ||
+          reply.reason !== null ||
+          reply.state.phase !== 'idle' ||
+          reply.state.request !== null ||
+          closeUncertain ||
+          nativeCloseState.phase === 'committing' ||
+          nativeCloseState.phase === 'uncertain'
+        )
+          return uncertain(
+            Error('Native close cancellation was not confirmed.'),
+          );
+        // A new OS request may arrive after native cancellation but before its
+        // reply. Keep it buffered until this flight has actually completed.
+        if (
+          nativeCloseState.phase !== 'requested' ||
+          nativeCloseState.request === request
+        )
+          nativeCloseState = reply.state;
+        heldAdmission?.abort();
+        heldAdmission = null;
+        retiredCloseRequest = request;
+        closing = false;
+        return 'editing';
+      } catch (reason) {
+        return uncertain(reason);
+      }
+    };
+    try {
+      requireRequest();
+      if (
+        productOperations ||
+        resolving.size ||
+        workspace.state().operation ||
+        workspace.state().unresolvedCleanup
+      )
+        throw Error('Finish the current operation before closing.');
+      if (!detachEditor || !detachEditor())
+        throw Error('Finish the current edit before closing.');
+      heldAdmission = workspace.beginAggregateClose();
+      closing = true;
+      refresh();
+      await protect();
+      await heldAdmission.flush();
+      await drainCloseWork();
+      heldAdmission.assertCurrent();
+      requireRequest();
+    } catch (reason) {
+      error(
+        reason instanceof Error
+          ? reason.message
+          : 'Close refused. Source retained.',
+      );
+      return cancel();
+    }
+    try {
+      commitDispatched = true;
+      const reply = await closeGuard!.resolve(request, 'commit');
+      if (!exactReply(reply, request))
+        return uncertain(Error('Native close response identity changed.'));
+      if (
+        reply.status === 'committing' &&
+        reply.reason === null &&
+        reply.state.phase === 'committing' &&
+        reply.state.request === request &&
+        !closeUncertain
+      ) {
+        // A late report is not permission to reopen after a possibly consumed
+        // permit. Preserve it and make the final acknowledgement uncertain.
+        heldAdmission!.assertCurrent();
+        nativeCloseState = reply.state;
+        return 'committing';
+      }
+      if (
+        reply.status === 'refused' &&
+        typeof reply.reason === 'string' &&
+        reply.state.phase !== 'committing' &&
+        reply.state.phase !== 'uncertain' &&
+        !closeUncertain
+      ) {
+        commitDispatched = false; // Exact refusal proves this command armed no permit.
+        return cancel();
+      }
+      return uncertain(Error('Native close response could not be verified.'));
+    } catch (reason) {
+      return uncertain(reason);
     }
   }
   refresh();
@@ -202,8 +455,19 @@ export function createNativeProduct(
     snapshot: () => refresh(false),
     subscribe(changed) {
       listeners.add(changed);
+      if (listeners.size === 1) startObserver();
       return () => {
         listeners.delete(changed);
+        if (listeners.size === 0) {
+          observerGeneration++;
+          const stop = stopCloseObserver;
+          stopCloseObserver = null;
+          try {
+            stop?.();
+          } catch {
+            /* Retired observers never own source. */
+          }
+        }
       };
     },
     documents: {
@@ -304,32 +568,65 @@ export function createNativeProduct(
       }
     },
     closeDocument: (id) => perform(() => workspace.close(id)),
-    async prepareClose() {
-      admitted();
-      const admission = workspace.beginAggregateClose();
-      closing = true;
-      refresh();
-      try {
-        await protect();
-        await admission.flush();
-        admission.assertCurrent();
-        // No native release was requested: the existing async boolean command
-        // lacks the generation-bound final acknowledgement required by this gate.
-        throw Error(
-          'Safe aggregate native close acknowledgement is unavailable. Native entry activation remains blocked.',
+    prepareClose(detachEditor) {
+      if (closeUncertain) return Promise.resolve('uncertain');
+      if (closeFlight) return closeFlight;
+      if (closeGuard) {
+        if (closing || closeUncertain) return Promise.resolve('uncertain');
+        if (nativeCloseState.phase !== 'requested' || !nativeCloseState.request)
+          return Promise.resolve('editing');
+        closeActive = true;
+        capturedCloseRequest = nativeCloseState.request;
+        // Reserve the promise before calling trusted synchronous editor code:
+        // disposal notifications may reenter application observers in this task.
+        let settle!: (outcome: ProductCloseOutcome) => void;
+        const flight = new Promise<ProductCloseOutcome>((resolve) => {
+          settle = resolve;
+        });
+        closeFlight = flight;
+        void guardedClose(detachEditor).then(
+          (outcome) => {
+            if (!closing && !closeUncertain) {
+              closeActive = false;
+              capturedCloseRequest = null;
+              closeFlight = null;
+            }
+            settle(outcome);
+            refresh();
+          },
+          (reason: unknown) => {
+            settle(uncertain(reason));
+          },
         );
-      } catch (reason) {
-        admission.abort();
-        closing = false;
-        error(
-          reason instanceof Error
-            ? reason.message
-            : 'Aggregate close refused. Source retained.',
-        );
-        throw reason;
-      } finally {
-        void protect().catch(() => {});
+        return flight;
       }
+      return (async (): Promise<ProductCloseOutcome> => {
+        admitted();
+        const admission = workspace.beginAggregateClose();
+        closing = true;
+        refresh();
+        try {
+          await protect();
+          await admission.flush();
+          admission.assertCurrent();
+          // No native release was requested: the existing async boolean command
+          // lacks the generation-bound final acknowledgement required by this gate.
+          throw Error(
+            'Safe aggregate native close acknowledgement is unavailable. Native entry activation remains blocked.',
+          );
+        } catch (reason) {
+          admission.abort();
+          closing = false;
+          error(
+            reason instanceof Error
+              ? reason.message
+              : 'Aggregate close refused. Source retained.',
+          );
+          throw reason;
+        } finally {
+          void protect().catch(() => {});
+        }
+      })();
     },
   };
 }

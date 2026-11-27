@@ -168,3 +168,41 @@ review found its deferred table flush guarded by composition state and forced at
 compositionend, not a demonstrated false-clean path. Test finalizer-before20ms
 ordering with exact source, then observe actual installed vendor/input behavior.
 This is a pending target witness, not a reason to weaken composition refusal.
+
+## Frontend integration checkpoint
+
+The fixed epoch-private transport, guarded async factory, application close model
+and real ProductRoot barrier/remount flow are implemented. Full frontend check:
+956 unit,140 tooling/zero skips,153 Chromium,9 Pages and4 local cloud cases passed.
+The controlled real-browser journey passed13 checkpoints, including three close
+scenarios. Native responses and storage there are synthetic, not actual OS tests.
+
+Before native entry activation add one module/window-lifetime bootstrap owner
+outside React effect replay. Preload required product modules, await guarded host,
+then construct exactly one model and render existing ProductRoot. Capture no new
+source/history registry and never fall back to the unguarded/legacy App.
+
+The browser RootBoundary is unsuitable for native authority: its reload action
+cannot renegotiate after authority use, and unmount is not clean detachment. A
+native fatal latch must retain model/host identities, prevent new close resolutions
+and show truthful minimal terminal feedback without reload, retry, fake empty
+admission, automatic application replacement or a saved assurance. An already
+issued commit cannot be revoked by a frontend latch. Graceful exit after lost
+bootstrap acknowledgement/fatal failure remains a separate reviewed lifecycle
+problem; do not add a generic quit permission as a workaround.
+
+Test one negotiation/model across StrictMode, held/malformed negotiation before
+any dirty/recovery/filesystem activity, fatal-before-commit versus already-issued
+commit, pending IME/unpublished DOM at fatal, and preserved browser-only reload.
+The installed mixed-source/vault journey remains the actual platform gate.
+
+## Bootstrap checkpoint
+
+The inactive window-lifetime bootstrap and permanent fatal boundary are implemented
+and independently reviewed. The combined check passed966 unit/143 tooling,153
+Chromium/9 Pages/4 local cloud cases; separate shared Root journey13 passed.
+Startup captures bindings, preloads presentation, negotiates once and constructs
+one model. Fatal failure is permanent, prevents new resolve calls and does not
+revoke an already issued commit. Next: wire the real entry to this owner, cover
+Safari-detector table composition, then run installed Linux acceptance. Entry
+wiring is a development candidate, not evidence of a corrected installed product.

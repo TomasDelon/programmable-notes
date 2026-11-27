@@ -1,5 +1,8 @@
 import { expect, it, vi } from 'vitest';
-import { createNativeProductServices } from '../../src/desktop/nativeProductServices';
+import {
+  createGuardedNativeProductHost,
+  createNativeProductServices,
+} from '../../src/desktop/nativeProductServices';
 import type {
   SnapshotInput,
   SnapshotWritten,
@@ -98,4 +101,110 @@ it('does not acknowledge non-durable or foreign snapshot metadata', async () => 
     );
     expect(h.ports.restoreSnapshot).not.toHaveBeenCalled();
   }
+});
+
+function bootstrapPorts() {
+  const h = fixture();
+  return {
+    ...h.ports,
+    chooseVault: vi.fn(async () => null),
+    vaultInventory: vi.fn(async () => ({ vaultId: 'vault', entries: [] })),
+    openVaultSources: vi.fn(async () => ({
+      status: 'acquired' as const,
+      vaultId: 'vault',
+      documents: [],
+    })),
+    createVaultSource: vi.fn(async () => {
+      throw Error('unused synthetic create');
+    }),
+    save: vi.fn(async () => ({ revision: 'next', durable: true })),
+    close: vi.fn(async () => {}),
+  };
+}
+function closeBootstrapPorts() {
+  return {
+    enable: vi.fn(async () => ({
+      version: 1,
+      epoch: 'a'.repeat(32),
+      phase: 'idle',
+      request: null,
+    })),
+    read: vi.fn(async () => ({
+      version: 1,
+      epoch: 'a'.repeat(32),
+      phase: 'idle',
+      request: null,
+    })),
+    resolve: vi.fn(async () => {
+      throw Error('unused synthetic close');
+    }),
+  };
+}
+it('negotiates before constructing a guarded host and never invokes storage during bootstrap', async () => {
+  const ports = bootstrapPorts(),
+    closePorts = closeBootstrapPorts();
+  let release!: (value: Awaited<ReturnType<typeof closePorts.enable>>) => void;
+  closePorts.enable.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const pending = createGuardedNativeProductHost(ports, closePorts);
+  expect(closePorts.enable).toHaveBeenCalledExactlyOnceWith(1);
+  for (const port of Object.values(ports)) expect(port).not.toHaveBeenCalled();
+  let constructed = false;
+  void pending.then(() => {
+    constructed = true;
+  });
+  await Promise.resolve();
+  expect(constructed).toBe(false);
+  release({ version: 1, epoch: 'a'.repeat(32), phase: 'idle', request: null });
+  const host = await pending;
+  expect(host.services.closeGuard).toBeDefined();
+  expect(host.workspace.state().sessions).toEqual([]);
+  for (const port of Object.values(ports)) expect(port).not.toHaveBeenCalled();
+  expect(closePorts.read).not.toHaveBeenCalled();
+});
+it('captures storage and close bindings before delayed negotiation and uses the captured host ports', async () => {
+  const ports = bootstrapPorts(),
+    closePorts = closeBootstrapPorts(),
+    originalDirty = ports.dirty,
+    originalChoose = ports.chooseVault;
+  let release!: (value: Awaited<ReturnType<typeof closePorts.enable>>) => void;
+  closePorts.enable.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const pending = createGuardedNativeProductHost(ports, closePorts);
+  ports.dirty = vi.fn(async () => {
+    throw Error('replaced dirty');
+  });
+  ports.chooseVault = vi.fn(async () => {
+    throw Error('replaced chooser');
+  });
+  closePorts.enable = vi.fn(async () => {
+    throw Error('replaced enable');
+  });
+  release({ version: 1, epoch: 'a'.repeat(32), phase: 'idle', request: null });
+  const host = await pending;
+  await host.services.setCloseState({ dirty: true, busy: true });
+  await host.workspace.choose();
+  expect(originalDirty).toHaveBeenCalledExactlyOnceWith(true, true);
+  expect(originalChoose).toHaveBeenCalledOnce();
+  expect(ports.dirty).not.toHaveBeenCalled();
+  expect(ports.chooseVault).not.toHaveBeenCalled();
+  expect(closePorts.enable).not.toHaveBeenCalled();
+});
+it('does not fall back to an unguarded host or issue storage IPC after failed negotiation', async () => {
+  const ports = bootstrapPorts(),
+    closePorts = closeBootstrapPorts();
+  closePorts.enable.mockRejectedValueOnce(Error('private detail'));
+  await expect(
+    createGuardedNativeProductHost(ports, closePorts),
+  ).rejects.toThrow('Native close negotiation failed.');
+  for (const port of Object.values(ports)) expect(port).not.toHaveBeenCalled();
+  expect(closePorts.read).not.toHaveBeenCalled();
 });

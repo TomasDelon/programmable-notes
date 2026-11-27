@@ -1,8 +1,13 @@
 import { createRoot } from 'react-dom/client';
+import { StrictMode } from 'react';
 import { createNativeWorkspace } from '../../../src/application/nativeWorkspace';
 import { createNativeProduct } from '../../../src/application/nativeProduct';
 import { ProductRoot } from '../../../src/product/ProductRoot';
 import { NotificationProvider } from '../../../src/ui/Notifications';
+import {
+  negotiateNativeCloseGuard,
+  type NativeClosePorts,
+} from '../../../src/desktop/nativeClose';
 
 // Trusted test entry only. These OS ports are simulated, not native I/O.
 const originalMixed =
@@ -20,6 +25,72 @@ let saveCalls = 0;
 let failNext = false;
 let closeState = { dirty: false, busy: false };
 const recovery: unknown[] = [];
+const epoch = 'a'.repeat(32);
+let closePhase: 'idle' | 'requested' | 'committing' = 'idle';
+let closeRequest: string | null = null;
+let requestSequence = 0;
+let closeMode: 'refuse' | 'hold' = 'refuse';
+let releaseCommit: (() => void) | undefined;
+const closeActions: string[] = [];
+const wireClose = () => ({
+  version: 1,
+  epoch,
+  phase: closePhase,
+  request: closeRequest,
+});
+const closePorts: NativeClosePorts = {
+  enable: async (version) => {
+    if (version !== 1) throw Error('Synthetic protocol version mismatch.');
+    return wireClose();
+  },
+  read: async (expectedEpoch) => {
+    if (expectedEpoch !== epoch) throw Error('Synthetic epoch mismatch.');
+    return wireClose();
+  },
+  resolve: async (expectedEpoch, request, action) => {
+    if (
+      expectedEpoch !== epoch ||
+      request !== closeRequest ||
+      closePhase !== 'requested'
+    )
+      throw Error('Synthetic close identity mismatch.');
+    closeActions.push(action);
+    if (action === 'cancel') {
+      closePhase = 'idle';
+      closeRequest = null;
+      return {
+        status: 'cancelled',
+        epoch,
+        request,
+        reason: null,
+        state: wireClose(),
+      };
+    }
+    if (closeMode === 'refuse')
+      return {
+        status: 'refused',
+        epoch,
+        request,
+        reason: 'Native operation, dialog, update or renderer prevents close',
+        state: wireClose(),
+      };
+    return new Promise((resolve) => {
+      releaseCommit = () => {
+        closePhase = 'committing';
+        resolve({
+          status: 'committing',
+          epoch,
+          request,
+          reason: null,
+          state: wireClose(),
+        });
+        releaseCommit = undefined;
+      };
+    });
+  },
+};
+// Negotiate the real narrow adapter before constructing either model.
+const closeGuard = await negotiateNativeCloseGuard(closePorts);
 function acquire(logicalPath: string) {
   const file = files.get(logicalPath);
   if (!file) throw Error('Synthetic fixture file missing.');
@@ -82,6 +153,7 @@ const workspace = createNativeWorkspace(
   () => `browser-session-${++sequence}`,
 );
 const application = createNativeProduct(workspace, {
+  closeGuard,
   setCloseState: async (state) => {
     closeState = { ...state };
   },
@@ -107,6 +179,10 @@ Object.assign(window, {
         saveCalls,
         closeState,
         recoveryCopies: recovery.length,
+        closeActions: [...closeActions],
+        closePhase,
+        closing: snapshot.closing,
+        closeUncertain: snapshot.closeUncertain,
       };
     },
     failNextSave() {
@@ -115,10 +191,23 @@ Object.assign(window, {
     externalWrite(source: string) {
       files.set('primary.md', { source, revision: `external-${++sequence}` });
     },
+    requestClose(mode: 'refuse' | 'hold') {
+      if (closePhase !== 'idle')
+        throw Error('Synthetic close already pending.');
+      closeMode = mode;
+      closeRequest = (++requestSequence).toString(16).padStart(32, '0');
+      closePhase = 'requested';
+    },
+    releaseClose() {
+      if (!releaseCommit) throw Error('Synthetic commit is not held.');
+      releaseCommit();
+    },
   },
 });
 createRoot(document.getElementById('root')!).render(
-  <NotificationProvider>
-    <ProductRoot application={application} />
-  </NotificationProvider>,
+  <StrictMode>
+    <NotificationProvider>
+      <ProductRoot application={application} />
+    </NotificationProvider>
+  </StrictMode>,
 );

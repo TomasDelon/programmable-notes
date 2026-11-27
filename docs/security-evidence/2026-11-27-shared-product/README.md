@@ -98,3 +98,45 @@ the viewport and are whitelisted individually in CI artifacts. These are viewpor
 checks in Chromium, not mobile hardware/touch or Linux WebKitGTK acceptance.
 An initial final-check attempt stopped at a missing browser-global qualification
 in the new Node test runner; that test-only lint error was corrected before rerun.
+
+## Frontend close integration
+
+A later frontend check passed956 unit,140 tooling/zero skips,153 Chromium,
+9 Pages and4 local cloud cases with format/lint/types/build. Independent source
+review found no Important/Critical issue in the bounded close integration.
+The expanded browser runner passed13 checkpoints: active DOM composition refuses
+close without replacing the owner; commit refusal plus exact cancel remounts the
+same session/history; a fresh isolated page's held commit retires real editor DOM
+input and cannot publish/write or reopen after its validated acknowledgement.
+The latter page is a fresh synthetic-memory fixture, not a native restart test.
+
+The fixture uses the real negotiated transport decoder, model, controller and
+React editor under StrictMode. Native close records/OS requests and revision-CAS
+storage are injected. Physical IME, native IPC, actual window destruction and
+native-file durability remain not-tested in this browser record. The packaged
+entry remains unchanged until bootstrap/fatal lifecycle and installed acceptance.
+
+## Combined close/bootstrap and child-guard foundation
+
+After the fixed close transport, model, Root and window-lifetime bootstrap were
+frozen, `npm run check` exited0:966 unit,143 tooling with zero skips,153 Chromium,
+9 Pages and4 disposable local cloud cases, plus formatting/lint/types/build.
+`npm run test:product:browser` separately exited0 with13 checkpoints. The new
+close checkpoints dispatch DOM composition events and synthetic native replies;
+they establish neither physical IME behavior nor actual native IPC/window close.
+
+The inactive bootstrap captures bindings before awaits, preloads presentation,
+negotiates once and retains one model. A permanent fatal latch prevents new close
+resolutions and survives React retry; already dispatched commits remain uncertain.
+There is no reload, legacy fallback or fabricated clean-close action. The default
+native entry has not been switched by this foundation packet.
+
+Native child WebKit guards now precede authored iframe assignment, including
+security probes without a payload. File chooser, permission, print, fullscreen
+and script-dialog handling are denied/suppressed by native handlers. Publication
+checks exact trusted location and sandbox again at actual JavaScript execution.
+Three Node tests execute the fixed publication template, and six direct Rust
+tests exercise one-shot activation. Rust formatting passed. These do not execute
+GTK signals. Hosted compilation and real Linux chooser/dialog/Stop/expiry tests
+remain separate requirements; no observed exploit or native readiness is claimed.
+The inline Wry host is a separate path and is not validated by this child change.

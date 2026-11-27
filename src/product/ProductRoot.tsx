@@ -94,6 +94,20 @@ export function ProductRoot({
   const [commandQuery, setCommandQuery] = useState('');
   const [commandIndex, setCommandIndex] = useState(0);
   const commands = useRef<EditorCommands>(null);
+  const [editorMount, setEditorMount] = useState(0);
+  const closeRequests = useRef(new WeakMap<ProductApplication, string>());
+  const [closeSettlement, setCloseSettlement] = useState(0);
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const closeFlight = useRef<{
+    application: ProductApplication;
+    request: string;
+  } | null>(null);
   const histories = useRef<EditorHistory>(new Map());
   const retainedAttempts = useRef(new Map<string, SourceBatch>());
   const sourcePanel = useRef<HTMLDivElement>(null);
@@ -156,6 +170,65 @@ export function ProductRoot({
     }
     return true;
   }
+  useEffect(() => {
+    const request = snapshot.closeRequestId;
+    if (
+      !request ||
+      snapshot.closeUncertain ||
+      closeRequests.current.get(application) === request
+    )
+      return;
+    // Native nonces do not repeat. Keep only the last request per live application,
+    // and one flight, including React StrictMode's repeated effect setup.
+    if (closeFlight.current?.application === application) return;
+    closeRequests.current.set(application, request);
+    const flight = { application, request };
+    closeFlight.current = flight;
+    const selected = snapshot.selectedSessionId;
+    let detached = false;
+    const stillOwnsEditor = () =>
+      mounted.current &&
+      latest.current.application === application &&
+      latest.current.id === selected &&
+      application.snapshot().selectedSessionId === selected;
+    // Admit after React's synchronous effect replay/cleanup has settled. This is
+    // lifecycle sequencing, not a substitute for the editor's own clean barrier.
+    void Promise.resolve()
+      .then(() =>
+        application.prepareClose(() => {
+          if (!stillOwnsEditor()) return false;
+          if (selected === null) return commands.current === null;
+          const detach = commands.current?.detachIfClean;
+          if (!detach || !detach()) return false;
+          detached = true;
+          return true;
+        }),
+      )
+      .then((outcome) => {
+        // The model alone decides cancellation/durability. Only a proved return to
+        // editing may remount exact owning sessions after actual clean detachment.
+        if (outcome === 'editing' && detached && stillOwnsEditor())
+          setEditorMount((value) => value + 1);
+      })
+      .catch((reason) => {
+        // A rejected/uncertain completion never authorizes reopening input.
+        if (stillOwnsEditor()) report(reason);
+      })
+      .finally(() => {
+        if (closeFlight.current === flight) {
+          closeFlight.current = null;
+          if (mounted.current && latest.current.application === application)
+            setCloseSettlement((value) => value + 1);
+        }
+      });
+  }, [
+    application,
+    snapshot.closeRequestId,
+    snapshot.closeUncertain,
+    snapshot.selectedSessionId,
+    closeSettlement,
+    report,
+  ]);
   const interaction = useWorkspaceInteraction({
     scope: application,
     selected: id,
@@ -275,7 +348,11 @@ export function ProductRoot({
     if (key === 'choose' && canLeave())
       run(async () => {
         await application.chooseVault();
-        if (application.snapshot().vaultLabel) setLeftOpen(true);
+        if (
+          latest.current.application === application &&
+          application.snapshot().vaultLabel
+        )
+          setLeftOpen(true);
       });
     if (key === 'new' && canLeave()) {
       setFilename('Untitled.md');
@@ -474,6 +551,7 @@ export function ProductRoot({
                   >
                     {(runtime) => (
                       <DocumentSurface
+                        key={editorMount}
                         documentId={id}
                         mode={mode}
                         fullDocument={false}
@@ -491,7 +569,9 @@ export function ProductRoot({
                           sourceIsCurrent: (text) =>
                             application.session(id).witness.source === text,
                           readOnly:
-                            snapshot.closing || document.phase !== 'open',
+                            snapshot.closing ||
+                            snapshot.closeUncertain ||
+                            document.phase !== 'open',
                           onPendingChange: (pending) => {
                             if (
                               !pending &&
@@ -620,6 +700,7 @@ export function ProductRoot({
               if (!canLeave()) return;
               run(async () => {
                 await application.create(filename, '');
+                if (latest.current.application !== application) return;
                 setCreateOpen(false);
                 changePreferences({ ...preferences, mode: 'source' });
               });

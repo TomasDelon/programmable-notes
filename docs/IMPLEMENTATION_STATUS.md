@@ -20,6 +20,42 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Frontend close orchestration — 27 November 2026
+
+The shared application now joins its clean editor barrier to native close
+requests through a fixed, validated transport. Guard negotiation completes before
+host/model construction; bindings are captured before awaits, and the epoch stays
+private. One serial observer retires old replies and reports quarantined timeouts
+without spawning more RPCs or retrying a commit.
+
+The model reserves its close flight before synchronous detachment, tracks product
+operations awaiting protection, gates canonical publication with existing aggregate
+admission and drains recovery/hint queue tails. Only an exact acknowledged cancel
+returns to editing; a possible commit remains held/uncertain. A refused IME barrier
+never unmounts the editor. Lost cancellation before any detachment issued no native
+commit and has no aggregate admission; the native guard still vetoes OS close.
+
+ProductRoot handles requests once through StrictMode replay, scopes completions to
+the owning application/session and remounts the same source/history only after a
+proved cancellation and actual clean detachment. No source or history registry is
+replaced. The legacy unguarded composition still explicitly refuses whole-app close.
+
+The combined foundation check passed966 unit,143 tooling/zero skips,153 Chromium,
+9 Pages and4 local cloud cases, plus format/lint/types/build. Expanded actual
+Chromium input passed13 checkpoints, including composition refusal, cancellation
+with exact undo/redo and held-commit input retirement. Close transport and storage
+in this browser witness are synthetic; physical IME, actual IPC, OS window close
+and native filesystem durability are not established by it.
+
+A single window-lifetime bootstrap and permanent fatal boundary are implemented
+and tested but not yet selected by the default native entry. Startup preloads the
+presentation, negotiates the guard and constructs exactly one model. Failure is
+sticky; it cannot offer browser Reload, recreate authority or authorize a clean
+close. Already dispatched commits remain uncertain. The next entry packet will
+route native startup through this owner and the actual shared ProductRoot.
+Installed chooser/autosave/close/restart acceptance and native inline React/security
+remain pending. No corrected installer is claimed.
+
 ## Safe-close prerequisites and CI evidence — 27 November 2026
 
 The owning SourceEditor/RenderedEditor now expose a synchronous clean-detachment
@@ -33,8 +69,9 @@ Rust adds three fixed editor-only guard commands with private epoch/request
 identity, shared operation/dialog reservation and a one-shot OS-close permit.
 Legacy callers do not negotiate automatically. Preview/child checks precede state
 access, and registration probes do not activate the guard in legacy tests. The
-native frontend still needs to join detachment, aggregate flush/recovery and exact
-commit/cancel acknowledgement; current nativeProduct deliberately refuses release.
+frontend integration described above now joins detachment, aggregate flush/recovery
+and exact commit/cancel acknowledgement; the unguarded legacy composition still
+refuses release.
 No default-entry, installer or installed-close acceptance is claimed.
 
 The full local check passed873 unit,140 tooling/zero skips,153 Chromium,9 Pages
