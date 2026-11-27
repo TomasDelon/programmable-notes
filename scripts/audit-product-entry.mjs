@@ -7,7 +7,7 @@ const defaultEntry = fileURLToPath(
   new URL('../src/web/EditorEntry.tsx', import.meta.url),
 );
 const limits = [
-  'Inspects only the exported EditorEntry function and its directly rendered static import or React lazy factory for native and browser pathname /. Explicit /engine is excluded.',
+  'Inspects only the exported EditorEntry function and its directly rendered static import or React lazy factory for native and browser pathname /. Explicit /engine is excluded. Native selection in main.tsx and window-lifetime bootstrap are outside this audit; a browser-only entry must not be interpreted as native routing proof.',
   'Module identities are normalized relative import paths plus named/default exports; no transitive import graph, re-export resolution, module existence or runtime behavior is verified.',
   'Different direct boot modules may wrap one shared product root. Wrapper resolution is unsupported; --require-shared-entry checks direct entry identity only, not universal architectural acceptance.',
   'A shared entry does not prove product parity, native inline React isolation, filesystem authority, mobile support or security. Independent semantic and real-platform review remain required.',

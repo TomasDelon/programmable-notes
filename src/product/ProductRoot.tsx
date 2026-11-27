@@ -329,6 +329,42 @@ export function ProductRoot({
         interaction.switchMode(
           mode === 'source' && selectedIsNote ? 'preview' : 'source',
         );
+      } else if (
+        event.isTrusted &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'z' &&
+        !settingsOpen &&
+        !commandOpen &&
+        !createOpen
+      ) {
+        // Editor surfaces and forms own their own input history. Chrome focus
+        // uses the same canonical editor commands, never the browser's last
+        // contenteditable undo stack or a second document/history registry.
+        const target = event.target;
+        if (
+          !(target instanceof HTMLElement) ||
+          target.closest(
+            'input,textarea,select,[contenteditable="true"],.cm-editor,.ProseMirror,[role="dialog"]',
+          )
+        )
+          return;
+        const app = latest.current.application;
+        const state = app.snapshot();
+        const editor = commands.current;
+        if (
+          app !== application ||
+          !id ||
+          state.selectedSessionId !== id ||
+          state.operation ||
+          state.closing ||
+          state.closeUncertain ||
+          !editor
+        )
+          return;
+        event.preventDefault();
+        if (!canLeave()) return;
+        run(() => (event.shiftKey ? editor.redo() : editor.undo()));
       }
     };
     window.addEventListener('keydown', keydown);

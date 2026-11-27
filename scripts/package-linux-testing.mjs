@@ -41,6 +41,9 @@ await writeFile(
     {
       version: config.version,
       sourceRevision: revision,
+      sourceTree: execFileSync('git', ['rev-parse', 'HEAD^{tree}'], {
+        encoding: 'utf8',
+      }).trim(),
       platform: 'linux-amd64-deb',
       file: basename(packagePath),
       bytes: bytes.length,
@@ -66,9 +69,11 @@ This is an owner testing download, not a production security certification or a
 published release. The source revision and exact package digest are in build.json.
 An installer/build inspection is not evidence of a successful installed GUI run.
 
-Product acceptance is unverified. Read product-entry-audit.json for the direct
-browser/native route finding. Different direct entries need architecture review;
-a matching entry alone still proves neither behavior nor native isolation. A green
+Product acceptance is unverified. The native entry now selects the shared document workspace through a guarded
+window-lifetime owner. product-entry-audit.json is a bounded EditorEntry-only
+diagnostic; main.tsx native selection is outside its scope, so an inconclusive
+result is not routing proof. Shared code alone proves neither behavior nor
+native isolation. A green
 build is not acceptance of the owner's unified local-vault product contract.
 Do not present this artifact as an accepted product delivery without separate
 contract acceptance and actual target-platform evidence.
@@ -82,31 +87,41 @@ After extracting this artifact, verify and install through the system package ma
 If replacing an older testing build, save your sources and close its editor and
 preview windows first. An already running process keeps the previous interface
 until it is closed. Keep your notes and recovery files; do not delete application
-data as an upgrade step.
+data as an upgrade step. Engineering builds can share a version number;
+--reinstall ensures this exact local package replaces an older build of that version.
 
 \x60\x60\x60sh
 sha256sum --check SHA256SUMS
-sudo apt install './${filename}'
+sudo apt install --reinstall './${filename}'
 \x60\x60\x60
 
 Open **Programmable Notes** from your desktop application launcher. Choose
-**Open notes folder**, select a folder of real MD/MDX/JS/TS source files, edit and
-save with Ctrl+S. Source bytes are saved through authorized native file grants,
-not a browser database. Initially reselect the folder after restarting. Keep
-independent backups; supported folder limits are 32 sources, 8 MiB combined,
-500,000 bytes per file. Oversized or unsafe folders are refused, not truncated.
+**Choose local vault** and explicitly authorize a disposable folder of real
+MD/MDX/JS/TS source files. Open a note and edit in Source or Preview. Edits are
+written automatically to the original file through scoped native grants, with
+revision checks; no Save button or browser database is the saving model.
+Initially reselect the folder after restarting. Keep independent backups and
+confirm actual disk contents while testing; installed autosave/close acceptance
+is still pending. Limits are 32 loaded sources, 8 MiB combined, 500,000 bytes per
+file. Oversized or unsafe scopes are refused, not truncated.
 
-Visual mode edits Markdown and mathematics in the trusted document editor. React
-executes only through the separate restricted native preview in Split mode.
-If your desktop cannot enforce preview namespaces/resource limits, preview fails
-closed; never disable isolation to make it run.
+Preview edits supported Markdown and mathematics in the trusted shared editor.
+Arbitrary JSX remains opaque. Native inline React execution is not yet enabled:
+its startup/input and containment gates are unresolved. No separate preview
+window or privileged iframe substitutes for it. Never disable isolation to make
+an unsupported runtime work.
 
-Settings contains the update checker and signed-package installation flow.
-Until the real public signing key and distribution channel are configured, it
-truthfully reports that the update channel is unavailable. No test key is trusted.
-Configured updates use system PackageKit/Polkit; the app never collects a password.
-Save all notes before installing. After confirmed installation, close and reopen.
-If installation completion is unknown, inspect the system installer first.
+Close requests must pass the clean editor, autosave and native guard handshake.
+A refused request returns to editing only after validated cancellation. An
+uncertain response or fatal startup/rendering error deliberately blocks a claimed
+safe close; do not treat it as confirmation that all edits reached the file.
+Unpublished data may require manual recovery. Do not delete recovery data as an
+upgrade step.
+
+The shared Settings surface currently exposes appearance and core modules.
+The existing signed updater backend remains separate; this candidate has no
+configured public update feed or active update control. No test key is trusted.
+Do not mistake an expiring Actions download for automatic update distribution.
 
 The production source retains unresolved native renderer/CPU Stop and installed
 runtime validation gates. See docs/LINUX_DESKTOP_TESTING.md and

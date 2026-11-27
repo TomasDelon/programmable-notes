@@ -52,9 +52,28 @@ It does not test native OS dialogs or disk access. The ordinary CI `check` job
 also runs it and includes its synthetic screenshots/results in the downloadable
 `playwright-results` artifact. See the
 [dated evidence and limits](docs/security-evidence/2026-11-27-shared-product/README.md).
-The shared native product is not yet the default installed entry.
+The native development entry now mounts this same shared product through a guarded
+window-lifetime owner. Actual installed chooser/autosave/close acceptance remains
+pending; no corrected installer or full native React support is claimed.
 
-## Original engine and native implementation status
+## Native development candidate
+
+Native startup now selects the shared editor with scoped local-vault autosave.
+Choose **Choose local vault**, authorize a disposable folder, then open and edit
+a note. Source and Preview share the canonical session/history. Changes target
+the original file automatically; browser storage is not used by this native path.
+The candidate still requires actual packaged Linux acceptance.
+
+Native inline React is currently unavailable; its startup/input and containment
+gates remain unresolved. File rename/move/Trash, continuous external observation,
+recovery discovery after restart and signed updater integration remain pending.
+Testing artifacts are not a public release or production security certification.
+
+## Historical engine and native implementation status
+
+The following describes the prior engine/legacy App regression path at /engine,
+including its separate preview/manual saving controls. It is not the default native
+workspace or the accepted product target.
 
 The [Linux local-editor candidate](docs/LINUX_LOCAL_EDITOR.md) adds an authorized
 notes-folder picker, native Settings and signed-update handling. Successful native

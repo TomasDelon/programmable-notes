@@ -5,9 +5,11 @@ import { RootBoundary } from './web/RootBoundary';
 import { startOffline } from './web/offline';
 import { EditorEntry } from './web/EditorEntry';
 import { NotificationProvider } from './ui/Notifications';
+import { nativeProductBootstrap } from './desktop/nativeProductBootstrap';
+import { NativeProductStartup } from './desktop/NativeProductStartup';
 
-// Native uses the current editor presentation with its own persistence/runtime authority.
-// The legacy /engine fixture retains its regression path; offline storage is browser-only.
+// Native is a development candidate using the shared product and scoped native
+// services. Installed Linux acceptance remains separate from this entry wiring.
 const native = isTauri();
 const legacy = location.pathname === '/engine';
 
@@ -19,18 +21,32 @@ document.documentElement.dataset.runtime = native
     ? 'engine'
     : 'web';
 
-createRoot(root).render(
-  <StrictMode>
-    <NotificationProvider>
-      <RootBoundary>
-        <Suspense
-          fallback={<p className="boot-message">Opening your workspace…</p>}
-        >
-          <EditorEntry />
+const opening = <p className="boot-message">Opening your workspace…</p>;
+if (native) {
+  // This permanent owner boundary catches even startup chunk failures before
+  // negotiation. Neither StrictMode effects nor a reload create its authority.
+  const Boundary = nativeProductBootstrap.Boundary;
+  createRoot(root).render(
+    <Boundary>
+      <StrictMode>
+        <Suspense fallback={opening}>
+          <NativeProductStartup />
         </Suspense>
-      </RootBoundary>
-    </NotificationProvider>
-  </StrictMode>,
-);
+      </StrictMode>
+    </Boundary>,
+  );
+} else {
+  createRoot(root).render(
+    <StrictMode>
+      <NotificationProvider>
+        <RootBoundary>
+          <Suspense fallback={opening}>
+            <EditorEntry />
+          </Suspense>
+        </RootBoundary>
+      </NotificationProvider>
+    </StrictMode>,
+  );
+}
 
 if (import.meta.env.PROD && !native && !legacy) startOffline();

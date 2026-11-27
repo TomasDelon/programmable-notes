@@ -1,33 +1,62 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-// Historical rejected-native-entry coverage with a simulated IPC adapter.
-// This does not establish target product acceptance, WebKitGTK, dialogs or disk I/O.
-// Migrate the fidelity/security scenarios to the shared app; do not preserve Split/X.
+// Actual main-entry/shared-product browser coverage with simulated native IPC.
+// This does not establish WebKitGTK, OS dialogs, real disk I/O or native sandboxing.
 const original =
   '\uFEFFimport Counter from "./Counter"\r\n\r\n# First title\r\n\r\nA **bold** paragraph and $x^2$.\r\n\r\n<Counter />\r\n\r\n{/* preserve comment */}\r\n';
 type NativeFixture = {
   commands: { command: string; args: Record<string, unknown> }[];
   browserStorageOpens: number;
   saves: { id: string; revision: string; source: string }[];
+  files: Record<string, string>;
+  opens: { id: string; path: string }[];
+  closed: string[];
 };
 
 async function nativeEntry(page: Page) {
   await page.addInitScript(
     ({ source }) => {
+      const epoch = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      const vaultId = 'synthetic-vault';
       const fixture: NativeFixture = {
         commands: [],
         browserStorageOpens: 0,
         saves: [],
+        opens: [],
+        closed: [],
+        files: {
+          'math/note.mdx': source,
+          'other.mdx': '# Other title\r\n\r\nSecond unchanged.\r\n',
+          'math/Counter.tsx':
+            'export default function Counter() { return <button>Count</button>; }',
+        },
       };
+      let guarded = false,
+        authorized = false,
+        snapshotNumber = 0;
+      const acquisitions = new Map<string, number>();
+      const grants = new Map<string, { path: string; revision: string }>();
+      const revisions = new Map(
+        Object.keys(fixture.files).map((path) => [path, 'revision-1']),
+      );
+      const snapshots = new Map<
+        string,
+        { id: string; name: string; source: string }
+      >();
+      const heads = new Map<string, string>();
       const host = window as unknown as {
         isTauri: boolean;
         __nativeFixture: NativeFixture;
         __TAURI_INTERNALS__: {
-          invoke: (
+          invoke(
             command: string,
             args?: Record<string, unknown>,
-          ) => Promise<unknown>;
+          ): Promise<unknown>;
         };
+      };
+      const keys = (args: Record<string, unknown>, expected: string[]) => {
+        if (Object.keys(args).sort().join(',') !== expected.sort().join(','))
+          throw Error('Unexpected native arguments');
       };
       host.isTauri = true;
       host.__nativeFixture = fixture;
@@ -37,72 +66,117 @@ async function nativeEntry(page: Page) {
           throw Error('Native notes must not open a browser database');
         },
       });
-      const grants = [
-        {
-          id: 'note-grant',
-          revision: 'revision-1',
-          name: 'note.mdx',
-          logicalPath: 'math/note.mdx',
-          displayPath: '/home/test/Notes/math/note.mdx',
-          source,
-          durabilityWarning: false,
-        },
-        {
-          id: 'other-grant',
-          revision: 'revision-1',
-          name: 'other.mdx',
-          logicalPath: 'other.mdx',
-          displayPath: '/home/test/Notes/other.mdx',
-          source: '# Other title\r\n\r\nSecond unchanged.\r\n',
-          durabilityWarning: false,
-        },
-        {
-          id: 'component-grant',
-          revision: 'revision-1',
-          name: 'Counter.tsx',
-          logicalPath: 'math/Counter.tsx',
-          displayPath: '/home/test/Notes/math/Counter.tsx',
-          source:
-            'export default function Counter() { return <button>Count</button>; }',
-          durabilityWarning: false,
-        },
-      ];
       host.__TAURI_INTERNALS__ = {
         async invoke(command, args = {}) {
           fixture.commands.push({ command, args });
-          if (command === 'open_notes_folder' || command === 'open_documents')
-            return grants.map((grant) => ({ ...grant }));
-          if (command === 'set_documents_dirty' || command === 'close_document')
+          if (command === 'enable_editor_close_guard') {
+            keys(args, ['version']);
+            if (guarded || fixture.commands.length !== 1 || args.version !== 1)
+              throw Error('Guard must precede all native work');
+            guarded = true;
+            return { version: 1, epoch, phase: 'idle', request: null };
+          }
+          if (!guarded)
+            throw Error('No native authority before close negotiation');
+          if (command === 'editor_close_state') {
+            keys(args, ['epoch']);
+            if (args.epoch !== epoch) throw Error('Wrong close epoch');
+            return { version: 1, epoch, phase: 'idle', request: null };
+          }
+          if (command === 'set_documents_dirty') {
+            keys(args, ['dirty', 'busy']);
+            if (
+              typeof args.dirty !== 'boolean' ||
+              typeof args.busy !== 'boolean'
+            )
+              throw Error('Invalid close hints');
             return;
-          if (command === 'confirm_discard') return true;
-          if (command === 'start_preview' || command === 'stop_preview') return;
-          if (command === 'preview_connection_active') return true;
-          if (command === 'desktop_update_check')
+          }
+          if (command === 'choose_vault') {
+            keys(args, []);
+            authorized = true;
+            return { vaultId, displayPath: '/synthetic/Notes' };
+          }
+          if (command === 'vault_inventory') {
+            keys(args, ['vaultId']);
+            if (!authorized || args.vaultId !== vaultId)
+              throw Error('Vault not authorized');
             return {
-              installedVersion: '0.1.1',
-              state: 'disabled',
-              message: 'This testing build has no signed update channel.',
+              vaultId,
+              entries: Object.entries(fixture.files).map(
+                ([logicalPath, text]) => ({
+                  logicalPath,
+                  bytes: new TextEncoder().encode(text).length,
+                }),
+              ),
             };
-          if (command === 'save_document' || command === 'reopen_document') {
-            const grant = grants.find((item) => item.id === args.id);
-            if (!grant || grant.revision !== args.revision)
+          }
+          if (command === 'open_vault_sources') {
+            keys(args, ['vaultId', 'paths']);
+            if (
+              !authorized ||
+              args.vaultId !== vaultId ||
+              !Array.isArray(args.paths) ||
+              args.paths.length !== 1
+            )
+              throw Error('Invalid vault acquisition');
+            return {
+              status: 'acquired',
+              vaultId,
+              documents: args.paths.map((path: unknown) => {
+                if (
+                  typeof path !== 'string' ||
+                  !Object.hasOwn(fixture.files, path)
+                )
+                  throw Error('Unknown scoped path');
+                const count = (acquisitions.get(path) ?? 0) + 1;
+                acquisitions.set(path, count);
+                const id = `${path === 'math/note.mdx' ? 'note' : path === 'other.mdx' ? 'other' : 'component'}-grant-${count}`;
+                const revision = revisions.get(path)!;
+                grants.set(id, { path, revision });
+                fixture.opens.push({ id, path });
+                return {
+                  id,
+                  revision,
+                  name: path.split('/').at(-1),
+                  logicalPath: path,
+                  displayPath: '/synthetic/Notes/' + path,
+                  source: fixture.files[path],
+                  durabilityWarning: false,
+                };
+              }),
+            };
+          }
+          if (command === 'save_document') {
+            keys(args, ['id', 'revision', 'source']);
+            const grant = typeof args.id === 'string' && grants.get(args.id);
+            if (
+              !grant ||
+              grant.revision !== args.revision ||
+              revisions.get(grant.path) !== args.revision ||
+              typeof args.source !== 'string'
+            )
               throw Error('Stale or unknown native grant');
-            if (command === 'reopen_document') return { ...grant };
-            if (typeof args.source !== 'string') throw Error('Invalid source');
             fixture.saves.push({
-              id: grant.id,
+              id: args.id as string,
               revision: grant.revision,
               source: args.source,
             });
-            grant.source = args.source;
+            fixture.files[grant.path] = args.source;
             grant.revision = `revision-${fixture.saves.length + 1}`;
+            revisions.set(grant.path, grant.revision);
             return { revision: grant.revision, durable: true };
           }
+          if (command === 'close_document') {
+            keys(args, ['id']);
+            if (typeof args.id !== 'string' || !grants.delete(args.id))
+              throw Error('Unknown close grant');
+            fixture.closed.push(args.id);
+            return;
+          }
           if (command === 'recovery_draft') {
-            if (args.action === 'list')
-              return { snapshots: [], errors: [], capacityExceeded: false };
-            if (args.action === 'migrate') return null;
             if (args.action === 'append') {
+              keys(args, ['action', 'input']);
               const input = args.input as {
                 documentId: string;
                 name: string;
@@ -110,17 +184,40 @@ async function nativeEntry(page: Page) {
                 parent: string | null;
                 source: string;
               };
+              keys(input as unknown as Record<string, unknown>, [
+                'documentId',
+                'name',
+                'baseline',
+                'parent',
+                'source',
+              ]);
+              if (
+                typeof input.source !== 'string' ||
+                !Object.keys(fixture.files).some(
+                  (path) => path.split('/').at(-1) === input.name,
+                ) ||
+                input.parent !== (heads.get(input.documentId) ?? null)
+              )
+                throw Error('Invalid recovery scope');
+              const id = `snapshot-${++snapshotNumber}`,
+                file = id + '.json';
+              snapshots.set(file, {
+                id,
+                name: input.name,
+                source: input.source,
+              });
+              heads.set(input.documentId, id);
               return {
                 snapshot: {
-                  file: 'snapshot.json',
-                  id: 'snapshot',
+                  file,
+                  id,
                   metadata: {
                     schema: 1,
                     documentId: input.documentId,
                     name: input.name,
                     baseline: input.baseline,
                     parent: input.parent,
-                    generation: 1,
+                    generation: snapshotNumber,
                     createdAtMs: Date.now(),
                     sourceBytes: new TextEncoder().encode(input.source).length,
                   },
@@ -129,8 +226,16 @@ async function nativeEntry(page: Page) {
                 warning: null,
               };
             }
-            return null;
+            if (args.action === 'restore-version') {
+              keys(args, ['action', 'file']);
+              const snapshot =
+                typeof args.file === 'string' && snapshots.get(args.file);
+              if (!snapshot) throw Error('Unknown recovery version');
+              return { name: snapshot.name, source: snapshot.source };
+            }
           }
+          // Runtime, arbitrary file paths, legacy acquisition and updater calls are
+          // intentionally not faked into success by this native-entry fixture.
           throw Error(`Unexpected native authority: ${command}`);
         },
       };
@@ -138,16 +243,21 @@ async function nativeEntry(page: Page) {
     { source: original },
   );
   await page.goto('/');
-  await expect(page.locator('.native-workspace-shell')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-runtime', 'native');
+  await expect(
+    page.getByRole('heading', { name: 'Your local vault' }),
+  ).toBeVisible();
+  await expect(page.locator('.native-workspace-shell')).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'MDX source' })).toHaveCount(
+    0,
+  );
 }
-
 async function fixture(page: Page) {
   return page.evaluate(
     () =>
       (window as unknown as { __nativeFixture: NativeFixture }).__nativeFixture,
   );
 }
-
 async function capture(page: Page, info: TestInfo, name: string) {
   const path = info.outputPath(name + '.png');
   await page.evaluate(async () => {
@@ -156,184 +266,289 @@ async function capture(page: Page, info: TestInfo, name: string) {
   await page.screenshot({ path, fullPage: true, animations: 'disabled' });
   await info.attach(name, { path, contentType: 'image/png' });
 }
-
-async function mode(page: Page, name: 'Source' | 'Preview' | 'Split') {
+async function mode(page: Page, name: 'Source' | 'Preview') {
+  const { width, height } = page.viewportSize()!;
   const handle = page.getByRole('button', { name: 'Show document modes' });
-  if ((await handle.getAttribute('aria-expanded')) !== 'true')
-    await handle.click();
+  await page.mouse.move(width / 2, 1);
+  await expect(handle).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('button', { name, exact: true }).click();
-  if ((await handle.getAttribute('aria-expanded')) === 'true')
-    await handle.click();
+  await page.mouse.move(width * 0.65, height * 0.65);
+  await expect(handle).toHaveAttribute('aria-expanded', 'false');
 }
-
-async function inspector(page: Page) {
-  const open = page.getByRole('button', { name: 'Open right panel' });
-  if (await open.isVisible()) await open.click();
-}
-
-test('native entry uses the document workspace and opaque native saves without browser persistence', async ({
-  page,
-}, testInfo) => {
-  await nativeEntry(page);
-  await capture(page, testInfo, 'native-workspace-welcome-default');
-  await expect(
-    page.getByRole('textbox', { name: 'Editable document' }),
-  ).toBeVisible();
-  await expect(page.locator('iframe')).toHaveCount(0);
-  expect((await fixture(page)).browserStorageOpens).toBe(0);
-  expect(
-    (await fixture(page)).commands.some(
-      ({ command }) => command === 'start_preview',
-    ),
-  ).toBe(false);
-  await inspector(page);
+async function openNote(page: Page) {
   await page
-    .getByRole('button', { name: 'Open notes folder', exact: true })
+    .getByRole('button', { name: 'Choose local vault', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Open left panel' }).click();
+  await page
+    .getByRole('button', { name: 'Open math/note.mdx', exact: true })
+    .click();
+  await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeVisible();
+}
+async function saved(page: Page, source: string) {
+  await expect
+    .poll(async () => (await fixture(page)).files['math/note.mdx'])
+    .toBe(source);
   await expect(
-    page.getByTitle('opened-1/math/note.mdx', { exact: true }),
-  ).toHaveAttribute('aria-current', 'page');
-  const editor = page.getByRole('textbox', { name: 'Editable document' });
-  const heading = editor.locator('h1');
+    page.getByRole('status', { name: 'Document save status' }),
+  ).toHaveText('Saved to file');
+}
+async function openSettings(page: Page) {
+  await page.keyboard.press('Control+k');
+  await page
+    .getByRole('textbox', { name: 'Search commands and notes' })
+    .fill('Settings');
+  await page
+    .getByRole('button', { name: /Settings Appearance and core plugins/ })
+    .click();
+  return page.getByRole('dialog', { name: 'Settings' });
+}
+
+test('actual native entry uses the shared editor, autosaves scoped grants and preserves history without browser persistence', async ({
+  page,
+}, info) => {
+  await nativeEntry(page);
+  await capture(page, info, 'native-shared-empty-before');
+  const initial = await fixture(page);
+  expect(initial.browserStorageOpens).toBe(0);
+  expect(initial.opens).toEqual([]);
+  expect(initial.commands[0]).toEqual({
+    command: 'enable_editor_close_guard',
+    args: { version: 1 },
+  });
+  await openNote(page);
+  await mode(page, 'Preview');
+  const editor = page.getByRole('textbox', { name: 'Editable document' }),
+    heading = editor.locator('h1');
   await expect(heading).toHaveText('First title');
+  await expect(editor.locator('input,textarea,.cm-editor')).toHaveCount(0);
+  await capture(page, info, 'native-shared-preview-before');
   await heading.click();
   await page.keyboard.press('End');
   await page.keyboard.insertText(' revised');
-  await expect(heading).toHaveText('First title revised');
-  await editor.press('Control+z');
-  await expect(heading).toHaveText('First title');
-  await editor.press('Control+Shift+z');
-  await expect(heading).toHaveText('First title revised');
-  await page.getByRole('button', { name: 'Save source', exact: true }).click();
-  await expect.poll(async () => (await fixture(page)).saves.length).toBe(1);
+  const revised = original.replace('# First title', '# First title revised');
+  await saved(page, revised);
   expect((await fixture(page)).saves[0]).toEqual({
-    id: 'note-grant',
+    id: 'note-grant-1',
     revision: 'revision-1',
-    source: original.replace('# First title', '# First title revised'),
+    source: revised,
   });
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(editor.locator('h1')).toHaveText('First title');
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
-  await expect(editor.locator('h1')).toHaveText('First title revised');
-  // Focus remains on the inspector button: history shortcuts must still own
-  // canonical document history outside either editing surface.
-  await page.getByRole('button', { name: 'Redo', exact: true }).focus();
   await page.keyboard.press('Control+z');
-  await expect(editor.locator('h1')).toHaveText('First title');
+  await saved(page, original);
   await page.keyboard.press('Control+Shift+z');
-  await expect(editor.locator('h1')).toHaveText('First title revised');
+  await saved(page, revised);
+  // Synthetic DOM key events do not authorize canonical changes. Real keyboard
+  // history must still work when a trusted app control, rather than text, owns focus.
+  const control = page.getByRole('button', {
+    name: 'Open right panel',
+    exact: true,
+  });
+  await control.focus();
+  const beforeSynthetic = (await fixture(page)).saves.length;
+  await control.evaluate((button) =>
+    button.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }),
+    ),
+  );
+  expect((await fixture(page)).files['math/note.mdx']).toBe(revised);
+  expect((await fixture(page)).saves.length).toBe(beforeSynthetic);
+  await page.keyboard.press('Control+z');
+  await saved(page, original);
+  await page.keyboard.press('Control+Shift+z');
+  await saved(page, revised);
+  // A real form field owns its native undo; the chrome fallback must not
+  // interpret that shortcut as permission to change the note behind the dialog.
+  await page.keyboard.press('Control+k');
+  await page
+    .getByRole('textbox', { name: 'Search commands and notes' })
+    .fill('New document');
+  await page
+    .getByRole('button', { name: /New document Create a real file/ })
+    .click();
+  const filename = page.getByRole('textbox', {
+    name: 'Vault-relative filename',
+  });
+  await filename.press('Control+a');
+  await page.keyboard.type('draft.mdx');
+  const beforeFormUndo = await fixture(page);
+  await page.keyboard.press('Control+z');
+  await expect(filename).not.toHaveValue('draft.mdx');
+  await page.keyboard.press('Escape');
+  await expect(heading).toHaveText('First title revised');
+  expect((await fixture(page)).files).toEqual(beforeFormUndo.files);
+  expect((await fixture(page)).saves).toEqual(beforeFormUndo.saves);
   await page
     .getByRole('button', { name: 'Open other.mdx', exact: true })
     .click();
   await expect(editor.locator('h1')).toHaveText('Other title');
-  await page.getByTitle('opened-1/math/note.mdx', { exact: true }).click();
-  await expect(editor.locator('h1')).toHaveText('First title revised');
   await page
-    .getByRole('button', { name: 'Reopen source', exact: true })
+    .getByRole('button', { name: 'Open math/note.mdx', exact: true })
     .click();
-  await expect
-    .poll(
-      async () =>
-        (await fixture(page)).commands.filter(
-          ({ command }) => command === 'reopen_document',
-        ).length,
-    )
-    .toBe(1);
-  await expect(editor.locator('h1')).toHaveText('First title revised');
+  await expect(heading).toHaveText('First title revised');
   await mode(page, 'Source');
-  const rawEditor = page.getByRole('textbox', { name: 'MDX source' });
-  await expect(rawEditor).toBeVisible();
-  await rawEditor.click();
-  await rawEditor.press('Control+End');
+  const raw = page.getByRole('textbox', { name: 'MDX source' });
+  await raw.click();
+  await page.keyboard.press('Control+End');
   await page.keyboard.insertText('Tail from Source.');
-  await page.getByRole('button', { name: 'Save source', exact: true }).click();
-  await expect.poll(async () => (await fixture(page)).saves.length).toBe(2);
-  expect((await fixture(page)).saves[1]).toEqual({
-    id: 'note-grant',
-    revision: 'revision-2',
-    source:
-      original.replace('# First title', '# First title revised') +
-      'Tail from Source.',
-  });
+  const edited = revised + 'Tail from Source.';
+  await saved(page, edited);
   await mode(page, 'Preview');
   await expect(editor).toContainText('Tail from Source.');
+  await page.keyboard.press('Control+k');
+  await page
+    .getByRole('textbox', { name: 'Search commands and notes' })
+    .fill('Close document');
+  await page
+    .getByRole('button', { name: /Close document Flush and close/ })
+    .click();
+  await expect
+    .poll(async () => (await fixture(page)).closed)
+    .toContain('note-grant-1');
+  await page
+    .getByRole('button', { name: 'Open math/note.mdx', exact: true })
+    .click();
+  await expect(editor.locator('h1')).toHaveText('First title revised');
+  await expect(editor).toContainText('Tail from Source.');
+  expect(
+    (await fixture(page)).opens
+      .filter(({ path }) => path === 'math/note.mdx')
+      .map(({ id }) => id),
+  ).toEqual(['note-grant-1', 'note-grant-2']);
   await expect(page.locator('iframe')).toHaveCount(0);
   expect((await fixture(page)).browserStorageOpens).toBe(0);
-  await capture(page, testInfo, 'native-workspace-desktop-browser-adapter');
+  for (const { command, args } of (await fixture(page)).commands) {
+    if (command === 'save_document')
+      expect(Object.keys(args).sort()).toEqual(['id', 'revision', 'source']);
+    expect([
+      'open_documents',
+      'open_notes_folder',
+      'start_preview',
+      'stop_preview',
+      'reopen_document',
+    ]).not.toContain(command);
+  }
+  await capture(page, info, 'native-shared-preview-after');
 });
 
-test('native React execution stays explicit and supervised while Settings exposes the inactive signed channel', async ({
+test('native React stays unavailable without privileged fallbacks or a fake signed-update interface', async ({
   page,
 }) => {
   await nativeEntry(page);
-  await inspector(page);
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings' });
-  await settings.getByRole('button', { name: 'Check for updates' }).click();
-  await expect(settings.getByRole('status')).toContainText(
-    'no signed update channel',
-  );
+  await openNote(page);
+  await mode(page, 'Preview');
+  const editor = page.getByRole('textbox', { name: 'Editable document' });
   await expect(
-    settings.getByRole('button', { name: 'Download and install' }),
+    editor.getByText('React preview is unavailable.', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    editor.getByRole('button', { name: 'Count', exact: true }),
   ).toHaveCount(0);
-  await settings.getByRole('button', { name: 'Close', exact: true }).click();
-  await mode(page, 'Split');
-  await expect
-    .poll(
-      async () =>
-        (await fixture(page)).commands.filter(
-          ({ command }) => command === 'start_preview',
-        ).length,
-      { timeout: 20_000 },
-    )
-    .toBeGreaterThan(0);
+  const settings = await openSettings(page);
+  await expect(
+    settings.getByRole('heading', { name: 'Core plugins' }),
+  ).toBeVisible();
+  await expect(
+    settings.getByRole('button', { name: 'Check for updates', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    settings.getByRole('button', { name: 'Download and install', exact: true }),
+  ).toHaveCount(0);
+  await settings
+    .getByRole('button', { name: 'Close Settings', exact: true })
+    .click();
+  const before = await fixture(page);
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      window.addEventListener('message', () => resolve(), { once: true });
+      window.postMessage(
+        {
+          type: 'save',
+          path: '/outside-vault/forged.mdx',
+          source: 'OVERWRITE ATTEMPT',
+        },
+        '*',
+      );
+    });
+  });
+  expect((await fixture(page)).files).toEqual(before.files);
+  expect((await fixture(page)).saves).toEqual(before.saves);
   await expect(page.locator('iframe')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Stop preview', exact: true }).click();
-  await expect
-    .poll(
-      async () =>
-        (await fixture(page)).commands.filter(
-          ({ command }) => command === 'stop_preview',
-        ).length,
-    )
-    .toBeGreaterThan(0);
+  expect((await fixture(page)).browserStorageOpens).toBe(0);
   expect(
     (await fixture(page)).commands.some(
       ({ command }) =>
+        command === 'start_preview' ||
+        command === 'stop_preview' ||
         command.startsWith('plugin:fs|') ||
         command.startsWith('plugin:shell|') ||
-        command.startsWith('plugin:updater|'),
+        command.startsWith('plugin:updater|') ||
+        command.startsWith('desktop_update_'),
     ),
   ).toBe(false);
 });
 
-test('native document workspace remains usable at tablet and mobile widths', async ({
+test('shared native candidate keeps two document modes, autosave and navigation usable at tablet and mobile widths', async ({
   page,
-}, testInfo) => {
+}, info) => {
   await nativeEntry(page);
+  await openNote(page);
   for (const [name, width, height] of [
     ['tablet', 820, 1180],
     ['mobile', 390, 844],
   ] as const) {
     await page.setViewportSize({ width, height });
+    const close = page.getByRole('button', {
+      name: 'Close navigation',
+      exact: true,
+    });
+    if (await close.isVisible()) await close.click();
+    await expect
+      .poll(() =>
+        page
+          .locator('#notes-navigation')
+          .evaluate((node) => node.getBoundingClientRect().right),
+      )
+      .toBeLessThanOrEqual(0);
+    await mode(page, 'Preview');
+    const editor = page.getByRole('textbox', { name: 'Editable document' });
+    await expect(editor).toBeVisible();
     await expect(
-      page.getByRole('textbox', { name: 'Editable document' }),
-    ).toBeVisible();
+      page.getByRole('status', { name: 'Document save status' }),
+    ).toHaveText('Saved to file');
+    await expect(
+      page.getByRole('button', { name: 'Split', exact: true }),
+    ).toHaveCount(0);
+    await expect(page.locator('.mode-island-actions')).not.toContainText(
+      'Split',
+    );
+    await expect(page.locator('.mode-island-actions button')).toHaveCount(2);
+    await expect(editor.locator('input,textarea,.cm-editor')).toHaveCount(0);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
-    const scrollingArea = await page
-      .locator('.native-workspace-shell .main-scroll')
+    const main = await page
+      .getByRole('main', { name: 'Document workspace' })
       .boundingBox();
-    const statusArea = await page
-      .getByRole('status', { name: 'Save status' })
-      .boundingBox();
-    expect(scrollingArea).not.toBeNull();
-    expect(statusArea).not.toBeNull();
-    expect(scrollingArea!.y + scrollingArea!.height).toBeLessThanOrEqual(
-      statusArea!.y + 1,
-    );
-    await capture(page, testInfo, `native-workspace-${name}-browser-adapter`);
+    expect(main).not.toBeNull();
+    expect(main!.height).toBeLessThanOrEqual(height + 1);
+    await page
+      .getByRole('button', { name: 'Open navigation', exact: true })
+      .click();
+    await expect(
+      page.getByRole('button', { name: 'Open math/note.mdx', exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Close navigation', exact: true })
+      .click();
+    await page.mouse.move(width * 0.65, height * 0.7);
+    await expect
+      .poll(() =>
+        page
+          .locator('#notes-navigation')
+          .evaluate((node) => node.getBoundingClientRect().right),
+      )
+      .toBeLessThanOrEqual(0);
+    await capture(page, info, `native-shared-${name}-browser-adapter`);
   }
+  expect((await fixture(page)).files['math/note.mdx']).toBe(original);
+  expect((await fixture(page)).browserStorageOpens).toBe(0);
 });

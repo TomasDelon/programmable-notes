@@ -52,8 +52,11 @@ to produce a pass. Only owner-directed product changes can amend these obligatio
 - Owner's six setup questions are answered and recorded in the product contract.
 - Shared-entry audit can report the current native/browser divergence without
   treating informational success as product readiness.
-- Current code still uses different application roots, manual native saves and a
-  separate native preview window. These are known migration gaps, not accepted
-  substitutes for A01/A03/A09.
-- New product behavior and installed acceptance have not been implemented/run as
-  part of setup. The living plan defines their order and blocker handling.
+- Subsequent development routes native startup to the shared ProductRoot with
+  scoped vault autosave and guarded close. Controlled-IPC/browser tests support
+  that composition; A03–A07 still require actual installed real-file witnesses.
+- Native inline React remains unavailable. A09/A11 are unresolved, and no legacy
+  separate-window fallback can satisfy them. File lifecycle, restart recovery
+  discovery, continuous external observation and update integration remain pending.
+- The setup itself did not implement or establish installed acceptance. Later
+  development evidence is recorded in IMPLEMENTATION_STATUS, not inferred here.

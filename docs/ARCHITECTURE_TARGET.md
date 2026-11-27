@@ -48,17 +48,35 @@ Whole-document HTML still owns iframe identity: unchanged executable HTML retain
 the frame across Source/Preview and theme changes, while retired requests withdraw
 stale diagnostics and presentation. Stop/rebuild, island lifecycle and React-disable
 reset retain their existing semantics. This extraction changes neither the product
-UI nor native activation. The workspace model and native lifecycle services still
-require integration; these dependency boundaries do not complete the shared
-workspace or establish native/product acceptance.
+UI nor native activation by itself. Subsequent shared-product and guarded
+bootstrap integration is described below; these renderer boundaries do not
+establish installed workspace or native runtime acceptance.
 
 The existing document panels are extracted into `workspace/DocumentSurface.tsx`
 ([ADR038](decisions/ADR-038-shared-document-surface.md)). The host passes the
 existing SourceEditor props and explicit runtime session; the leaf owns no
 source copy, history, storage or native IPC. Mount/session identity is distinct
 from logical path. This is a shared presentation leaf, not a completed shared
-product root or native activation. Controller-injected DOM tests and real Store
-I/O remain separate evidence; installed typing-to-disk is still required.
+product root or native activation by itself. Controller-injected DOM tests and
+real Store I/O remain separate evidence; installed typing-to-disk is still required.
+
+## Current shared native composition
+
+The native development entry now selects one window-lifetime guarded bootstrap
+and the shared ProductRoot. ProductRoot composes actual shared navigation, header,
+settings, palette and document interaction. NativeProduct delegates source/history
+to existing DocumentSessions/SourceSession and filesystem operations to the scoped
+NativeWorkspace; it adds neither a second document registry nor browser storage.
+
+A synchronous trusted editor barrier precedes aggregate autosave/recovery draining
+and exact native close acknowledgement. Only validated cancellation can return to
+editing; unknown commit outcomes stay held. A permanent native fatal boundary
+prevents reload/reinitialization of authority. See ADR039 and ADR041.
+
+This is a candidate for installed real-file acceptance. Native React has no active
+renderer adapter until the same-window input/containment gates pass. Missing
+file lifecycle, restart recovery discovery, external observation and updater
+integration remain explicit gaps rather than alternative product surfaces.
 
 ## Responsibilities
 
