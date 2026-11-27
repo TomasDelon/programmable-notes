@@ -1,4 +1,7 @@
-"""Fresh synthetic keys only. No Docker, configure-script execution or VM."""
+"""Fresh synthetic keys; no Docker, full configure-script execution or VM.
+
+The public network-file fragment alone executes inside an owned temporary path.
+"""
 
 import base64
 import hashlib
@@ -6,6 +9,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 import signal
 from pathlib import Path
 import stat
@@ -206,6 +210,34 @@ class Preparation(unittest.TestCase):
         result = subprocess.run(["/bin/bash", "-n", str(SCRIPT.parent / "native-guest/configure.sh")],
                                 capture_output=True, timeout=5)
         self.assertEqual(result.returncode, 0)
+
+    def test_public_network_fragment_is_readable_under_private_umask_without_exposing_auth(self):
+        configure = (SCRIPT.parent / "native-guest/configure.sh").read_text()
+        guest_path = "/etc/systemd/network/10-native-fixture.network"
+        start = configure.index("cat > " + guest_path + " <<'CONF'\n")
+        end = configure.index("cat > /etc/systemd/system/user@.service.d/", start)
+        fragment = configure[start:end]
+        directory = self.parent / "network-fragment"
+        directory.mkdir(mode=0o700)
+        network = directory / "10-native-fixture.network"
+        public_key_file = directory / "controller.pub"
+        public_key_file.write_bytes(public())
+        authorization = directory / "authorized_keys"
+        auth_line = next(line for line in configure.splitlines()
+                         if line.startswith("install -m ") and line.endswith("/home/fixture/.ssh/authorized_keys"))
+        auth_args = shlex.split(auth_line)
+        # Exercise the versioned auth mode too, without guest-only user/group changes.
+        subprocess.run(["/usr/bin/install", "-m", auth_args[auth_args.index("-m") + 1],
+                        str(public_key_file), str(authorization)], check=True, timeout=5)
+        self.assertEqual(stat.S_IMODE(authorization.stat().st_mode), 0o600)
+        result = subprocess.run(["/bin/bash", "-eu", "-c",
+                                 "umask 077\n" + fragment.replace(guest_path, shlex.quote(str(network)))],
+                                cwd=directory, capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(network.read_bytes(), b"[Match]\nName=en* eth*\n[Network]\nDHCP=yes\n")
+        self.assertEqual(stat.S_IMODE(network.stat().st_mode), 0o644)
+        self.assertEqual(stat.S_IMODE(authorization.stat().st_mode), 0o600)
+        self.assertEqual(authorization.read_bytes(), public_key_file.read_bytes())
 
     def test_prepared_context_returns_only_immutable_public_snapshots(self):
         self.assertEqual(self.run_prepare().returncode, 0)

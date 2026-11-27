@@ -57,8 +57,9 @@ BOM/CRLF/opaque JSX and invalid MDX bytes were observed before flush, close/reop
 used a fresh session, and conflicting external bytes/mode0640 remained intact
 while local text was retained. No real creation or GUI behavior is claimed by
 that case. The initial full-check evidence is in the implementation status;
-four contained Tauri outcome tests await hosted execution because local GLib
-development packages are absent. No guest success, active desktop autosave or
+four contained Tauri outcome tests passed in hosted native-check at source
+1ab4bb4 (run45919131636). Local compilation remains blocked by absent GLib
+development packages. No guest success, active desktop autosave or
 product parity is implied. The existing
 native interface remains rejected; one shared product tree, native dirty/busy
 acknowledgement, durable recovery and installed security/lifecycle acceptance are

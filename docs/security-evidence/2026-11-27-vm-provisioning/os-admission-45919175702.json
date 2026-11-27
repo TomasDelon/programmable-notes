@@ -1,0 +1,22 @@
+{
+  "evidence_source": "validated GitHub check annotation",
+  "run_id": 45919175702,
+  "source_commit": "1ab4bb4c439e94473d0a8a0de8956dfd90eb75f2",
+  "job_id": 140245543854,
+  "run_conclusion": "failure",
+  "scope": "guest-os-admission-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "stage": "boot_wait",
+  "reason": "timeout",
+  "ssh_error": "timeout",
+  "returncode": 255,
+  "guard_status": 2,
+  "boot_markers": ["crng_ready", "linux_kernel_started", "systemd_started"],
+  "serial_bytes": 48235,
+  "native_payload_executed": false,
+  "limitations": [
+    "Presence markers are advisory; absence does not establish a cause.",
+    "No successful SSH admission, pin/key controls or normal shutdown established."
+  ]
+}

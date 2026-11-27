@@ -49,6 +49,8 @@ Name=en* eth*
 [Network]
 DHCP=yes
 CONF
+# Public DHCP configuration is read by the unprivileged systemd-network service.
+chmod 0644 /etc/systemd/network/10-native-fixture.network
 cat > /etc/systemd/system/user@.service.d/50-native-fixture.conf <<'CONF'
 [Service]
 Delegate=cpu cpuset io memory pids

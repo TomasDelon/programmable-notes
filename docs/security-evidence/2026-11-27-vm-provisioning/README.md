@@ -115,6 +115,41 @@ serial output is never published. Presence is advisory; absence does not establi
 a cause, and no marker can pass admission. **42 Python controls and 9 reporter
 CLI tests passed**; actual marker observations await the next runner execution.
 
+## Actual startup observation and public network-file correction
+
+At source **1ab4bb4**, required [CI45919131636](https://github.com/TomasDelon/programmable-notes/actions/runs/45919131636)
+passed both jobs, including the production package and the Tauri test command
+containing the four acquisition outcome cases. The separate
+[VM45919175702](https://github.com/TomasDelon/programmable-notes/actions/runs/45919175702)
+failed again at SSH boot timeout. Its [validated annotation receipt](os-admission-45919175702.json)
+contains only `crng_ready`, `linux_kernel_started`, `systemd_started` and the
+48,235-byte count. No raw serial output was published. These observed markers do
+not establish the absence of another event or the timeout's cause. No native
+payload, successful SSH admission, pin/key negatives or normal shutdown is claimed.
+
+Review found a concrete permission flaw: `umask 077` plus the configuration
+heredoc left the public DHCP `.network` file root-owned `0600`; networkd uses an
+unprivileged service account. Provisioning now explicitly makes **only that public
+file `0644`**. Private authorization stays `0600`; SSH, namespaces and resource
+policy are unchanged. The new control executes the actual versioned fragment
+under the private umask, checks exact bytes/modes and retains a private auth file.
+It failed before the correction and passed afterward: **30 provision controls**.
+
+A separate [actual Linux DAC receipt](network-mode-dac.json) records a fresh
+pinned-Ubuntu, network-none container with no host mounts or owner data: non-owner
+UID1001 could not read the root-owned `0600` file, then read exact bytes at `0644`.
+The owned container was removed; a separate daemon query found zero remaining
+probe containers. This proves the permission distinction, not actual networkd or
+guest admission. Reproduce the versioned file-mode control with:
+
+```sh
+node --test tests/tooling/native-vm-provision.test.mjs
+```
+
+The correction still requires a **fresh** preparation/packing/admission run.
+Old prepared contexts intentionally fail current source-hash validation. Do not
+reuse the old private image, weaken admission checks or relabel earlier failures.
+
 ## Reproduce
 
 On a disposable Linux host with Docker, Python and OpenSSH client:

@@ -1,0 +1,9 @@
+{
+  "scope": "isolated Linux DAC only, not systemd or guest admission",
+  "image": "ubuntu@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8",
+  "network": "none",
+  "host_mounts": false,
+  "root_owned_0600_denied_to_nonowner": true,
+  "root_owned_0644_read_exact_to_nonowner": true,
+  "owner_credentials_or_data_used": false
+}

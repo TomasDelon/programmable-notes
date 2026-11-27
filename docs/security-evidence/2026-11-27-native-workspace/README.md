@@ -74,7 +74,8 @@ The complete local check exited **0**: **788 unit, 110 tooling / zero skips,
 152 Chromium, 9 local Pages and 4 cloud-storage browser tests**, plus formatting,
 lint, strict types and production build. A final diagnostic-only deadline change
 received another successful **110-test tooling run**. Four new contained Tauri
-mapping tests await hosted native execution; they are not counted as local passes.
+mapping tests subsequently passed in hosted native-check for source1ab4bb4
+(run45919131636); they are not counted as local passes.
 No cloud backend was activated by these disposable local browser tests.
 
 Reproduce on Linux with the repository's Node/Rust toolchain and dependencies:
