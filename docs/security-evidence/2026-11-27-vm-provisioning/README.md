@@ -48,7 +48,8 @@ The admission tool also retains failed-run receipts after validating the private
 fixture root. They contain fixed stage/error categories and bounded return codes,
 not raw SSH output, keys, mount paths or exception text. Cleanup failure stays a
 failed result; invalid preflight writes no receipt. These failure controls have
-been tested locally, while actual guest admission is still pending.
+been tested locally. The actual hosted attempt below failed; successful guest
+admission remains unproven.
 
 The complete required `npm run check` exited 0: **739 unit, 101 tooling (zero
 skips), 152 Chromium, 9 local Pages and 4 inactive-cloud browser tests passed**,
@@ -57,6 +58,42 @@ wrappers count 29 preparation, 31 packing and 28 admission Python controls;
 routing tests cover old and VM dispatch combinations. The pinned scanner was
 explicitly enabled. The staged-source secret scan found zero findings. No local
 native Rust/GUI tests were rerun; no Rust or application UI source changed.
+
+## Hosted execution and evidence retrieval
+
+Required CI for source **3533fcc** passed in
+[run 45913220787](https://github.com/TomasDelon/programmable-notes/actions/runs/45913220787).
+This is the required application/build check result, distinct from optional OS
+admission and from later work-in-progress source changes.
+
+The manual standard-Ubuntu OS-admission
+[run 45913264160](https://github.com/TomasDelon/programmable-notes/actions/runs/45913264160)
+**failed** after its real image assembly and launch-layout validation completed.
+The exact internal stage and error category are not established. The sanitized
+receipt artifact could not be retrieved: Azure Blob downloads returned
+`Forbidden`, including an approved retry. No signed download URL is reproduced.
+That access failure is a limitation on diagnosis, not an explanation of the OS
+admission failure. The original failed run and its artifact remain retained and
+are not rewritten or promoted by later source/tests.
+
+A permanent strict receipt reporter is implemented for subsequent runs. It reads
+only bounded, owned, private regular receipt files without following symlinks;
+rejects duplicate keys, unknown fields and invalid types/enums; and emits only
+validated OS stage/error categories and bounded return codes as GitHub check
+annotations. Public-key hashes, private paths, exception text and raw SSH output
+are not printed. Its schema includes the writer's `protocol` category for invalid
+probe responses, including cleanup failures originating in that stage.
+Known failed probes include only a fixed check name (for example `cgroup_v2`),
+never its raw value. Unknown exceptions do not receive an invented check. Seven
+reporter CLI controls cover injection, misplaced labels and exact scope; the
+smoke wrapper now counts 32 Python controls, preserving admission predicates.
+The final tooling rerun passed **108 tests, zero skips** after these additions.
+
+Reporting a valid failed receipt exits zero so diagnosis can complete; the
+original smoke step still exits unsuccessfully and keeps the job failed. There
+is no `continue-on-error` or rewritten old result. This delivery change does not
+fix the unknown cause, establish the original failure stage or demonstrate a new
+successful VM run. Native application acceptance remains outside OS admission.
 
 ## Reproduce
 
@@ -88,10 +125,11 @@ secrets, a paid runner, a release or a merge.
 
 ## Current limits
 
-Local image preparation and launcher layout checks have executed. Actual guest
-boot, authenticated OS admission and normal shutdown must be reported from their
-own runner result before being claimed. The managed host has no host QEMU, sudo
-or package helper; no unchecked container launch was substituted.
+Local image preparation and launcher layout checks have executed. A hosted OS
+admission attempt failed; successful guest boot, authenticated OS admission and
+normal shutdown must be demonstrated by their own complete runner result before
+being claimed. The managed host has no host QEMU, sudo or package helper; no
+unchecked container launch was substituted.
 
 OS admission does not test the native application, malicious MDX, IPC/filesystem
 denial, keyboard/geometry, native Stop/expiry or CPU/memory containment. Those

@@ -43,6 +43,20 @@ class CleanupFailed(Refused):
     pass
 
 
+PROBE_CHECKS = frozenset(("schema", "version", "uid", "authorized_count", "authorized_sha256",
+                          "pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"))
+
+
+class ProbeRefused(Refused):
+    """A fixed check name only, never a failed value or parser/SSH message."""
+
+    def __init__(self, check):
+        if type(check) is not str or check not in PROBE_CHECKS:
+            raise Refused()
+        super().__init__()
+        self.probe_check = check
+
+
 ENV = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
 FIELDS = {"version", "uid", "pid1_systemd", "cgroup_v2", "mounts_allowed",
           "root_ext4_vda", "authorized_count", "authorized_sha256", "agent_absent"}
@@ -77,18 +91,22 @@ print(json.dumps(result,sort_keys=True))
 
 def _facts(raw, expected):
     if type(raw) is not bytes or not 0 < len(raw) <= 4096:
-        raise Refused()
-    facts = json.loads(raw, object_pairs_hook=guard._pairs)
+        raise ProbeRefused("schema")
+    try:
+        facts = json.loads(raw, object_pairs_hook=guard._pairs)
+    except (json.JSONDecodeError, UnicodeDecodeError, guard.Refused):
+        raise ProbeRefused("schema") from None
     if type(facts) is not dict or set(facts) != FIELDS:
-        raise Refused()
+        raise ProbeRefused("schema")
     for field, value in (("version", 1), ("uid", 1001), ("authorized_count", 1)):
         if type(facts[field]) is not int or facts[field] != value:
-            raise Refused()
-    for field in FIELDS - {"version", "uid", "authorized_count", "authorized_sha256"}:
+            raise ProbeRefused(field)
+    # Fixed order makes multiple failures reproducible; admission predicates are unchanged.
+    for field in ("pid1_systemd", "cgroup_v2", "mounts_allowed", "root_ext4_vda", "agent_absent"):
         if facts[field] is not True:
-            raise Refused()
+            raise ProbeRefused(field)
     if facts["authorized_sha256"] != expected:
-        raise Refused()
+        raise ProbeRefused("authorized_sha256")
     return facts
 
 
@@ -203,6 +221,11 @@ def _failure_receipt(root, progress):
                    "status": "failed", "stage": stage, "reason": reason, "ssh_error": progress["ssh_error"]}
         if cleanup:
             receipt["origin_stage"] = progress["stage"]
+        check = progress.get("probe_check")
+        if (type(check) is str and check in PROBE_CHECKS and progress["ssh_error"] == "protocol"
+                and ((stage == "probe" and reason == "refused")
+                     or (cleanup and progress["stage"] == "probe"))):
+            receipt["probe_check"] = check
         code = _safe_code(progress["returncode"])
         if code is not None:
             receipt["returncode"] = code
@@ -381,6 +404,7 @@ def _smoke(root_path):
                 _revalidate(active_witnesses)
                 progress["returncode"] = None
                 progress["ssh_error"] = "none"
+                progress.pop("probe_check", None)
                 with _owned(_ssh(identity, pin), stdin=subprocess.PIPE) as connection:
                     try:
                         status, data = _drain(connection, timeout, payload=PROBE)
@@ -404,7 +428,12 @@ def _smoke(root_path):
             def accept_probe(data):
                 progress["stage"] = "probe"
                 progress["ssh_error"] = "protocol"
-                _facts(data, expected_hash)
+                progress.pop("probe_check", None)
+                try:
+                    _facts(data, expected_hash)
+                except ProbeRefused as error:
+                    progress["probe_check"] = error.probe_check
+                    raise
                 progress["ssh_error"] = "none"
             deadline = time.monotonic() + 180
             while True:

@@ -35,3 +35,17 @@ Small phases:
 
 Root owns integration, dist/4173 and full checks. Delegate disjoint preparation and
 review only. Review exact file list/interfaces before code; avoid generic VM APIs.
+
+## Failure feedback when artifact storage is unavailable
+
+- **Outcome:** expose only validated OS-admission stage/categories through GitHub
+  check annotations, so the cloud agent can diagnose a failed run without signed
+  artifact URLs or raw SSH logs.
+- **Invariants:** never print unrecognized fields, paths, keys, exception text or
+  arbitrary receipt strings. Preserve the original failure and native-app-not-tested
+  scope; reporting a failed result must not make the job pass.
+- **Witness:** the actual reporter CLI maps a bounded valid receipt to one fixed
+  safe annotation; forged scope, extra fields, oversized/symlinked input and
+  message injection are refused without printing their values.
+- **Done:** regression controls, workflow integration and actual runner annotation
+  observed. The original failed run/artifact remain unchanged.

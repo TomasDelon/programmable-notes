@@ -199,10 +199,15 @@ test('VM admission is isolated from every other dispatch mode and never duplicat
   assert.match(vmSection, /runs-on: ubuntu-24\.04/);
   assert.match(vmSection, /persist-credentials: false/);
   assert.match(vmSection, /path: \.cache\/native-vm-evidence\/smoke\.json\n/);
+  assert.match(
+    vmSection,
+    /python3 -I -B scripts\/report-native-vm-receipt\.py/,
+  );
   assert.doesNotMatch(
     vmSection,
     /path: .*\*|runs-on:.*self-hosted|permissions:.*write/,
   );
+  assert.doesNotMatch(vmSection, /continue-on-error:\s*true/);
 });
 test('role opt-in is guarded before checkout and remains a fixed optional command', () => {
   assert.ok(

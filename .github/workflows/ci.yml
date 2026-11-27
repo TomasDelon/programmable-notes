@@ -434,6 +434,7 @@ jobs:
           mkdir -p .cache/native-vm-evidence
           if test -f "$PN_VM_ROOT/smoke-receipt.json"; then
             install -m 0600 "$PN_VM_ROOT/smoke-receipt.json" .cache/native-vm-evidence/smoke.json
+            python3 -I -B scripts/report-native-vm-receipt.py "$GITHUB_WORKSPACE/.cache/native-vm-evidence/smoke.json"
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.fixture.outputs.created == 'true' && hashFiles('.cache/native-vm-evidence/smoke.json') != ''

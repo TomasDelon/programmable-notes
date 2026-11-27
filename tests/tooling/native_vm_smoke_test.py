@@ -260,7 +260,48 @@ class Smoke(unittest.TestCase):
         self.assertEqual(output, "NATIVE_VM_OS_SMOKE_REFUSED\n")
         self.assertEqual(self.guard.terminated, 1)
         self.assertEqual(self.guard.killed, 0)
-        self.failure_receipt("probe")
+        receipt = self.failure_receipt("probe")
+        self.assertEqual(receipt.get("probe_check"), "mounts_allowed")
+
+    def test_known_schema_and_field_refusals_report_only_fixed_check_names(self):
+        expected = self.facts["authorized_sha256"]
+        malformed = [b"", b"PRIVATE_INVALID_JSON", b"\xff", b"{}", b"[]", b"x" * 4097,
+                     json.dumps(self.facts).replace('"version": 1', '"version":1,"version":1').encode()]
+        cases = [(raw, "schema") for raw in malformed]
+        for field, value in (("version", True), ("uid", "PRIVATE_UID"), ("authorized_count", 2),
+                             ("pid1_systemd", False), ("cgroup_v2", False), ("mounts_allowed", 1),
+                             ("root_ext4_vda", False), ("agent_absent", False), ("authorized_sha256", "PRIVATE_HASH")):
+            cases.append((json.dumps({**self.facts, field: value}).encode(), field))
+        cases.append((json.dumps({**self.facts, "PRIVATE_UNKNOWN": "PRIVATE_VALUE"}).encode(), "schema"))
+        for raw, check in cases:
+            with self.subTest(check=check):
+                with self.assertRaises(Exception) as failure:
+                    smoke._facts(raw, expected)
+                self.assertEqual(getattr(failure.exception, "probe_check", None), check)
+                self.assertIsInstance(failure.exception, smoke.Refused)
+                self.assertNotIn("PRIVATE", str(failure.exception))
+
+    def test_first_probe_field_failure_is_deterministic(self):
+        expected = self.facts["authorized_sha256"]
+        broken = {**self.facts, "pid1_systemd": False, "cgroup_v2": False,
+                  "mounts_allowed": False, "authorized_sha256": "PRIVATE_HASH"}
+        for _ in range(4):
+            with self.assertRaises(smoke.Refused) as failure:
+                smoke._facts(json.dumps(broken).encode(), expected)
+            self.assertEqual(getattr(failure.exception, "probe_check", None), "pid1_systemd")
+
+    def test_unknown_probe_exception_does_not_invent_a_check(self):
+        with patch.object(smoke, "_facts", side_effect=RuntimeError("PRIVATE_UNKNOWN")):
+            self.assertEqual(self.run_mocked()[0], 2)
+        receipt = self.failure_receipt("probe")
+        self.assertEqual(receipt["ssh_error"], "protocol")
+        self.assertNotIn("probe_check", receipt)
+
+    def test_successful_probe_then_later_failure_does_not_retain_a_check(self):
+        # A pin-refusal failure happens outside _facts, after a successful probe.
+        self.ssh_transform = lambda status, data, kind: (0, json.dumps(self.facts).encode()) if kind == "pin" else (status, data)
+        self.assertEqual(self.run_mocked()[0], 2)
+        self.assertNotIn("probe_check", self.failure_receipt("pin"))
 
     def test_invalid_json_unknown_fields_and_truthy_boolean_never_admit(self):
         expected = self.facts["authorized_sha256"]
@@ -309,6 +350,7 @@ class Smoke(unittest.TestCase):
         receipt = self.failure_receipt("cleanup")
         self.assertEqual(receipt["origin_stage"], "probe")
         self.assertEqual(receipt["reason"], "cleanup_failed")
+        self.assertEqual(receipt.get("probe_check"), "cgroup_v2")
 
     def test_monitor_sends_only_fixed_powerdown_to_owned_unix_socket(self):
         path = self.root / "runtime/monitor.sock"
