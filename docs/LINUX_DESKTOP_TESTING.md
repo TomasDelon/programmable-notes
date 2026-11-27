@@ -420,3 +420,31 @@ and per-case deadlines unchanged. Record controller exit status as well as JSON.
 completed acceptance, retained resource/latency failures and reproducible limits](security-evidence/2026-11-24-current-package/README.md).
 The [next hosted acceptance plan](plans/2026-11-24-native-hosted-acceptance.md)
 is a handoff, not an already-executed GitHub native GUI job.
+
+## Packaged shared-editor chooser observation
+
+The current hosted editor-only journey is `scripts/native-shared-editor.mjs`,
+launched by the closed standard-Ubuntu runner in `run-native-shared-editor.sh`.
+Use the manual CI input native_shared_run with the successful required CI run ID
+at the same repository/branch head. It verifies the production package before
+installation and runs under a fresh ordinary account. This is not renderer
+security acceptance, and native arbitrary React remains disabled.
+
+The journey captures screenshot-startup.png once after actual shared-workspace
+readiness and before vault authorization. The native-shared-editor-witness
+artifact retains it even if a later chooser step fails. Capturing an image is not
+visual inspection or proof of editing, saving or recovery.
+
+For a folder chooser the external driver types an explicit trailing directory
+separator and requires that exact field echo. GTK3 folder inline completion
+appends directory separators; the unchanged file-chooser mode keeps its original
+input bytes. PID/title/focus checks, actual Return/Select acknowledgement,1ms key
+delay and30s deadline remain intact. This is a supported directory spelling, not
+proof that a previous echo failure had that exact cause. No prefix acceptance or
+native filesystem grant shortcut is permitted.
+
+If echo still differs, the driver emits only a closed shape category from its
+existing final read. The reporter projects it only for a validated failed chooser
+journey and one unambiguous known marker. Do not publish paths, values, raw logs or
+signed artifact URLs. Retain each failed run and distinguish a helper signature
+from an application or namespace diagnosis.

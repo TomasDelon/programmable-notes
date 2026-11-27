@@ -570,7 +570,7 @@ test('host annotations expose only closed stages, codes and denial categories ra
     assert.match(
       result.stdout,
       new RegExp(
-        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none\\n$`,
+        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none; dialogEchoShape=unknown\\n$`,
       ),
     );
     assert.doesNotMatch(
@@ -824,7 +824,7 @@ test('chooser advisory classes recognize only fixed terminal helper exceptions',
       assert.deepEqual(observed.record.dialogClasses, [category]);
       assert.match(
         observed.stdout,
-        new RegExp(`; dialogClasses=${category}\\n$`),
+        new RegExp(`; dialogClasses=${category}; dialogEchoShape=unknown\\n$`),
       );
       assert.equal(observed.record.result, 'failed');
       assert.doesNotMatch(
@@ -1053,6 +1053,91 @@ test('journey diagnostics preserve only exact OS errno classes and executable/pr
     assert.doesNotMatch(
       observed.stdout + observed.stderr + JSON.stringify(observed.record),
       /private-errno|%0A|EPERM|EACCES|executable_identity_extra/,
+    );
+  }
+});
+
+const echoMismatchLine =
+  'AssertionError: Native location entry did not echo the exact fixture path';
+const echoChooserFailure = (values = {}) =>
+  failedJourney({
+    stage: 'authorized_vault_chooser',
+    startupPhase: 'complete',
+    failureKind: 'other',
+    ...values,
+  });
+test('dialog echo shape projects exactly one bare allowlisted marker only on an eligible failed chooser', async (t) => {
+  const shapes = [
+    'not_focused',
+    'empty',
+    'missing_separator',
+    'extra_separator',
+    'shorter_prefix',
+    'longer_prefix',
+    'different',
+  ];
+  for (const shape of shapes) {
+    const raw = `${echoMismatchLine}\nNATIVE_DIALOG_ECHO_SHAPE=${shape}\n`;
+    for (const stage of ['authorized_vault_chooser', 'fresh_launch_reopen']) {
+      const observed = await runJourneyReport(
+        t,
+        echoChooserFailure({ stage }),
+        raw,
+      );
+      assert.deepEqual(observed.record.dialogClasses, [
+        'dialog_location_echo_mismatch',
+      ]);
+      assert.equal(observed.record.dialogEchoShape, shape);
+      assert.match(observed.stdout, new RegExp(`dialogEchoShape=${shape}\\n$`));
+      assert.equal(observed.record.result, 'failed');
+    }
+  }
+  const marker = `${echoMismatchLine}\nNATIVE_DIALOG_ECHO_SHAPE=missing_separator\n`;
+  for (const [receipt, outer] of [
+    [undefined, 'journey'],
+    [echoChooserFailure({ result: 'passed' }), 'journey'],
+    [echoChooserFailure({ scope: 'foreign' }), 'journey'],
+    [echoChooserFailure({ stage: 'source_autosave' }), 'journey'],
+    [echoChooserFailure({ startupPhase: 'product_ready' }), 'journey'],
+    [echoChooserFailure({ failureKind: 'assertion' }), 'journey'],
+    [echoChooserFailure(), 'driver_start'],
+  ]) {
+    const observed = await runJourneyReport(t, receipt, marker, outer);
+    assert.equal(observed.record.dialogEchoShape, 'unknown');
+  }
+  const noMismatch = await runJourneyReport(
+    t,
+    echoChooserFailure(),
+    'NATIVE_DIALOG_ECHO_SHAPE=missing_separator\n',
+  );
+  assert.equal(noMismatch.record.dialogEchoShape, 'unknown');
+});
+test('dialog echo marker ignores raw, unknown, quoted, injected, source and duplicate lines without revealing values', async (t) => {
+  const marker = 'NATIVE_DIALOG_ECHO_SHAPE=missing_separator';
+  for (const lines of [
+    [],
+    ['NATIVE_DIALOG_ECHO_SHAPE=UNKNOWN'],
+    ['NATIVE_DIALOG_ECHO_SHAPE=missing_separator_extra'],
+    ['NATIVE_DIALOG_ECHO_SHAPE=/private/echo-sentinel'],
+    ['NATIVE_DIALOG_ECHO_SHAPE=missing_separator%0A::error::echo-sentinel'],
+    [`prefix ${marker}`],
+    [`'${marker}'`],
+    [`print("${marker}", file=sys.stderr)`],
+    [marker, marker],
+    [marker, 'NATIVE_DIALOG_ECHO_SHAPE=different'],
+    [marker, `print("${marker}")`],
+    [marker, 'NATIVE_DIALOG_ECHO_SHAPE=unknown'],
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      echoChooserFailure(),
+      [echoMismatchLine, ...lines].join('\n') + '\n',
+    );
+    assert.equal(observed.record.dialogEchoShape, 'unknown');
+    assert.match(observed.stdout, /dialogEchoShape=unknown\n$/);
+    assert.doesNotMatch(
+      observed.stdout + observed.stderr + JSON.stringify(observed.record),
+      /echo-sentinel|private\/|%0A/,
     );
   }
 });

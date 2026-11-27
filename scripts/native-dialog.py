@@ -11,6 +11,34 @@ mode = sys.argv[2]
 title = sys.argv[3]
 argument = sys.argv[4] if len(sys.argv) > 4 else ''
 
+def location_input_text(action, value):
+    # GTK 3.24.41 gtkfilechooserentry.c enables folder inline completion and
+    # includes a separator in directory completions (blob 02f9d5542f1a49ffd9481850cc4a081d6ed4d72a).
+    # Request that exact directory spelling rather than accepting a prefix.
+    if action == 'choose-folder' and not value.endswith('/'):
+        return value + '/'
+    return value
+
+def location_echo_shape(observed, expected):
+    # Advisory only: never disclose the text or relax the exact echo oracle.
+    if observed is None:
+        return 'not_focused'
+    if not isinstance(observed, str):
+        return 'different'
+    if observed == expected:
+        return None
+    if observed == '':
+        return 'empty'
+    if expected.endswith('/') and observed == expected[:-1]:
+        return 'missing_separator'
+    if observed == expected + '/':
+        return 'extra_separator'
+    if expected.startswith(observed):
+        return 'shorter_prefix'
+    if observed.startswith(expected):
+        return 'longer_prefix'
+    return 'different'
+
 def command(*args):
     return subprocess.check_output(['xdotool', *args], text=True, stderr=subprocess.PIPE, timeout=8).strip()
 
@@ -108,6 +136,7 @@ assert wid is not None, f'Native dialog not visible for PID {pid}: {title}'
 command('windowactivate', '--sync', wid)
 if mode in ('choose', 'choose-folder'):
     assert argument.startswith('/'), 'Use an absolute fixture path'
+    typed_path = location_input_text(mode, argument)
     command('key', '--clearmodifiers', 'ctrl+l')
     # X11 key delivery does not acknowledge GTK focus or path-entry creation.
     while focused_entry_text() is None and time.monotonic() < deadline:
@@ -115,10 +144,13 @@ if mode in ('choose', 'choose-folder'):
     assert focused_entry_text() is not None, 'Native location entry did not focus'
     # Save choosers may select only the stem, leaving the old suffix selected out.
     command('key', '--clearmodifiers', 'ctrl+a')
-    command('type', '--clearmodifiers', '--delay', '1', '--', argument)
-    while focused_entry_text() != argument and time.monotonic() < deadline:
+    command('type', '--clearmodifiers', '--delay', '1', '--', typed_path)
+    while focused_entry_text() != typed_path and time.monotonic() < deadline:
         time.sleep(0.1)
-    assert focused_entry_text() == argument, 'Native location entry did not echo the exact fixture path'
+    observed_echo = focused_entry_text()
+    if observed_echo != typed_path:
+        print('NATIVE_DIALOG_ECHO_SHAPE=' + location_echo_shape(observed_echo, typed_path), file=sys.stderr)
+    assert observed_echo == typed_path, 'Native location entry did not echo the exact fixture path'
     command('key', '--clearmodifiers', 'Return')
     # GtkFileChooser's location entry may first select, then require Open/Save.
     time.sleep(0.3)
