@@ -24,7 +24,7 @@ try {
       !Buffer.isBuffer(manifest) || !manifest.length || manifest.length > 16384)
     throw Error('fixed artifacts');
   const receipt = JSON.parse(manifest);
-  if (receipt.profile !== 'inline-react-v1' || receipt.nativeTested !== false ||
+  if (receipt.profile !== 'inline-react-guarded-v2' || receipt.nativeTested !== false ||
       receipt.generatedCodeEvaluatedOnHost !== false || receipt.artifacts.htmlBytes !== html.length ||
       receipt.artifacts.htmlSha256 !== createHash('sha256').update(html).digest('hex'))
     throw Error('fixed receipt');
@@ -44,8 +44,8 @@ try {
   const length = Buffer.alloc(4);
   length.writeUInt32BE(manifest.length);
   await publish('fixture-evidence.bin', Buffer.concat([
-    Buffer.from('PN_INLINE_REACT_V1_BUILD\0'), length, manifest,
-    Buffer.from('\0PN_INLINE_REACT_V1_BUILD_END\0'),
+    Buffer.from('PN_INLINE_REACT_GUARDED_V2_BUILD\0'), length, manifest,
+    Buffer.from('\0PN_INLINE_REACT_GUARDED_V2_BUILD_END\0'),
   ]));
 } catch {
   process.exitCode = 2;
@@ -61,6 +61,8 @@ fn main() {
     for input in [
         "../compile.mjs",
         "../document.mdx",
+        "../../../src-tauri/src/preview_browser_guards.rs",
+        "../../../src-tauri/src/preview_activation.rs",
         "../../../package.json",
         "../../../package-lock.json",
         "../../../.nvmrc",

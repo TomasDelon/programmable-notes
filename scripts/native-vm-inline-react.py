@@ -33,9 +33,10 @@ class CleanupFailed(Exception):
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 ROOT = "/home/fixture/native-inline-react-v1"
-PROFILE = "inline-react-v1"
+PROFILE = "inline-react-guarded-v2"
 SCOPE = "fixed-native-diagnostic-only"
 SOURCES = (
+    "src-tauri/src/preview_browser_guards.rs", "src-tauri/src/preview_activation.rs",
     "scripts/native-inline-react-v1/host/src/native_snapshot.rs",
     "scripts/native-inline-react-v1/host/src/main.rs", "scripts/native-inline-react-v1/host/build.rs",
     "scripts/native-inline-react-v1/host/Cargo.toml", "scripts/native-inline-react-v1/host/Cargo.lock",
@@ -70,8 +71,8 @@ EVIDENCE = MappingProxyType({
        for case in ("stop", "expiry") for name, limit in
        (("result.json", 16384), ("events.jsonl", 256 * 1024))},
 })
-BUILD_PREFIX = b"PN_INLINE_REACT_V1_BUILD\0"
-BUILD_SUFFIX = b"\0PN_INLINE_REACT_V1_BUILD_END\0"
+BUILD_PREFIX = b"PN_INLINE_REACT_GUARDED_V2_BUILD\0"
+BUILD_SUFFIX = b"\0PN_INLINE_REACT_GUARDED_V2_BUILD_END\0"
 DEPENDENCIES = ("@mdx-js/mdx", "esbuild", "react", "react-dom", "scheduler")
 
 
@@ -146,6 +147,8 @@ def _build_evidence(binary, sources):
         raise Refused()
     expected = {"sourceSha256": _digest(sources["scripts/native-inline-react-v1/document.mdx"]),
                 "compilerSha256": _digest(sources["scripts/native-inline-react-v1/compile.mjs"]),
+                "browserGuardsSha256": _digest(sources["src-tauri/src/preview_browser_guards.rs"]),
+                "activationSha256": _digest(sources["src-tauri/src/preview_activation.rs"]),
                 "packageJsonSha256": _digest(sources["package.json"]),
                 "packageLockSha256": _digest(sources["package-lock.json"])}
     if build["inputs"] != expected:
@@ -740,7 +743,7 @@ def _summary_notices(result):
     passed = session["status"] == "passed" and all(value["status"] == "passed" for value in cases.values())
     if (result["status"] == "passed") != passed:
         raise Refused()
-    prefix = ("::notice title=Fixed inline React diagnostic::profile=inline-react-v1 "
+    prefix = ("::notice title=Fixed inline React diagnostic::profile=inline-react-guarded-v2 "
               "scope=fixed-native-diagnostic-only native_app_tested=false ")
     notices = [prefix + "session_status=" + session["status"] + " session_phase=" + session["phase"]
                + " session_reason=" + session["reason"] + " cleanup=" + session["cleanup"]]

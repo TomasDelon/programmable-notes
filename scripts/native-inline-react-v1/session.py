@@ -23,6 +23,7 @@ REASONS = frozenset(('none', 'not_run', 'preflight_refused', 'desktop_failed', '
 START_FAILURES = frozenset(('not_run', 'none', 'unknown', 'unit_not_active', 'network_not_isolated',
                             'privileges_missing', 'invalid_limits', 'input_rejected'))
 SOURCES = (
+    "src-tauri/src/preview_browser_guards.rs", "src-tauri/src/preview_activation.rs",
     'scripts/native-inline-react-v1/host/src/main.rs',
     'scripts/native-inline-react-v1/host/src/native_snapshot.rs',
     'scripts/native-inline-react-v1/host/build.rs',
@@ -140,7 +141,7 @@ class Artifacts:
         check(type(manifest) is dict and set(manifest) == {
             'version', 'profile', 'native_app_tested', 'files', 'sources'})
         check(type(manifest['version']) is int and manifest['version'] == 1
-              and manifest['profile'] == 'inline-react-v1'
+              and manifest['profile'] == 'inline-react-guarded-v2'
               and manifest['native_app_tested'] is False)
         check(type(manifest['sources']) is dict and set(manifest['sources']) == set(SOURCES))
         check(all(type(value) is str and re.fullmatch('[0-9a-f]{64}', value)
@@ -263,7 +264,7 @@ def validate_receipt(value, case):
             'status', 'phase', 'reason', *OBSERVATIONS}
     check(type(value) is dict and set(value) == keys, 'receipt_invalid')
     check(type(value['version']) is int and value['version'] == 1
-          and value['profile'] == 'inline-react-v1' and value['case'] == case
+          and value['profile'] == 'inline-react-guarded-v2' and value['case'] == case
           and value['scope'] == 'fixed-native-diagnostic-only'
           and value['native_app_tested'] is False
           and value['status'] == 'passed' and value['phase'] == 'complete'
@@ -596,7 +597,7 @@ def main(arguments):
     global INTERRUPTED
     check(not arguments and os.getuid() == UID and os.geteuid() == UID)
     os.umask(0o077)
-    result = dict(version=1, profile='inline-react-v1', scope='fixed-native-diagnostic-only',
+    result = dict(version=1, profile='inline-react-guarded-v2', scope='fixed-native-diagnostic-only',
                   native_app_tested=False, status='failed', phase='preflight',
                   reason='preflight_refused', cases={'stop': 'not_run', 'expiry': 'not_run'}, cleanup='not_run',
                   diagnostics={case: empty_diagnostic() for case in ('stop', 'expiry')})

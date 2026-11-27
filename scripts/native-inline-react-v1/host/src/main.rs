@@ -5,18 +5,22 @@ compile_error!("The fixed inline diagnostic requires Linux/X11");
 use gtk::prelude::*;
 use native_snapshot::{Event as NativeEvent, Snapshot, Termination};
 use std::{cell::RefCell, io::Read, rc::Rc};
-use webkit2gtk::{WebProcessTerminationReason, WebViewExt};
+use webkit2gtk::{DownloadExt, WebContextExt, WebProcessTerminationReason, WebViewExt};
 use wry::{
     dpi::{LogicalPosition, LogicalSize},
-    PageLoadEvent, Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
+    NewWindowResponse, PageLoadEvent, Rect, WebViewBuilder, WebViewBuilderExtUnix, WebViewExtUnix,
 };
 
 mod native_snapshot;
+#[path = "../../../../src-tauri/src/preview_activation.rs"]
+mod preview_activation;
+#[path = "../../../../src-tauri/src/preview_browser_guards.rs"]
+mod preview_browser_guards;
 
 const FIXTURE: &str = include_str!(concat!(env!("OUT_DIR"), "/fixture.html"));
 static BUILD_EVIDENCE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/fixture-evidence.bin"));
 const REJECTED_TITLE: &[u8] =
-    br#"{"fixture":"inline-react-v1","ready":false,"error":"receipt-overflow"}"#;
+    br#"{"fixture":"inline-react-guarded-v2","ready":false,"error":"receipt-overflow"}"#;
 
 fn child() -> Result<(), Box<dyn std::error::Error>> {
     let mut payload = String::new();
@@ -90,6 +94,8 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
             size: LogicalSize::new(300, 120).into(),
         })
         .with_navigation_handler(move |url| {
+            // Retained v1 rule: authored same-URL about:blank navigation is not
+            // denied by this allowlist. Tightening awaits native policy-event proof.
             let allowed = matches!(url.as_str(), "about:blank");
             if !allowed {
                 native_navigation(Some(NativeEvent::NavigationDenied));
@@ -97,6 +103,7 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
             allowed
         })
         .with_download_started_handler(|_, _| false)
+        .with_new_window_req_handler(|_, _| NewWindowResponse::Deny)
         // The pinned GTK backend installs this before initial navigation. Its
         // Started event maps to WebKit Committed, not provisional load start.
         .with_on_page_load_handler(move |event, _url| match event {
@@ -125,27 +132,41 @@ fn child() -> Result<(), Box<dyn std::error::Error>> {
             );
             receipt_window.display().flush();
         })
-        .with_html(FIXTURE)
         .build_gtk(&plug)?;
-    // Failure/termination hooks still attach after construction: their absence
-    // cannot rule out an earlier event. Commit/finish observation is pre-load.
+    // No URL/HTML was supplied: construction cannot publish authored JavaScript.
+    // The native-owned admission is consumed even if guard setup or load fails.
     let webkit = _view.webview();
-    let native_failure = native_update.clone();
-    webkit.connect_load_failed(move |_, _, _, _| {
-        native_failure(Some(NativeEvent::LoadFailed));
-        false
-    });
-    let native_termination = native_update.clone();
-    webkit.connect_web_process_terminated(move |_, reason| {
-        let reason = match reason {
-            WebProcessTerminationReason::Crashed => Termination::Crashed,
-            WebProcessTerminationReason::ExceededMemoryLimit => Termination::MemoryLimit,
-            WebProcessTerminationReason::TerminatedByApi => Termination::ApiTerminated,
-            _ => Termination::Unknown,
-        };
-        native_termination(Some(NativeEvent::Terminated(reason)));
-    });
     native_update(Some(NativeEvent::Built));
+    let activation = preview_activation::Activation::default();
+    activation.run(
+        true,
+        || {
+            preview_browser_guards::install(&webkit)?;
+            // Cancel at download creation, before Wry's destination-selection path.
+            let context = webkit.context().ok_or("Preview context unavailable")?;
+            context.connect_download_started(|_, download| download.cancel());
+            let native_failure = native_update.clone();
+            webkit.connect_load_failed(move |_, _, _, _| {
+                native_failure(Some(NativeEvent::LoadFailed));
+                false
+            });
+            let native_termination = native_update.clone();
+            webkit.connect_web_process_terminated(move |_, reason| {
+                let reason = match reason {
+                    WebProcessTerminationReason::Crashed => Termination::Crashed,
+                    WebProcessTerminationReason::ExceededMemoryLimit => Termination::MemoryLimit,
+                    WebProcessTerminationReason::TerminatedByApi => Termination::ApiTerminated,
+                    _ => Termination::Unknown,
+                };
+                native_termination(Some(NativeEvent::Terminated(reason)));
+            });
+            Ok::<_, Box<dyn std::error::Error>>(())
+        },
+        || {
+            _view.load_html(FIXTURE)?;
+            Ok(())
+        },
+    )?;
     plug.show_all();
     println!(
         "CHILD_READY pid={} trusted_parent={parent}",
@@ -171,7 +192,7 @@ fn start_failure(error: &str) -> &'static str {
 fn host() -> Result<(), Box<dyn std::error::Error>> {
     gtk::init()?;
     let window = gtk::Window::new(gtk::WindowType::Toplevel);
-    window.set_title("Fixed inline React v1 diagnostic");
+    window.set_title("Fixed inline React guarded v2 diagnostic");
     window.set_default_size(640, 500);
     let fixed = gtk::Fixed::new();
     window.add(&fixed);

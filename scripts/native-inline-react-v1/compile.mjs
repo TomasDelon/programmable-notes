@@ -15,16 +15,16 @@ const dependencies = [
   'scheduler',
 ];
 const csp =
-  "default-src 'none'; script-src 'nonce-inline-react-v1'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
+  "default-src 'none'; script-src 'nonce-inline-react-guarded-v2'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'";
 const bootstrap = `
 import * as React from 'react';
 import {createRoot} from 'react-dom/client';
 let current = {ready:false,count:0,field:'',focus:''};
 let stickyError = '';
 const publish = () => {
-  const value = JSON.stringify({fixture:'inline-react-v1',...current,error:stickyError});
+  const value = JSON.stringify({fixture:'inline-react-guarded-v2',...current,error:stickyError});
   document.title = new TextEncoder().encode(value).length <= 256
-    ? value : '{"fixture":"inline-react-v1","ready":false,"error":"receipt-overflow"}';
+    ? value : '{"fixture":"inline-react-guarded-v2","ready":false,"error":"receipt-overflow"}';
 };
 globalThis.__pnFixtureReport = next => {
   current = {
@@ -46,12 +46,15 @@ createRoot(document.getElementById('preview'),{onUncaughtError:() => fail('react
 /** Returns reproducible public artifact bytes; never executes generated code. */
 export async function compileFixture(...args) {
   if (args.length) throw Error('Fixed fixture compiler accepts no arguments.');
-  const [source, compiler, packageBytes, lockBytes] = await Promise.all([
-    readFile(new URL('./document.mdx', import.meta.url)),
-    readFile(new URL('./compile.mjs', import.meta.url)),
-    readFile(new URL('package.json', repository)),
-    readFile(new URL('package-lock.json', repository)),
-  ]);
+  const [source, compiler, packageBytes, lockBytes, browserGuards, activation] =
+    await Promise.all([
+      readFile(new URL('./document.mdx', import.meta.url)),
+      readFile(new URL('./compile.mjs', import.meta.url)),
+      readFile(new URL('package.json', repository)),
+      readFile(new URL('package-lock.json', repository)),
+      readFile(new URL('src-tauri/src/preview_browser_guards.rs', repository)),
+      readFile(new URL('src-tauri/src/preview_activation.rs', repository)),
+    ]);
   const project = JSON.parse(packageBytes);
   const lock = JSON.parse(lockBytes);
   const packages = {};
@@ -100,7 +103,7 @@ export async function compileFixture(...args) {
   const html = Buffer.from(
     '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' +
       csp +
-      '"><style>body{margin:0;font:16px sans-serif}#fixture-row{display:flex;align-items:center;gap:8px;padding:4px}button,input{font:inherit}button{padding:2px 6px}label{display:flex;align-items:center;gap:4px}input{width:110px;min-width:0}</style></head><body><div id="preview"></div><script nonce="inline-react-v1">' +
+      '"><style>body{margin:0;font:16px sans-serif}#fixture-row{display:flex;align-items:center;gap:8px;padding:4px}button,input{font:inherit}button{padding:2px 6px}label{display:flex;align-items:center;gap:4px}input{width:110px;min-width:0}</style></head><body><div id="preview"></div><script nonce="inline-react-guarded-v2">' +
       javascript +
       '</script></body></html>',
   );
@@ -108,7 +111,7 @@ export async function compileFixture(...args) {
     JSON.stringify(
       {
         version: 1,
-        profile: 'inline-react-v1',
+        profile: 'inline-react-guarded-v2',
         scope: 'fixed-fixture-build-only',
         nativeTested: false,
         generatedCodeEvaluatedOnHost: false,
@@ -116,6 +119,8 @@ export async function compileFixture(...args) {
         inputs: {
           sourceSha256: digest(source),
           compilerSha256: digest(compiler),
+          browserGuardsSha256: digest(browserGuards),
+          activationSha256: digest(activation),
           packageJsonSha256: digest(packageBytes),
           packageLockSha256: digest(lockBytes),
         },

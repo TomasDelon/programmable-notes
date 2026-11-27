@@ -15,7 +15,7 @@ test('fixed fixture yields reproducible public bytes bound to current sources, l
   const again = await compileFixture();
   assert.deepEqual(again, artifact);
   const manifest = JSON.parse(artifact.manifest);
-  assert.equal(manifest.profile, 'inline-react-v1');
+  assert.equal(manifest.profile, 'inline-react-guarded-v2');
   assert.equal(manifest.scope, 'fixed-fixture-build-only');
   assert.equal(manifest.nativeTested, false);
   assert.equal(manifest.generatedCodeEvaluatedOnHost, false);
@@ -23,6 +23,8 @@ test('fixed fixture yields reproducible public bytes bound to current sources, l
   for (const [key, path] of Object.entries({
     sourceSha256: 'scripts/native-inline-react-v1/document.mdx',
     compilerSha256: 'scripts/native-inline-react-v1/compile.mjs',
+    browserGuardsSha256: 'src-tauri/src/preview_browser_guards.rs',
+    activationSha256: 'src-tauri/src/preview_activation.rs',
     packageJsonSha256: 'package.json',
     packageLockSha256: 'package-lock.json',
   }))
@@ -61,7 +63,7 @@ test('bundled browser artifact has one script, parses without host execution, an
   const scripts = dom.window.document.querySelectorAll('script');
   assert.equal(scripts.length, 1);
   assert.equal((html.match(/<\/script>/gi) || []).length, 1);
-  assert.equal(scripts[0].getAttribute('nonce'), 'inline-react-v1');
+  assert.equal(scripts[0].getAttribute('nonce'), 'inline-react-guarded-v2');
   const javascript = scripts[0].textContent;
   const manifest = JSON.parse(artifact.manifest);
   assert.equal(manifest.artifacts.javascriptSha256, digest(javascript));
@@ -78,7 +80,7 @@ test('bundled browser artifact has one script, parses without host execution, an
   assert.equal(parsed.status, 0, parsed.stderr);
   for (const policy of [
     "default-src 'none'",
-    "script-src 'nonce-inline-react-v1'",
+    "script-src 'nonce-inline-react-guarded-v2'",
     "connect-src 'none'",
     "frame-src 'none'",
     "form-action 'none'",

@@ -114,7 +114,7 @@ class Driver(unittest.TestCase):
         self.repo = Path(self.temp.name)
         self.addCleanup(patch.stopall)
         patch.object(self.driver, "REPOSITORY", self.repo).start()
-        for name in self.driver.SOURCES:
+        for name in (*self.driver.SOURCES, "src-tauri/src/preview_browser_guards.rs", "src-tauri/src/preview_activation.rs"):
             path = self.repo / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"synthetic reviewed source\n")
@@ -138,11 +138,13 @@ class Driver(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({"version": version}))
             packages[name] = {"version": version, "packageJsonSha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-        self.build = {"version": 1, "profile": "inline-react-v1", "scope": "fixed-fixture-build-only",
+        self.build = {"version": 1, "profile": "inline-react-guarded-v2", "scope": "fixed-fixture-build-only",
                       "nativeTested": False, "generatedCodeEvaluatedOnHost": False, "nodeVersion": "v24.22.1",
                       "inputs": {key: hashlib.sha256((self.repo / path).read_bytes()).hexdigest() for key, path in (
                           ("sourceSha256", "scripts/native-inline-react-v1/document.mdx"),
                           ("compilerSha256", "scripts/native-inline-react-v1/compile.mjs"),
+                          ("browserGuardsSha256", "src-tauri/src/preview_browser_guards.rs"),
+                          ("activationSha256", "src-tauri/src/preview_activation.rs"),
                           ("packageJsonSha256", "package.json"), ("packageLockSha256", "package-lock.json"))},
                       "dependencies": packages,
                       "artifacts": {part + suffix: (32 if suffix == "Bytes" else "a" * 64)
@@ -216,12 +218,12 @@ class Driver(unittest.TestCase):
                 broken = {**value, key: "not_run"}
                 with self.assertRaises(Exception):
                     self.driver._case_receipt(json.dumps(broken).encode(), case)
-            for extra in ({"PRIVATE_KEY": "PRIVATE_CANARY"}, {"native_app_tested": True}, {"version": True}):
+            for extra in ({"PRIVATE_KEY": "PRIVATE_CANARY"}, {"native_app_tested": True}, {"version": True}, {"profile": "inline-react-v1"}):
                 with self.assertRaises(Exception):
                     self.driver._case_receipt(json.dumps({**value, **extra}).encode(), case)
 
     def case(self, case):
-        value = {"version": 1, "profile": "inline-react-v1", "scope": "fixed-native-diagnostic-only",
+        value = {"version": 1, "profile": "inline-react-guarded-v2", "scope": "fixed-native-diagnostic-only",
                  "native_app_tested": False, "case": case, "status": "passed", "phase": "complete", "reason": "none",
                  "bridge": "passed", "termination": "passed"}
         value.update({name: "passed" if case == "stop" else "not_run" for name in ("pointer", "keyboard", "host_input")})
@@ -340,11 +342,11 @@ while True:
                     self.execute_collector()
 
     def test_session_receipt_does_not_promote_failed_or_missing_cases(self):
-        value = {"version": 1, "profile": "inline-react-v1", "scope": "fixed-native-diagnostic-only",
+        value = {"version": 1, "profile": "inline-react-guarded-v2", "scope": "fixed-native-diagnostic-only",
                  "native_app_tested": False, "status": "passed", "phase": "complete", "reason": "none",
                  "cases": {"stop": "passed", "expiry": "passed"}, "cleanup": "passed"}
         self.driver._session_receipt(json.dumps(value).encode())
-        for change in ({"cleanup": "failed"}, {"cases": {"stop": "failed", "expiry": "passed"}},
+        for change in ({"profile": "inline-react-v1"}, {"cleanup": "failed"}, {"cases": {"stop": "failed", "expiry": "passed"}},
                        {"cases": {"stop": "passed"}}, {"phase": "stop"}, {"reason": "internal_error"}):
             with self.assertRaises(Exception):
                 self.driver._session_receipt(json.dumps({**value, **change}).encode())
@@ -353,7 +355,9 @@ while True:
         sources = {name: (self.repo / name).read_bytes() for name in self.driver.SOURCES}
         self.assertEqual(self.driver._build_evidence(self.binary, sources), self.build)
         for binary in (b"\x7fELF", self.binary * 2, self.binary[:-1],
+                       self.binary.replace(b"PN_INLINE_REACT_GUARDED_V2_BUILD", b"PN_INLINE_REACT_V1_BUILD"),
                        b"\x7fELF" + self.driver.BUILD_PREFIX + struct.pack(">I", 16385) + self.driver.BUILD_SUFFIX,
+                       self.binary_for({**self.build, "profile": "inline-react-v1"}),
                        self.binary_for({**self.build, "nativeTested": True}),
                        self.binary_for({**self.build, "nodeVersion": "v0.0.0"}),
                        self.binary_for({**self.build, "artifacts": {**self.build["artifacts"], "htmlBytes": True}})):
@@ -361,12 +365,16 @@ while True:
                 self.driver._build_evidence(binary, sources)
         with self.assertRaises(Exception):
             self.driver._build_evidence(self.binary, {**sources, "scripts/native-inline-react-v1/document.mdx": b"changed"})
+        with self.assertRaises(Exception):
+            self.driver._build_evidence(self.binary, {**sources, "src-tauri/src/preview_browser_guards.rs": b"changed"})
+        with self.assertRaises(Exception):
+            self.driver._build_evidence(self.binary, {**sources, "src-tauri/src/preview_activation.rs": b"changed"})
         (self.repo / "node_modules/react/package.json").write_text('{"version":"9.9.9"}')
         with self.assertRaises(Exception):
             self.driver._build_evidence(self.binary, sources)
 
     def summary(self, passed=True):
-        session = {"version": 1, "profile": "inline-react-v1", "scope": "fixed-native-diagnostic-only",
+        session = {"version": 1, "profile": "inline-react-guarded-v2", "scope": "fixed-native-diagnostic-only",
                    "native_app_tested": False, "status": "passed", "phase": "complete", "reason": "none",
                    "cases": {"stop": "passed", "expiry": "passed"}, "cleanup": "passed"}
         cases = {case: self.case(case) for case in ("stop", "expiry")}
@@ -376,7 +384,7 @@ while True:
             cases = {"stop": {**cases["stop"], "status": "failed", "phase": "keyboard",
                                "reason": "keyboard_not_acknowledged", "keyboard": "failed",
                                "termination": "not_run", "host_input": "not_run"}}
-        return {"version": 1, "profile": "inline-react-v1", "scope": "fixed-native-diagnostic-only",
+        return {"version": 1, "profile": "inline-react-guarded-v2", "scope": "fixed-native-diagnostic-only",
                 "native_app_tested": False, "status": "passed" if passed else "failed",
                 "guard_normal_exit": True, "session": session, "cases": cases,
                 "PRIVATE_METADATA": "PRIVATE_CANARY"}

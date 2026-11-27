@@ -32,7 +32,7 @@ class SessionControls(unittest.TestCase):
             (self.root / name).write_bytes(data)
             (self.root / name).chmod(0o700 if name == 'host' else 0o600)
             files[name] = {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
-        self.manifest = {'version': 1, 'profile': 'inline-react-v1',
+        self.manifest = {'version': 1, 'profile': 'inline-react-guarded-v2',
                          'native_app_tested': False, 'files': files,
                          'sources': {name: 'a' * 64 for name in session.SOURCES}}
         self.write_manifest()
@@ -92,6 +92,7 @@ class SessionControls(unittest.TestCase):
 
     def test_manifest_shape_source_names_and_boolean_sizes_refuse(self):
         changes = [lambda m: m.update(extra=True),
+                   lambda m: m.update(profile='inline-react-v1'),
                    lambda m: m['sources'].update({'arbitrary': 'a' * 64}),
                    lambda m: m['files']['host'].update(bytes=True),
                    lambda m: m.update(native_app_tested=True)]
@@ -114,7 +115,7 @@ class SessionControls(unittest.TestCase):
         value = {key: 'passed' for key in session.OBSERVATIONS}
         if case == 'expiry':
             value.update(pointer='not_run', keyboard='not_run', host_input='not_run')
-        return dict(version=1, profile='inline-react-v1', case=case,
+        return dict(version=1, profile='inline-react-guarded-v2', case=case,
                     scope='fixed-native-diagnostic-only', native_app_tested=False,
                     status='passed', phase='complete', reason='none', **value)
 

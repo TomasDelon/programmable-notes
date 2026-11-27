@@ -103,8 +103,8 @@ test('actual build program produces only bounded public OUT_DIR artifacts withou
   );
   const manifestBytes = await readFile(join(output, 'fixture-manifest.json'));
   const evidence = await readFile(join(output, 'fixture-evidence.bin'));
-  const prefix = Buffer.from('PN_INLINE_REACT_V1_BUILD\0');
-  const suffix = Buffer.from('\0PN_INLINE_REACT_V1_BUILD_END\0');
+  const prefix = Buffer.from('PN_INLINE_REACT_GUARDED_V2_BUILD\0');
+  const suffix = Buffer.from('\0PN_INLINE_REACT_GUARDED_V2_BUILD_END\0');
   assert.deepEqual(evidence.subarray(0, prefix.length), prefix);
   assert.equal(evidence.readUInt32BE(prefix.length), manifestBytes.length);
   assert.deepEqual(
@@ -120,7 +120,7 @@ test('actual build program produces only bounded public OUT_DIR artifacts withou
   );
   assert.equal(manifest.nativeTested, false);
   assert.equal(manifest.generatedCodeEvaluatedOnHost, false);
-  assert.equal(manifest.profile, 'inline-react-v1');
+  assert.equal(manifest.profile, 'inline-react-guarded-v2');
   assert.equal(manifest.artifacts.htmlSha256, digest(html));
   assert.equal(manifest.artifacts.htmlBytes, html.length);
   assert.ok(html.length <= 4 * 1024 * 1024);
@@ -157,10 +157,13 @@ test('runtime host has only fixed input, own-window diagnostics and trusted nati
   assert.match(beforeWebkit, /&receipt_window,\s*&bridge_atom,/);
   const titleCallback = source.slice(
     source.indexOf('.with_document_title_changed_handler'),
-    source.indexOf('.with_html(FIXTURE)'),
+    source.indexOf('.build_gtk(&plug)'),
   );
   assert.match(titleCallback, /&receipt_atom,/);
-  assert.doesNotMatch(titleCallback, /bridge_atom|_PN_FIXTURE_BRIDGE/);
+  assert.doesNotMatch(
+    titleCallback,
+    /bridge_atom|_PN_FIXTURE_BRIDGE|activation|load_html|preview_browser_guards|gtk::main_quit/,
+  );
   assert.match(source, /\.build_gtk\(&plug\)/);
   assert.match(source, /\.with_devtools\(false\)/);
   assert.match(source, /\.with_incognito\(true\)/);
@@ -210,4 +213,43 @@ test('runtime host has only fixed input, own-window diagnostics and trusted nati
     source,
     /\/repo|\/mnt|1000|with_ipc_handler|evaluate_script|grab_focus|native_documents|std::fs::write/,
   );
+});
+
+test('inline host cannot publish authored HTML during construction or before native guards and failure hooks', async () => {
+  const source = await read('src/main.rs');
+  assert.match(source, /mod preview_browser_guards;/);
+  assert.match(source, /mod preview_activation;/);
+  const build = source.indexOf('.build_gtk(&plug)?');
+  const guards = source.indexOf('preview_browser_guards::install(&webkit)?');
+  const failures = source.indexOf('webkit.connect_load_failed');
+  const termination = source.indexOf('webkit.connect_web_process_terminated');
+  const publish = source.indexOf('_view.load_html(FIXTURE)');
+  assert.ok(
+    build > 0 && guards > build && failures > build && termination > build,
+  );
+  assert.ok(publish > guards && publish > failures && publish > termination);
+  assert.doesNotMatch(
+    source.slice(0, build),
+    /\.with_(?:html|url|initialization_script)\(/,
+  );
+  assert.match(
+    source,
+    /with_new_window_req_handler\(\|_, _\| NewWindowResponse::Deny\)/,
+  );
+  assert.match(
+    source,
+    /connect_download_started\(\|_, download\| download.cancel\(\)\)/,
+  );
+  assert.match(source, /activation.run\(/);
+  assert.doesNotMatch(source, /__pnFixtureReport|with_ipc_handler/);
+  const tauri = await readFile('src-tauri/src/preview_permissions.rs', 'utf8');
+  assert.match(tauri, /preview_browser_guards::install\(&webview\)\?/);
+  const shared = await readFile(
+    'src-tauri/src/preview_browser_guards.rs',
+    'utf8',
+  );
+  assert.match(shared, /request.cancel\(\)/);
+  assert.match(shared, /request.deny\(\)/);
+  assert.match(shared, /confirm_set_confirmed\(false\)/);
+  assert.doesNotMatch(shared, /dialog.close\(|dialog.clone\(/);
 });

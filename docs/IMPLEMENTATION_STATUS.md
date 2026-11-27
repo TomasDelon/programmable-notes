@@ -20,6 +20,23 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Experimental inline guard foundation — 27 November 2026
+
+A candidate shares ADR040's canonical GTK denial handlers with the inline Wry
+host. Empty construction, native guard/failure-hook installation and consumed
+one-shot publication precede its first authored HTML load. Popup denial and
+immediate download cancellation stay on the child's incognito context. Existing
+Tauri publication checks, Supervisor and resource/input limits are unchanged.
+
+The successor profile is strictly inline-react-guarded-v2, including source hashes
+and compiler/driver/session/observer identities. Historical v1 results do not
+establish this profile. Targeted controls and six shared Activation tests passed;
+independent source review found no blocker. GTK compilation and native handler
+witnesses remain unexecuted for this candidate. The about:blank navigation
+exception remains explicit. See [ADR043](decisions/ADR-043-inline-native-browser-guards.md).
+General native React remains disabled; no new renderer/application acceptance is
+claimed.
+
 ## Explicit native recovery copies — 27 November 2026
 
 The shared native workspace has a candidate recovery dialog for choosing a

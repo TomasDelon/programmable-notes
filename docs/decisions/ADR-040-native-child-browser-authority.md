@@ -46,3 +46,11 @@ Tauri tests. These remain logic/template/compilation tests; real
 chooser/permission/dialog signals, dialog continuation, repeated React input,
 Stop, expiry and child cleanup require disposable Linux runtime validation. No
 production security readiness or fixed installed application is claimed.
+
+## Experimental inline successor
+
+ADR043 applies the same canonical per-view handlers before the experimental Wry
+host's first authored publication. Tauri's existing activation and assignment
+checks stay in place. This source-level foundation does not prove inline runtime
+handler execution or extend historical Tauri-child evidence to the new profile.
+General native React remains disabled pending the full matrix.

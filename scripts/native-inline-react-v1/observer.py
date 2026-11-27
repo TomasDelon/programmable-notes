@@ -68,10 +68,10 @@ def _validated_title(raw):
         raise Refused("fixture_error") from None
     if value == {"bridge": "native-before-webkit"}:
         return "bridge"
-    if value == {"fixture": "inline-react-v1", "ready": False, "error": "receipt-overflow"} and type(value["ready"]) is bool:
+    if value == {"fixture": "inline-react-guarded-v2", "ready": False, "error": "receipt-overflow"} and type(value["ready"]) is bool:
         return value  # Fixed compiler overflow diagnostic; never a readiness receipt.
     if (type(value) is not dict or set(value) != {"fixture", "ready", "count", "field", "focus", "error"}
-            or value["fixture"] != "inline-react-v1" or type(value["ready"]) is not bool
+            or value["fixture"] != "inline-react-guarded-v2" or type(value["ready"]) is not bool
             or type(value["count"]) is not int or not 0 <= value["count"] <= 999
             or type(value["field"]) is not str or len(value["field"].encode("utf-16-le", errors="surrogatepass")) > 32
             or type(value["focus"]) is not str or value["focus"] not in ("", "counter", "field")
@@ -759,7 +759,7 @@ def _same(first, second):
 
 
 def run(case, evidence, backend, absolute):
-    result = {"version": 1, "profile": "inline-react-v1", "case": case, "scope": "fixed-native-diagnostic-only",
+    result = {"version": 1, "profile": "inline-react-guarded-v2", "case": case, "scope": "fixed-native-diagnostic-only",
               "native_app_tested": False, "status": "failed", "phase": "host", "reason": "none",
               **{key: "not_run" for key in OBSERVATIONS}}
     target = host = renderer = child = None
@@ -916,7 +916,7 @@ def observe(case):
             result = run(case, evidence, backend, absolute)
         except Exception as error:
             exception_event(evidence, "admission", error)
-            result = {"version": 1, "profile": "inline-react-v1", "case": case, "scope": "fixed-native-diagnostic-only",
+            result = {"version": 1, "profile": "inline-react-guarded-v2", "case": case, "scope": "fixed-native-diagnostic-only",
                       "native_app_tested": False, "status": "failed", "phase": "admission",
                       "reason": error.reason if isinstance(error, Refused) else "observer_error",
                       **{key: "not_run" for key in OBSERVATIONS}}

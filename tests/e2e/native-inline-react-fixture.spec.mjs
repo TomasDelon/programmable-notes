@@ -30,7 +30,7 @@ test('fixed compiled MDX/React acknowledges pointer and normal field focus/typin
     }
   };
   await expect.poll(receipt).toMatchObject({
-    fixture: 'inline-react-v1',
+    fixture: 'inline-react-guarded-v2',
     ready: true,
     count: 0,
     field: '',

@@ -20,7 +20,7 @@ GROUP = observer.GROUP_PREFIX + "app.slice/" + UNIT
 
 
 def title(**changes):
-    return json.dumps({"fixture": "inline-react-v1", "ready": True, "count": 0, "field": "", "focus": "", "error": "", **changes}).encode()
+    return json.dumps({"fixture": "inline-react-guarded-v2", "ready": True, "count": 0, "field": "", "focus": "", "error": "", **changes}).encode()
 
 
 def journal():
@@ -65,7 +65,7 @@ class Titles(unittest.TestCase):
             self.assertEqual(observer.title_state(title(error=error)), error.replace("-", "_"))
             with self.assertRaises(observer.Refused) as failure: observer.decode_title(title(error=error))
             self.assertEqual(failure.exception.reason, "fixture_error")
-        overflow = b'{"fixture":"inline-react-v1","ready":false,"error":"receipt-overflow"}'
+        overflow = b'{"fixture":"inline-react-guarded-v2","ready":false,"error":"receipt-overflow"}'
         self.assertEqual(observer.title_state(overflow), "receipt_overflow")
         with self.assertRaises(observer.Refused) as failure: observer.decode_title(overflow)
         self.assertEqual(failure.exception.reason, "fixture_error")
@@ -79,7 +79,7 @@ class Titles(unittest.TestCase):
 
     def test_malformed_foreign_duplicate_and_unbounded_receipts_refused(self):
         invalid = [b"x" * 257, b"\xff", b"{}", b"[]", b'{"bridge":"native-before-webkit","extra":1}',
-                   b'{"fixture":"inline-react-v1","fixture":"inline-react-v1"}', title(fixture="other"), title(count=True),
+                   b'{"fixture":"inline-react-guarded-v2","fixture":"inline-react-guarded-v2"}', title(fixture="other"), title(fixture="inline-react-v1"), title(count=True),
                    title(count=-1), title(count=1000), title(ready=1), title(field="x" * 17), title(field="😀" * 9),
                    title(focus="forced"), title(error="arbitrary private error"), title(unit=UNIT)]
         for raw in invalid:
@@ -139,7 +139,7 @@ class Files(unittest.TestCase):
         try:
             self.assertIn("PRIVATE", evidence.host_log())
             evidence.event("pointer_ack", count=2)
-            result = {"version": 1, "profile": "inline-react-v1", "case": "stop", "scope": "fixed-native-diagnostic-only",
+            result = {"version": 1, "profile": "inline-react-guarded-v2", "case": "stop", "scope": "fixed-native-diagnostic-only",
                       "native_app_tested": False, "status": "failed", "phase": "host", "reason": "host_not_ready",
                       **{key: "not_run" for key in observer.OBSERVATIONS}}
             evidence.finish(result)
