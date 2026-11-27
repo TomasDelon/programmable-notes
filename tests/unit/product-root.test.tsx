@@ -51,6 +51,7 @@ function fixture(
     save?: NativeWorkspacePorts['save'];
     files?: Record<string, string>;
     preserveAttempt?: NativeProductServices['preserveAttempt'];
+    createVaultSource?: NativeWorkspacePorts['createVaultSource'];
   } = {},
 ) {
   const files = options.files ?? {
@@ -94,19 +95,21 @@ function fixture(
           };
         }),
       }),
-      createVaultSource: async (_vaultId, path, source) => ({
-        status: 'acquired',
-        vaultId: 'vault',
-        document: {
-          id: 'created-grant-' + path,
-          revision: 'disk-0',
-          logicalPath: path,
-          name: path,
-          displayPath: '/label/Notes/' + path,
-          source,
-          durabilityWarning: false,
-        },
-      }),
+      createVaultSource:
+        options.createVaultSource ??
+        (async (_vaultId, path, source) => ({
+          status: 'acquired',
+          vaultId: 'vault',
+          document: {
+            id: 'created-grant-' + path,
+            revision: 'disk-0',
+            logicalPath: path,
+            name: path,
+            displayPath: '/label/Notes/' + path,
+            source,
+            durabilityWarning: false,
+          },
+        })),
       save,
       close: async () => {},
     },
@@ -140,6 +143,142 @@ async function mode(value: 'Source' | 'Preview') {
   fireEvent.click(screen.getByRole('button', { name: 'Show document modes' }));
   fireEvent.click(screen.getByRole('button', { name: value }));
 }
+
+it('hands a confirmed new native document to the source editor for immediate typing', async () => {
+  const mounted = fixture();
+  await chooseAndOpen();
+  const create = screen.getByRole('button', { name: 'New document' });
+  create.focus();
+  fireEvent.click(create);
+  fireEvent.change(
+    screen.getByRole('textbox', { name: 'Vault-relative filename' }),
+    {
+      target: { value: 'new.mdx' },
+    },
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: 'MDX source' })).toHaveFocus(),
+  );
+  const id = mounted.application.snapshot().selectedSessionId!;
+  expect(mounted.application.loadedDocument(id).logicalPath).toBe('new.mdx');
+  const editor = EditorView.findFromDOM(
+    screen.getByRole('textbox', { name: 'MDX source' }),
+  )!;
+  act(() =>
+    editor.dispatch({
+      changes: { from: 0, insert: 'Immediate native input' },
+      userEvent: 'input.type',
+    }),
+  );
+  expect(mounted.application.documents.state(id)?.witness.source).toBe(
+    'Immediate native input',
+  );
+});
+
+it.each(['cancelled', 'replaced', 'newer focus'] as const)(
+  'does not focus a native creation after its owner was %s',
+  async (outcome) => {
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const mounted = fixture({
+      createVaultSource: async (_vaultId, path, source) => {
+        await held;
+        return {
+          status: 'acquired',
+          vaultId: 'vault',
+          document: {
+            id: 'created-grant-' + path,
+            revision: 'disk-0',
+            logicalPath: path,
+            name: path,
+            displayPath: '/label/Notes/' + path,
+            source,
+            durabilityWarning: false,
+          },
+        };
+      },
+    });
+    await chooseAndOpen();
+    const create = screen.getByRole('button', { name: 'New document' });
+    create.focus();
+    fireEvent.click(create);
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    await waitFor(() =>
+      expect(mounted.application.snapshot().operation).toBe('create'),
+    );
+    const newerControl = screen.getByRole('textbox', {
+      name: 'Search documents',
+    });
+    if (outcome === 'newer focus') newerControl.focus();
+    else
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Close New document' }),
+      );
+    if (outcome === 'replaced') {
+      const replacement = fixture();
+      replacement.unmount();
+      mounted.rerender(
+        <NotificationProvider>
+          <ProductRoot application={replacement.application} />
+        </NotificationProvider>,
+      );
+      fireEvent.click(
+        screen.getAllByRole('button', { name: 'Choose local vault' })[0]!,
+      );
+      fireEvent.click(
+        await screen.findByRole('button', { name: 'Open note.md' }),
+      );
+      await screen.findByRole('textbox', { name: 'MDX source' });
+      fireEvent.click(screen.getByRole('button', { name: 'New document' }));
+    }
+    await act(async () => {
+      finish();
+      await held;
+    });
+    await waitFor(() =>
+      expect(mounted.application.snapshot().operation).toBeNull(),
+    );
+    if (outcome === 'cancelled' || outcome === 'newer focus') {
+      expect(
+        screen.queryByRole('dialog', { name: 'New document' }),
+      ).not.toBeInTheDocument();
+      if (outcome === 'newer focus') expect(newerControl).toHaveFocus();
+    } else {
+      expect(
+        screen.getByRole('textbox', { name: 'Vault-relative filename' }),
+      ).toHaveFocus();
+    }
+    expect(
+      screen.getByRole('textbox', { name: 'MDX source' }),
+    ).not.toHaveFocus();
+  },
+);
+
+it('keeps a refused native creation dialog and source ownership intact', async () => {
+  const mounted = fixture({
+    createVaultSource: async () => {
+      throw Error('refused');
+    },
+  });
+  const oldEditor = await chooseAndOpen();
+  const oldId = mounted.application.snapshot().selectedSessionId;
+  fireEvent.click(screen.getByRole('button', { name: 'New document' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+  await waitFor(() =>
+    expect(mounted.application.snapshot().operation).toBeNull(),
+  );
+  expect(
+    screen.getByRole('dialog', { name: 'New document' }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('textbox', { name: 'Vault-relative filename' }),
+  ).toHaveFocus();
+  expect(mounted.application.snapshot().selectedSessionId).toBe(oldId);
+  expect(screen.getByRole('textbox', { name: 'MDX source' })).toBe(oldEditor);
+});
 
 it('chooses a controller vault, opens a session and autosaves editor receipts through a held writer', async () => {
   let release!: (value: { revision: string; durable: boolean }) => void;

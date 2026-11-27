@@ -17,6 +17,7 @@ export function DocumentCommandPalette({
   onIndex,
   onRun,
   onClose,
+  shouldRestoreFocus,
 }: {
   query: string;
   index: number;
@@ -25,6 +26,7 @@ export function DocumentCommandPalette({
   onIndex(value: number): void;
   onRun(command: DocumentCommand): void;
   onClose(): void;
+  shouldRestoreFocus?: () => boolean;
 }) {
   useEffect(() => {
     document
@@ -36,6 +38,7 @@ export function DocumentCommandPalette({
       title="Command palette"
       onClose={onClose}
       className="web-command-dialog"
+      shouldRestoreFocus={shouldRestoreFocus}
     >
       <div className="modal-search">
         <Search size={20} />

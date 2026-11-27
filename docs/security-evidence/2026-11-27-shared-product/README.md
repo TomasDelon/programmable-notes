@@ -293,3 +293,37 @@ exists. The role cannot modify the payload or tool. Cleanup runs the immutable
 copy, removes its own Linux payload and treats deletion failure as a failed run.
 Checkout ancestors must be unwritable to the fresh UID; failed permission queries
 refuse launch. No host cache, credentials or node_modules are copied or uploaded.
+
+## New-document focus regression discovered in CI
+
+Onab6d3d4, required run46053038535 passed native-check, including the new early
+callback's actual GTK compilation. Its check job rejected one flaky Recent
+navigation case: after creating Gamma, the Source editor remained inactive.
+The retry passed, but the flaky-test policy correctly kept the job failed. No
+unchanged rerun or relaxed timeout/retry policy was used to claim green.
+
+A controlled click-frame hold reproduced the lost-focus behavior. WebApp relied
+on one animation frame while keyed SourceEditor creates CodeMirror in a passive
+effect. The shared interaction hook now consumes an owned focus request after
+mount; the controlled probe does not establish the exact scheduling of the CI
+failure. Explicit creation-dialog handoff prevents old focus restoration from
+overriding the new editor. Scope, selection, navigation and active-control checks
+retire stale work. Native creation additionally verifies its confirmed new session
+and captures the initiator before awaiting, so a newer focused control wins.
+
+The amended patch passed26 targeted unit cases and9 Chromium navigation cases
+with zero retries/flakes, including immediate typing, dialog cancellation, rejected
+creation and replacement application. A held native create first reproduced the
+newer-focus recapture edge and then passed after submission-time capture. Source,
+history, filesystem and runtime permissions are unchanged. Independent review
+found no Important issue.
+
+One intermediate broad browser run was invalidated because a parallel worker
+rebuilt its shared dist directory. It was interrupted (exit130), not reported as
+an application failure or a pass. The final run owns a frozen build exclusively;
+AGENT_WORKFLOW now records build-directory ownership as well as port ownership.
+
+The final frozen focus patch `npm run check` exited0:984 unit,163 tooling with
+zero skips,155 Chromium,9 Pages and4 disposable local cloud cases passed, plus
+format/lint/types/build. No worker changed source or dist during that run. The
+next required CI and native attempts must validate this amended application.

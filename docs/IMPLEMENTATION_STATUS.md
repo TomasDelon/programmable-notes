@@ -20,6 +20,19 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## New-document focus correction — 27 November 2026
+
+CI onab6d3d4 passed native-check but rejected one flaky new-note focus case. A
+controlled delayed-frame probe reproduced the source editor remaining inactive.
+Creation now uses shared mount-owned focus with explicit dialog handoff; native
+completion retains its submission-time initiator and confirmed session ownership.
+Cancellation, newer controls and replacement applications retain their focus.
+Source/history and all privilege boundaries remain unchanged. Targeted26 unit
+and9 Chromium navigation cases passed. The final frozen full check passed984 unit,
+163 tooling/zero skips,155 Chromium,9 Pages and4 local cloud cases, plus static
+checks/build. The next CI/native attempts are tracked in the dated evidence.
+No unchanged CI retry claims green.
+
 ## Native validation and observer corrections — 27 November 2026
 
 Required CI on6c92742 passed both jobs. The packaged Ubuntu attempt installed the

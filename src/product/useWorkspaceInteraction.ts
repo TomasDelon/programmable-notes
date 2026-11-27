@@ -32,12 +32,21 @@ export interface WorkspaceInteractionInput {
 export function useWorkspaceInteraction(input: WorkspaceInteractionInput) {
   const latest = useRef(input);
   const navigationRequest = useRef(0);
+  const [, setFocusRequest] = useState(0);
+  const pendingFocus = useRef<{
+    id: string;
+    from: string | null;
+    scope: object | undefined;
+    request: number;
+    initiator: Element | null;
+  } | null>(null);
   useLayoutEffect(() => {
     latest.current = input;
   });
   useLayoutEffect(
     () => () => {
       navigationRequest.current++;
+      pendingFocus.current = null;
     },
     [input.scope],
   );
@@ -50,6 +59,47 @@ export function useWorkspaceInteraction(input: WorkspaceInteractionInput) {
     offset: number;
     source: string;
   } | null>(null);
+  // Child SourceEditor creates its keyed EditorView in a passive effect. Own
+  // focus at that mount boundary instead of racing it with a single frame.
+  useEffect(() => {
+    const target = pendingFocus.current;
+    if (!target) return;
+    if (
+      target.scope === input.scope &&
+      target.request === navigationRequest.current &&
+      input.selected === target.from &&
+      input.selected !== target.id
+    )
+      return;
+    pendingFocus.current = null;
+    if (
+      target.scope !== input.scope ||
+      target.request !== navigationRequest.current ||
+      input.selected !== target.id ||
+      input.mode !== 'source'
+    )
+      return;
+    const active = document.activeElement;
+    if (active && active !== document.body && active !== target.initiator)
+      return;
+    input.sourcePanel.current
+      ?.querySelector<HTMLElement>('.cm-content')
+      ?.focus();
+  });
+  function focusCreatedDocument(
+    id: string,
+    initiator: Element | null = document.activeElement,
+  ) {
+    pendingLocation.current = null;
+    pendingFocus.current = {
+      id,
+      from: latest.current.selected,
+      scope: latest.current.scope,
+      request: ++navigationRequest.current,
+      initiator,
+    };
+    setFocusRequest((value) => value + 1);
+  }
   useEffect(() => {
     const target = pendingLocation.current;
     if (target && input.selected === target.key && input.mode === 'source') {
@@ -73,7 +123,7 @@ export function useWorkspaceInteraction(input: WorkspaceInteractionInput) {
       return;
     const initiator = document.activeElement;
     pendingLocation.current = null;
-    const request = navigationRequest.current;
+    const request = ++navigationRequest.current;
     current.setMode(next);
     if (next === 'source')
       requestAnimationFrame(() => {
@@ -232,6 +282,15 @@ export function useWorkspaceInteraction(input: WorkspaceInteractionInput) {
   }
   return {
     canLeaveDraft: () => latest.current.canLeave(),
+    focusCreatedDocument,
+    shouldRestoreDialogFocus: () => {
+      const target = pendingFocus.current;
+      return (
+        !target ||
+        target.scope !== latest.current.scope ||
+        target.request !== navigationRequest.current
+      );
+    },
     switchMode,
     openDocument,
     showSource,

@@ -88,6 +88,7 @@ export function ProductRoot({
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const creationRequest = useRef(0);
   const [filename, setFilename] = useState('Untitled.md');
   const [query, setQuery] = useState('');
   const [commandOpen, setCommandOpen] = useState(false);
@@ -391,6 +392,7 @@ export function ProductRoot({
           setLeftOpen(true);
       });
     if (key === 'new' && canLeave()) {
+      creationRequest.current++;
       setFilename('Untitled.md');
       setCreateOpen(true);
     }
@@ -728,15 +730,41 @@ export function ProductRoot({
       {createOpen && (
         <ProductDialog
           title="New document"
-          onClose={() => setCreateOpen(false)}
+          shouldRestoreFocus={interaction.shouldRestoreDialogFocus}
+          onClose={() => {
+            creationRequest.current++;
+            setCreateOpen(false);
+          }}
         >
           <form
             onSubmit={(event) => {
               event.preventDefault();
               if (!canLeave()) return;
+              const request = ++creationRequest.current;
+              const before = application.snapshot();
+              const path = filename;
+              const initiator = globalThis.document.activeElement;
               run(async () => {
-                await application.create(filename, '');
-                if (latest.current.application !== application) return;
+                await application.create(path, '');
+                const after = application.snapshot();
+                const created = after.selectedSessionId;
+                if (
+                  !mounted.current ||
+                  latest.current.application !== application ||
+                  creationRequest.current !== request ||
+                  before.vaultLabel !== after.vaultLabel ||
+                  after.closing ||
+                  !created ||
+                  before.loadedDocuments.some(
+                    (entry) => entry.sessionId === created,
+                  ) ||
+                  !after.loadedDocuments.some(
+                    (entry) =>
+                      entry.sessionId === created && entry.logicalPath === path,
+                  )
+                )
+                  return;
+                interaction.focusCreatedDocument(created, initiator);
                 setCreateOpen(false);
                 changePreferences({ ...preferences, mode: 'source' });
               });

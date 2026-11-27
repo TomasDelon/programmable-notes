@@ -55,6 +55,73 @@ async function createNote(page: Page, title: string) {
   ).toBeVisible();
 }
 
+test('new document accepts keyboard input when click animation work is deferred', async ({
+  page,
+}) => {
+  await launch(page);
+  await documentTools(page);
+  // Hold only frames queued by the click, leaving browser actionability and
+  // subsequent editor measurement frames running normally.
+  await page.evaluate(() => {
+    const held: FrameRequestCallback[] = [];
+    (
+      window as Window & { releaseCreationFrames?: () => void }
+    ).releaseCreationFrames = () => {
+      for (const callback of held) callback(performance.now());
+    };
+    document.addEventListener(
+      'click',
+      () => {
+        const schedule = window.requestAnimationFrame;
+        window.requestAnimationFrame = (callback) => {
+          held.push(callback);
+          return -held.length;
+        };
+        document.addEventListener(
+          'click',
+          () => {
+            window.requestAnimationFrame = schedule;
+          },
+          { once: true },
+        );
+      },
+      { capture: true, once: true },
+    );
+  });
+  await page.getByRole('button', { name: 'New document', exact: true }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source', exact: true });
+  await expect(source).toBeFocused();
+  await page.keyboard.type('Immediate new document input');
+  await expect(source).toHaveText('Immediate new document input');
+  await page.keyboard.press('Control+k');
+  const search = page.getByRole('textbox', {
+    name: 'Search commands and notes',
+  });
+  await expect(search).toBeFocused();
+  await page.evaluate(() => {
+    (
+      window as Window & { releaseCreationFrames?: () => void }
+    ).releaseCreationFrames?.();
+  });
+  await expect(search).toBeFocused();
+});
+
+test('new document from the command palette owns focus after the palette closes', async ({
+  page,
+}) => {
+  await launch(page);
+  await documentTools(page);
+  await page.getByRole('button', { name: 'New document', exact: true }).focus();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.getByLabel('Search commands and notes').fill('New document');
+  await palette.getByRole('button', { name: /^New document/ }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source', exact: true });
+  await expect(source).toBeFocused();
+  await page.keyboard.type('Created from palette');
+  await expect(source).toHaveText('Created from palette');
+});
+
 async function renameNote(page: Page, title: string) {
   await page.locator('.doc-title-row').click();
   await page.keyboard.press('Control+k');

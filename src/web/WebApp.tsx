@@ -561,6 +561,7 @@ function WorkspaceBody({
     visitHistory,
     setVisitHistory,
     showSource,
+    focusCreatedDocument,
   } = interaction;
   const closePeek = () => navigation.current?.closePeek();
   const importAttachments = async (files: File[]) => {
@@ -594,6 +595,7 @@ function WorkspaceBody({
       }
       const key = model.createNote(name, parent);
       if (!key) return;
+      focusCreatedDocument(key);
       setNewItem(null);
       model.setMode('source');
       documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
@@ -602,9 +604,6 @@ function WorkspaceBody({
         return { entries, cursor: entries.length - 1 };
       });
       if (window.innerWidth <= 720) setLeftOpen(false);
-      requestAnimationFrame(() => {
-        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus();
-      });
       return;
     }
     openLeft();
@@ -665,11 +664,9 @@ function WorkspaceBody({
         newItem.parent,
       );
       if (!key) return;
+      focusCreatedDocument(key);
       model.setMode('source');
       documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-      requestAnimationFrame(() =>
-        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus(),
-      );
       setVisitHistory((history) => {
         const entries = [...history.entries.slice(0, history.cursor + 1), key];
         return { entries, cursor: entries.length - 1 };
@@ -2040,6 +2037,7 @@ function WorkspaceBody({
 
       {commandOpen && (
         <DocumentCommandPalette
+          shouldRestoreFocus={interaction.shouldRestoreDialogFocus}
           query={commandQuery}
           index={commandIndex}
           results={commandResults}

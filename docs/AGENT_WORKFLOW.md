@@ -86,6 +86,15 @@ Independent CI gates may overlap only when their concurrency groups and resource
   figures or promise that written rules eliminate errors. Revise rules that add
   effort without preventing an observed failure.
 
+### Shared build ownership
+
+A browser validation owns its preview port and the built assets it serves. Do not
+run another build into `dist/` during that validation. Workers must wait for the
+owner to release the build directory or use an explicitly isolated build and
+server. A concurrent rebuild invalidates the browser result; preserve its log and
+rerun against one frozen artifact. Freeze source and stop worker build commands
+as well as worker servers before the final check.
+
 ## 3. Evidence record
 
 For milestones with several gates, the optional consistency checker consumes this shape:

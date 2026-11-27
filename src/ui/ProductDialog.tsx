@@ -6,17 +6,21 @@ export function ProductDialog({
   children,
   onClose,
   className = '',
+  shouldRestoreFocus,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   className?: string;
+  shouldRestoreFocus?: () => boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
+  const restore = useRef(shouldRestoreFocus);
   useEffect(() => {
     close.current = onClose;
-  }, [onClose]);
+    restore.current = shouldRestoreFocus;
+  }, [onClose, shouldRestoreFocus]);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const first =
@@ -55,7 +59,7 @@ export function ProductDialog({
     document.addEventListener('keydown', keydown, true);
     return () => {
       document.removeEventListener('keydown', keydown, true);
-      previous?.focus();
+      if (restore.current?.() !== false) previous?.focus();
     };
   }, []);
   return (
