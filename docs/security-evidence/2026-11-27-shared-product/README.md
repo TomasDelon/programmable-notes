@@ -667,3 +667,47 @@ combinations. Independent source review found no blocking issue. Application and
 fixed React helper inputs did not change: no new full browser or guarded native
 retry is implied. The next installed observation will exercise this changed
 measurement; the current not-found result remains a failure.
+
+## Actual disabled acceptance candidate and smallest native correction
+
+Both required jobs in [CI46076855351](https://github.com/TomasDelon/programmable-notes/actions/runs/46076855351)
+passed onbf365d7. Download [browser screenshots](https://github.com/TomasDelon/programmable-notes/actions/runs/46076855351/artifacts/15236215798)
+and [the engineering package](https://github.com/TomasDelon/programmable-notes/actions/runs/46076855351/artifacts/15235447191).
+The package remains unaccepted.
+
+[Installed run46077685409](https://github.com/TomasDelon/programmable-notes/actions/runs/46077685409)
+passed shared startup and exact location echo. Its source-bound
+[receipt](installed-46077685409.json) identifies a matching candidate with
+visible/showing=true but enabled/sensitive=false (1100). The existing action did
+not bypass that state, and final dismissal failed. Cleanup passed without force
+or residuals. The [startup artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46077685409/artifacts/15235112954)
+was retained but not downloaded/viewed here. Editing/disk/close/restart/recovery
+still did not pass.
+
+Upstream GTK3.24.41 source provides a coherent hypothesis: SELECT_FOLDER can
+start in Recent mode; get_files then returns selected Recent rows, and an empty
+selection yields no URI. Folder entry text changes skip location timeout, while
+the dialog's accept sensitivity is driven by available URIs. Explicit initial
+folder setup marks RELOAD_HAS_FOLDER and its asynchronous load emits selection
+change. This does not prove the actual chooser was in Recent mode. References:
+[folder entry change](https://github.com/GNOME/gtk/blob/3.24.41/gtk/gtkfilechooserwidget.c#L2598),
+[Recent startup](https://github.com/GNOME/gtk/blob/3.24.41/gtk/gtkfilechooserwidget.c#L4110),
+[Recent file selection](https://github.com/GNOME/gtk/blob/3.24.41/gtk/gtkfilechooserwidget.c#L6138),
+[accept sensitivity](https://github.com/GNOME/gtk/blob/3.24.41/gtk/gtkfilechooserdialog.c#L389).
+
+The smallest application correction gives the native vault picker a trusted
+platform Home starting directory. Locked SDK APIs and forwarding into rfd's GTK
+set_current_folder were independently reviewed. Home is not a vault grant:
+editor checks precede resolution, both reservations remain held, cancellation
+preserves scope, and only the actual OS-selected path reaches select_authorized.
+Resolution failure returns a fixed error and releases guards. There is no
+renderer/CWD/fixture fallback, alternate action, forced sensitivity or clock change.
+The meaningful regression witness is the existing actual packaged journey, not
+a source-mirroring mock. Local Rustfmt and all194 tooling cases/zero skips plus
+static checks passed; SDK compilation and runtime correction are pending.
+
+A separate source review did not justify replacing the GTK backend for a proposed
+threading explanation: the pinned Tao0.37.2 event loop holds the default GLib
+context throughout its lifetime, preventing rfd's worker from dispatching it
+concurrently. Generic GTK thread-rule concerns do not establish this failure's
+cause. No dependency fork or thread change was made.

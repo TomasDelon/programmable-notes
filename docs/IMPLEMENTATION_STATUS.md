@@ -20,6 +20,30 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Observed disabled picker button and Home initialization candidate
+
+Both mandatory CI jobs in46076855351 passed onbf365d7. Installed46077685409
+passed shared startup and exact location echo, then refused a matching native
+button whose visible/showing bits were true and enabled/sensitive bits false
+(1100). Cleanup passed without force or residuals. This is an observed disabled
+candidate, not a missing path, filesystem denial or proven GTK Recent-mode cause.
+File editing/disk/close/restart/recovery remain unverified.
+
+The next native change starts the vault chooser in the trusted platform Home
+directory. It is an initial view only: editor authorization, operation/dialog
+reservations, explicit OS selection, cancellation and selected-path vault
+validation remain unchanged. Missing Home resolution returns a fixed error with
+no CWD, renderer or fixture fallback. No default vault is activated and no button
+state is forced. GTK source supports an empty-Recent/selection explanation, but
+the actual mode was not observed; the changed packaged journey must verify it.
+
+Independent source/API/authority review found no blocking issue. Local Rustfmt,
+the entire194-case tooling suite with zero skips, and format/lint/types passed.
+Application JavaScript inputs remain those of the1014-unit/159-Chromium/9-Pages/
+4-cloud run. Native SDK compilation and the changed installed observation are
+pending for this candidate. The successful3b92912 fixed React helper is retained
+without an unchanged retry; its inputs did not change.
+
 ## Current tested head and remaining selector blocker — 27 November 2026
 
 Both required CI jobs passed on3b92912 in46074514226, including real SDK

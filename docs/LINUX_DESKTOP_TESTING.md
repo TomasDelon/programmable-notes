@@ -479,3 +479,10 @@ cause. The reporter validates the complete paired marker frame and withholds
 lookup values outside a failed not-found context; impossible all-eligible or
 not-attempted combinations remain unknown. No raw names, paths or exceptions are
 published, and no state predicate or action is bypassed.
+
+The native vault picker candidate now supplies the trusted platform Home as its
+initial directory, so a fresh profile has a concrete folder view. This does not
+select or activate a vault: acceptance and selected-path validation remain
+mandatory, and cancellation preserves the previous scope. No fallback path is
+accepted if Home resolution fails. The change is awaiting current-package SDK and
+GUI validation; the earlier disabled-button observation remains a failed test.

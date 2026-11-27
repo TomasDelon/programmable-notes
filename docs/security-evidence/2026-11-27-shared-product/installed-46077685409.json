@@ -1,0 +1,35 @@
+{
+  "evidence_source": "Source-pinned fixed GitHub check annotations and API metadata only; no artifact/raw logs accessed",
+  "run_id": 46077685409,
+  "job_id": 140769151913,
+  "source_commit": "bf365d749b4fe9471fcd07d28ca4853c743daa00",
+  "status": "failed",
+  "scope": "installed-editor-only",
+  "startup_phase": "complete",
+  "journey_stage": "authorized_vault_chooser",
+  "failure_kind": "other",
+  "dialog_classes": ["dialog_dismissal_unconfirmed"],
+  "dialog_echo_shape": "unknown",
+  "dialog_accept_state": "not_found",
+  "dialog_accept_lookup": "button_flags_1100",
+  "observed_last_matching_button": {
+    "visible": true,
+    "showing": true,
+    "enabled": false,
+    "sensitive": false
+  },
+  "cleanup": {
+    "passed": true,
+    "forced": false,
+    "residual": false
+  },
+  "artifact_id": 15235112954,
+  "editing_disk_close_restart_verified": false,
+  "native_react_security_verified": false,
+  "limitations": [
+    "A matching button was observed but not eligible; this does not directly identify GTK Recent/Browse mode or the cause of disabled state.",
+    "Exact path echo passed; no filesystem or namespace failure is inferred.",
+    "The existing action correctly refused the ineligible candidate.",
+    "Retained startup PNG was not downloaded or visually inspected here."
+  ]
+}
