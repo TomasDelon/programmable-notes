@@ -64,3 +64,20 @@ entry without a terminal notification; selection and fresh reopened identities
 remain host-owned. This observation cache is a projection, never another source,
 history or persistence authority. Browser production composition and native boot
 routing remain unchanged by the hook packet.
+
+## Shared document row presentation
+
+`workspace/DocumentNavigationRow.tsx` extracts the existing ordinary navigation
+button, preserving its DOM, indentation, icon, accessibility and drag handlers.
+WebApp consumes it immediately and retains draft admission, ordering and all
+operations. The row knows only presentation/callback props, never a browser
+workspace model, native path/grant, source/history or storage.
+
+A controlled native host consumes the same row and DocumentSurface with the
+existing asynchronous inventory/open/controller ports. A selected inventory path
+and selected opaque editor session remain distinct; delayed acquisition leaves
+the previous editor selected, loaded rows reuse grants, and late saves update
+only their originating session. These are injected-OS-port UI controls, not an
+installed filesystem or complete shared-root witness. Folder/Recent/search
+composition and native bootstrap remain separate; no browser-state shim or
+replacement native shell is introduced.

@@ -54,6 +54,7 @@ import '@fontsource-variable/dm-sans';
 import '@fontsource-variable/dm-sans/wght-italic.css';
 import type { EditorCommands, EditorHistory } from '../editor/SourceEditor';
 import { DocumentSurface } from '../workspace/DocumentSurface';
+import { DocumentNavigationRow } from '../workspace/DocumentNavigationRow';
 import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
@@ -1089,14 +1090,13 @@ function WorkspaceBody({
     const note = state.documents[key]!;
     const Icon = isMdxSource(key) ? FileText : Code2;
     return (
-      <button
-        type="button"
+      <DocumentNavigationRow
         key={key}
-        className={
-          'nav-file ' +
-          (key === selected ? 'selected' : '') +
-          treeDropClass({ kind: 'document', id: key })
-        }
+        title={note.title}
+        selected={key === selected}
+        depth={depth}
+        icon={Icon}
+        extraClass={treeDropClass({ kind: 'document', id: key })}
         draggable
         onDragStart={(event) =>
           startTreeDrag(event, { kind: 'document', id: key })
@@ -1120,21 +1120,8 @@ function WorkspaceBody({
           if (!event.currentTarget.contains(event.relatedTarget as Node))
             setDropHint(null);
         }}
-        style={{
-          /* Exactly one indentation level belongs outside each row.
-             The inner icon padding is fixed to match sibling folders. */
-          marginLeft: depth * 16,
-          paddingLeft: 7,
-          width: 'calc(100% - ' + depth * 16 + 'px)',
-        }}
-        onClick={() => openDocument(key)}
-        title={note.title}
-        aria-label={'Open ' + note.title}
-        aria-current={key === selected ? 'page' : undefined}
-      >
-        <Icon size={14} strokeWidth={1.65} />
-        <span>{note.title}</span>
-      </button>
+        onOpen={() => openDocument(key)}
+      />
     );
   }
   function draftRow(parent: string, depth: number) {

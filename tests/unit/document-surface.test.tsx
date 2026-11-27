@@ -10,7 +10,9 @@ import { EditorView } from '@codemirror/view';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
+import { FileText } from 'lucide-react';
 import { DocumentSurface } from '../../src/workspace/DocumentSurface';
+import { DocumentNavigationRow } from '../../src/workspace/DocumentNavigationRow';
 import { useDocumentSession } from '../../src/workspace/useDocumentSession';
 import {
   DocumentRuntime,
@@ -161,6 +163,21 @@ async function nativeHost() {
     revision: 'saved',
     durable: true,
   }));
+  const openSources = vi.fn<NativeWorkspacePorts['openVaultSources']>(
+    async (vaultId, paths) => ({
+      status: 'acquired',
+      vaultId,
+      documents: paths.map((path) => ({
+        id: `grant-${path}`,
+        revision: 'disk-0',
+        name: path,
+        logicalPath: path,
+        displayPath: `/label/${path}`,
+        source: path === 'a.mdx' ? original : 'Other.',
+        durabilityWarning: false,
+      })),
+    }),
+  );
   const workspace = createNativeWorkspace(
     {
       chooseVault: async () => ({ vaultId: 'vault', displayPath: '/label' }),
@@ -169,21 +186,10 @@ async function nativeHost() {
         entries: [
           { logicalPath: 'a.mdx', bytes: original.length },
           { logicalPath: 'b.mdx', bytes: 1 },
+          { logicalPath: 'c.mdx', bytes: 1 },
         ],
       }),
-      openVaultSources: async (vaultId, paths) => ({
-        status: 'acquired',
-        vaultId,
-        documents: paths.map((path) => ({
-          id: `grant-${path}`,
-          revision: 'disk-0',
-          name: path,
-          logicalPath: path,
-          displayPath: `/label/${path}`,
-          source: path === 'a.mdx' ? original : 'Other.',
-          durabilityWarning: false,
-        })),
-      }),
+      openVaultSources: openSources,
       createVaultSource: async () => {
         throw Error('not exercised');
       },
@@ -199,20 +205,61 @@ async function nativeHost() {
   const commands = createRef<EditorCommands>();
   const histories: { current: EditorHistory } = { current: new Map() };
   const legacyChange = vi.fn();
+  function InventoryRow({
+    path,
+    sessionId,
+    selected,
+  }: {
+    path: string;
+    sessionId: string | null;
+    selected: boolean;
+  }) {
+    const document = useDocumentSession(workspace.controller, sessionId);
+    return (
+      <>
+        <DocumentNavigationRow
+          title={path}
+          selected={selected}
+          depth={path.split('/').length - 1}
+          icon={FileText}
+          onOpen={() => {
+            void workspace.open(path).catch(() => {});
+          }}
+        />
+        <output aria-label={`Status ${path}`}>
+          {document?.autosave.status ?? 'not loaded'}
+        </output>
+      </>
+    );
+  }
   function ObservedSurface() {
-    const [id, setId] = useState(workspace.state().selectedSessionId);
+    const [navigation, setNavigation] = useState(workspace.state());
     useEffect(() => {
-      const unsubscribe = workspace.subscribe((state) =>
-        setId(state.selectedSessionId),
-      );
-      setId(workspace.state().selectedSessionId);
+      const unsubscribe = workspace.subscribe(setNavigation);
+      setNavigation(workspace.state());
       return unsubscribe;
     }, []);
+    const id = navigation.selectedSessionId;
     const state = useDocumentSession(workspace.controller, id);
     if (!state || !id) return null;
     const source = state.witness.source;
     return (
       <>
+        <nav aria-label="Native inventory with injected OS ports">
+          {navigation.inventory?.entries.map(({ logicalPath }) => {
+            const loaded = navigation.sessions.find(
+              (entry) => entry.logicalPath === logicalPath,
+            );
+            return (
+              <InventoryRow
+                key={logicalPath}
+                path={logicalPath}
+                sessionId={loaded?.sessionId ?? null}
+                selected={loaded?.sessionId === id}
+              />
+            );
+          })}
+        </nav>
         <output data-testid="session-status">{state.autosave.status}</output>
         <output data-testid="session-revision">
           {state.witness.editorRevision}
@@ -265,8 +312,166 @@ async function nativeHost() {
     );
   }
   const draw = () => <ObservedSurface />;
-  return { workspace, a, b, commands, histories, legacyChange, save, draw };
+  return {
+    workspace,
+    a,
+    b,
+    commands,
+    histories,
+    legacyChange,
+    save,
+    openSources,
+    draw,
+  };
 }
+
+it('uses the shared row with injected OS ports: an asynchronous inventory open retains the old real editor until acknowledgement', async () => {
+  const h = await nativeHost();
+  const pending =
+    deferred<Awaited<ReturnType<NativeWorkspacePorts['openVaultSources']>>>();
+  h.openSources.mockReturnValueOnce(pending.promise);
+  const ui = render(h.draw(), { wrapper: NotificationProvider });
+  const editor = EditorView.findFromDOM(
+    ui.container.querySelector('.cm-editor')!,
+  )!;
+  const before = h.workspace.session(h.a).witness;
+  fireEvent.click(screen.getByRole('button', { name: 'Open c.mdx' }));
+  expect(h.openSources).toHaveBeenLastCalledWith('vault', ['c.mdx']);
+  expect(h.workspace.state().selectedSessionId).toBe(h.a);
+  expect(screen.getByRole('button', { name: 'Open a.mdx' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  expect(
+    screen.getByRole('button', { name: 'Open c.mdx' }),
+  ).not.toHaveAttribute('aria-current');
+  expect(
+    EditorView.findFromDOM(ui.container.querySelector('.cm-editor')!),
+  ).toBe(editor);
+  expect(rawSource(editor.state)).toBe(original);
+  expect(screen.getByTestId('session-source').textContent).toBe(original);
+  expect(h.workspace.session(h.a).witness).toEqual(before);
+  const third = '\uFEFF# Third\r\n\r\nOpaque <Widget';
+  await act(async () =>
+    pending.resolve({
+      status: 'acquired',
+      vaultId: 'vault',
+      documents: [
+        {
+          id: 'grant-c.mdx',
+          revision: 'disk-c',
+          name: 'c.mdx',
+          logicalPath: 'c.mdx',
+          displayPath: '/label/c.mdx',
+          source: third,
+          durabilityWarning: false,
+        },
+      ],
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Open c.mdx' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    ),
+  );
+  expect(screen.getByTestId('session-source').textContent).toBe(third);
+  expect(
+    rawSource(
+      EditorView.findFromDOM(ui.container.querySelector('.cm-editor')!)!.state,
+    ),
+  ).toBe(third);
+  expect(h.workspace.session(h.a).witness).toEqual(before);
+  expect(h.legacyChange).not.toHaveBeenCalled();
+});
+
+it('reuses loaded grants through the shared row while preserving independent real SourceEditor histories', async () => {
+  const h = await nativeHost();
+  render(h.draw(), { wrapper: NotificationProvider });
+  act(() => {
+    expect(h.commands.current!.insertText('A row edit')).toBe(true);
+  });
+  const aSource = h.workspace.session(h.a).witness.source;
+  fireEvent.click(screen.getByRole('button', { name: 'Open b.mdx' }));
+  await waitFor(() =>
+    expect(screen.getByTestId('session-source').textContent).toBe('Other.'),
+  );
+  act(() => {
+    expect(h.commands.current!.insertText('B row edit')).toBe(true);
+  });
+  const bSource = h.workspace.session(h.b).witness.source;
+  fireEvent.click(screen.getByRole('button', { name: 'Open a.mdx' }));
+  await waitFor(() =>
+    expect(screen.getByTestId('session-source').textContent).toBe(aSource),
+  );
+  act(() => h.commands.current!.undo());
+  expect(h.workspace.session(h.a).witness.source).toBe(original);
+  act(() => h.commands.current!.redo());
+  expect(h.workspace.session(h.a).witness.source).toBe(aSource);
+  fireEvent.click(screen.getByRole('button', { name: 'Open b.mdx' }));
+  await waitFor(() =>
+    expect(screen.getByTestId('session-source').textContent).toBe(bSource),
+  );
+  act(() => h.commands.current!.undo());
+  expect(h.workspace.session(h.b).witness.source).toBe('Other.');
+  act(() => h.commands.current!.redo());
+  expect(h.workspace.session(h.b).witness.source).toBe(bSource);
+  await act(() => h.workspace.controller.flush());
+  expect(h.openSources).toHaveBeenCalledTimes(2);
+  expect(h.workspace.state().sessions.map((entry) => entry.sessionId)).toEqual([
+    h.a,
+    h.b,
+  ]);
+  expect(h.histories.current.has(h.a)).toBe(true);
+  expect(h.histories.current.has(h.b)).toBe(true);
+  expect(h.histories.current.has('a.mdx')).toBe(false);
+  expect(h.legacyChange).not.toHaveBeenCalled();
+});
+
+it('projects an old held save only into its originating row status after shared navigation selects another source', async () => {
+  const h = await nativeHost();
+  const pending = deferred<{ revision: string; durable: boolean }>();
+  h.save.mockReturnValueOnce(pending.promise);
+  const ui = render(h.draw(), { wrapper: NotificationProvider });
+  act(() => {
+    expect(h.commands.current!.insertText('Held A row edit')).toBe(true);
+  });
+  const accepted = h.workspace.session(h.a).witness.source;
+  await waitFor(() =>
+    expect(screen.getByLabelText('Status a.mdx')).toHaveTextContent('writing'),
+  );
+  expect(h.save).toHaveBeenCalledWith('grant-a.mdx', 'disk-0', accepted);
+  fireEvent.click(screen.getByRole('button', { name: 'Open b.mdx' }));
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Open b.mdx' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    ),
+  );
+  await waitFor(() => expect(h.workspace.state().operation).toBeNull());
+  const bState = h.workspace.controller.state(h.b);
+  const bEditor = EditorView.findFromDOM(
+    ui.container.querySelector('.cm-editor')!,
+  )!;
+  const bCommands = h.commands.current;
+  expect(screen.getByTestId('session-status')).toHaveTextContent('saved');
+  await act(async () => {
+    pending.resolve({ revision: 'a-row-saved', durable: true });
+    await h.workspace.controller.flush();
+  });
+  expect(screen.getByLabelText('Status a.mdx')).toHaveTextContent('saved');
+  expect(screen.getByLabelText('Status b.mdx')).toHaveTextContent('saved');
+  expect(screen.getByTestId('session-status')).toHaveTextContent('saved');
+  expect(screen.getByTestId('session-source').textContent).toBe('Other.');
+  expect(h.workspace.controller.state(h.b)).toEqual(bState);
+  expect(
+    EditorView.findFromDOM(ui.container.querySelector('.cm-editor')!),
+  ).toBe(bEditor);
+  expect(h.commands.current).toBe(bCommands);
+  expect(h.workspace.state().selectedSessionId).toBe(h.b);
+  expect(h.openSources).toHaveBeenCalledTimes(2);
+  expect(h.legacyChange).not.toHaveBeenCalled();
+});
 
 it('binds the same surface to native sessions: delayed writes stay with their origin and per-session undo survives switching', async () => {
   const h = await nativeHost();
