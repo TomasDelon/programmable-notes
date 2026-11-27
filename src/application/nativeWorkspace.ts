@@ -4,6 +4,7 @@ import type {
   nativeDocuments,
   NativeVaultInfo,
   NativeVaultInventory,
+  NativeVaultRefusalCode,
 } from '../documents/native';
 import type { SourceSession } from '../editor/sourceWitness';
 import { isSupportedSource } from '../sourceTypes';
@@ -33,6 +34,25 @@ export interface NativeWorkspaceState {
   readonly unresolvedCleanup: number;
 }
 type Listener = (state: NativeWorkspaceState) => void;
+
+function exactWireRecord(
+  value: unknown,
+  keys: readonly string[],
+): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return (
+    (prototype === Object.prototype || prototype === null) &&
+    Reflect.ownKeys(value).length === keys.length &&
+    keys.every((key) => {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      return descriptor !== undefined && 'value' in descriptor;
+    })
+  );
+}
+function refusalCode(value: unknown): value is NativeVaultRefusalCode {
+  return value === 'rejected' || value === 'io' || value === 'conflict';
+}
 
 function validPath(path: string): boolean {
   // Mirror native-documents/src/vault.rs::validate_source_path. These checks
@@ -94,6 +114,13 @@ class UncertainAcquisition extends Error {
   constructor(kind: 'open' | 'create') {
     super(
       `${kind === 'create' ? 'Creation' : 'Opening'} outcome is uncertain. A ${kind === 'create' ? 'file or ' : ''}native grant may exist; reconciliation is required.`,
+    );
+  }
+}
+class ConfirmedRefusal extends Error {
+  constructor(kind: 'open' | 'create', code: NativeVaultRefusalCode) {
+    super(
+      `Native ${kind} refused (${code}). No target file or document grant was published.`,
     );
   }
 }
@@ -197,6 +224,7 @@ export function createNativeWorkspace(
     } catch (reason) {
       error =
         reason instanceof CreatedNotOpened ||
+        reason instanceof ConfirmedRefusal ||
         reason instanceof UncertainAcquisition
           ? reason.message
           : `${kind} failed. Existing document text was retained.`;
@@ -219,8 +247,8 @@ export function createNativeWorkspace(
       return await request();
     } catch {
       // A rejected promise cannot distinguish a backend refusal from lost IPC
-      // after acquisition/publication. Typed refusals/reconciliation are future
-      // work; never infer no side effects from native error message strings.
+      // after acquisition/publication. Unknown-outcome reconciliation remains
+      // future work; never infer no side effects from native error message strings.
       uncertainResponses++;
       throw new UncertainAcquisition(kind);
     }
@@ -259,7 +287,9 @@ export function createNativeWorkspace(
       protectedIdentities.has(document.id)
     ) {
       uncertainResponses++;
-      throw Error('Native document ownership is inconsistent.');
+      throw new UncertainAcquisition(
+        expectedSource === undefined ? 'open' : 'create',
+      );
     }
     // This matching acknowledgement is the only grant eligible for failed-attach cleanup.
     protectedIdentities.add(document.id);
@@ -288,21 +318,51 @@ export function createNativeWorkspace(
     notify();
     return id;
   }
-  function acknowledged(
+  function outcomeDocument(
+    kind: 'open' | 'create',
     vaultId: string,
-    responseVault: string,
     path: string,
-    input: NativeDocument,
+    response: unknown,
   ): NativeDocument {
     try {
-      const document = documentSnapshot(input);
-      if (responseVault !== vaultId || document.logicalPath !== path)
+      const requestKey = kind === 'open' ? 'paths' : 'path';
+      if (
+        exactWireRecord(response, ['status', 'vaultId', requestKey, 'code']) &&
+        response.status === 'refused' &&
+        response.vaultId === vaultId &&
+        refusalCode(response.code)
+      ) {
+        const origin = response[requestKey];
+        const matches =
+          kind === 'create'
+            ? origin === path
+            : Array.isArray(origin) &&
+              Object.getPrototypeOf(origin) === Array.prototype &&
+              origin.length === 1 &&
+              Reflect.ownKeys(origin).length === 2 &&
+              Object.getOwnPropertyDescriptor(origin, '0')?.value === path;
+        if (matches) throw new ConfirmedRefusal(kind, response.code);
+      }
+      const sourceKey = kind === 'open' ? 'documents' : 'document';
+      if (
+        !exactWireRecord(response, ['status', 'vaultId', sourceKey]) ||
+        response.status !== 'acquired' ||
+        response.vaultId !== vaultId
+      )
+        throw Error('Unexpected native acquisition response.');
+      const payload = response[sourceKey];
+      if (kind === 'open' && (!Array.isArray(payload) || payload.length !== 1))
+        throw Error('Expected one native source acknowledgement.');
+      const input = kind === 'open' ? (payload as unknown[])[0] : payload;
+      const document = documentSnapshot(input as NativeDocument);
+      if (document.logicalPath !== path)
         throw Error('Unexpected native response scope.');
       return document;
     } catch (reason) {
+      if (reason instanceof ConfirmedRefusal) throw reason;
       // Foreign/malformed responses cannot authorize cleanup of arbitrary IDs.
       uncertainResponses++;
-      throw reason;
+      throw new UncertainAcquisition(kind);
     }
   }
 
@@ -385,20 +445,7 @@ export function createNativeWorkspace(
         const response = await acquire('open', () =>
           openVaultSources(vaultId, [path]),
         );
-        if (
-          !response ||
-          !Array.isArray(response.documents) ||
-          response.documents.length !== 1
-        ) {
-          uncertainResponses++;
-          throw Error('Expected one native source acknowledgement.');
-        }
-        const document = acknowledged(
-          vaultId,
-          response.vaultId,
-          path,
-          response.documents[0]!,
-        );
+        const document = outcomeDocument('open', vaultId, path, response);
         return attach(vaultId, path, document, epoch);
       }),
     create: (path: string, source: string) =>
@@ -420,13 +467,8 @@ export function createNativeWorkspace(
         const response = await acquire('create', () =>
           createVaultSource(vaultId, path, source),
         );
+        const document = outcomeDocument('create', vaultId, path, response);
         try {
-          const document = acknowledged(
-            vaultId,
-            response?.vaultId,
-            path,
-            response?.document,
-          );
           const id = await attach(vaultId, path, document, epoch, source);
           // Metadata is observational; only the acknowledged created path is added here.
           if (
@@ -439,7 +481,8 @@ export function createNativeWorkspace(
             });
           notify();
           return id;
-        } catch {
+        } catch (reason) {
+          if (reason instanceof UncertainAcquisition) throw reason;
           throw new CreatedNotOpened();
         }
       }),

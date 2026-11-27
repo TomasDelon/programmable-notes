@@ -48,12 +48,14 @@ function setup() {
     openVaultSources: vi.fn<NativeWorkspacePorts['openVaultSources']>(
       async (vaultId, paths) => ({
         vaultId,
+        status: 'acquired' as const,
         documents: paths.map((path) => document(path)),
       }),
     ),
     createVaultSource: vi.fn<NativeWorkspacePorts['createVaultSource']>(
       async (vaultId, path, source) => ({
         vaultId,
+        status: 'acquired' as const,
         document: document(path, `created-${path}`, source),
       }),
     ),
@@ -161,7 +163,11 @@ describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
     ports.openVaultSources.mockReturnValueOnce(pending.promise);
     const opening = w.open('b.mdx');
     w.controller.setUnapplied(a, true);
-    pending.resolve({ vaultId: 'vault-a', documents: [document('b.mdx')] });
+    pending.resolve({
+      vaultId: 'vault-a',
+      status: 'acquired' as const,
+      documents: [document('b.mdx')],
+    });
     const b = await opening;
     expect(w.state().sessions).toHaveLength(2);
     expect(w.state().selectedSessionId).toBe(a);
@@ -187,7 +193,11 @@ describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
     ports.openVaultSources.mockReturnValueOnce(pending.promise);
     const opening = w.open('c.mdx');
     w.select(a);
-    pending.resolve({ vaultId: 'vault-a', documents: [document('c.mdx')] });
+    pending.resolve({
+      vaultId: 'vault-a',
+      status: 'acquired' as const,
+      documents: [document('c.mdx')],
+    });
     await opening;
     expect(w.state().selectedSessionId).toBe(a);
   });
@@ -243,6 +253,7 @@ describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
     await w.choose();
     ports.openVaultSources.mockResolvedValueOnce({
       vaultId: 'vault-a',
+      status: 'acquired' as const,
       documents: [document('big.mdx', 'new-grant', 'x'.repeat(500_001))],
     });
     ports.close.mockRejectedValueOnce(Error('close lost'));
@@ -261,6 +272,7 @@ describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
       const a = await w.open('a.mdx');
       ports.openVaultSources.mockResolvedValueOnce({
         vaultId: kind === 'wrong-vault' ? 'foreign' : 'vault-a',
+        status: 'acquired' as const,
         documents: [
           document(
             kind === 'wrong-path' ? 'foreign.mdx' : 'b.mdx',
@@ -307,6 +319,7 @@ describe('native workspace use cases (DATA-01/02, EDIT-01)', () => {
     expect(w.state().selectedSessionId).toBeNull();
     ports.openVaultSources.mockResolvedValueOnce({
       vaultId: 'vault-a',
+      status: 'acquired' as const,
       documents: [document('a.mdx', 'fresh-grant')],
     });
     const next = await w.open('a.mdx');
@@ -419,6 +432,7 @@ it('captures a baseline before later response mutation and never retargets priva
   const baseline = document();
   ports.openVaultSources.mockResolvedValueOnce({
     vaultId: 'vault-a',
+    status: 'acquired' as const,
     documents: [baseline],
   });
   await w.choose();
@@ -443,6 +457,7 @@ it('cleans a fresh grant with mismatched created bytes but never deletes or sele
   const a = await w.open('a.mdx');
   ports.createVaultSource.mockResolvedValueOnce({
     vaultId: 'vault-a',
+    status: 'acquired' as const,
     document: document('new.mdx', 'new-grant', 'different'),
   });
   await expect(w.create('new.mdx', 'requested bytes')).rejects.toThrow(
@@ -582,3 +597,193 @@ it('does not infer a confirmed no-side-effect refusal from a native error messag
   await expect(w.choose()).rejects.toThrow();
   expect(ports.chooseVault).toHaveBeenCalledTimes(1);
 });
+
+it('allows retry after an exact resolved missing-file refusal without altering selected text or grants', async () => {
+  const { ports, workspace: w } = setup();
+  await w.choose();
+  const a = await w.open('a.mdx');
+  ports.openVaultSources.mockResolvedValueOnce({
+    status: 'refused',
+    vaultId: 'vault-a',
+    paths: ['missing.mdx'],
+    code: 'io',
+  });
+  await expect(w.open('missing.mdx')).rejects.toThrow(/refused/i);
+  expect(w.state()).toMatchObject({
+    selectedSessionId: a,
+    unresolvedCleanup: 0,
+  });
+  expect(w.session(a).witness.source).toBe('source a.mdx');
+  expect(ports.close).not.toHaveBeenCalled();
+  const retry = await w.open('missing.mdx');
+  expect(w.state().selectedSessionId).toBe(retry);
+  expect(w.state().sessions).toHaveLength(2);
+});
+
+it.each(['io', 'conflict', 'rejected'] as const)(
+  'allows create retry after a resolved %s refusal, without claiming a file was created',
+  async (code) => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    const a = await w.open('a.mdx');
+    ports.createVaultSource.mockResolvedValueOnce({
+      status: 'refused',
+      vaultId: 'vault-a',
+      path: 'new.mdx',
+      code,
+    });
+    await expect(w.create('new.mdx', 'requested')).rejects.toThrow(/refused/i);
+    expect(w.state()).toMatchObject({
+      selectedSessionId: a,
+      unresolvedCleanup: 0,
+    });
+    expect(ports.close).not.toHaveBeenCalled();
+    const retry = await w.create('new.mdx', 'requested');
+    expect(w.session(retry).witness.source).toBe('requested');
+  },
+);
+
+it.each(['open', 'create'] as const)(
+  'never treats a rejected refusal-shaped object as a confirmed %s refusal',
+  async (kind) => {
+    const { ports, workspace: w } = setup();
+    await w.choose();
+    const refusal =
+      kind === 'open'
+        ? {
+            status: 'refused',
+            vaultId: 'vault-a',
+            paths: ['new.mdx'],
+            code: 'io',
+          }
+        : {
+            status: 'refused',
+            vaultId: 'vault-a',
+            path: 'new.mdx',
+            code: 'io',
+          };
+    if (kind === 'open') ports.openVaultSources.mockRejectedValueOnce(refusal);
+    else ports.createVaultSource.mockRejectedValueOnce(refusal);
+    await expect(
+      kind === 'open' ? w.open('new.mdx') : w.create('new.mdx', 'requested'),
+    ).rejects.toThrow(/uncertain/i);
+    expect(w.state().unresolvedCleanup).toBe(1);
+    expect(ports.close).not.toHaveBeenCalled();
+  },
+);
+
+it.each(['open', 'create'] as const)(
+  'latches malformed/foreign resolved %s refusals without trusting their IDs',
+  async (kind) => {
+    const baseline =
+      kind === 'open'
+        ? {
+            status: 'refused',
+            vaultId: 'vault-a',
+            paths: ['new.mdx'],
+            code: 'io',
+          }
+        : {
+            status: 'refused',
+            vaultId: 'vault-a',
+            path: 'new.mdx',
+            code: 'io',
+          };
+    const variants: unknown[] = [
+      { ...baseline, vaultId: 'foreign' },
+      { ...baseline, code: 'PublicationUncertain' },
+      { ...baseline, code: 'IO' },
+      { ...baseline, code: undefined },
+      { ...baseline, status: undefined },
+      { ...baseline, grant: 'foreign-grant' },
+      {
+        ...baseline,
+        [kind === 'open' ? 'paths' : 'path']:
+          kind === 'open' ? ['other.mdx'] : 'other.mdx',
+      },
+      {
+        ...baseline,
+        [kind === 'open' ? 'paths' : 'path']:
+          kind === 'open' ? ['new.mdx', 'other.mdx'] : ['new.mdx'],
+      },
+      Object.assign(Object.create({ inherited: true }), baseline),
+      Object.defineProperty({ ...baseline }, 'hidden', {
+        value: 'foreign-grant',
+      }),
+      Object.defineProperty({ ...baseline }, 'code', { get: () => 'io' }),
+      null,
+    ];
+    for (const variant of variants) {
+      const { ports, workspace: w } = setup();
+      await w.choose();
+      const a = await w.open('a.mdx');
+      if (kind === 'open')
+        ports.openVaultSources.mockResolvedValueOnce(
+          variant as Awaited<
+            ReturnType<NativeWorkspacePorts['openVaultSources']>
+          >,
+        );
+      else
+        ports.createVaultSource.mockResolvedValueOnce(
+          variant as Awaited<
+            ReturnType<NativeWorkspacePorts['createVaultSource']>
+          >,
+        );
+      await expect(
+        kind === 'open' ? w.open('new.mdx') : w.create('new.mdx', 'requested'),
+      ).rejects.toThrow();
+      expect(w.state().unresolvedCleanup).toBe(1);
+      expect(w.state().selectedSessionId).toBe(a);
+      expect(ports.close).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it.each(['open', 'create'] as const)(
+  'requires an exact acquired envelope/tag for %s before accepting a grant',
+  async (kind) => {
+    const doc = document('new.mdx', 'new-grant');
+    const variants: unknown[] =
+      kind === 'open'
+        ? [
+            { vaultId: 'vault-a', documents: [doc] },
+            {
+              status: 'acquired',
+              vaultId: 'vault-a',
+              documents: [doc],
+              code: 'io',
+            },
+          ]
+        : [
+            { vaultId: 'vault-a', document: doc },
+            {
+              status: 'acquired',
+              vaultId: 'vault-a',
+              document: doc,
+              code: 'io',
+            },
+          ];
+    for (const variant of variants) {
+      const { ports, workspace: w } = setup();
+      await w.choose();
+      if (kind === 'open')
+        ports.openVaultSources.mockResolvedValueOnce(
+          variant as Awaited<
+            ReturnType<NativeWorkspacePorts['openVaultSources']>
+          >,
+        );
+      else
+        ports.createVaultSource.mockResolvedValueOnce(
+          variant as Awaited<
+            ReturnType<NativeWorkspacePorts['createVaultSource']>
+          >,
+        );
+      await expect(
+        kind === 'open' ? w.open('new.mdx') : w.create('new.mdx', 'requested'),
+      ).rejects.toThrow();
+      expect(w.state().sessions).toHaveLength(0);
+      expect(w.state().unresolvedCleanup).toBe(1);
+      expect(ports.close).not.toHaveBeenCalled();
+    }
+  },
+);

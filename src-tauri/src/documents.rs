@@ -33,16 +33,87 @@ pub struct VaultInventory {
     entries: Vec<native_documents::InventoryEntry>,
 }
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct VaultDocuments {
-    vault_id: String,
-    documents: Vec<Document>,
+#[serde(rename_all = "lowercase")]
+pub enum AcquisitionRefusalCode {
+    Rejected,
+    Io,
+    Conflict,
 }
 #[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct VaultCreated {
+#[serde(
+    tag = "status",
+    rename_all = "lowercase",
+    rename_all_fields = "camelCase"
+)]
+pub enum VaultDocuments {
+    Acquired {
+        vault_id: String,
+        documents: Vec<Document>,
+    },
+    Refused {
+        vault_id: String,
+        paths: Vec<String>,
+        code: AcquisitionRefusalCode,
+    },
+}
+#[derive(Serialize)]
+#[serde(
+    tag = "status",
+    rename_all = "lowercase",
+    rename_all_fields = "camelCase"
+)]
+pub enum VaultCreated {
+    Acquired {
+        vault_id: String,
+        document: Document,
+    },
+    Refused {
+        vault_id: String,
+        path: String,
+        code: AcquisitionRefusalCode,
+    },
+}
+#[cfg(target_os = "linux")]
+fn acquisition_refusal(error: native_documents::Error) -> Result<AcquisitionRefusalCode, String> {
+    match error {
+        native_documents::Error::Rejected(_) => Ok(AcquisitionRefusalCode::Rejected),
+        native_documents::Error::Io(_) => Ok(AcquisitionRefusalCode::Io),
+        native_documents::Error::Conflict => Ok(AcquisitionRefusalCode::Conflict),
+        error => Err(error.to_string()),
+    }
+}
+#[cfg(target_os = "linux")]
+fn vault_documents_outcome(
     vault_id: String,
-    document: Document,
+    paths: Vec<String>,
+    result: Result<Vec<Document>, native_documents::Error>,
+) -> Result<VaultDocuments, String> {
+    match result {
+        Ok(documents) => Ok(VaultDocuments::Acquired {
+            vault_id,
+            documents,
+        }),
+        Err(error) => Ok(VaultDocuments::Refused {
+            vault_id,
+            paths,
+            code: acquisition_refusal(error)?,
+        }),
+    }
+}
+#[cfg(target_os = "linux")]
+fn vault_created_outcome(
+    vault_id: String,
+    path: String,
+    result: Result<Document, native_documents::Error>,
+) -> Result<VaultCreated, String> {
+    match result {
+        Ok(document) => Ok(VaultCreated::Acquired { vault_id, document }),
+        Err(error) => Ok(VaultCreated::Refused {
+            vault_id,
+            path,
+            code: acquisition_refusal(error)?,
+        }),
+    }
 }
 #[cfg(target_os = "linux")]
 struct VaultSession {
@@ -236,12 +307,8 @@ pub async fn open_vault_sources(
         let _operation = operation;
         #[cfg(target_os = "linux")]
         {
-            Ok(VaultDocuments {
-                vault_id: captured.info.vault_id.clone(),
-                documents: store(&docs)?
-                    .open_vault(&captured.vault, &paths)
-                    .map_err(|error| error.to_string())?,
-            })
+            let result = store(&docs)?.open_vault(&captured.vault, &paths);
+            vault_documents_outcome(captured.info.vault_id.clone(), paths, result)
         }
         #[cfg(not(target_os = "linux"))]
         {
@@ -270,12 +337,8 @@ pub async fn create_vault_source(
         let _operation = operation;
         #[cfg(target_os = "linux")]
         {
-            Ok(VaultCreated {
-                vault_id: captured.info.vault_id.clone(),
-                document: store(&docs)?
-                    .create_vault(&captured.vault, &path, &source)
-                    .map_err(|error| error.to_string())?,
-            })
+            let result = store(&docs)?.create_vault(&captured.vault, &path, &source);
+            vault_created_outcome(captured.info.vault_id.clone(), path, result)
         }
         #[cfg(not(target_os = "linux"))]
         {
@@ -636,6 +699,152 @@ mod tests {
         fn drop(&mut self) {
             std::fs::remove_dir_all(&self.0).unwrap();
         }
+    }
+    fn domain_refusals() -> Vec<(&'static str, native_documents::Error)> {
+        vec![
+            (
+                "rejected",
+                native_documents::Error::Rejected("private diagnostic"),
+            ),
+            (
+                "io",
+                native_documents::Error::Io(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    "private diagnostic",
+                )),
+            ),
+            ("conflict", native_documents::Error::Conflict),
+        ]
+    }
+
+    #[test]
+    fn typed_acquisition_refusals_serialize_only_original_scope_and_fixed_code() {
+        for (code, error) in domain_refusals() {
+            let response = vault_documents_outcome(
+                "origin-vault".into(),
+                vec!["notes/a.mdx".into(), "modules/B.TsX".into()],
+                Err(error),
+            )
+            .unwrap();
+            assert_eq!(
+                serde_json::to_value(response).unwrap(),
+                serde_json::json!({
+                    "status": "refused", "vaultId": "origin-vault",
+                    "paths": ["notes/a.mdx", "modules/B.TsX"], "code": code,
+                })
+            );
+        }
+        for (code, error) in domain_refusals() {
+            let response =
+                vault_created_outcome("origin-vault".into(), "notes/Note.MdX".into(), Err(error))
+                    .unwrap();
+            assert_eq!(
+                serde_json::to_value(response).unwrap(),
+                serde_json::json!({
+                    "status": "refused", "vaultId": "origin-vault", "path": "notes/Note.MdX", "code": code,
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn uncertainty_and_unknown_or_stale_grants_never_become_confirmed_refusals() {
+        for error in [
+            native_documents::Error::PublicationUncertain(std::io::Error::other(
+                "private diagnostic",
+            )),
+            native_documents::Error::UnknownGrant,
+            native_documents::Error::StaleRevision,
+        ] {
+            assert!(
+                vault_documents_outcome("vault".into(), vec!["a.mdx".into()], Err(error)).is_err()
+            );
+        }
+        for error in [
+            native_documents::Error::PublicationUncertain(std::io::Error::other(
+                "private diagnostic",
+            )),
+            native_documents::Error::UnknownGrant,
+            native_documents::Error::StaleRevision,
+        ] {
+            assert!(vault_created_outcome("vault".into(), "a.mdx".into(), Err(error)).is_err());
+        }
+    }
+
+    fn outcome_document() -> Document {
+        Document {
+            id: "private-grant".into(),
+            revision: "disk-revision".into(),
+            name: "Note.MdX".into(),
+            logical_path: "notes/Note.MdX".into(),
+            display_path: "/display-only/Note.MdX".into(),
+            source: "\u{feff}Exact\r\n<Broken".into(),
+            durability_warning: true,
+        }
+    }
+
+    #[test]
+    fn acquired_outcomes_preserve_exact_documents_and_durability_warnings() {
+        let expected = serde_json::to_value(outcome_document()).unwrap();
+        let opened = vault_documents_outcome(
+            "origin-vault".into(),
+            vec!["notes/Note.MdX".into()],
+            Ok(vec![outcome_document()]),
+        )
+        .unwrap();
+        assert_eq!(
+            serde_json::to_value(opened).unwrap(),
+            serde_json::json!({
+                "status": "acquired", "vaultId": "origin-vault", "documents": [expected.clone()],
+            })
+        );
+        let created = vault_created_outcome(
+            "origin-vault".into(),
+            "notes/Note.MdX".into(),
+            Ok(outcome_document()),
+        )
+        .unwrap();
+        assert_eq!(
+            serde_json::to_value(created).unwrap(),
+            serde_json::json!({
+                "status": "acquired", "vaultId": "origin-vault", "document": expected,
+            })
+        );
+    }
+
+    #[test]
+    fn actual_store_missing_open_and_collision_are_scoped_confirmed_refusals() {
+        let fixture = VaultFixture::new();
+        let (vault, _) = fixture.selected();
+        let mut store = Store::default();
+        let paths = vec!["missing.mdx".into()];
+        let result = store.open_vault(&vault, &paths);
+        let missing = vault_documents_outcome("origin-vault".into(), paths, result).unwrap();
+        assert_eq!(
+            serde_json::to_value(missing).unwrap(),
+            serde_json::json!({
+                "status": "refused", "vaultId": "origin-vault", "paths": ["missing.mdx"], "code": "io",
+            })
+        );
+        let original = store
+            .create_vault(&vault, "note.mdx", "original\r\n")
+            .unwrap();
+        let result = store.create_vault(&vault, "note.mdx", "must not overwrite");
+        let collision =
+            vault_created_outcome("origin-vault".into(), "note.mdx".into(), result).unwrap();
+        assert_eq!(
+            serde_json::to_value(collision).unwrap(),
+            serde_json::json!({
+                "status": "refused", "vaultId": "origin-vault", "path": "note.mdx", "code": "conflict",
+            })
+        );
+        assert_eq!(
+            std::fs::read(fixture.0.join("note.mdx")).unwrap(),
+            b"original\r\n"
+        );
+        store
+            .save(&original.id, &original.revision, "still authorized")
+            .unwrap();
     }
     #[test]
     fn vault_cancellation_changes_nothing_and_replacement_preserves_captured_scope_and_grants() {

@@ -491,7 +491,7 @@ try {
         assert.equal(receipt.ok, true);
         workspaceGrant = receipt.document.id;
         workspaceDiskRevision = receipt.document.revision;
-        return { vaultId, documents: [receipt.document] };
+        return { status: 'acquired', vaultId, documents: [receipt.document] };
       },
       createVaultSource: async () => {
         throw Error('Not exercised by this fixture');

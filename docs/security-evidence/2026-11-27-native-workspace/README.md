@@ -61,6 +61,22 @@ cargo test --manifest-path native-documents/Cargo.toml --locked
 cargo check --manifest-path src-tauri/Cargo.toml --locked --features custom-protocol
 ```
 
+## Scoped acquisition protocol follow-up
+
+Resolved, exact `refused` outcomes echo the originating vault and requested
+path(s), with fixed codes. They permit another acquisition without publishing
+source or clearing unknown outcomes. Rejected promises, malformed/foreign receipts
+and publication uncertainty remain blocked. The actual Store harness still passes
+with acquired-tagged envelopes; no native dialogs or Tauri caller are simulated
+as runtime acceptance.
+
+The complete local check exited **0**: **788 unit, 110 tooling / zero skips,
+152 Chromium, 9 local Pages and 4 cloud-storage browser tests**, plus formatting,
+lint, strict types and production build. A final diagnostic-only deadline change
+received another successful **110-test tooling run**. Four new contained Tauri
+mapping tests await hosted native execution; they are not counted as local passes.
+No cloud backend was activated by these disposable local browser tests.
+
 Reproduce on Linux with the repository's Node/Rust toolchain and dependencies:
 
 ```sh

@@ -16,21 +16,40 @@ export interface NativeVaultInventory {
   entries: { logicalPath: string; bytes: number }[];
 }
 export interface NativeVaultDocuments {
+  status: 'acquired';
   vaultId: string;
   documents: NativeDocument[];
 }
 export interface NativeVaultCreated {
+  status: 'acquired';
   vaultId: string;
   document: NativeDocument;
 }
+export type NativeVaultRefusalCode = 'rejected' | 'io' | 'conflict';
+export interface NativeVaultOpenRefused {
+  status: 'refused';
+  vaultId: string;
+  paths: string[];
+  code: NativeVaultRefusalCode;
+}
+export interface NativeVaultCreateRefused {
+  status: 'refused';
+  vaultId: string;
+  path: string;
+  code: NativeVaultRefusalCode;
+}
+export type NativeVaultOpenOutcome =
+  NativeVaultDocuments | NativeVaultOpenRefused;
+export type NativeVaultCreateOutcome =
+  NativeVaultCreated | NativeVaultCreateRefused;
 export const nativeDocuments = {
   chooseVault: () => invoke<NativeVaultInfo | null>('choose_vault'),
   vaultInventory: (vaultId: string) =>
     invoke<NativeVaultInventory>('vault_inventory', { vaultId }),
   openVaultSources: (vaultId: string, paths: string[]) =>
-    invoke<NativeVaultDocuments>('open_vault_sources', { vaultId, paths }),
+    invoke<NativeVaultOpenOutcome>('open_vault_sources', { vaultId, paths }),
   createVaultSource: (vaultId: string, path: string, source: string) =>
-    invoke<NativeVaultCreated>('create_vault_source', {
+    invoke<NativeVaultCreateOutcome>('create_vault_source', {
       vaultId,
       path,
       source,
