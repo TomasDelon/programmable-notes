@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import {
   act,
   fireEvent,
@@ -759,3 +760,252 @@ it.each(['cancelled', 'newer focus'] as const)(
     if (outcome === 'newer focus') expect(search).toHaveFocus();
   },
 );
+
+it('shows pending then failed discovery without claiming no retained versions, and retries explicitly', async () => {
+  let fail!: (reason: Error) => void;
+  const list = vi
+    .fn<NonNullable<NativeProductServices['recovery']>['list']>()
+    .mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          fail = reject;
+        }),
+    )
+    .mockResolvedValue({ versions: [], warning: false });
+  const h = fixture({ recovery: { list, read: async () => original } });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  const trigger = screen.getByRole('button', { name: 'Recover a copy' });
+  trigger.focus();
+  fireEvent.click(trigger);
+  expect(screen.getByText('Loading recovery versions…')).toBeInTheDocument();
+  expect(screen.queryByText('No retained versions are available.')).toBeNull();
+  await waitFor(() => expect(list).toHaveBeenCalledOnce());
+  await act(async () => {
+    fail(Error('Recovery discovery unavailable.'));
+  });
+  expect(
+    screen.getByText('Recovery versions could not be refreshed.'),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('No retained versions are available.')).toBeNull();
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'The operation could not finish.',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Retry discovery' }));
+  await screen.findByText('No retained versions are available.');
+  expect(list).toHaveBeenCalledTimes(2);
+});
+
+it('retains cached recovery options on a failed refresh and retries without discarding selection', async () => {
+  const list = vi
+    .fn<NonNullable<NativeProductServices['recovery']>['list']>()
+    .mockResolvedValueOnce({ versions: [retainedVersion], warning: false })
+    .mockRejectedValueOnce(Error('Refresh unavailable.'))
+    .mockResolvedValue({ versions: [retainedVersion], warning: false });
+  const h = fixture({ recovery: { list, read: async () => original } });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  fireEvent.change(screen.getByLabelText('Recovery version'), {
+    target: { value: retainedVersion.file },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh versions' }));
+  await screen.findByText('Recovery versions could not be refreshed.');
+  expect(
+    screen.getByRole('option', { name: /original.md/ }),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText('Recovery version')).toHaveValue(
+    retainedVersion.file,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Retry discovery' }));
+  await waitFor(() =>
+    expect(
+      screen.queryByText('Recovery versions could not be refreshed.'),
+    ).toBeNull(),
+  );
+  expect(screen.getByLabelText('Recovery version')).toHaveValue(
+    retainedVersion.file,
+  );
+  expect(list).toHaveBeenCalledTimes(3);
+});
+
+it('focuses an enabled modal control while initial recovery discovery is pending', async () => {
+  let finish!: (catalog: {
+    versions: (typeof retainedVersion)[];
+    warning: boolean;
+  }) => void;
+  const h = fixture({
+    recovery: {
+      list: () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+      read: async () => original,
+    },
+  });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  const trigger = screen.getByRole('button', { name: 'Recover a copy' });
+  trigger.focus();
+  fireEvent.click(trigger);
+  const close = screen.getByRole('button', { name: 'Close Recover a copy' });
+  expect(close).toHaveFocus();
+  await waitFor(() => expect(typeof finish).toBe('function'));
+  await act(async () => {
+    finish({ versions: [], warning: false });
+  });
+});
+
+it('can explicitly create a cached recovered copy while discovery remains failed', async () => {
+  const list = vi
+    .fn<NonNullable<NativeProductServices['recovery']>['list']>()
+    .mockResolvedValueOnce({ versions: [retainedVersion], warning: false })
+    .mockRejectedValueOnce(Error('Refresh unavailable.'));
+  const h = fixture({ recovery: { list, read: async () => original } });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  fireEvent.change(screen.getByLabelText('Recovery version'), {
+    target: { value: retainedVersion.file },
+  });
+  fireEvent.change(screen.getByLabelText('Recovered copy filename'), {
+    target: { value: 'cached-copy.md' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh versions' }));
+  await screen.findByText('Recovery versions could not be refreshed.');
+  expect(
+    screen.getByRole('button', { name: 'Create recovered copy' }),
+  ).toBeEnabled();
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Create recovered copy' }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: 'Recover a copy' })).toBeNull(),
+  );
+  const selected = h.application.snapshot().selectedSessionId!;
+  expect(h.application.loadedDocument(selected).logicalPath).toBe(
+    'cached-copy.md',
+  );
+  expect(h.application.session(selected).witness.source).toBe(original);
+  expect(list).toHaveBeenCalledTimes(2);
+});
+
+it.each(['resolve', 'reject'] as const)(
+  'ignores an old discovery %s after replacement by a recovery-capable application',
+  async (outcome) => {
+    let resolve!: (catalog: {
+      versions: (typeof retainedVersion)[];
+      warning: boolean;
+    }) => void;
+    let reject!: (reason: Error) => void;
+    const list = vi.fn(
+      () =>
+        new Promise<{ versions: (typeof retainedVersion)[]; warning: boolean }>(
+          (accept, refuse) => {
+            resolve = accept;
+            reject = refuse;
+          },
+        ),
+    );
+    const h = fixture({ recovery: { list, read: async () => original } });
+    await act(async () => {
+      await h.application.chooseVault();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+    await waitFor(() => expect(list).toHaveBeenCalledOnce());
+    const nextVersion = {
+      ...retainedVersion,
+      file: 'next-version',
+      metadata: { ...retainedVersion.metadata, name: 'next.md' },
+    };
+    const next = fixture({
+      recovery: {
+        list: async () => ({ versions: [nextVersion], warning: false }),
+        read: async () => 'next',
+      },
+    });
+    next.unmount();
+    h.rerender(
+      <NotificationProvider>
+        <ProductRoot application={next.application} />
+      </NotificationProvider>,
+    );
+    await screen.findByRole('option', { name: /next.md/ });
+    await act(async () => {
+      if (outcome === 'resolve')
+        resolve({ versions: [retainedVersion], warning: true });
+      else reject(Error('Old discovery failed.'));
+    });
+    expect(screen.getByRole('option', { name: /next.md/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /original.md/ })).toBeNull();
+    expect(
+      screen.queryByText('Recovery versions could not be refreshed.'),
+    ).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  },
+);
+
+it('completes recovery discovery after strict effect replay without a false failure or stuck loading state', async () => {
+  const list = vi
+    .fn<NonNullable<NativeProductServices['recovery']>['list']>()
+    .mockResolvedValue({ versions: [retainedVersion], warning: false });
+  const h = fixture({ recovery: { list, read: async () => original } });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  h.rerender(
+    <StrictMode>
+      <NotificationProvider>
+        <ProductRoot application={h.application} />
+      </NotificationProvider>
+    </StrictMode>,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  await waitFor(() =>
+    expect(screen.queryByText('Loading recovery versions…')).toBeNull(),
+  );
+  expect(
+    screen.queryByText('Recovery versions could not be refreshed.'),
+  ).toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+it('does not keep modal shortcuts blocked after replacement removes recovery support', async () => {
+  const h = fixture({
+    recovery: {
+      list: async () => ({ versions: [retainedVersion], warning: false }),
+      read: async () => original,
+    },
+  });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  const next = fixture();
+  next.unmount();
+  h.rerender(
+    <NotificationProvider>
+      <ProductRoot application={next.application} />
+    </NotificationProvider>,
+  );
+  expect(screen.queryByRole('dialog', { name: 'Recover a copy' })).toBeNull();
+  fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+  expect(
+    screen.getByRole('dialog', { name: 'Command palette' }),
+  ).toBeInTheDocument();
+});

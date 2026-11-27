@@ -24,8 +24,12 @@ export function ProductDialog({
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const first =
-      panel.current?.querySelector<HTMLElement>('[data-autofocus]') ??
-      panel.current?.querySelector<HTMLElement>('input, button');
+      panel.current?.querySelector<HTMLElement>(
+        '[data-autofocus]:not(:disabled)',
+      ) ??
+      panel.current?.querySelector<HTMLElement>(
+        'input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)',
+      );
     first?.focus();
     const keydown = (event: KeyboardEvent) => {
       // A native top-layer dialog owns its focus trap and Escape handling.

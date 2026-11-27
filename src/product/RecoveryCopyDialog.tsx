@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type {
   ProductApplication,
   ProductRecoveryState,
@@ -28,22 +28,61 @@ export function RecoveryCopyDialog({
 }) {
   const [file, setFile] = useState(recovery.attempt?.version.file ?? '');
   const [path, setPath] = useState(recovery.attempt?.path ?? '');
+  const [discoveryState, setDiscovery] = useState<{
+    application: ProductApplication;
+    status: 'pending' | 'ready' | 'failed';
+  }>({ application, status: 'pending' });
+  const discovery =
+    discoveryState.application === application
+      ? discoveryState.status
+      : 'pending';
   const lifetime = useRef<AbortController | null>(null);
+  const discoveryFlight = useRef<object | null>(null);
   const flight = useRef(false);
   useLayoutEffect(() => {
     const controller = new AbortController();
     lifetime.current = controller;
-    if (!application.snapshot().recovery?.operation)
-      void application.refreshRecovery?.(controller.signal).catch((reason) => {
-        if (!controller.signal.aborted) report(reason);
-      });
+    discoveryFlight.current = null;
     return () => controller.abort();
-  }, [application, report]);
+  }, [application]);
+  useEffect(() => {
+    const controller = lifetime.current;
+    if (
+      !controller ||
+      controller.signal.aborted ||
+      discovery !== 'pending' ||
+      recovery.operation ||
+      discoveryFlight.current
+    )
+      return;
+    const request = {};
+    discoveryFlight.current = request;
+    // Start after synchronous effect replay has settled; retired lifetimes
+    // must not reserve the application's single recovery operation.
+    void Promise.resolve()
+      .then(async () => {
+        if (controller.signal.aborted) return;
+        await application.refreshRecovery?.(controller.signal);
+        if (!controller.signal.aborted)
+          setDiscovery({ application, status: 'ready' });
+      })
+      .catch((reason) => {
+        if (!controller.signal.aborted) {
+          setDiscovery({ application, status: 'failed' });
+          report(reason);
+        }
+      })
+      .finally(() => {
+        if (discoveryFlight.current === request) discoveryFlight.current = null;
+      });
+  }, [application, discovery, recovery.operation, report]);
   const close = () => {
     lifetime.current?.abort();
     onClose();
   };
   const uncertain = recovery.attempt?.uncertain;
+  const pending = discovery === 'pending' || recovery.operation === 'list';
+  const busy = pending || !!recovery.operation;
   return (
     <ProductDialog
       title="Recover a copy"
@@ -60,6 +99,10 @@ export function RecoveryCopyDialog({
             Some recovery versions could not be read, or storage capacity was
             exceeded. Available versions are listed below.
           </p>
+        )}
+        {pending && <p role="status">Loading recovery versions…</p>}
+        {discovery === 'failed' && (
+          <p role="status">Recovery versions could not be refreshed.</p>
         )}
         <form
           onSubmit={(event) => {
@@ -97,7 +140,7 @@ export function RecoveryCopyDialog({
               data-autofocus
               aria-label="Recovery version"
               value={file}
-              disabled={!!recovery.operation || uncertain}
+              disabled={busy || uncertain}
               onChange={(event) => setFile(event.target.value)}
             >
               <option value="">Choose a version</option>
@@ -111,26 +154,36 @@ export function RecoveryCopyDialog({
               ))}
             </select>
           </label>
-          {!recovery.operation && !recovery.versions.length && (
-            <p>No retained versions are available.</p>
-          )}
+          {discovery === 'ready' &&
+            !recovery.operation &&
+            !recovery.versions.length && (
+              <p>No retained versions are available.</p>
+            )}
           <label>
             New vault-relative filename
             <input
               aria-label="Recovered copy filename"
               value={path}
-              disabled={!!recovery.operation || uncertain}
+              disabled={busy || uncertain}
               onChange={(event) => setPath(event.target.value)}
             />
           </label>
           <div className="web-form-actions">
+            <button
+              type="button"
+              className="web-button"
+              disabled={busy}
+              onClick={() => setDiscovery({ application, status: 'pending' })}
+            >
+              {discovery === 'failed' ? 'Retry discovery' : 'Refresh versions'}
+            </button>
             <button
               className="web-button"
               type="submit"
               disabled={
                 !file ||
                 !path ||
-                !!recovery.operation ||
+                busy ||
                 uncertain ||
                 !application.snapshot().vaultLabel
               }

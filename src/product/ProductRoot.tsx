@@ -312,6 +312,9 @@ export function ProductRoot({
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.repeat) return;
+      // Recovery's modal controls own keyboard input, including native undo.
+      // Do not dispatch background document commands or open another overlay.
+      if (recoveryOpen && snapshot.recovery) return;
       if (
         (event.ctrlKey || event.metaKey) &&
         event.key.toLowerCase() === 'k' &&

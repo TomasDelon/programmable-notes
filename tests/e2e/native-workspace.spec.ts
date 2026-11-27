@@ -12,6 +12,8 @@ type NativeFixture = {
   opens: { id: string; path: string }[];
   closed: string[];
   holdRecoveryRead?: boolean;
+  holdRecoveryList?: boolean;
+  failRecoveryList?: boolean;
 };
 
 async function nativeEntry(page: Page) {
@@ -49,6 +51,7 @@ async function nativeEntry(page: Page) {
         isTauri: boolean;
         __nativeFixture: NativeFixture;
         __releaseRecovery?: () => void;
+        __releaseRecoveryList?: () => void;
         __TAURI_INTERNALS__: {
           invoke(
             command: string,
@@ -242,6 +245,12 @@ async function nativeEntry(page: Page) {
             };
             if (args.action === 'list') {
               keys(args, ['action']);
+              if (fixture.holdRecoveryList)
+                await new Promise<void>((resolve) => {
+                  host.__releaseRecoveryList = resolve;
+                });
+              if (fixture.failRecoveryList)
+                throw Error('Synthetic recovery discovery unavailable.');
               return {
                 snapshots: [null, retained],
                 errors: [
@@ -788,4 +797,145 @@ test('closing recovery during a held native read creates zero files', async ({
         ).length,
     ),
   ).toBe(0);
+});
+
+test('recovery modal owns shortcuts while filename native undo and the closed-modal palette still work', async ({
+  page,
+}) => {
+  await nativeEntry(page);
+  await openNote(page);
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('Modal history witness.');
+  const revised = original + 'Modal history witness.';
+  await saved(page, revised);
+  await page
+    .getByRole('button', { name: 'Recover a copy', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Recover a copy' });
+  const filename = dialog.getByLabel('Recovered copy filename');
+  await expect(filename).toBeEnabled();
+  await filename.fill('copy.mdx');
+  await filename.press('End');
+  await page.keyboard.type('x');
+  await page.keyboard.press('Control+z');
+  await expect(filename).toHaveValue('copy.mdx');
+  await page.keyboard.press('Control+k');
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toBeHidden();
+  await page.keyboard.press('Control+e');
+  await expect(page.locator('[data-editor-mode]')).toHaveAttribute(
+    'data-editor-mode',
+    'source',
+  );
+  // Even a newer background control must not route canonical history while modal.
+  await page
+    .getByRole('button', { name: 'Open right panel', exact: true })
+    .focus();
+  await page.keyboard.press('Control+z');
+  expect((await fixture(page)).files['math/note.mdx']).toBe(revised);
+  await dialog.getByRole('button', { name: 'Close Recover a copy' }).click();
+  await page.keyboard.press('Control+k');
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toBeVisible();
+  await page.keyboard.press('Control+k');
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toBeHidden();
+  await page
+    .getByRole('button', { name: 'Open right panel', exact: true })
+    .focus();
+  await page.keyboard.press('Control+z');
+  await saved(page, original);
+});
+
+test('recovery discovery shows pending and failure, preserves cached options, and retries explicitly', async ({
+  page,
+}, testInfo) => {
+  await nativeEntry(page);
+  await page
+    .getByRole('button', { name: 'Choose local vault' })
+    .first()
+    .click();
+  await page.evaluate(() => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.holdRecoveryList = true;
+  });
+  await page
+    .getByRole('button', { name: 'Recover a copy', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Recover a copy' });
+  await expect(dialog.getByText('Loading recovery versions…')).toBeVisible();
+  await expect(
+    dialog.getByText('No retained versions are available.'),
+  ).toBeHidden();
+  await expect(
+    dialog.getByRole('button', { name: 'Close Recover a copy' }),
+  ).toBeFocused();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          typeof (window as unknown as { __releaseRecoveryList?: () => void })
+            .__releaseRecoveryList,
+      ),
+    )
+    .toBe('function');
+  await page.evaluate(() => {
+    const host = window as unknown as {
+      __nativeFixture: NativeFixture;
+      __releaseRecoveryList?: () => void;
+    };
+    host.__nativeFixture.holdRecoveryList = false;
+    host.__releaseRecoveryList?.();
+  });
+  const version = dialog.getByLabel('Recovery version');
+  await expect(version).toBeEnabled();
+  await version.selectOption({ index: 1 });
+  const selected = await version.inputValue();
+  await page.evaluate(() => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.failRecoveryList = true;
+  });
+  await dialog.getByRole('button', { name: 'Refresh versions' }).click();
+  await expect(
+    dialog.getByText('Recovery versions could not be refreshed.'),
+  ).toBeVisible();
+  await expect(
+    dialog.getByText('No retained versions are available.'),
+  ).toBeHidden();
+  await expect(version).toHaveValue(selected);
+  await expect(page.getByRole('alert')).toContainText(
+    'The operation could not finish.',
+  );
+  await dialog.screenshot({
+    path: testInfo.outputPath('native-recovery-discovery-failure.png'),
+    animations: 'disabled',
+  });
+  await page.evaluate(() => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.failRecoveryList = false;
+  });
+  await dialog.getByRole('button', { name: 'Retry discovery' }).click();
+  await expect(
+    dialog.getByText('Recovery versions could not be refreshed.'),
+  ).toBeHidden();
+  await expect(version).toBeEnabled();
+  await expect(version).toHaveValue(selected);
+  const commands = (await fixture(page)).commands;
+  expect(
+    commands.filter(
+      ({ command, args }) =>
+        command === 'recovery_draft' && args.action === 'list',
+    ),
+  ).toHaveLength(3);
+  expect(
+    commands.filter(({ command }) => command === 'create_vault_source'),
+  ).toHaveLength(0);
 });
