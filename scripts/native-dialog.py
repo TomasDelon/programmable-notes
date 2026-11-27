@@ -126,19 +126,25 @@ def focused_entry_text():
 def click(name):
     global accept_state
     accept_state = 'not_found'
+    dialogs = []
+    # Match the same owned top-level topology as focused_entry_text. Establish
+    # uniqueness across every matching application before touching any action.
     for app in pyatspi.Registry.getDesktop(0):
-        try:
-            if app.get_process_id() != pid:
-                continue
-            button = find(app, name)
-            if button is not None:
-                accept_state = 'action_error'
-                acknowledged = button.queryAction().doAction(0)
-                accept_state = 'action_acknowledged' if acknowledged else 'action_rejected'
-                assert acknowledged
-                return True
-        except Exception:
-            continue
+        if app.get_process_id() == pid:
+            dialogs.extend(child for child in app if child.name == title)
+    assert len(dialogs) <= 1, 'Ambiguous native accessibility dialogs'
+    if not dialogs:
+        return False
+    try:
+        button = find(dialogs[0], name)
+        if button is not None:
+            accept_state = 'action_error'
+            acknowledged = button.queryAction().doAction(0)
+            accept_state = 'action_acknowledged' if acknowledged else 'action_rejected'
+            assert acknowledged
+            return True
+    except Exception:
+        pass
     return False
 
 deadline = time.monotonic() + 30

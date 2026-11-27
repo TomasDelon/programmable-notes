@@ -146,6 +146,7 @@ from types import SimpleNamespace
 definition = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'click')
 class App:
     def get_process_id(self): return 7
+    def __iter__(self): return iter([SimpleNamespace(name='PRIVATE_TITLE')])
 class Button:
     def __init__(self, result): self.result = result; self.calls = 0
     def queryAction(self): return self
@@ -156,7 +157,7 @@ class Button:
         return self.result
 for result, expected in ((None, 'not_found'), (False, 'action_rejected'), (True, 'action_acknowledged'), (RuntimeError('PRIVATE_PATH_TOKEN'), 'action_error')):
     button = None if result is None else Button(result)
-    env = {'pid': 7, 'accept_state': 'not_attempted', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: [App()])), 'find': lambda app, name: button}
+    env = {'pid': 7, 'title': 'PRIVATE_TITLE', 'accept_state': 'not_attempted', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: [App()])), 'find': lambda app, name: button}
     exec(compile(ast.Module(body=[definition], type_ignores=[]), '<actual-click>', 'exec'), env)
     output = io.StringIO()
     with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
@@ -170,6 +171,53 @@ loops = [node for node in ast.walk(tree) if isinstance(node, ast.While) and any(
 assert len(loops) == 1
 ack = next(node for node in loops[0].body if isinstance(node, ast.If) and ast.unparse(node.test) == 'click(accept)')
 assert len(ack.body) == 1 and isinstance(ack.body[0], ast.Break)
+print('PASS')
+`);
+});
+
+test('actual click targets only the unique owned dialog and refuses ambiguity before any action', () => {
+  run(`
+from types import SimpleNamespace
+definition = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'click')
+class Button:
+    def __init__(self): self.calls = 0
+    def queryAction(self): return self
+    def doAction(self, index): self.calls += 1; return True
+class Window:
+    def __init__(self, name): self.name = name; self.button = Button()
+class App:
+    def __init__(self, pid, children): self.pid = pid; self.children = children
+    def get_process_id(self): return self.pid
+    def __iter__(self): return iter(self.children)
+owned = Window('Choose local vault')
+wrong = Window('PRIVATE_OTHER_WINDOW')
+duplicate = Window('Choose local vault')
+cases = (
+    ([App(7, [wrong, owned])], True, False, [owned]),
+    ([App(7, [wrong])], False, False, []),
+    ([App(8, [owned])], False, False, []),
+    ([App(7, [owned, duplicate])], False, True, []),
+    ([App(7, [owned]), App(7, [duplicate])], False, True, []),
+)
+for apps, expected, ambiguous, visited in cases:
+    for window in (owned, wrong, duplicate): window.button.calls = 0
+    seen = []
+    def find(node, name):
+        assert name == 'Open'
+        seen.append(node)
+        return node.button
+    env = {'pid': 7, 'title': 'Choose local vault', 'accept_state': 'not_attempted', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: apps)), 'find': find}
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), '<actual-scoped-click>', 'exec'), env)
+    failed = False
+    try: result = env['click']('Open')
+    except AssertionError as error:
+        failed = True
+        assert str(error) == 'Ambiguous native accessibility dialogs'
+    assert failed is ambiguous
+    if not ambiguous: assert result is expected
+    assert seen == visited
+    assert owned.button.calls == int(expected)
+    assert wrong.button.calls == duplicate.button.calls == 0
 print('PASS')
 `);
 });
