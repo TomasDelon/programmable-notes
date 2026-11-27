@@ -1,0 +1,36 @@
+import { useEffect, useState } from 'react';
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  const [field, setField] = useState('');
+  const [focus, setFocus] = useState('');
+  useEffect(() => {
+    globalThis.__pnFixtureReport({ ready: true, count, field, focus });
+  }, [count, field, focus]);
+  return (
+    <div id="fixture-row">
+      <button
+        id="counter"
+        onClick={() => setCount((value) => Math.min(value + 1, 999))}
+        onFocus={() => setFocus('counter')}
+        onBlur={() => setFocus('')}
+      >
+        Count: {count}
+      </button>
+      <label htmlFor="field">
+        Field
+        <input
+          id="field"
+          value={field}
+          maxLength={16}
+          autoComplete="off"
+          onChange={(event) => setField(event.target.value.slice(0, 16))}
+          onFocus={() => setFocus('field')}
+          onBlur={() => setFocus('')}
+        />
+      </label>
+    </div>
+  );
+}
+
+<Counter />

@@ -20,6 +20,30 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Fixed React fixture and acknowledged VM lifecycle — 27 November 2026
+
+The fixed MDX/React counter/input fixture compiles without host evaluation and
+returns public artifact/hash metadata. Its sandboxed browser control passed real
+Count 0→2 clicks, explicit field focus and ordinary keyboard typing without
+locator focus repair. Bounded document-title data is diagnostic only and cannot
+authorize source/native operations. No native host or payload driver is activated.
+[Evidence](security-evidence/2026-11-27-native-inline-fixture/README.md).
+
+Required CI for **d8119a7** passed both jobs. Its actual OS run progressed past
+SSH, then-current facts and wrong-pin/key refusal brackets, but **failed normal
+shutdown**. Writing HMP bytes did not acknowledge command acceptance. The fixture
+now uses bounded fixed QMP greeting/capability/powerdown acknowledgements; normal
+guard exit 0 within 60 seconds remains mandatory. Admission additionally requires
+actual no-container detection and active logind through fixed bounded commands.
+No image/isolation/SSH/resource policy is relaxed. The new controls still require
+an actual guest run. [VM evidence](security-evidence/2026-11-27-vm-provisioning/README.md).
+
+The complete local check exited **0**: **793 unit, 114 tooling / zero skips,
+153 Chromium, 9 Pages and 4 inactive-cloud browser tests**, plus formatting,
+lint, strict types and build. After a buffered-reply test precision correction,
+tooling passed again **114 tests / zero skips**. Source reviews found no remaining
+blocker; actual OS admission and native acceptance are still pending.
+
 ## Whole-document runtime seam — 27 November 2026
 
 Both inline and whole-document rendering now have explicit trusted adapters.
