@@ -22,10 +22,17 @@ export function validateRequest(expected) {
       !/[\r\n\0]/.test(expected.branch),
   );
 }
-export function validateRun(run, jobs, expected) {
+export function validateRun(run, jobs, expected, workflow) {
   validateRequest(expected);
+  assert.ok(Number.isSafeInteger(workflow.id) && workflow.id > 0);
+  assert.equal(workflow.name, 'CI');
+  assert.equal(workflow.path, '.github/workflows/ci.yml');
+  assert.equal(workflow.state, 'active');
   assert.equal(String(run.id), expected.runId);
-  assert.equal(run.name, 'CI');
+  // Actions run.name is the configurable run-name display title. Bind to the
+  // canonical workflow fetched from this repository's fixed ci.yml endpoint.
+  assert.ok(Number.isSafeInteger(run.workflow_id));
+  assert.equal(run.workflow_id, workflow.id);
   assert.equal(run.path, '.github/workflows/ci.yml');
   assert.equal(run.head_sha, expected.headSha);
   assert.equal(run.head_branch, expected.branch);
@@ -113,9 +120,12 @@ async function main() {
       assert.equal(response.ok, true, 'Actions metadata unavailable');
       return response.json();
     };
+    const workflow = await request(
+      `https://api.github.com/repos/${expected.repository}/actions/workflows/ci.yml`,
+    );
     const run = await request(endpoint);
     const jobs = await request(`${endpoint}/jobs?filter=latest&per_page=100`);
-    validateRun(run, jobs, expected);
+    validateRun(run, jobs, expected, workflow);
     console.log('NATIVE_SHARED_REQUIRED_CI_VERIFIED');
     return;
   }

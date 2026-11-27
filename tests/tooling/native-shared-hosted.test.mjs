@@ -20,7 +20,8 @@ const expected = {
 };
 const run = () => ({
   id: 1234,
-  name: 'CI',
+  name: 'CI · event=pull_request · ref=refs/pull/9/merge · group=ci-CI-refs/pull/9/merge-build',
+  workflow_id: 421740247,
   path: '.github/workflows/ci.yml',
   head_sha: expected.headSha,
   head_branch: expected.branch,
@@ -28,6 +29,12 @@ const run = () => ({
   conclusion: 'success',
   repository: { full_name: expected.repository },
   head_repository: { full_name: expected.repository },
+});
+const workflowIdentity = () => ({
+  id: 421740247,
+  name: 'CI',
+  path: '.github/workflows/ci.yml',
+  state: 'active',
 });
 const jobs = () => ({
   total_count: 2,
@@ -39,7 +46,7 @@ const jobs = () => ({
 });
 test('run reuse requires a canonical numeric ID and exact successful required CI head/repository/branch', () => {
   validateRequest(expected);
-  validateRun(run(), jobs(), expected);
+  validateRun(run(), jobs(), expected, workflowIdentity());
   for (const runId of [
     '0',
     '01',
@@ -57,11 +64,19 @@ test('run reuse requires a canonical numeric ID and exact successful required CI
     { status: 'in_progress' },
     { path: 'other.yml' },
     { id: 456 },
+    { workflow_id: 421740248 },
+    { workflow_id: '421740247' },
+    { workflow_id: undefined },
     { repository: { full_name: 'other/repo' } },
     { head_repository: { full_name: 'fork/repo' } },
   ])
     assert.throws(() =>
-      validateRun({ ...run(), ...changed }, jobs(), expected),
+      validateRun(
+        { ...run(), ...changed },
+        jobs(),
+        expected,
+        workflowIdentity(),
+      ),
     );
   for (const changed of [
     { total_count: 101 },
@@ -69,8 +84,121 @@ test('run reuse requires a canonical numeric ID and exact successful required CI
     { jobs: jobs().jobs.map((job) => ({ ...job, conclusion: 'skipped' })) },
   ])
     assert.throws(() =>
-      validateRun(run(), { ...jobs(), ...changed }, expected),
+      validateRun(
+        run(),
+        { ...jobs(), ...changed },
+        expected,
+        workflowIdentity(),
+      ),
     );
+});
+test('canonical workflow metadata rejects wrong identities, paths, names and inactive workflows', () => {
+  validateRun(
+    { ...run(), name: 'Custom display title' },
+    jobs(),
+    expected,
+    workflowIdentity(),
+  );
+  for (const changed of [
+    { id: 421740248 },
+    { id: '421740247' },
+    { id: 0 },
+    { id: Number.MAX_SAFE_INTEGER + 1 },
+    { path: 'other.yml' },
+    { name: 'Other' },
+    { state: 'disabled_manually' },
+  ]) {
+    assert.throws(() =>
+      validateRun(run(), jobs(), expected, {
+        ...workflowIdentity(),
+        ...changed,
+      }),
+    );
+  }
+  assert.throws(() => validateRun(run(), jobs(), expected));
+});
+test('recorded public Actions API run with a dynamic PR title binds to its canonical CI workflow', () => {
+  // Public responses read on 27 November after the hosted provenance refusal;
+  // these fields are API provenance, without credentials or runtime evidence.
+  const recordedRun = {
+    ...run(),
+    id: 46020089543,
+    head_sha: '8ee2d60522e686d14ed86a4bc8f5dabc121dfef2',
+    head_branch: 'fix/preview-markdown-input',
+    repository: { full_name: 'TomasDelon/programmable-notes' },
+    head_repository: { full_name: 'TomasDelon/programmable-notes' },
+  };
+  const recordedJobs = {
+    total_count: 7,
+    jobs: [
+      ...jobs().jobs,
+      ...[
+        'deployment-check',
+        'native-preflight',
+        'preview-input-regression',
+        'native-shared-editor',
+        'native-vm',
+      ].map((name) => ({ name, status: 'completed', conclusion: 'skipped' })),
+    ],
+  };
+  const recordedExpected = {
+    runId: String(recordedRun.id),
+    repository: recordedRun.repository.full_name,
+    headSha: recordedRun.head_sha,
+    branch: recordedRun.head_branch,
+  };
+  validateRun(recordedRun, recordedJobs, recordedExpected, workflowIdentity());
+  assert.throws(() =>
+    validateRun(
+      { ...recordedRun, workflow_id: 9 },
+      recordedJobs,
+      recordedExpected,
+      workflowIdentity(),
+    ),
+  );
+  assert.throws(() =>
+    validateRun(
+      recordedRun,
+      { total_count: 1, jobs: [recordedJobs.jobs[0]] },
+      recordedExpected,
+      workflowIdentity(),
+    ),
+  );
+  // Replay the public API records through the real CLI, checking its fixed
+  // workflow endpoint as well as the run/jobs endpoints without network/token use.
+  const endpoint = `https://api.github.com/repos/${recordedExpected.repository}/actions`;
+  const responses = [
+    [`${endpoint}/workflows/ci.yml`, workflowIdentity()],
+    [`${endpoint}/runs/${recordedRun.id}`, recordedRun],
+    [
+      `${endpoint}/runs/${recordedRun.id}/jobs?filter=latest&per_page=100`,
+      recordedJobs,
+    ],
+  ];
+  const preload = `import assert from 'node:assert/strict'; const responses=new Map(${JSON.stringify(responses)}); globalThis.fetch=async url=>{assert.ok(responses.has(url),'Unexpected Actions endpoint'); return Response.json(responses.get(url));};`;
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      `data:text/javascript,${encodeURIComponent(preload)}`,
+      'scripts/verify-native-shared-artifact.mjs',
+      '--run',
+    ],
+    {
+      env: {
+        ...process.env,
+        GH_TOKEN: 'synthetic-not-a-secret',
+        PN_NATIVE_SHARED_RUN: recordedExpected.runId,
+        GITHUB_REPOSITORY: recordedExpected.repository,
+        GITHUB_SHA: recordedExpected.headSha,
+        GITHUB_REF_NAME: recordedExpected.branch,
+      },
+      encoding: 'utf8',
+      timeout: 5000,
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, 'NATIVE_SHARED_REQUIRED_CI_VERIFIED\n');
 });
 async function artifact(t, overrides = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'pn-shared-artifact-'));

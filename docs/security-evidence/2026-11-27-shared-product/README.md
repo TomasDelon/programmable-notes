@@ -190,3 +190,53 @@ sudo and receives a clean environment, authenticated X display and existing WebK
 sandbox. Fixed receipts/screenshots are collected; missing evidence, forced app
 cleanup or residual app/WebKit actors fail. No private provisioner, credential
 share, paid runner, release or isolation bypass is introduced.
+
+## First actual hosted-editor dispatch: pre-install refusal
+
+Candidate CI [run46020089543](https://github.com/TomasDelon/programmable-notes/actions/runs/46020089543)
+on8ee2d60 passed both required jobs, including the new entry browser regressions
+and optimized production package. The subsequent optional hosted attempt
+[run46021513886](https://github.com/TomasDelon/programmable-notes/actions/runs/46021513886)
+failed its mandatory-CI provenance check before downloading/installing the package.
+No desktop account, application process, real chooser or native file journey ran.
+There was no witness artifact because execution stopped before observation.
+
+The verifier's test fixture assumed Actions run.name was the static workflow name.
+The actual public API returns the dynamic run title there. Read-only real API
+responses reproduced that exact assertion failure. The correction authenticates
+the run's canonical workflow_id against the fixed CI workflow API record, retaining
+exact repository, branch, head, path, successful required jobs, source tree, package
+hash and production inspection. It does not accept a title prefix or loosen
+package provenance. Runtime acceptance remains pending a corrected dispatch.
+
+## Native React keyboard diagnostic: next discriminating probe
+
+The previous sealed Debian run45964414560 failed inside the trusted subprocess
+pipe wait, before React text acknowledgement. Focus acknowledgement had passed.
+Readiness can use44 seconds while pointer/focus/typing share a49-second deadline,
+and each command is also capped at2 seconds. The retained receipt cannot tell
+whether the typing command had its full budget. This is an unproven driver/startup
+hypothesis, not proof that native keyboard interaction works.
+
+The diagnostic adds one optional closed timing record for the fixed literal hello
+command: available milliseconds, limiting clock, elapsed time, timeout branch and
+helper outcome. Actual commands, minimum deadlines, cleanup and isolation remain
+unchanged. Elapsed time includes existing kill/reap cleanup. A returned helper
+never substitutes for the existing native text acknowledgement or case outcome.
+Reporter validation binds the record to the frozen observer hash and excludes raw
+arguments/output/exceptions. Old receipts without it remain valid.
+
+39 observer,17 sanitizer and23 driver tests passed, plus their three tooling
+wrappers and the complete150-case tooling suite at that diagnostic checkpoint.
+Independent review found no Important issue. No new guest/native probe has run.
+Next perform one reviewed sealed-fixture run: a truncated unit budget supports
+the headroom hypothesis; a full2-second pipe timeout directs investigation toward
+the X11/xdotool command. Neither result authorizes native React activation without
+the remaining interaction, expiry, containment and cleanup witnesses.
+
+After the workflow-ID correction and bounded diagnostics froze, the final
+`npm run check` exited0:973 unit,152 tooling with zero skips,153 Chromium,9 Pages
+and4 disposable local cloud cases, plus formatting/lint/types/build. Actual API
+responses for run46020089543/workflow421740247 reproduced the original failure
+and passed the corrected verifier unchanged. Independent review found no Important
+issue. The next hosted retry remains unexecuted at this checkpoint.

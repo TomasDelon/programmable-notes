@@ -40,7 +40,7 @@ the owning application/session and remounts the same source/history only after a
 proved cancellation and actual clean detachment. No source or history registry is
 replaced. The legacy unguarded composition still explicitly refuses whole-app close.
 
-The final entry integration check passed973 unit,150 tooling/zero skips,153 Chromium,
+The final entry integration check passed973 unit,152 tooling/zero skips,153 Chromium,
 9 Pages and4 local cloud cases, plus format/lint/types/build. Expanded actual
 Chromium input passed13 checkpoints, including composition refusal, cancellation
 with exact undo/redo and held-commit input retirement. Close transport and storage
