@@ -745,6 +745,28 @@ export function ProductRoot({
         <RecoveryCopyDialog
           application={application}
           recovery={snapshot.recovery}
+          shouldRestoreFocus={interaction.shouldRestoreDialogFocus}
+          onCreated={(before, path, initiator) => {
+            const after = application.snapshot();
+            const created = after.selectedSessionId;
+            if (
+              !mounted.current ||
+              latest.current.application !== application ||
+              before.vaultLabel !== after.vaultLabel ||
+              after.closing ||
+              !created ||
+              before.loadedDocuments.some(
+                (entry) => entry.sessionId === created,
+              ) ||
+              !after.loadedDocuments.some(
+                (entry) =>
+                  entry.sessionId === created && entry.logicalPath === path,
+              )
+            )
+              return;
+            interaction.focusCreatedDocument(created, initiator);
+            changePreferences({ ...preferences, mode: 'source' });
+          }}
           onClose={() => setRecoveryOpen(false)}
           report={report}
         />
@@ -759,6 +781,7 @@ export function ProductRoot({
           }}
         >
           <form
+            className="web-form"
             onSubmit={(event) => {
               event.preventDefault();
               if (!canLeave()) return;
@@ -801,9 +824,11 @@ export function ProductRoot({
                 onChange={(event) => setFilename(event.target.value)}
               />
             </label>
-            <button type="submit" className="web-button">
-              Create document
-            </button>
+            <div className="web-form-actions">
+              <button type="submit" className="web-button">
+                Create document
+              </button>
+            </div>
           </form>
         </ProductDialog>
       )}

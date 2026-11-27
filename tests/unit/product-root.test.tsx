@@ -582,6 +582,9 @@ it('recovery dialog creates a saved independent copy through the actual native p
   await waitFor(() =>
     expect(screen.queryByRole('dialog', { name: 'Recover a copy' })).toBeNull(),
   );
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: 'MDX source' })).toHaveFocus(),
+  );
   expect(create).toHaveBeenCalledExactlyOnceWith(
     'vault',
     'recovered.md',
@@ -686,3 +689,73 @@ it('reopening an uncertain recovery copy keeps its exact destination and version
   ).toBeDisabled();
   expect(create).toHaveBeenCalledOnce();
 });
+
+it.each(['cancelled', 'newer focus'] as const)(
+  'recovery creation preserves focus after %s while native creation is pending',
+  async (outcome) => {
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const h = fixture({
+      createVaultSource: async (_vault, path, source) => {
+        await held;
+        return {
+          status: 'acquired',
+          vaultId: 'vault',
+          document: {
+            id: 'delayed-copy-grant',
+            revision: 'disk-copy',
+            name: path,
+            logicalPath: path,
+            displayPath: path,
+            source,
+            durabilityWarning: false,
+          },
+        };
+      },
+      recovery: {
+        list: async () => ({ versions: [retainedVersion], warning: false }),
+        read: async () => original,
+      },
+    });
+    await act(async () => {
+      await h.application.chooseVault();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    const trigger = screen.getByRole('button', { name: 'Recover a copy' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    await screen.findByRole('option', { name: /original.md/ });
+    fireEvent.change(screen.getByLabelText('Recovery version'), {
+      target: { value: retainedVersion.file },
+    });
+    fireEvent.change(screen.getByLabelText('Recovered copy filename'), {
+      target: { value: 'pending-copy.md' },
+    });
+    const submit = screen.getByRole('button', {
+      name: 'Create recovered copy',
+    });
+    submit.focus();
+    fireEvent.click(submit);
+    await waitFor(() =>
+      expect(h.application.snapshot().operation).toBe('create'),
+    );
+    const search = screen.getByRole('textbox', { name: 'Search documents' });
+    if (outcome === 'newer focus') search.focus();
+    else
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Close Recover a copy' }),
+      );
+    await act(async () => {
+      finish();
+      await held;
+    });
+    await waitFor(() => expect(h.application.snapshot().operation).toBeNull());
+    expect(screen.queryByRole('dialog', { name: 'Recover a copy' })).toBeNull();
+    expect(
+      screen.getByRole('textbox', { name: 'MDX source' }),
+    ).not.toHaveFocus();
+    if (outcome === 'newer focus') expect(search).toHaveFocus();
+  },
+);

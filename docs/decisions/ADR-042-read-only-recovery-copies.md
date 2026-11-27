@@ -74,3 +74,12 @@ explicitly ignored worker/ptrace/tmpfs cases; Rust formatting passed. Targeted
 browser journeys use controlled native IPC, not GTK or actual native authority.
 Independent review found no remaining Important issue. Packaged native recovery
 and actual restart remain unexecuted; retain that distinction when delivering it.
+
+The operational dialogs reuse the existing shared form styles. Actual browser
+screenshots at desktop/tablet/mobile exposed and then verified correction of
+inline/clipped controls. A real immediate-typing probe also reproduced lost focus
+after successful restoration. The parent now reuses the existing guarded creation
+focus handoff, capturing the initiator before awaiting and validating the current
+application, newly selected session and destination before focusing. Cancellation
+and newer focused controls retain ownership. No new focus engine or document
+writer was introduced. These remain controlled-native-IPC browser observations.

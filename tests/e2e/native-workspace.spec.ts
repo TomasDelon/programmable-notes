@@ -648,7 +648,7 @@ test('shared native candidate keeps two document modes, autosave and navigation 
 
 test('native recovery explicitly creates a lossless new copy and preserves originals and versions', async ({
   page,
-}) => {
+}, testInfo) => {
   await nativeEntry(page);
   await page
     .getByRole('button', { name: 'Choose local vault' })
@@ -663,14 +663,58 @@ test('native recovery explicitly creates a lossless new copy and preserves origi
   );
   await dialog.getByLabel('Recovery version').selectOption({ index: 1 });
   await dialog.getByLabel('Recovered copy filename').fill('recovered.mdx');
+  for (const [name, width, height] of [
+    ['desktop', 1280, 720],
+    ['tablet', 820, 1180],
+    ['mobile', 390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect
+      .poll(() =>
+        dialog.evaluate((panel) => {
+          const select = panel.querySelector('select')!;
+          const input = panel.querySelector('input')!;
+          const button = panel.querySelector('button[type="submit"]')!;
+          const bounds = panel.getBoundingClientRect();
+          const controls = [select, input, button].map((control) =>
+            control.getBoundingClientRect(),
+          );
+          return (
+            controls.every(
+              (box) =>
+                box.left >= bounds.left + 16 &&
+                box.right <= bounds.right - 16 &&
+                box.bottom <= bounds.bottom - 16,
+            ) &&
+            input.closest('label')!.getBoundingClientRect().top >=
+              select.getBoundingClientRect().bottom + 8 &&
+            panel.scrollWidth <= panel.clientWidth
+          );
+        }),
+      )
+      .toBe(true);
+    await dialog.screenshot({
+      path: testInfo.outputPath(`native-recovery-dialog-${name}.png`),
+      animations: 'disabled',
+    });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
   await dialog.getByRole('button', { name: 'Create recovered copy' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeVisible();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('Recovered typing.');
+  await expect
+    .poll(async () => (await fixture(page)).files['recovered.mdx'])
+    .toBe(original + 'Recovered typing.');
   const result = await page.evaluate(
     () =>
       (window as unknown as { __nativeFixture: NativeFixture }).__nativeFixture,
   );
-  expect(result.files['recovered.mdx']).toBe(original);
+  expect(result.files['recovered.mdx']).toBe(original + 'Recovered typing.');
   expect(result.files['math/note.mdx']).toBe(original);
   expect(
     result.commands.filter(

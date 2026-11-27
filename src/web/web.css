@@ -3617,6 +3617,9 @@ body {
   color: var(--muted);
   font-size: 12px;
 }
+.web-form label + label {
+  margin-top: 16px;
+}
 .web-form input,
 .web-form select {
   width: 100%;
