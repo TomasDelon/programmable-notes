@@ -1,10 +1,17 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { createRef } from 'react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { createRef, useEffect, useState } from 'react';
 import { EditorView } from '@codemirror/view';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import ts from 'typescript';
 import { DocumentSurface } from '../../src/workspace/DocumentSurface';
+import { useDocumentSession } from '../../src/workspace/useDocumentSession';
 import {
   DocumentRuntime,
   type DocumentRuntimeSession,
@@ -192,50 +199,72 @@ async function nativeHost() {
   const commands = createRef<EditorCommands>();
   const histories: { current: EditorHistory } = { current: new Map() };
   const legacyChange = vi.fn();
-  const draw = () => {
-    const id = workspace.state().selectedSessionId!;
-    const state = workspace.controller.state(id);
+  function ObservedSurface() {
+    const [id, setId] = useState(workspace.state().selectedSessionId);
+    useEffect(() => {
+      const unsubscribe = workspace.subscribe((state) =>
+        setId(state.selectedSessionId),
+      );
+      setId(workspace.state().selectedSessionId);
+      return unsubscribe;
+    }, []);
+    const state = useDocumentSession(workspace.controller, id);
+    if (!state || !id) return null;
     const source = state.witness.source;
     return (
-      <DocumentRuntime
-        input={{
-          files: { [state.logicalPath]: source },
-          entry: state.logicalPath,
-          theme: 'light',
-          images: [],
-          enabled: true,
-        }}
-      >
-        {(runtime) => (
-          <DocumentSurface
-            documentId={id}
-            mode="preview"
-            fullDocument={false}
-            reactEnabled
-            runtime={runtime}
-            editor={{
-              source,
-              session: workspace.session(id),
-              documentKey: state.logicalPath,
-              commandsRef: commands,
-              histories,
-              onChange: legacyChange,
-              onPendingChange: (pending) =>
-                workspace.controller.setUnapplied(id, pending),
-              rendered: {
-                active: true,
-                files: { [state.logicalPath]: source },
-                entry: state.logicalPath,
-                theme: 'light',
-                images: [],
-                stopped: runtime.stopped,
-              },
-            }}
-          />
-        )}
-      </DocumentRuntime>
+      <>
+        <output data-testid="session-status">{state.autosave.status}</output>
+        <output data-testid="session-revision">
+          {state.witness.editorRevision}
+        </output>
+        <output data-testid="session-source">{source}</output>
+        <output data-testid="session-unapplied">
+          {String(state.unapplied)}
+        </output>
+        <output data-testid="session-retained">
+          {state.retainedFailures[0]?.source}
+        </output>
+        <DocumentRuntime
+          input={{
+            files: { [state.logicalPath]: source },
+            entry: state.logicalPath,
+            theme: 'light',
+            images: [],
+            enabled: true,
+          }}
+        >
+          {(runtime) => (
+            <DocumentSurface
+              documentId={id}
+              mode="preview"
+              fullDocument={false}
+              reactEnabled
+              runtime={runtime}
+              editor={{
+                source,
+                session: workspace.session(id),
+                documentKey: state.logicalPath,
+                commandsRef: commands,
+                histories,
+                onChange: legacyChange,
+                onPendingChange: (pending) =>
+                  workspace.controller.setUnapplied(id, pending),
+                rendered: {
+                  active: true,
+                  files: { [state.logicalPath]: source },
+                  entry: state.logicalPath,
+                  theme: 'light',
+                  images: [],
+                  stopped: runtime.stopped,
+                },
+              }}
+            />
+          )}
+        </DocumentRuntime>
+      </>
     );
-  };
+  }
+  const draw = () => <ObservedSurface />;
   return { workspace, a, b, commands, histories, legacyChange, save, draw };
 }
 
@@ -251,8 +280,7 @@ it('binds the same surface to native sessions: delayed writes stay with their or
   const retiredCommands = h.commands.current!;
   await Promise.resolve();
   expect(h.save).toHaveBeenCalledWith('grant-a.mdx', 'disk-0', accepted);
-  h.workspace.select(h.b);
-  ui.rerender(h.draw());
+  await act(async () => h.workspace.select(h.b));
   act(() => {
     expect(h.commands.current!.insertText('B edit')).toBe(true);
   });
@@ -260,20 +288,47 @@ it('binds the same surface to native sessions: delayed writes stay with their or
   act(() => {
     expect(retiredCommands.insertText('Stale A command')).toBe(false);
   });
-  pending.resolve({ revision: 'a-saved', durable: true });
-  await h.workspace.controller.flush();
+  await act(async () => {
+    pending.resolve({ revision: 'a-saved', durable: true });
+    await h.workspace.controller.flush();
+  });
   expect(h.workspace.session(h.b).witness.source).toBe(bAccepted);
-  h.workspace.select(h.a);
-  ui.rerender(h.draw());
+  await act(async () => h.workspace.select(h.a));
   act(() => h.commands.current!.undo());
   expect(h.workspace.session(h.a).witness.source).toBe(original);
   act(() => h.commands.current!.redo());
   expect(h.workspace.session(h.a).witness.source).toBe(accepted);
-  await h.workspace.controller.flush();
+  await act(() => h.workspace.controller.flush());
   expect(h.legacyChange).not.toHaveBeenCalled();
   expect(h.histories.current.has(h.a)).toBe(true);
   expect(h.histories.current.has('a.mdx')).toBe(false);
   expect(ui.container.querySelector('iframe')).toBeNull();
+});
+
+it('observes writing to saved and exact canonical bytes without another edit or manual rerender', async () => {
+  const h = await nativeHost();
+  const pending = deferred<{ revision: string; durable: boolean }>();
+  h.save.mockReturnValueOnce(pending.promise);
+  render(h.draw(), { wrapper: NotificationProvider });
+  act(() => {
+    expect(h.commands.current!.insertText('First')).toBe(true);
+    expect(h.commands.current!.insertText('Second')).toBe(true);
+  });
+  const witness = h.workspace.session(h.a).witness;
+  await waitFor(() =>
+    expect(screen.getByTestId('session-status')).toHaveTextContent('writing'),
+  );
+  expect(screen.getByTestId('session-revision')).toHaveTextContent(
+    String(witness.editorRevision),
+  );
+  expect(screen.getByTestId('session-source').textContent).toBe(witness.source);
+  await act(async () => {
+    pending.resolve({ revision: 'written', durable: true });
+    await h.workspace.controller.flush();
+  });
+  expect(screen.getByTestId('session-status')).toHaveTextContent('saved');
+  expect(h.workspace.session(h.a).witness).toEqual(witness);
+  expect(h.legacyChange).not.toHaveBeenCalled();
 });
 
 it('keeps unapplied native-session text selected and prevents normal close', async () => {
@@ -284,6 +339,9 @@ it('keeps unapplied native-session text selected and prevents normal close', asy
     target: { value: 'https://example.invalid/retained' },
   });
   expect(h.workspace.controller.state(h.a).unapplied).toBe(true);
+  await waitFor(() =>
+    expect(screen.getByTestId('session-unapplied')).toHaveTextContent('true'),
+  );
   expect(() => h.workspace.select(h.b)).toThrow();
   await expect(h.workspace.close(h.a)).rejects.toThrow();
   expect(h.workspace.state().selectedSessionId).toBe(h.a);
@@ -298,8 +356,10 @@ it('retains a failed native-session publication separately from accepted source 
   const ui = render(h.draw(), { wrapper: NotificationProvider });
   const session = h.workspace.session(h.a);
   const failed = '\uFEFFUnpublished attempt.\r\n';
-  session.retainFailure({ expected: session.witness, source: failed });
-  ui.rerender(h.draw());
+  await act(async () =>
+    session.retainFailure({ expected: session.witness, source: failed }),
+  );
+  expect(screen.getByTestId('session-retained').textContent).toBe(failed);
   expect(() => h.workspace.select(h.b)).toThrow();
   await expect(h.workspace.close(h.a)).rejects.toThrow();
   const state = h.workspace.controller.state(h.a);

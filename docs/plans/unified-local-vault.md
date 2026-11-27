@@ -48,8 +48,8 @@ it is not a UI/product to clone.
       controlled native-session bindings and actual browser interactions pass.
       This is not a shared root or installed native acceptance.
 - [ ] Extract the remaining shared product/use cases and platform ports without a
-      second UI. Live session projection, navigation/storage/root composition
-      remain separate work.
+      second UI. Live session projection now has controlled shared-surface evidence;
+      production selection, navigation/storage/root composition remain work.
 - [ ] Implement scoped local vault/index/file lifecycle and genuine autosave.
 - [ ] Adapt both inline and full-document execution paths to platform services.
 - [ ] Execute reusable interaction/fidelity acceptance and exact-package native

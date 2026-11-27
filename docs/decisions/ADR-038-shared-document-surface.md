@@ -46,3 +46,21 @@ history, stale callbacks, retained failures and explicit runtime absence. Inject
 writer tests verify the shared composition/authority path; existing real Store
 I/O evidence remains separate. Neither proves accepted installed autosave or
 permits promoting a corrected installer.
+
+## Live session observation
+
+`workspace/useDocumentSession.ts` observes only the existing controller's
+`state`/`subscribe` port. It caches snapshots for React rather than repeatedly
+returning the controller's newly allocated copies. Each binding belongs to one
+controller and opaque session ID; null selection has no subscription. It rereads
+after subscribing, rejects callbacks after cleanup, and propagates unknown
+controller errors through the React error path instead of silently returning
+empty or stale source.
+
+The controlled surface host separately observes structural selection and document
+state. Autosave writing-to-saved, draft/failure state and rapid source receipts
+refresh without manual rerenders. Closing successfully retires the controller
+entry without a terminal notification; selection and fresh reopened identities
+remain host-owned. This observation cache is a projection, never another source,
+history or persistence authority. Browser production composition and native boot
+routing remain unchanged by the hook packet.

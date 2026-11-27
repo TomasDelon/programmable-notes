@@ -20,6 +20,31 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Live controller projection — 27 November 2026
+
+`workspace/useDocumentSession.ts` now observes the existing controller with a
+cached React snapshot per controller/session binding. It rereads after subscribe,
+retires callbacks on switch/unmount and surfaces unknown controller errors. It
+adds no canonical source, history, persistence or runtime authority. The controlled
+DocumentSurface host separately observes structural selection and document state.
+
+Eight hook tests and seven surface tests cover held save completion without a
+manual rerender, rapid source receipts, stale callbacks, controller replacement,
+StrictMode cleanup, fresh reopened identities and retained draft/failure text.
+Independent review repeated all15; the implementer's related112 tests, strict
+types, lint and formatting passed. Production boot composition and native GUI
+acceptance remain pending; injected writers are not real Store or installed I/O.
+See [the plan](plans/document-session-observation.md) and
+[ADR038](decisions/ADR-038-shared-document-surface.md).
+
+The complete frozen-source check for the observation and diagnostic packet exited
+**0**: **808 unit, 126 tooling / zero skips, 153 Chromium, 9 Pages and 4 local
+cloud-storage browser cases**, plus formatting, lint, strict types and production
+build. Functional input identities stayed unchanged. Both earlier native runs
+remain failed; the new bounded host/exception diagnostics have not yet executed
+in a guest. Local GTK compilation remains unavailable without GLib development
+metadata; the required hosted job compiles the fixed host before packaging.
+
 ## Shared document surface — 27 November 2026
 
 The existing SourceEditor and full-document preview panels are extracted into
@@ -34,7 +59,7 @@ and injected writers: exact BOM/CRLF history, delayed save origin, switching,
 retired commands, retained failures, draft blocking and runtime absence. These
 are controller/DOM integration controls, not installed native GUI or real Store
 I/O. Independent review found no remaining blocker. The shared product root,
-live session subscriptions, native runtime and installed autosave remain pending;
+native runtime integration and installed autosave remain pending;
 the rejected shell is not activated or promoted by this extraction.
 
 The complete frozen-source local check exited **0**: **799 unit, 125 tooling /
@@ -45,6 +70,13 @@ extraction and bounded desktop-probe correction; native execution of the latter
 still requires a new completed profile run. No cloud backend is activated.
 
 ## Fixed native interaction profile — 27 November 2026
+
+The second actual [profile45932957386](https://github.com/TomasDelon/programmable-notes/actions/runs/45932957386)
+at **30daf57** completed desktop startup but failed host observation with
+`observer_error`; session cleanup was unproven/failed and expiry was not run.
+OS admission and normal shutdown passed separately. No React input, Stop or
+expiry passed. The exact cause is unknown; controlled observer interruption can
+produce the same receipt after early host failure. [Retained failure](security-evidence/2026-11-27-native-inline-fixture/native-profile-45932957386.json).
 
 The first actual [native profile45931348826](https://github.com/TomasDelon/programmable-notes/actions/runs/45931348826)
 at **aeff50b** failed during desktop startup with a deadline; both Stop and expiry
