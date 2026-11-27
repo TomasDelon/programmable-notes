@@ -18,6 +18,40 @@ including its share deviation and unproven Stop result.
 - **Done:** independently reviewed sources and negative controls, then actual
   runtime observations. Failed or unperformed phases remain explicit.
 
+## Latest checkpoint and next gates
+
+On2ad5910, sealed Debian13 run46057753337 passed this fixed helper's input/Stop
+and natural-expiry cases. See the [dated evidence](../security-evidence/2026-11-27-shared-product/README.md).
+Earlier startup failures remain retained; one pass does not prove repeatability
+or a causal startup repair. This diagnostic is not the packaged application.
+
+Independent review identifies the next application gates:
+
+1. Integrate the existing DocumentRuntime/RenderedRuntime platform seams using
+   read-only snapshots of explicitly loaded, authorized buffers, including
+   imports. Keep one lifecycle/resource owner, not multiplied limits per island.
+   Current native enabled:false and selected-file-only inputs are deliberate
+   gaps; changing a toggle alone is insufficient.
+2. Before arbitrary source publication, apply and test the native browser
+   chooser/permission/dialog/print/fullscreen/download/navigation restrictions on
+   the inline Wry path. ADR040's Tauri-child guards do not cover that path.
+   Require real editor-positive and preview-negative IPC tests.
+3. Reuse Supervisor and existing stress/editor/lifecycle fixtures for actual
+   integrated CPU, both memory workloads, trusted OOM/expiry attribution, Stop,
+   crash cleanup and interactive recovery. Shared-editor typing and real-file
+   autosave must remain usable under attack. WebDriver ACL probes and normal
+   production namespace/seccomp verification are separate observations.
+4. Validate the actual packaged product: unsaved MDX imports/hooks/events,
+   in-document geometry/scroll/resize/focus, multiple islands, switching, source
+   fidelity/history, stale-build/session disposal, plugin disable and close.
+   Establish repeatable startup on this candidate rather than looping unchanged
+   diagnostic retries.
+
+Arbitrary native React remains disabled until these gates pass. Physical GPU and
+Wayland coverage is separate compatibility work; unsupported embedding must fail
+closed. Independent editor/recovery development can proceed on the verified
+platform without waiting for unavailable hardware.
+
 ## Admission before payload
 
 Actual [share-free OS admission](native-vm-provisioning.md) must pass using the

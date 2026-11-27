@@ -195,7 +195,7 @@ timeout -k 1s 10s gsettings set org.gnome.desktop.interface toolkit-accessibilit
 timeout -k 1s 10s dbus-update-activation-environment DISPLAY XAUTHORITY XDG_RUNTIME_DIR
 timeout -k 1s 10s gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus --method org.a11y.Bus.GetAddress
 printf driver_start >"$HOME/stage"
-pn-shared-tauri-driver --host 127.0.0.1 --port 4444 --native-driver /usr/bin/WebKitWebDriver &
+pn-shared-tauri-driver --native-host 127.0.0.1 --port 4444 --native-driver /usr/bin/WebKitWebDriver &
 pn_services+=("$!")
 pn_ready=0
 for ((pn_i=0; pn_i<30; pn_i++)); do if curl --silent --fail --max-time 1 http://127.0.0.1:4444/status >/dev/null; then pn_ready=1; break; fi; sleep 0.2; done

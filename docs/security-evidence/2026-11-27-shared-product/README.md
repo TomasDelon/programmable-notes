@@ -1,9 +1,10 @@
 # Shared editor/local-vault integration — 27 November 2026
 
-This evidence concerns the pending shared ProductRoot/controller packet on top
-of ad0ffca. It does **not** establish an installed Linux application, real native
-OS chooser, production filesystem journey or native React security acceptance.
-The native default entry remains unchanged pending safe close and installed gates.
+This chronological record begins with the shared ProductRoot/controller packet
+on top of ad0ffca. Later sections record guarded native entry activation and
+subsequent hosted attempts; the initial packet was inactive. Current installed
+editing/chooser/filesystem acceptance and the full native React security matrix
+remain unverified. The latest fixed diagnostic helper pass is a separate scope.
 
 ## Executed checks
 
@@ -327,3 +328,51 @@ The final frozen focus patch `npm run check` exited0:984 unit,163 tooling with
 zero skips,155 Chromium,9 Pages and4 disposable local cloud cases passed, plus
 format/lint/types/build. No worker changed source or dist during that run. The
 next required CI and native attempts must validate this amended application.
+
+## Actual attempts on2ad5910 and driver correction
+
+Required [CI46056673446](https://github.com/TomasDelon/programmable-notes/actions/runs/46056673446)
+passed both jobs. Installed-editor [run46057748343](https://github.com/TomasDelon/programmable-notes/actions/runs/46057748343)
+passed package provenance, tree/hash verification, production inspection and
+installation, then failed at driver_start with exit1. Cleanup passed, no forced
+cleanup or residual processes were reported, and denialClasses was none. The
+application was not launched; no chooser/editing/disk/restart acceptance is claimed.
+The fixed check annotation supplies this observation without artifact downloads.
+
+Published tauri-driver2.1.0 source identifies a deterministic CLI mismatch: its
+parser rejects `--host`; `--native-host` is supported. The intermediary already
+binds to127.0.0.1, and the native driver remains on loopback. The one-argument
+correction preserves permissions, timeouts, cleanup and acceptance predicates.
+The regression failed with the original launch line and passed after correction.
+Three new controls validate actual Bash-expanded arguments against an attributed
+exact upstream HELP fixture, reject unsafe/unsupported values and bind the CI
+version. All17 scoped CLI/hosted controls and static checks passed; independent
+review found no Important issue. This does not replace an actual installed retry.
+
+The sealed Debian13 [run46057753337](https://github.com/TomasDelon/programmable-notes/actions/runs/46057753337)
+passed OS admission on WebKitGTK2.54.3 and the fixed native React diagnostic.
+[Strictly validated annotation evidence](react-46057753337.json) records:
+
+- Stop case: bridge, pointer, actual keyboard acknowledgement, termination and
+  trusted host input passed.
+- Expiry case: bridge and termination passed; pointer, keyboard and host input
+  were not run by that case's design.
+- Session cleanup passed. The keyboard helper had its full2000ms local budget,
+  returned after91ms without a timeout; actual acknowledgement is a separate
+  passing case outcome, not inferred from helper return.
+- Early committed/finished flags were not published on success and remain
+  unknown. Hook placement and prerequisite compilation are separate evidence.
+
+This single fixed helper pass does not establish a causal startup repair,
+repeatability, application geometry, document IPC/filesystem denial or hostile
+CPU/memory containment. Prior failures remain retained. No unchanged retry,
+artifact/raw-log download or escalation was performed. Arbitrary native document
+React remains disabled until the full acceptance matrix passes.
+
+The final frozen driver-correction `npm run check` exited0:984 unit,166 tooling
+with zero skips,155 Chromium,9 Pages and4 disposable local cloud cases passed,
+plus formatting/lint/types/build. No source or build inputs changed during browser
+verification. Only documentation was updated afterward; its formatting was
+rechecked. Staged, complete-history and archived-content secret scans found zero
+findings. The next current-source required CI and actual packaged retry remain
+separate gates.

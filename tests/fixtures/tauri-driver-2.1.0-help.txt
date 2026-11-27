@@ -1,0 +1,17 @@
+Source: https://crates.io/api/v1/crates/tauri-driver/2.1.0/download
+Crate SHA-256: 2f2e29bd6900fb718dfdc06f2e7a371d6087c085daaf83709847ef3e6b0c1953
+src/cli.rs SHA-256: d08a622c036becf29cad6cbcae5974ae630005354370f7605582f68bf2709a7c
+Copyright 2019-2024 Tauri Programme within The Commons Conservancy
+SPDX-License-Identifier: Apache-2.0 OR MIT
+Exact HELP string from src/cli.rs (not a native runtime receipt):
+---
+USAGE: tauri-driver [FLAGS] [OPTIONS]
+
+FLAGS:
+  -h, --help              Prints help information
+
+OPTIONS:
+  --port NUMBER           Sets the tauri-driver intermediary port
+  --native-port NUMBER    Sets the port of the underlying WebDriver
+  --native-host HOST      Sets the host of the underlying WebDriver (Linux only)
+  --native-driver PATH    Sets the path to the native WebDriver binary

@@ -10,8 +10,8 @@ requirements and the deferred Split/X/hover report. Setup answers subsequently
 confirmed architecture quality first, conditional code reuse, a fully local vault
 with automatic writes to real files, real rename/move/Trash, Linux first and
 unprivileged React inline in the same document/window. Existing web code is a
-reference to assess, not something to preserve unchanged at all costs. Current
-manual-save/separate-window native behavior does not satisfy that target.
+reference to assess, not something to preserve unchanged at all costs. At rejection, the
+manual-save/separate-window native behavior did not satisfy that target.
 
 The [target architecture](ARCHITECTURE_TARGET.md),
 [acceptance gates](PRODUCT_ACCEPTANCE.md) and
@@ -19,6 +19,28 @@ The [target architecture](ARCHITECTURE_TARGET.md),
 The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
+
+## Latest native validation — 27 November 2026
+
+Required CI on2ad5910 passed both jobs. The packaged Ubuntu run46057748343
+verified and installed the production package but stopped at driver_start before
+application launch. The launcher passed unsupported `--host` to tauri-driver2.1.0;
+the published parser requires `--native-host`. The correction changes only that
+flag. An attributed upstream HELP fixture checks the actual Bash-expanded launch
+arguments and the installed version; independent review confirms loopback binding
+and unchanged isolation. Installed editing and close acceptance remain pending. The frozen local full
+check passed984 unit,166 tooling/zero skips,155 Chromium,9 Pages and4 local cloud
+cases, plus static checks/build. Current-source CI and the installed retry remain
+separate gates.
+
+The separate sealed Debian13 run46057753337 passed fixed React pointer input,
+actual keyboard acknowledgement, Stop, expiry, host input and session cleanup.
+Expiry does not exercise pointer/keyboard input. This is one successful fixed
+helper run, not packaged-application acceptance, repeatability or hostile resource
+containment. Previous failed observations remain failures; early commit/finish
+values were not published on the successful run. Native arbitrary-document React
+remains disabled pending the complete product/security matrix. See the
+[validated evidence](security-evidence/2026-11-27-shared-product/react-46057753337.json).
 
 ## New-document focus correction — 27 November 2026
 

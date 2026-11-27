@@ -1,0 +1,135 @@
+{
+  "evidence_source": "Strictly validated source-pinned GitHub check annotations; no artifacts or raw logs accessed",
+  "run_id": 46057753337,
+  "job_id": 140704280123,
+  "source_commit": "2ad5910de2ec86c4b4665ecc0308044ba488b047",
+  "status": "passed",
+  "native_app_tested": false,
+  "session": {
+    "version": 1,
+    "profile": "inline-react-v1",
+    "scope": "fixed-native-diagnostic-only",
+    "native_app_tested": false,
+    "status": "passed",
+    "phase": "complete",
+    "reason": "none",
+    "cleanup": "passed",
+    "cases": {
+      "expiry": "passed",
+      "stop": "passed"
+    },
+    "diagnostics": {
+      "stop": {
+        "original_reason": "none",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 0
+        }
+      },
+      "expiry": {
+        "original_reason": "none",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 0
+        }
+      }
+    }
+  },
+  "cases": {
+    "expiry": {
+      "version": 1,
+      "profile": "inline-react-v1",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "expiry",
+      "status": "passed",
+      "phase": "complete",
+      "reason": "none",
+      "bridge": "passed",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "passed",
+      "host_input": "not_run"
+    },
+    "stop": {
+      "version": 1,
+      "profile": "inline-react-v1",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "stop",
+      "status": "passed",
+      "phase": "complete",
+      "reason": "none",
+      "bridge": "passed",
+      "pointer": "passed",
+      "keyboard": "passed",
+      "termination": "passed",
+      "host_input": "passed"
+    }
+  },
+  "keyboard_attempt": {
+    "phase": "keyboard",
+    "availableMs": 2000,
+    "limitingClock": "local",
+    "elapsedMs": 91,
+    "timeoutKind": "none",
+    "outcome": "returned"
+  },
+  "os_admission": {
+    "status": "passed",
+    "scope": "guest-os-admission-only",
+    "source_profile": "debian13",
+    "environment": {
+      "id": "debian",
+      "version": "13",
+      "kernel_release": "6.12.118+deb13-amd64",
+      "packages": {
+        "libc6": "2.41-12+deb13u5",
+        "libgtk-3-0t64": "3.24.49-3",
+        "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+        "linux-image-amd64": "6.12.118-1",
+        "systemd": "257.13-1~deb13u1"
+      }
+    }
+  },
+  "early_native_snapshot": {
+    "observed": false,
+    "reason": "Publisher emits native flags only for failed readiness; none emitted for passing cases",
+    "hook_placement": "Pre-build SDK callback installed before unchanged initial HTML, verified source and prerequisite CI compilation"
+  },
+  "artifacts": [
+    {
+      "expired": false,
+      "id": 15226938758,
+      "name": "fixed-native-inline-react-diagnostic",
+      "size_in_bytes": 2392
+    },
+    {
+      "expired": false,
+      "id": 15226209949,
+      "name": "native-vm-os-admission",
+      "size_in_bytes": 553
+    }
+  ],
+  "limitations": [
+    "One fixed helper run, not repeatability or application acceptance.",
+    "No actual early committed/finished values were published on this successful run.",
+    "Successful helper return is separate from actual keyboard acknowledgement; both present here.",
+    "Does not establish product geometry, arbitrary-document IPC/filesystem denial or hostile CPU/memory containment.",
+    "Previous readiness/keyboard failures remain failed; no causal startup-fix conclusion.",
+    "No artifact downloads/raw signed logs/escalation or unchanged retry.",
+    "Host running/observer exited diagnostics were captured before normal session teardown, not evidence of surviving processes."
+  ]
+}
