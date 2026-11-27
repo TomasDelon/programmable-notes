@@ -155,6 +155,25 @@ impl Recovery {
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
             Err(e) => return Err(e.to_string()),
         }
+        Self::open_existing(path, false)
+    }
+    /// Discovery and explicit reads never initialize, repair or prune the store.
+    pub fn open_readonly(path: &Path) -> Result<Option<Self>, String> {
+        match Self::open_existing(path, true) {
+            Ok(store) => Ok(Some(store)),
+            Err(reason) => {
+                // Only an absent directory is an empty inventory. Invalid existing
+                // directories/locks remain errors under the same ownership rules.
+                if matches!(std::fs::symlink_metadata(path), Err(e) if e.kind() == std::io::ErrorKind::NotFound)
+                {
+                    Ok(None)
+                } else {
+                    Err(reason)
+                }
+            }
+        }
+    }
+    fn open_existing(path: &Path, readonly: bool) -> Result<Self, String> {
         let directory = OpenOptions::new()
             .read(true)
             .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
@@ -171,14 +190,21 @@ impl Recovery {
         };
         let lock = store.at(
             ".lock",
-            libc::O_RDWR | libc::O_CREAT | libc::O_NONBLOCK,
+            if readonly {
+                libc::O_RDONLY | libc::O_NONBLOCK
+            } else {
+                libc::O_RDWR | libc::O_CREAT | libc::O_NONBLOCK
+            },
             0o600,
         )?;
         private(&lock)?;
         io(unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) })
             .map_err(|_| "Recovery is busy in another operation".to_string())?;
         store._lock = Some(lock);
-        store.maintenance_warning = store.cleanup().and_then(|_| store.repair_retention()).err();
+        if !readonly {
+            store.maintenance_warning =
+                store.cleanup().and_then(|_| store.repair_retention()).err();
+        }
         Ok(store)
     }
     fn at(&self, name: &str, flags: i32, mode: u32) -> Result<File, String> {
@@ -407,6 +433,9 @@ impl Recovery {
             return Err("Legacy copy retained; migration durability is uncertain".into());
         }
         Ok(Some(written.snapshot))
+    }
+    pub fn read_version(&self, file: &str) -> Result<(Snapshot, String), String> {
+        self.record(file)
     }
     pub fn restore(&self, file: &str) -> Result<String, String> {
         self.record(file).map(|(_, source)| source)

@@ -47,3 +47,8 @@ export interface RecoveryCandidate {
   baseline?: string;
   displayPath?: string;
 }
+
+export interface RecoveryCatalog {
+  readonly versions: readonly RecoverySnapshot[];
+  readonly warning: boolean;
+}

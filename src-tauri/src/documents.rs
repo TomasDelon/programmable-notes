@@ -847,22 +847,28 @@ pub async fn recovery_draft(
         #[cfg(target_os = "linux")]
         {
             let root = app.path().app_data_dir().map_err(|e| e.to_string())?;
-            std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
             let directory = root.join("recovery");
+            if matches!(action.as_str(), "list" | "restore-version") {
+                let recovery = native_documents::snapshots::Recovery::open_readonly(&directory)?;
+                if action == "list" {
+                    return match recovery {
+                        Some(store) => serde_json::to_value(store.list()?).map_err(|e|e.to_string()),
+                        None => Ok(serde_json::json!({"snapshots":[],"errors":[],"capacityExceeded":false})),
+                    };
+                }
+                let store = recovery.ok_or("Recovery version is unavailable")?;
+                let (snapshot, source) = store.read_version(&file.ok_or("Missing version identifier")?)?;
+                return Ok(serde_json::json!({"name":snapshot.metadata.name,"source":source,"snapshot":snapshot}));
+            }
+            std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
             if matches!(action.as_str(), "keep"|"restore"|"delete") {
                 return serde_json::to_value(native_documents::draft::recovery_draft(&directory,&action,source.as_deref())?).map_err(|e|e.to_string());
             }
             let mut recovery = native_documents::snapshots::Recovery::open(&directory)?;
             let value = match action.as_str() {
-                "list" => serde_json::to_value(recovery.list()?),
                 "append" => {
                     let input: native_documents::snapshots::Input = serde_json::from_value(input.ok_or("Missing snapshot input")?).map_err(|e|e.to_string())?;
                     serde_json::to_value(recovery.append(input)?)
-                },
-                "restore-version" => {
-                    let file = file.ok_or("Missing version identifier")?;
-                    let snapshot = recovery.list()?.snapshots.into_iter().find(|s|s.file == file).ok_or("Recovery version is unavailable or damaged")?;
-                    Ok(serde_json::json!({"name":snapshot.metadata.name,"source":recovery.restore(&file)?}))
                 },
                 "delete-version" => { recovery.remove(&file.ok_or("Missing version identifier")?)?; Ok(serde_json::Value::Null) },
                 "migrate" => serde_json::to_value(recovery.migrate_legacy()?),

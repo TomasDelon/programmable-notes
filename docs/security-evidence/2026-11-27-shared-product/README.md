@@ -415,3 +415,46 @@ suite reran:173 passed,0 failed,0 skipped; format/lint/types also passed.
 Application source/build inputs did not change, so the browser evidence remains
 applicable. These diagnostic fields carry no new authority and do not repair the
 previous runtime failure. Independent final review found no Important issue.
+
+## Actual packaged startup and remaining chooser failure
+
+[Run46064143844](https://github.com/TomasDelon/programmable-notes/actions/runs/46064143844)
+onacbec3a used successful required CI46062811208 and the inspected production
+package. Fixed annotations now locate the failed journey: startupPhase=complete,
+journeyStage=authorized_vault_chooser, failureKind=other. Thus WebDriver startup,
+installed process identity and shared ProductRoot readiness actually passed.
+Cleanup passed without forced termination or residual application processes.
+The generic operation_not_permitted substring remains advisory; it is not a
+namespace diagnosis. No file editing/save/close/restart acceptance is inferred.
+The exact chooser/helper failure remains unknown without another bounded
+observation; no artifact/raw-log download or unchanged retry was performed.
+
+## Explicit recovery copies, candidate followingacbec3a
+
+The shared product now discovers retained native versions and creates an explicit
+new copy inside the authorized vault through existing exclusive file creation.
+[ADR042](../../decisions/ADR-042-read-only-recovery-copies.md) records authority,
+cancellation, lossless source and uncertainty semantics. Reading recovery no
+longer initializes or prunes the store; writer retention policy is unchanged.
+
+A clean eight-sequential-version filesystem fixture demonstrates the former
+maintenance behavior: writer opening prunes it to five. Read-only discovery and
+version reading preserve the same valid files and bytes. Corrupt siblings and
+unsafe/missing stores have separate controls. Frontend tests cover receipt
+correlation, exact BOM/CRLF/Unicode/JSX, collision/path refusal, selection ABA,
+cancelled reads, close protection and unknown-ack retention/retry lock. An extreme
+timestamp crash and a successful-copy selection self-abort were corrected with
+regressions. Reopening an uncertain attempt preserves the visible path/version.
+
+The frozen full `npm run check` exited0:1004 unit,173 tooling with zero skips,
+157 Chromium,9 Pages and4 disposable local cloud cases, plus format/lint/types
+and build. Full native-documents tests and Rust formatting exited0:93 passed,
+seven explicitly ignored. One is the parent-controlled worker; four require
+own-child ptrace and two require disposable small tmpfs filesystems. Those six
+specialized cases were not executed locally for this candidate. The earlier
+hosted native job runs them on its own source; it is not copied onto this change.
+
+Independent product/security review found no remaining Important issue. Native
+GTK command compilation and actual installed recovery/restart remain separate
+pending gates. The packaged observation above predates this recovery candidate;
+controlled-IPC browser journeys and real backend files do not replace it.

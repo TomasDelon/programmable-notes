@@ -9,6 +9,7 @@ import type {
   ProductCloseState,
   ProductCloseResolution,
   ProductCloseOutcome,
+  ProductRecoveryState,
 } from '../product/productApplication';
 
 /** Application projection only. Source/history/grants stay in the existing workspace. */
@@ -23,6 +24,15 @@ export function createNativeProduct(
   const recoveryKeys = new Map<string, string>();
   const resolving = new Set<string>();
   const pendingRecovery = new Set<string>();
+  const recoveryPort = services.recovery;
+  let structuralGeneration = 0;
+  let recoveryFlight = false;
+  let recoveryState: ProductRecoveryState = {
+    versions: [],
+    warning: false,
+    operation: null,
+    attempt: null,
+  };
   let closing = false;
   let closeUncertain = false;
   let closeActive = false;
@@ -182,6 +192,7 @@ export function createNativeProduct(
         );
     }
     const value = {
+      ...(recoveryPort ? { recovery: recoveryState } : {}),
       vaultLabel: state.vault?.displayPath ?? null,
       entries: (state.inventory?.entries ?? []).map((entry) => ({
         ...entry,
@@ -470,6 +481,130 @@ export function createNativeProduct(
         }
       };
     },
+    ...(recoveryPort
+      ? {
+          async refreshRecovery(signal: AbortSignal) {
+            admitted();
+            if (recoveryFlight)
+              throw Error('A recovery operation is already running.');
+            recoveryFlight = true;
+            recoveryState = { ...recoveryState, operation: 'list' };
+            refresh();
+            try {
+              await perform(async () => {
+                if (signal.aborted)
+                  throw Error('Recovery discovery was cancelled.');
+                const catalog = await recoveryPort.list();
+                if (signal.aborted)
+                  throw Error('Recovery discovery was cancelled.');
+                recoveryState = { ...recoveryState, ...catalog };
+              });
+            } finally {
+              recoveryFlight = false;
+              recoveryState = { ...recoveryState, operation: null };
+              refresh();
+            }
+          },
+          async restoreRecoveryCopy(
+            file: string,
+            path: string,
+            signal: AbortSignal,
+          ) {
+            admitted();
+            if (recoveryFlight)
+              throw Error('A recovery operation is already running.');
+            if (
+              recoveryState.attempt?.uncertain ||
+              workspace.state().unresolvedCleanup
+            )
+              throw Error(
+                'Recovery creation outcome is unresolved. Do not retry automatically.',
+              );
+            const version = recoveryState.versions.find(
+              (entry) => entry.file === file,
+            );
+            const initial = workspace.state();
+            const generation = structuralGeneration;
+            const vaultId = initial.vault?.vaultId;
+            const selected = initial.selectedSessionId;
+            if (!version || !vaultId)
+              throw Error(
+                'Choose a vault and a retained recovery version first.',
+              );
+            const current = () => {
+              const state = workspace.state();
+              if (
+                signal.aborted ||
+                generation !== structuralGeneration ||
+                state.vault?.vaultId !== vaultId ||
+                state.selectedSessionId !== selected ||
+                state.unresolvedCleanup ||
+                closing ||
+                closeActive
+              )
+                throw Error(
+                  'Recovery creation was cancelled or its destination changed.',
+                );
+            };
+            current();
+            recoveryFlight = true;
+            recoveryState = {
+              ...recoveryState,
+              operation: 'read',
+              attempt: null,
+            };
+            refresh();
+            try {
+              await perform(async () => {
+                current();
+                const source = await recoveryPort.read(version);
+                current();
+                if (
+                  typeof source !== 'string' ||
+                  new TextEncoder().encode(source).length !==
+                    version.metadata.sourceBytes ||
+                  version.metadata.sourceBytes > 500_000
+                )
+                  throw Error(
+                    'Recovery source does not match the selected version.',
+                  );
+                recoveryState = {
+                  ...recoveryState,
+                  operation: 'create',
+                  attempt: Object.freeze({
+                    version,
+                    path,
+                    source,
+                    uncertain: false,
+                  }),
+                };
+                refresh();
+                // Last synchronous check before the existing exclusive file authority.
+                current();
+                try {
+                  await workspace.create(path, source);
+                } catch (reason) {
+                  recoveryState = {
+                    ...recoveryState,
+                    attempt: Object.freeze({
+                      version,
+                      path,
+                      source,
+                      uncertain: workspace.state().unresolvedCleanup > 0,
+                    }),
+                  };
+                  throw reason;
+                }
+                recoveryState = { ...recoveryState, attempt: null };
+              });
+            } finally {
+              recoveryFlight = false;
+              recoveryState = { ...recoveryState, operation: null };
+              refresh();
+            }
+          },
+        }
+      : {}),
     documents: {
       state: (id) => workspace.controller.state(id),
       subscribe: (id, changed) => workspace.controller.subscribe(id, changed),
@@ -483,11 +618,21 @@ export function createNativeProduct(
       if (!metadata) throw Error('Document session is not loaded.');
       return metadata;
     },
-    chooseVault: () => perform(() => workspace.choose()),
+    chooseVault: () => {
+      structuralGeneration++;
+      return perform(() => workspace.choose());
+    },
     refreshInventory: () => perform(() => workspace.refreshInventory()),
-    open: (path) => perform(() => workspace.open(path)),
-    create: (path, source) => perform(() => workspace.create(path, source)),
+    open: (path) => {
+      structuralGeneration++;
+      return perform(() => workspace.open(path));
+    },
+    create: (path, source) => {
+      structuralGeneration++;
+      return perform(() => workspace.create(path, source));
+    },
     select(id) {
+      structuralGeneration++;
       admitted();
       workspace.select(id);
       refresh();
@@ -567,8 +712,12 @@ export function createNativeProduct(
         void protect().catch(() => {});
       }
     },
-    closeDocument: (id) => perform(() => workspace.close(id)),
+    closeDocument: (id) => {
+      structuralGeneration++;
+      return perform(() => workspace.close(id));
+    },
     prepareClose(detachEditor) {
+      structuralGeneration++;
       if (closeUncertain) return Promise.resolve('uncertain');
       if (closeFlight) return closeFlight;
       if (closeGuard) {

@@ -1,3 +1,4 @@
+import { RecoveryCopyDialog } from './RecoveryCopyDialog';
 import {
   useCallback,
   useEffect,
@@ -88,6 +89,7 @@ export function ProductRoot({
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
   const creationRequest = useRef(0);
   const [filename, setFilename] = useState('Untitled.md');
   const [query, setQuery] = useState('');
@@ -532,6 +534,18 @@ export function ProductRoot({
             </button>
           )}
         </div>
+        {snapshot.recovery && (
+          <button
+            type="button"
+            className="web-button"
+            disabled={!!snapshot.operation || snapshot.closing}
+            onClick={() => {
+              if (canLeave()) setRecoveryOpen(true);
+            }}
+          >
+            Recover a copy
+          </button>
+        )}
         {snapshot.vaultLabel && (
           <p className="web-detail-path">{snapshot.vaultLabel}</p>
         )}
@@ -725,6 +739,14 @@ export function ProductRoot({
             interaction.runCommand(result, () => setCommandOpen(false), action)
           }
           onClose={() => setCommandOpen(false)}
+        />
+      )}
+      {recoveryOpen && snapshot.recovery && (
+        <RecoveryCopyDialog
+          application={application}
+          recovery={snapshot.recovery}
+          onClose={() => setRecoveryOpen(false)}
+          report={report}
         />
       )}
       {createOpen && (

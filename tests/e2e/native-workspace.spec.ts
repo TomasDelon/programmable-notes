@@ -11,6 +11,7 @@ type NativeFixture = {
   files: Record<string, string>;
   opens: { id: string; path: string }[];
   closed: string[];
+  holdRecoveryRead?: boolean;
 };
 
 async function nativeEntry(page: Page) {
@@ -47,6 +48,7 @@ async function nativeEntry(page: Page) {
       const host = window as unknown as {
         isTauri: boolean;
         __nativeFixture: NativeFixture;
+        __releaseRecovery?: () => void;
         __TAURI_INTERNALS__: {
           invoke(
             command: string,
@@ -147,6 +149,55 @@ async function nativeEntry(page: Page) {
               }),
             };
           }
+          if (command === 'create_vault_source') {
+            keys(args, ['vaultId', 'path', 'source']);
+            if (
+              !authorized ||
+              args.vaultId !== vaultId ||
+              typeof args.path !== 'string' ||
+              typeof args.source !== 'string'
+            )
+              throw Error('Invalid create authority');
+            const path = args.path;
+            if (path in fixture.files)
+              return { status: 'refused', vaultId, path, code: 'conflict' };
+            if (
+              !/\.(md|mdx|tsx?|jsx?)$/i.test(path) ||
+              path
+                .split('/')
+                .some(
+                  (part) =>
+                    !part ||
+                    [
+                      '.',
+                      '..',
+                      '.git',
+                      'node_modules',
+                      '.programmable-notes',
+                    ].includes(part),
+                ) ||
+              path.includes('\\')
+            )
+              return { status: 'refused', vaultId, path, code: 'rejected' };
+            fixture.files[path] = args.source;
+            const id = 'created-grant-' + path,
+              revision = 'created-revision';
+            revisions.set(path, revision);
+            grants.set(id, { path, revision });
+            return {
+              status: 'acquired',
+              vaultId,
+              document: {
+                id,
+                revision,
+                logicalPath: path,
+                name: path.split('/').at(-1),
+                displayPath: '/synthetic/Notes/' + path,
+                source: args.source,
+                durabilityWarning: false,
+              },
+            };
+          }
           if (command === 'save_document') {
             keys(args, ['id', 'revision', 'source']);
             const grant = typeof args.id === 'string' && grants.get(args.id);
@@ -175,6 +226,48 @@ async function nativeEntry(page: Page) {
             return;
           }
           if (command === 'recovery_draft') {
+            const retained = {
+              id: 'b'.repeat(64),
+              file: `${'a'.repeat(32)}-00000000000000000001-${'b'.repeat(64)}.pnrec`,
+              metadata: {
+                schema: 1,
+                documentId: 'a'.repeat(32),
+                name: 'retained.mdx',
+                baseline: null,
+                parent: null,
+                generation: 1,
+                createdAtMs: 1,
+                sourceBytes: new TextEncoder().encode(source).length,
+              },
+            };
+            if (args.action === 'list') {
+              keys(args, ['action']);
+              return {
+                snapshots: [null, retained],
+                errors: [
+                  {
+                    file: 'damaged.pnrec',
+                    message: 'synthetic corrupt version',
+                  },
+                ],
+                capacityExceeded: true,
+              };
+            }
+            if (
+              args.action === 'restore-version' &&
+              args.file === retained.file
+            ) {
+              keys(args, ['action', 'file']);
+              if (fixture.holdRecoveryRead)
+                await new Promise<void>((resolve) => {
+                  host.__releaseRecovery = resolve;
+                });
+              return {
+                name: retained.metadata.name,
+                source,
+                snapshot: retained,
+              };
+            }
             if (args.action === 'append') {
               keys(args, ['action', 'input']);
               const input = args.input as {
@@ -551,4 +644,104 @@ test('shared native candidate keeps two document modes, autosave and navigation 
   }
   expect((await fixture(page)).files['math/note.mdx']).toBe(original);
   expect((await fixture(page)).browserStorageOpens).toBe(0);
+});
+
+test('native recovery explicitly creates a lossless new copy and preserves originals and versions', async ({
+  page,
+}) => {
+  await nativeEntry(page);
+  await page
+    .getByRole('button', { name: 'Choose local vault' })
+    .first()
+    .click();
+  await page
+    .getByRole('button', { name: 'Recover a copy', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Recover a copy' });
+  await expect(dialog.getByRole('status')).toContainText(
+    'Some recovery versions',
+  );
+  await dialog.getByLabel('Recovery version').selectOption({ index: 1 });
+  await dialog.getByLabel('Recovered copy filename').fill('recovered.mdx');
+  await dialog.getByRole('button', { name: 'Create recovered copy' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeVisible();
+  const result = await page.evaluate(
+    () =>
+      (window as unknown as { __nativeFixture: NativeFixture }).__nativeFixture,
+  );
+  expect(result.files['recovered.mdx']).toBe(original);
+  expect(result.files['math/note.mdx']).toBe(original);
+  expect(
+    result.commands.filter(
+      ({ command, args }) =>
+        command === 'recovery_draft' &&
+        ['delete-version', 'migrate'].includes(String(args.action)),
+    ),
+  ).toEqual([]);
+  expect(
+    result.commands.filter(({ command }) => command === 'create_vault_source'),
+  ).toHaveLength(1);
+});
+
+test('closing recovery during a held native read creates zero files', async ({
+  page,
+}) => {
+  await nativeEntry(page);
+  await page
+    .getByRole('button', { name: 'Choose local vault' })
+    .first()
+    .click();
+  await page.evaluate(() => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.holdRecoveryRead = true;
+  });
+  await page
+    .getByRole('button', { name: 'Recover a copy', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Recover a copy' });
+  await dialog.getByLabel('Recovery version').selectOption({ index: 1 });
+  await dialog.getByLabel('Recovered copy filename').fill('cancelled.mdx');
+  await dialog.getByRole('button', { name: 'Create recovered copy' }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          typeof (window as unknown as { __releaseRecovery?: () => void })
+            .__releaseRecovery,
+      ),
+    )
+    .toBe('function');
+  await dialog.getByRole('button', { name: 'Close Recover a copy' }).click();
+  await page.evaluate(() =>
+    (
+      window as unknown as { __releaseRecovery?: () => void }
+    ).__releaseRecovery?.(),
+  );
+  await expect(
+    page.getByRole('button', { name: 'Recover a copy', exact: true }),
+  ).toBeEnabled();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as unknown as { __nativeFixture: NativeFixture }
+          ).__nativeFixture.commands
+            .filter(({ command }) => command === 'set_documents_dirty')
+            .at(-1)?.args.busy,
+      ),
+    )
+    .toBe(false);
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          window as unknown as { __nativeFixture: NativeFixture }
+        ).__nativeFixture.commands.filter(
+          ({ command }) => command === 'create_vault_source',
+        ).length,
+    ),
+  ).toBe(0);
 });

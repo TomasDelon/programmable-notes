@@ -48,6 +48,7 @@ afterEach(() => {
 
 function fixture(
   options: {
+    recovery?: NativeProductServices['recovery'];
     save?: NativeWorkspacePorts['save'];
     files?: Record<string, string>;
     preserveAttempt?: NativeProductServices['preserveAttempt'];
@@ -116,6 +117,7 @@ function fixture(
     () => 'session-' + ++sequence,
   );
   const application = createNativeProduct(workspace, {
+    recovery: options.recovery,
     setCloseState: async () => {},
     preserveAttempt:
       options.preserveAttempt ?? (async () => ({ durable: true })),
@@ -523,4 +525,164 @@ it('waits for a durable recovery receipt before claiming a refused Preview attem
     1,
   );
   expect(mounted.application.documents.state(id).unapplied).toBe(true);
+});
+
+const retainedVersion = {
+  file: 'retained-version',
+  id: 'retained-id',
+  metadata: {
+    schema: 1,
+    documentId: 'retained-document',
+    name: 'original.md',
+    baseline: null,
+    parent: null,
+    generation: 1,
+    createdAtMs: 1,
+    sourceBytes: new TextEncoder().encode(original).length,
+  },
+};
+it('recovery dialog creates a saved independent copy through the actual native product model', async () => {
+  const create = vi.fn<NativeWorkspacePorts['createVaultSource']>(
+    async (_vault, path, source) => ({
+      status: 'acquired',
+      vaultId: 'vault',
+      document: {
+        id: 'copy-grant',
+        revision: 'disk-copy',
+        name: path,
+        logicalPath: path,
+        displayPath: path,
+        source,
+        durabilityWarning: false,
+      },
+    }),
+  );
+  const h = fixture({
+    createVaultSource: create,
+    recovery: {
+      list: async () => ({ versions: [retainedVersion], warning: true }),
+      read: async () => original,
+    },
+  });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  fireEvent.change(screen.getByLabelText('Recovery version'), {
+    target: { value: retainedVersion.file },
+  });
+  fireEvent.change(screen.getByLabelText('Recovered copy filename'), {
+    target: { value: 'recovered.md' },
+  });
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Create recovered copy' }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: 'Recover a copy' })).toBeNull(),
+  );
+  expect(create).toHaveBeenCalledExactlyOnceWith(
+    'vault',
+    'recovered.md',
+    original,
+  );
+  expect(
+    h.application.session(h.application.snapshot().selectedSessionId!).witness
+      .source,
+  ).toBe(original);
+});
+it.each(['close', 'replacement'] as const)(
+  'recovery dialog lifetime cancels held reads before create: %s',
+  async (kind) => {
+    let release!: (source: string) => void;
+    const read = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          release = resolve;
+        }),
+    );
+    const create = vi.fn<NativeWorkspacePorts['createVaultSource']>();
+    const h = fixture({
+      createVaultSource: create,
+      recovery: {
+        list: async () => ({ versions: [retainedVersion], warning: false }),
+        read,
+      },
+    });
+    await act(async () => {
+      await h.application.chooseVault();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+    await screen.findByRole('option', { name: /original.md/ });
+    fireEvent.change(screen.getByLabelText('Recovery version'), {
+      target: { value: retainedVersion.file },
+    });
+    fireEvent.change(screen.getByLabelText('Recovered copy filename'), {
+      target: { value: 'cancelled.md' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Create recovered copy' }),
+    );
+    await waitFor(() => expect(read).toHaveBeenCalledOnce());
+    if (kind === 'close')
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Close Recover a copy' }),
+      );
+    else {
+      const next = fixture();
+      next.unmount();
+      h.rerender(
+        <NotificationProvider>
+          <ProductRoot application={next.application} />
+        </NotificationProvider>,
+      );
+    }
+    await act(async () => {
+      release(original);
+    });
+    expect(create).not.toHaveBeenCalled();
+  },
+);
+
+it('reopening an uncertain recovery copy keeps its exact destination and version visible and blocks retry', async () => {
+  const create = vi
+    .fn<NativeWorkspacePorts['createVaultSource']>()
+    .mockRejectedValue(Error('lost acknowledgement'));
+  const h = fixture({
+    createVaultSource: create,
+    recovery: {
+      list: async () => ({ versions: [retainedVersion], warning: false }),
+      read: async () => original,
+    },
+  });
+  await act(async () => {
+    await h.application.chooseVault();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  await screen.findByRole('option', { name: /original.md/ });
+  fireEvent.change(screen.getByLabelText('Recovery version'), {
+    target: { value: retainedVersion.file },
+  });
+  fireEvent.change(screen.getByLabelText('Recovered copy filename'), {
+    target: { value: 'uncertain.md' },
+  });
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Create recovered copy' }),
+  );
+  await screen.findByText(/Creation could not be confirmed/);
+  fireEvent.click(screen.getByRole('button', { name: 'Close Recover a copy' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Recover a copy' }));
+  expect(screen.getByLabelText('Recovered copy filename')).toHaveValue(
+    'uncertain.md',
+  );
+  expect(screen.getByLabelText('Recovery version')).toHaveValue(
+    retainedVersion.file,
+  );
+  expect(
+    screen.getByRole('button', { name: 'Create recovered copy' }),
+  ).toBeDisabled();
+  expect(create).toHaveBeenCalledOnce();
 });

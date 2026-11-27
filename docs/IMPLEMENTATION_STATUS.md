@@ -20,6 +20,32 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Explicit native recovery copies — 27 November 2026
+
+The shared native workspace has a candidate recovery dialog for choosing a
+retained version and an explicit new vault-relative filename. It reuses scoped
+exclusive creation and the canonical source/history owner. Original-file autosave
+remains the main saving model; no original path is inferred or overwritten with
+snapshot text. Cancellation and structural-generation checks reject stale reads;
+uncertain creation retains version/path/source and blocks retry.
+
+Recovery discovery/read no longer invokes writer initialization or retention
+cleanup. Existing ownership, symlink, lock and integrity checks remain. Invalid
+catalog records warn without hiding valid siblings; verified read receipts bind
+the exact selected version. [ADR042](decisions/ADR-042-read-only-recovery-copies.md)
+records the decision and limits.
+
+Targeted validation passed61 unit,5 controlled-native-IPC Chromium journeys and
+27 Rust snapshot/vault-create cases, with one preexisting ENOSPC case not executed.
+A clean eight-version test confirms reader preservation and demonstrates that
+writer opening prunes the same valid inventory to five. Independent review found
+no remaining Important issue. The final full check passed1004 unit,173 tooling/zero skips,157 Chromium,9 Pages
+and4 local cloud cases. The full native document crate passed93 tests with seven
+explicitly ignored infrastructure/worker cases, and Rust formatting passed.
+Native command compilation and actual packaged recovery/restart acceptance remain
+separate CI/runtime gates at this checkpoint. The older native
+witness predates this candidate; arbitrary native React stays disabled.
+
 ## Current installed acceptance — 27 November 2026
 
 Required CI on10cb8e4 passed both jobs. The corrected installed Ubuntu test passed

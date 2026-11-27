@@ -1,3 +1,4 @@
+import type { RecoverySnapshot, RecoveryCatalog } from '../documents/recovery';
 import type { DocumentSessions } from '../application/documentSessions';
 import type { SourceBatch, SourceSession } from '../editor/sourceWitness';
 
@@ -32,7 +33,18 @@ export interface ProductCloseGuard {
   ): Promise<ProductCloseResolution>;
 }
 export type ProductCloseOutcome = 'editing' | 'committing' | 'uncertain';
+export interface RecoveryCopyAttempt {
+  readonly version: RecoverySnapshot;
+  readonly path: string;
+  readonly source: string;
+  readonly uncertain: boolean;
+}
+export interface ProductRecoveryState extends RecoveryCatalog {
+  readonly operation: 'list' | 'read' | 'create' | null;
+  readonly attempt: RecoveryCopyAttempt | null;
+}
 export interface ProductSnapshot {
+  readonly recovery?: ProductRecoveryState;
   readonly vaultLabel: string | null;
   readonly entries: readonly ProductNavigationEntry[];
   readonly loadedDocuments: readonly LoadedProductDocument[];
@@ -45,6 +57,12 @@ export interface ProductSnapshot {
   readonly closeUncertain: boolean;
 }
 export interface ProductApplication {
+  refreshRecovery?(signal: AbortSignal): Promise<void>;
+  restoreRecoveryCopy?(
+    file: string,
+    path: string,
+    signal: AbortSignal,
+  ): Promise<void>;
   snapshot(): ProductSnapshot;
   subscribe(changed: () => void): () => void;
   readonly documents: Pick<
@@ -70,6 +88,10 @@ export interface ProductApplication {
 }
 /** Privileged host ports; never passed to authored document code. */
 export interface NativeProductServices {
+  readonly recovery?: {
+    list(): Promise<RecoveryCatalog>;
+    read(version: RecoverySnapshot): Promise<string>;
+  };
   readonly closeGuard?: ProductCloseGuard;
   setCloseState(state: { dirty: boolean; busy: boolean }): Promise<void>;
   preserveAttempt(input: {

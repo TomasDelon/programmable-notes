@@ -1,4 +1,8 @@
 import {
+  decodeRecoveryCatalog,
+  decodeRecoveryVersion,
+} from './nativeRecoveryCatalog';
+import {
   createNativeWorkspace,
   type NativeWorkspacePorts,
 } from '../application/nativeWorkspace';
@@ -14,17 +18,42 @@ import type { NativeProductServices } from '../product/productApplication';
 type RecoveryPorts = Pick<
   typeof nativeDocuments,
   'dirty' | 'snapshot' | 'restoreSnapshot'
->;
+> &
+  Partial<Pick<typeof nativeDocuments, 'snapshots'>>;
 /** Capture privileged bindings once, keeping grants and private identities out of product chrome. */
 export function createNativeProductServices(
   ports: RecoveryPorts = nativeDocuments,
   newIdentity: () => string = () => crypto.randomUUID(),
 ): NativeProductServices {
-  const { dirty, snapshot, restoreSnapshot } = ports;
+  const { dirty, snapshot, restoreSnapshot, snapshots } = ports;
   const runId = newIdentity();
   const heads = new Map<string, string>();
   let recovery = Promise.resolve();
   return {
+    recovery: snapshots
+      ? {
+          list: async () => decodeRecoveryCatalog(await snapshots()),
+          async read(version) {
+            const captured = decodeRecoveryVersion(version);
+            if (!captured) throw Error('Recovery version is invalid.');
+            const reply = await restoreSnapshot(captured.file);
+            const receipt = reply as typeof reply & { snapshot?: unknown };
+            const echoed = decodeRecoveryVersion(receipt.snapshot);
+            if (
+              !echoed ||
+              JSON.stringify(echoed) !== JSON.stringify(captured) ||
+              reply.name !== captured.metadata.name ||
+              typeof reply.source !== 'string' ||
+              new TextEncoder().encode(reply.source).length !==
+                captured.metadata.sourceBytes
+            )
+              throw Error(
+                'Recovery readback does not match the selected version.',
+              );
+            return reply.source;
+          },
+        }
+      : undefined,
     setCloseState: ({ dirty: unsaved, busy }) => dirty(unsaved, busy),
     preserveAttempt(input) {
       const { sessionId, logicalPath } = input;
