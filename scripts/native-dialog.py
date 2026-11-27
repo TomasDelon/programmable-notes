@@ -11,6 +11,7 @@ mode = sys.argv[2]
 title = sys.argv[3]
 argument = sys.argv[4] if len(sys.argv) > 4 else ''
 accept_state = 'not_attempted'
+accept_lookup = 'not_attempted'
 
 def location_accept_label(action, dialog_title):
     # rfd 0.17.2 supplies NULL accept-label. GTK 3.24.41
@@ -82,14 +83,18 @@ def window():
     return matches[0] if matches else None
 
 def find(node, name, depth=0):
+    global accept_lookup
     if depth > 35:
         return None
     try:
         if node.getRoleName() == 'push button' and node.name.replace('_', '') == name:
+            accept_lookup = 'button_unreadable'
             state = node.getState()
-            if all(state.contains(flag) for flag in (
+            flags = tuple(state.contains(flag) for flag in (
                     pyatspi.STATE_VISIBLE, pyatspi.STATE_SHOWING,
-                    pyatspi.STATE_ENABLED, pyatspi.STATE_SENSITIVE)):
+                    pyatspi.STATE_ENABLED, pyatspi.STATE_SENSITIVE))
+            accept_lookup = 'button_flags_' + ''.join('1' if flag else '0' for flag in flags)
+            if all(flags):
                 return node
         for child in node:
             match = find(child, name, depth + 1)
@@ -124,8 +129,9 @@ def focused_entry_text():
     return None
 
 def click(name):
-    global accept_state
+    global accept_state, accept_lookup
     accept_state = 'not_found'
+    accept_lookup = 'dialog_not_found'
     dialogs = []
     # Match the same owned top-level topology as focused_entry_text. Establish
     # uniqueness across every matching application before touching any action.
@@ -135,6 +141,7 @@ def click(name):
     assert len(dialogs) <= 1, 'Ambiguous native accessibility dialogs'
     if not dialogs:
         return False
+    accept_lookup = 'button_not_found'
     try:
         button = find(dialogs[0], name)
         if button is not None:
@@ -194,6 +201,7 @@ while window() is not None and time.monotonic() < deadline:
 dialog_dismissed = window() is None
 if not dialog_dismissed and mode in ('choose', 'choose-folder'):
     print('NATIVE_DIALOG_ACCEPT_STATE=' + accept_state, file=sys.stderr)
+    print('NATIVE_DIALOG_ACCEPT_LOOKUP=' + accept_lookup, file=sys.stderr)
 assert dialog_dismissed, f'Native dialog did not acknowledge {mode}: {title}'
 print(json.dumps({'pid': pid, 'title': title, 'action': mode, 'argument': argument,
                   'dialogDismissed': True}))

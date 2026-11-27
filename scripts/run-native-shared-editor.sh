@@ -157,20 +157,30 @@ if (dialogEligible && dialogClasses.includes('dialog_location_echo_mismatch')) {
   }
 }
 let dialogAcceptState = 'unknown';
+let dialogAcceptLookup = 'unknown';
 if (dialogEligible && dialogClasses.includes('dialog_dismissal_unconfirmed')) {
   const mentions = raw.split(/\r?\n/).filter(line => line.includes('NATIVE_DIALOG_ACCEPT'));
-  const prefix = 'NATIVE_DIALOG_ACCEPT_STATE=';
+  const statePrefix = 'NATIVE_DIALOG_ACCEPT_STATE=';
+  const lookupPrefix = 'NATIVE_DIALOG_ACCEPT_LOOKUP=';
+  const stateLines = mentions.filter(line => line.startsWith(statePrefix));
+  const lookupLines = mentions.filter(line => line.startsWith(lookupPrefix));
   const states = new Set(['not_attempted', 'not_found', 'action_error', 'action_rejected', 'action_acknowledged']);
-  if (mentions.length === 1 && mentions[0].startsWith(prefix)) {
-    const state = mentions[0].slice(prefix.length);
-    if (states.has(state)) dialogAcceptState = state;
+  const lookups = new Set(['not_attempted', 'dialog_not_found', 'button_not_found', 'button_unreadable', ...Array.from({length: 16}, (_, bits) => `button_flags_${bits.toString(2).padStart(4, '0')}`)]);
+  const state = stateLines[0]?.slice(statePrefix.length);
+  const lookup = lookupLines[0]?.slice(lookupPrefix.length);
+  // Validate the entire frame: the new lookup line must not shadow STATE, and
+  // duplicate/unknown/quoted/source lines cannot smuggle either observation.
+  if (stateLines.length === 1 && lookupLines.length <= 1 && mentions.length === stateLines.length + lookupLines.length && states.has(state) && (lookupLines.length === 0 || lookups.has(lookup))) {
+    dialogAcceptState = state;
+    // An eligible button or unattempted lookup cannot explain a not-found return.
+    if (state === 'not_found' && lookupLines.length === 1 && lookup !== 'not_attempted' && lookup !== 'button_flags_1111') dialogAcceptLookup = lookup;
   }
 }
-await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, dialogClasses, dialogEchoShape, dialogAcceptState, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
+await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, dialogClasses, dialogEchoShape, dialogAcceptState, dialogAcceptLookup, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
 if (result !== 'passed') {
   // Only closed stage names, numeric codes and booleans reach the public API.
   // Never publish diagnostic text, paths, source or framework replies here.
-  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}; dialogClasses=${dialogClasses.join(',') || 'none'}; dialogEchoShape=${dialogEchoShape}; dialogAcceptState=${dialogAcceptState}`);
+  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}; dialogClasses=${dialogClasses.join(',') || 'none'}; dialogEchoShape=${dialogEchoShape}; dialogAcceptState=${dialogAcceptState}; dialogAcceptLookup=${dialogAcceptLookup}`);
   process.exitCode = 1;
 }
 REPORT

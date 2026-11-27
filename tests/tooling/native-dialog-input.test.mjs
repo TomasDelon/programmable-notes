@@ -157,13 +157,14 @@ class Button:
         return self.result
 for result, expected in ((None, 'not_found'), (False, 'action_rejected'), (True, 'action_acknowledged'), (RuntimeError('PRIVATE_PATH_TOKEN'), 'action_error')):
     button = None if result is None else Button(result)
-    env = {'pid': 7, 'title': 'PRIVATE_TITLE', 'accept_state': 'not_attempted', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: [App()])), 'find': lambda app, name: button}
+    env = {'pid': 7, 'title': 'PRIVATE_TITLE', 'accept_state': 'not_attempted', 'accept_lookup': 'PRIVATE_STALE_LOOKUP', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: [App()])), 'find': lambda app, name: button}
     exec(compile(ast.Module(body=[definition], type_ignores=[]), '<actual-click>', 'exec'), env)
     output = io.StringIO()
     with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
         clicked = env['click']('PRIVATE_BUTTON_NAME')
     assert clicked is (result is True)
     assert env['accept_state'] == expected
+    assert env['accept_lookup'] == 'button_not_found'
     assert output.getvalue() == ''
     if button is not None: assert button.calls == 1
 # Actual chooser loop must break immediately after the first acknowledged click.
@@ -229,23 +230,84 @@ import io
 from types import SimpleNamespace
 initial = next(node for node in tree.body if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'accept_state' for target in node.targets))
 assert ast.literal_eval(initial.value) == 'not_attempted'
+lookup_initial = next(node for node in tree.body if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'accept_lookup' for target in node.targets))
+assert ast.literal_eval(lookup_initial.value) == 'not_attempted'
 final_read = next(index for index, node in enumerate(tree.body) if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'dialog_dismissed' for target in node.targets))
 tail = tree.body[final_read:]
 assert len([node for node in ast.walk(ast.Module(body=tail, type_ignores=[])) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'window']) == 1
 assert sum('NATIVE_DIALOG_ACCEPT_STATE=' in ast.unparse(node) for node in tree.body) == 1
+assert sum('NATIVE_DIALOG_ACCEPT_LOOKUP=' in ast.unparse(node) for node in tree.body) == 1
 for mode in ('choose', 'choose-folder', 'cancel', 'button'):
     for dismissed in (True, False):
         for state in ('not_attempted', 'not_found', 'action_error', 'action_rejected', 'action_acknowledged'):
-            output = io.StringIO()
-            env = {'window': lambda: None if dismissed else 'PRIVATE_WINDOW', 'mode': mode, 'title': 'PRIVATE_TITLE', 'argument': 'PRIVATE_PATH_TOKEN', 'pid': 7, 'accept_state': state, 'sys': SimpleNamespace(stderr=output), 'json': __import__('json')}
-            failed = False
-            with contextlib.redirect_stdout(io.StringIO()):
-                try: exec(compile(ast.Module(body=tail, type_ignores=[]), '<actual-final-read>', 'exec'), env)
-                except AssertionError: failed = True
-            assert failed is (not dismissed)
-            expected = 'NATIVE_DIALOG_ACCEPT_STATE=' + state + '\\n' if not dismissed and mode in ('choose', 'choose-folder') else ''
-            assert output.getvalue() == expected
-            assert 'PRIVATE' not in output.getvalue()
+            for lookup in ('not_attempted', 'dialog_not_found', 'button_not_found', 'button_unreadable', *('button_flags_' + format(bits, '04b') for bits in range(16))):
+                output = io.StringIO()
+                env = {'window': lambda: None if dismissed else 'PRIVATE_WINDOW', 'mode': mode, 'title': 'PRIVATE_TITLE', 'argument': 'PRIVATE_PATH_TOKEN', 'pid': 7, 'accept_state': state, 'accept_lookup': lookup, 'sys': SimpleNamespace(stderr=output), 'json': __import__('json')}
+                failed = False
+                with contextlib.redirect_stdout(io.StringIO()):
+                    try: exec(compile(ast.Module(body=tail, type_ignores=[]), '<actual-final-read>', 'exec'), env)
+                    except AssertionError: failed = True
+                assert failed is (not dismissed)
+                expected = 'NATIVE_DIALOG_ACCEPT_STATE=' + state + '\\nNATIVE_DIALOG_ACCEPT_LOOKUP=' + lookup + '\\n' if not dismissed and mode in ('choose', 'choose-folder') else ''
+                assert output.getvalue() == expected
+                assert 'PRIVATE' not in output.getvalue()
+print('PASS')
+`);
+});
+
+test('actual button lookup records only existing native state flags and preserves eligibility', () => {
+  run(`
+from types import SimpleNamespace
+definition = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'find')
+class State:
+    def __init__(self, bits, failure=False): self.bits = bits; self.failure = failure; self.calls = []
+    def contains(self, flag):
+        self.calls.append(flag)
+        if self.failure: raise RuntimeError('PRIVATE_STATE_TOKEN')
+        return self.bits[flag]
+class Node:
+    def __init__(self, role='push button', name='_Open', bits=(False,)*4, failure=False, state_failure=False, children=()):
+        self.role = role; self.name = name; self.state = State(bits, state_failure); self.failure = failure; self.children = children; self.reads = 0
+    def getRoleName(self): return self.role
+    def getState(self):
+        self.reads += 1
+        if self.failure: raise RuntimeError('PRIVATE_GETSTATE_TOKEN')
+        return self.state
+    def __iter__(self): return iter(self.children)
+env = {'accept_lookup': 'button_not_found', 'pyatspi': SimpleNamespace(STATE_VISIBLE=0, STATE_SHOWING=1, STATE_ENABLED=2, STATE_SENSITIVE=3)}
+exec(compile(ast.Module(body=[definition], type_ignores=[]), '<actual-find>', 'exec'), env)
+for value in range(16):
+    bits = tuple(bool(value & (1 << (3-index))) for index in range(4))
+    node = Node(bits=bits)
+    env['accept_lookup'] = 'button_not_found'
+    result = env['find'](node, 'Open')
+    assert result is (node if all(bits) else None)
+    assert env['accept_lookup'] == 'button_flags_' + format(value, '04b')
+    assert node.reads == 1 and node.state.calls == [0, 1, 2, 3]
+for node in (Node(failure=True), Node(state_failure=True)):
+    env['accept_lookup'] = 'button_not_found'
+    assert env['find'](node, 'Open') is None
+    assert env['accept_lookup'] == 'button_unreadable'
+    assert node.reads == 1
+for node in (Node(role='label'), Node(name='PRIVATE_OTHER_BUTTON')):
+    env['accept_lookup'] = 'button_not_found'
+    assert env['find'](node, 'Open') is None
+    assert env['accept_lookup'] == 'button_not_found' and node.reads == 0
+first = Node(bits=(False, False, False, False))
+last = Node(bits=(True, False, True, False))
+root = Node(role='dialog', children=(first, last))
+assert env['find'](root, 'Open') is None
+assert env['accept_lookup'] == 'button_flags_1010'
+# Reset happens before each click, including missing owned-title dialogs.
+click = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'click')
+class App:
+    def get_process_id(self): return 7
+    def __iter__(self): return iter([])
+env.update(pid=7, title='Choose local vault', accept_state='not_attempted')
+env['pyatspi'].Registry = SimpleNamespace(getDesktop=lambda index: [App()])
+exec(compile(ast.Module(body=[click], type_ignores=[]), '<actual-click>', 'exec'), env)
+assert env['click']('Open') is False
+assert env['accept_lookup'] == 'dialog_not_found'
 print('PASS')
 `);
 });

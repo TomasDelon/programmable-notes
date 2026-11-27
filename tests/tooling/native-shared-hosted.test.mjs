@@ -570,7 +570,7 @@ test('host annotations expose only closed stages, codes and denial categories ra
     assert.match(
       result.stdout,
       new RegExp(
-        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none; dialogEchoShape=unknown; dialogAcceptState=unknown\\n$`,
+        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none; dialogEchoShape=unknown; dialogAcceptState=unknown; dialogAcceptLookup=unknown\\n$`,
       ),
     );
     assert.doesNotMatch(
@@ -825,7 +825,7 @@ test('chooser advisory classes recognize only fixed terminal helper exceptions',
       assert.match(
         observed.stdout,
         new RegExp(
-          `; dialogClasses=${category}; dialogEchoShape=unknown; dialogAcceptState=unknown\\n$`,
+          `; dialogClasses=${category}; dialogEchoShape=unknown; dialogAcceptState=unknown; dialogAcceptLookup=unknown\\n$`,
         ),
       );
       assert.equal(observed.record.result, 'failed');
@@ -1092,7 +1092,9 @@ test('dialog echo shape projects exactly one bare allowlisted marker only on an 
       assert.equal(observed.record.dialogEchoShape, shape);
       assert.match(
         observed.stdout,
-        new RegExp(`dialogEchoShape=${shape}; dialogAcceptState=unknown\\n$`),
+        new RegExp(
+          `dialogEchoShape=${shape}; dialogAcceptState=unknown; dialogAcceptLookup=unknown\\n$`,
+        ),
       );
       assert.equal(observed.record.result, 'failed');
     }
@@ -1141,7 +1143,7 @@ test('dialog echo marker ignores raw, unknown, quoted, injected, source and dupl
     assert.equal(observed.record.dialogEchoShape, 'unknown');
     assert.match(
       observed.stdout,
-      /dialogEchoShape=unknown; dialogAcceptState=unknown\n$/,
+      /dialogEchoShape=unknown; dialogAcceptState=unknown; dialogAcceptLookup=unknown\n$/,
     );
     assert.doesNotMatch(
       observed.stdout + observed.stderr + JSON.stringify(observed.record),
@@ -1172,7 +1174,9 @@ test('dialog accept state projects one bare exact marker only for this failed ch
       assert.equal(observed.record.dialogAcceptState, state);
       assert.match(
         observed.stdout,
-        new RegExp(`dialogAcceptState=${state}\\n$`),
+        new RegExp(
+          `dialogAcceptState=${state}; dialogAcceptLookup=unknown\\n$`,
+        ),
       );
       assert.equal(observed.record.result, 'failed');
     }
@@ -1226,10 +1230,126 @@ test('accept marker rejects unknown, raw, quoted, source, injected and duplicate
       [dismissalLine, ...lines].join('\n') + '\n',
     );
     assert.equal(observed.record.dialogAcceptState, 'unknown');
-    assert.match(observed.stdout, /dialogAcceptState=unknown\n$/);
+    assert.match(
+      observed.stdout,
+      /dialogAcceptState=unknown; dialogAcceptLookup=unknown\n$/,
+    );
     assert.doesNotMatch(
       observed.stdout + observed.stderr + JSON.stringify(observed.record),
       /accept-sentinel|private\/|%0A/,
     );
   }
+});
+
+const lookupFrame = (lookup, state = 'not_found') =>
+  `${dismissalLine}\nNATIVE_DIALOG_ACCEPT_STATE=${state}\nNATIVE_DIALOG_ACCEPT_LOOKUP=${lookup}\n`;
+test('paired accept STATE and LOOKUP retain existing state and project only ineligible lookup observations', async (t) => {
+  const values = [
+    'dialog_not_found',
+    'button_not_found',
+    'button_unreadable',
+    ...Array.from(
+      { length: 15 },
+      (_, bits) => `button_flags_${bits.toString(2).padStart(4, '0')}`,
+    ),
+  ];
+  for (const lookup of values) {
+    for (const stage of ['authorized_vault_chooser', 'fresh_launch_reopen']) {
+      const observed = await runJourneyReport(
+        t,
+        echoChooserFailure({ stage }),
+        lookupFrame(lookup),
+      );
+      assert.equal(observed.record.dialogAcceptState, 'not_found');
+      assert.equal(observed.record.dialogAcceptLookup, lookup);
+      assert.match(
+        observed.stdout,
+        new RegExp(`dialogAcceptLookup=${lookup}\\n$`),
+      );
+    }
+  }
+  for (const state of [
+    'not_attempted',
+    'action_error',
+    'action_rejected',
+    'action_acknowledged',
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      echoChooserFailure(),
+      lookupFrame('button_flags_1111', state),
+    );
+    assert.equal(observed.record.dialogAcceptState, state);
+    assert.equal(observed.record.dialogAcceptLookup, 'unknown');
+  }
+  for (const impossibleValue of ['not_attempted', 'button_flags_1111']) {
+    const impossible = await runJourneyReport(
+      t,
+      echoChooserFailure(),
+      lookupFrame(impossibleValue),
+    );
+    assert.equal(impossible.record.dialogAcceptState, 'not_found');
+    assert.equal(impossible.record.dialogAcceptLookup, 'unknown');
+  }
+  const absent = await runJourneyReport(
+    t,
+    echoChooserFailure(),
+    `${dismissalLine}\nNATIVE_DIALOG_ACCEPT_STATE=not_found\n`,
+  );
+  assert.equal(absent.record.dialogAcceptState, 'not_found');
+  assert.equal(absent.record.dialogAcceptLookup, 'unknown');
+});
+test('lookup projection rejects ambiguous ACCEPT frames, foreign contexts and raw data', async (t) => {
+  const state = 'NATIVE_DIALOG_ACCEPT_STATE=not_found';
+  const lookup = 'NATIVE_DIALOG_ACCEPT_LOOKUP=button_not_found';
+  for (const lines of [
+    [lookup],
+    [state, lookup, lookup],
+    [state, state, lookup],
+    [state, lookup, 'NATIVE_DIALOG_ACCEPT_LOOKUP=dialog_not_found'],
+    [state, 'NATIVE_DIALOG_ACCEPT_LOOKUP=button_flags_11111'],
+    [state, 'NATIVE_DIALOG_ACCEPT_LOOKUP=button_flags_010x'],
+    [state, 'NATIVE_DIALOG_ACCEPT_LOOKUP=/private/lookup-sentinel'],
+    [
+      state,
+      'NATIVE_DIALOG_ACCEPT_LOOKUP=button_not_found%0A::error::lookup-sentinel',
+    ],
+    [state, `'${lookup}'`],
+    [state, `print("${lookup}")`],
+    [state, lookup, `print("${lookup}")`],
+    [state, lookup, 'NATIVE_DIALOG_ACCEPT_LOOKUP_EXTRA=button_not_found'],
+    [state, 'NATIVE_DIALOG_ACCEPT_LOOKUP=UNKNOWN'],
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      echoChooserFailure(),
+      [dismissalLine, ...lines].join('\n') + '\n',
+    );
+    assert.equal(observed.record.dialogAcceptState, 'unknown');
+    assert.equal(observed.record.dialogAcceptLookup, 'unknown');
+    assert.doesNotMatch(
+      observed.stdout + observed.stderr + JSON.stringify(observed.record),
+      /lookup-sentinel|private\/|%0A/,
+    );
+  }
+  for (const [receipt, outer] of [
+    [undefined, 'journey'],
+    [echoChooserFailure({ result: 'passed' }), 'journey'],
+    [echoChooserFailure({ scope: 'foreign' }), 'journey'],
+    [echoChooserFailure({ stage: 'source_autosave' }), 'journey'],
+    [echoChooserFailure({ startupPhase: 'product_ready' }), 'journey'],
+    [echoChooserFailure({ failureKind: 'assertion' }), 'journey'],
+    [echoChooserFailure(), 'driver_start'],
+  ])
+    assert.equal(
+      (
+        await runJourneyReport(
+          t,
+          receipt,
+          lookupFrame('button_not_found'),
+          outer,
+        )
+      ).record.dialogAcceptLookup,
+      'unknown',
+    );
 });
