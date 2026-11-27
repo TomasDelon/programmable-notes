@@ -116,7 +116,7 @@ def assert_contract(text):
     assert len(marker.keywords) == 1 and marker.keywords[0].arg == 'file' and ast.unparse(marker.keywords[0].value) == 'sys.stderr'
     assert any(isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'deadline' for target in node.targets) and ast.unparse(node.value) == 'time.monotonic() + 30' for node in ast.walk(parsed))
     assert "command('key', '--clearmodifiers', 'Return')" in text
-    assert "assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'" in text
+    assert "assert dialog_dismissed, f'Native dialog did not acknowledge {mode}: {title}'" in text
 assert_contract(source)
 for old, new in (
     ("'--', typed_path)", "'--', argument)"),
@@ -134,6 +134,70 @@ for old, new in (
         pass
     else:
         raise AssertionError('mutated input contract was accepted')
+print('PASS')
+`);
+});
+
+test('actual AT-SPI click records only closed observations without repeating an acknowledged action', () => {
+  run(`
+import contextlib
+import io
+from types import SimpleNamespace
+definition = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'click')
+class App:
+    def get_process_id(self): return 7
+class Button:
+    def __init__(self, result): self.result = result; self.calls = 0
+    def queryAction(self): return self
+    def doAction(self, index):
+        assert index == 0
+        self.calls += 1
+        if isinstance(self.result, Exception): raise self.result
+        return self.result
+for result, expected in ((None, 'not_found'), (False, 'action_rejected'), (True, 'action_acknowledged'), (RuntimeError('PRIVATE_PATH_TOKEN'), 'action_error')):
+    button = None if result is None else Button(result)
+    env = {'pid': 7, 'accept_state': 'not_attempted', 'pyatspi': SimpleNamespace(Registry=SimpleNamespace(getDesktop=lambda index: [App()])), 'find': lambda app, name: button}
+    exec(compile(ast.Module(body=[definition], type_ignores=[]), '<actual-click>', 'exec'), env)
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+        clicked = env['click']('PRIVATE_BUTTON_NAME')
+    assert clicked is (result is True)
+    assert env['accept_state'] == expected
+    assert output.getvalue() == ''
+    if button is not None: assert button.calls == 1
+# Actual chooser loop must break immediately after the first acknowledged click.
+loops = [node for node in ast.walk(tree) if isinstance(node, ast.While) and any(isinstance(child, ast.Call) and isinstance(child.func, ast.Name) and child.func.id == 'click' for child in ast.walk(node))]
+assert len(loops) == 1
+ack = next(node for node in loops[0].body if isinstance(node, ast.If) and ast.unparse(node.test) == 'click(accept)')
+assert len(ack.body) == 1 and isinstance(ack.body[0], ast.Break)
+print('PASS')
+`);
+});
+
+test('accept-state marker uses the existing final read only for failed chooser dismissal', () => {
+  run(`
+import contextlib
+import io
+from types import SimpleNamespace
+initial = next(node for node in tree.body if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'accept_state' for target in node.targets))
+assert ast.literal_eval(initial.value) == 'not_attempted'
+final_read = next(index for index, node in enumerate(tree.body) if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'dialog_dismissed' for target in node.targets))
+tail = tree.body[final_read:]
+assert len([node for node in ast.walk(ast.Module(body=tail, type_ignores=[])) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'window']) == 1
+assert sum('NATIVE_DIALOG_ACCEPT_STATE=' in ast.unparse(node) for node in tree.body) == 1
+for mode in ('choose', 'choose-folder', 'cancel', 'button'):
+    for dismissed in (True, False):
+        for state in ('not_attempted', 'not_found', 'action_error', 'action_rejected', 'action_acknowledged'):
+            output = io.StringIO()
+            env = {'window': lambda: None if dismissed else 'PRIVATE_WINDOW', 'mode': mode, 'title': 'PRIVATE_TITLE', 'argument': 'PRIVATE_PATH_TOKEN', 'pid': 7, 'accept_state': state, 'sys': SimpleNamespace(stderr=output), 'json': __import__('json')}
+            failed = False
+            with contextlib.redirect_stdout(io.StringIO()):
+                try: exec(compile(ast.Module(body=tail, type_ignores=[]), '<actual-final-read>', 'exec'), env)
+                except AssertionError: failed = True
+            assert failed is (not dismissed)
+            expected = 'NATIVE_DIALOG_ACCEPT_STATE=' + state + '\\n' if not dismissed and mode in ('choose', 'choose-folder') else ''
+            assert output.getvalue() == expected
+            assert 'PRIVATE' not in output.getvalue()
 print('PASS')
 `);
 });

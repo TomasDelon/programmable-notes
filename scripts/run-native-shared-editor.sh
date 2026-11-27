@@ -156,11 +156,21 @@ if (dialogEligible && dialogClasses.includes('dialog_location_echo_mismatch')) {
     if (shapes.has(shape)) dialogEchoShape = shape;
   }
 }
-await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, dialogClasses, dialogEchoShape, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
+let dialogAcceptState = 'unknown';
+if (dialogEligible && dialogClasses.includes('dialog_dismissal_unconfirmed')) {
+  const mentions = raw.split(/\r?\n/).filter(line => line.includes('NATIVE_DIALOG_ACCEPT'));
+  const prefix = 'NATIVE_DIALOG_ACCEPT_STATE=';
+  const states = new Set(['not_attempted', 'not_found', 'action_error', 'action_rejected', 'action_acknowledged']);
+  if (mentions.length === 1 && mentions[0].startsWith(prefix)) {
+    const state = mentions[0].slice(prefix.length);
+    if (states.has(state)) dialogAcceptState = state;
+  }
+}
+await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, dialogClasses, dialogEchoShape, dialogAcceptState, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
 if (result !== 'passed') {
   // Only closed stage names, numeric codes and booleans reach the public API.
   // Never publish diagnostic text, paths, source or framework replies here.
-  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}; dialogClasses=${dialogClasses.join(',') || 'none'}; dialogEchoShape=${dialogEchoShape}`);
+  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}; dialogClasses=${dialogClasses.join(',') || 'none'}; dialogEchoShape=${dialogEchoShape}; dialogAcceptState=${dialogAcceptState}`);
   process.exitCode = 1;
 }
 REPORT

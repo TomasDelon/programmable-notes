@@ -10,6 +10,7 @@ pid = int(sys.argv[1])
 mode = sys.argv[2]
 title = sys.argv[3]
 argument = sys.argv[4] if len(sys.argv) > 4 else ''
+accept_state = 'not_attempted'
 
 def location_accept_label(action, dialog_title):
     # rfd 0.17.2 supplies NULL accept-label. GTK 3.24.41
@@ -123,13 +124,18 @@ def focused_entry_text():
     return None
 
 def click(name):
+    global accept_state
+    accept_state = 'not_found'
     for app in pyatspi.Registry.getDesktop(0):
         try:
             if app.get_process_id() != pid:
                 continue
             button = find(app, name)
             if button is not None:
-                assert button.queryAction().doAction(0)
+                accept_state = 'action_error'
+                acknowledged = button.queryAction().doAction(0)
+                accept_state = 'action_acknowledged' if acknowledged else 'action_rejected'
+                assert acknowledged
                 return True
         except Exception:
             continue
@@ -179,6 +185,9 @@ else:
 # chooser acceptance, automatically confirm replacement, or retry an acknowledged click.
 while window() is not None and time.monotonic() < deadline:
     time.sleep(0.1)
-assert window() is None, f'Native dialog did not acknowledge {mode}: {title}'
+dialog_dismissed = window() is None
+if not dialog_dismissed and mode in ('choose', 'choose-folder'):
+    print('NATIVE_DIALOG_ACCEPT_STATE=' + accept_state, file=sys.stderr)
+assert dialog_dismissed, f'Native dialog did not acknowledge {mode}: {title}'
 print(json.dumps({'pid': pid, 'title': title, 'action': mode, 'argument': argument,
                   'dialogDismissed': True}))

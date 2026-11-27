@@ -570,7 +570,7 @@ test('host annotations expose only closed stages, codes and denial categories ra
     assert.match(
       result.stdout,
       new RegExp(
-        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none; dialogEchoShape=unknown\\n$`,
+        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown; dialogClasses=none; dialogEchoShape=unknown; dialogAcceptState=unknown\\n$`,
       ),
     );
     assert.doesNotMatch(
@@ -824,7 +824,9 @@ test('chooser advisory classes recognize only fixed terminal helper exceptions',
       assert.deepEqual(observed.record.dialogClasses, [category]);
       assert.match(
         observed.stdout,
-        new RegExp(`; dialogClasses=${category}; dialogEchoShape=unknown\\n$`),
+        new RegExp(
+          `; dialogClasses=${category}; dialogEchoShape=unknown; dialogAcceptState=unknown\\n$`,
+        ),
       );
       assert.equal(observed.record.result, 'failed');
       assert.doesNotMatch(
@@ -1088,7 +1090,10 @@ test('dialog echo shape projects exactly one bare allowlisted marker only on an 
         'dialog_location_echo_mismatch',
       ]);
       assert.equal(observed.record.dialogEchoShape, shape);
-      assert.match(observed.stdout, new RegExp(`dialogEchoShape=${shape}\\n$`));
+      assert.match(
+        observed.stdout,
+        new RegExp(`dialogEchoShape=${shape}; dialogAcceptState=unknown\\n$`),
+      );
       assert.equal(observed.record.result, 'failed');
     }
   }
@@ -1134,10 +1139,97 @@ test('dialog echo marker ignores raw, unknown, quoted, injected, source and dupl
       [echoMismatchLine, ...lines].join('\n') + '\n',
     );
     assert.equal(observed.record.dialogEchoShape, 'unknown');
-    assert.match(observed.stdout, /dialogEchoShape=unknown\n$/);
+    assert.match(
+      observed.stdout,
+      /dialogEchoShape=unknown; dialogAcceptState=unknown\n$/,
+    );
     assert.doesNotMatch(
       observed.stdout + observed.stderr + JSON.stringify(observed.record),
       /echo-sentinel|private\/|%0A/,
+    );
+  }
+});
+
+const dismissalLine =
+  'AssertionError: Native dialog did not acknowledge choose-folder: Choose local vault';
+test('dialog accept state projects one bare exact marker only for this failed chooser dismissal', async (t) => {
+  for (const state of [
+    'not_attempted',
+    'not_found',
+    'action_error',
+    'action_rejected',
+    'action_acknowledged',
+  ]) {
+    for (const stage of ['authorized_vault_chooser', 'fresh_launch_reopen']) {
+      const observed = await runJourneyReport(
+        t,
+        echoChooserFailure({ stage }),
+        `${dismissalLine}\nNATIVE_DIALOG_ACCEPT_STATE=${state}\n`,
+      );
+      assert.deepEqual(observed.record.dialogClasses, [
+        'dialog_dismissal_unconfirmed',
+      ]);
+      assert.equal(observed.record.dialogAcceptState, state);
+      assert.match(
+        observed.stdout,
+        new RegExp(`dialogAcceptState=${state}\\n$`),
+      );
+      assert.equal(observed.record.result, 'failed');
+    }
+  }
+  const raw = `${dismissalLine}\nNATIVE_DIALOG_ACCEPT_STATE=action_acknowledged\n`;
+  for (const [receipt, outer] of [
+    [undefined, 'journey'],
+    [echoChooserFailure({ result: 'passed' }), 'journey'],
+    [echoChooserFailure({ scope: 'foreign' }), 'journey'],
+    [echoChooserFailure({ stage: 'source_autosave' }), 'journey'],
+    [echoChooserFailure({ startupPhase: 'product_ready' }), 'journey'],
+    [echoChooserFailure({ failureKind: 'assertion' }), 'journey'],
+    [echoChooserFailure(), 'driver_start'],
+  ])
+    assert.equal(
+      (await runJourneyReport(t, receipt, raw, outer)).record.dialogAcceptState,
+      'unknown',
+    );
+  assert.equal(
+    (
+      await runJourneyReport(
+        t,
+        echoChooserFailure(),
+        'NATIVE_DIALOG_ACCEPT_STATE=action_acknowledged\n',
+      )
+    ).record.dialogAcceptState,
+    'unknown',
+  );
+});
+test('accept marker rejects unknown, raw, quoted, source, injected and duplicate states without exposing data', async (t) => {
+  const marker = 'NATIVE_DIALOG_ACCEPT_STATE=action_acknowledged';
+  for (const lines of [
+    [],
+    ['NATIVE_DIALOG_ACCEPT_STATE=UNKNOWN'],
+    ['NATIVE_DIALOG_ACCEPT_STATE=action_acknowledged_extra'],
+    ['NATIVE_DIALOG_ACCEPT_STATE=/private/accept-sentinel'],
+    [
+      'NATIVE_DIALOG_ACCEPT_STATE=action_acknowledged%0A::error::accept-sentinel',
+    ],
+    [`prefix ${marker}`],
+    [`'${marker}'`],
+    [`print("${marker}",file=sys.stderr)`],
+    [marker, marker],
+    [marker, 'NATIVE_DIALOG_ACCEPT_STATE=not_found'],
+    [marker, `print("${marker}")`],
+    [marker, 'NATIVE_DIALOG_ACCEPT_STATE=unknown'],
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      echoChooserFailure(),
+      [dismissalLine, ...lines].join('\n') + '\n',
+    );
+    assert.equal(observed.record.dialogAcceptState, 'unknown');
+    assert.match(observed.stdout, /dialogAcceptState=unknown\n$/);
+    assert.doesNotMatch(
+      observed.stdout + observed.stderr + JSON.stringify(observed.record),
+      /accept-sentinel|private\/|%0A/,
     );
   }
 });
