@@ -11,6 +11,16 @@ mode = sys.argv[2]
 title = sys.argv[3]
 argument = sys.argv[4] if len(sys.argv) > 4 else ''
 
+def location_accept_label(action, dialog_title):
+    # rfd 0.17.2 supplies NULL accept-label. GTK 3.24.41
+    # gtkfilechoosernative.c show_dialog defaults SAVE to _Save, all others to
+    # _Open (blob 76f7cb6da89b33bad30f9cc934e4e1eddb4463ac).
+    if action == 'choose-folder':
+        return 'Open'
+    if action == 'choose':
+        return 'Save' if dialog_title == 'Save source as' else 'Open'
+    raise ValueError('Unknown chooser action')
+
 def location_input_text(action, value):
     # GTK 3.24.41 gtkfilechooserentry.c enables folder inline completion and
     # includes a separator in directory completions (blob 02f9d5542f1a49ffd9481850cc4a081d6ed4d72a).
@@ -155,7 +165,7 @@ if mode in ('choose', 'choose-folder'):
     # GtkFileChooser's location entry may first select, then require Open/Save.
     time.sleep(0.3)
     while window() is not None and time.monotonic() < deadline:
-        accept = 'Select' if mode == 'choose-folder' else ('Save' if title == 'Save source as' else 'Open')
+        accept = location_accept_label(mode, title)
         if click(accept):
             break
         time.sleep(0.1)

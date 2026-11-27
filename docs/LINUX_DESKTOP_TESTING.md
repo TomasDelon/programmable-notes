@@ -438,7 +438,7 @@ visual inspection or proof of editing, saving or recovery.
 For a folder chooser the external driver types an explicit trailing directory
 separator and requires that exact field echo. GTK3 folder inline completion
 appends directory separators; the unchanged file-chooser mode keeps its original
-input bytes. PID/title/focus checks, actual Return/Select acknowledgement,1ms key
+input bytes. PID/title/focus checks, actual Return/Open acknowledgement,1ms key
 delay and30s deadline remain intact. This is a supported directory spelling, not
 proof that a previous echo failure had that exact cause. No prefix acceptance or
 native filesystem grant shortcut is permitted.
@@ -448,3 +448,9 @@ existing final read. The reporter projects it only for a validated failed choose
 journey and one unambiguous known marker. Do not publish paths, values, raw logs or
 signed artifact URLs. Retain each failed run and distinguish a helper signature
 from an application or namespace diagnosis.
+
+The pinned rfd GTK backend passes null accept labels. GTK3.24.41 therefore uses
+Open for folder selection, and Save only for its save action. The helper now uses
+that exact default label rather than Select; it does not try alternative buttons.
+This independently verified SDK mismatch was after the previous failed echo
+stage, so it is not claimed as the cause of that earlier failure.

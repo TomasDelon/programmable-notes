@@ -9,7 +9,7 @@ from pathlib import Path
 import tempfile
 source = Path('scripts/native-dialog.py').read_text()
 tree = ast.parse(source)
-definitions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in ('location_input_text', 'location_echo_shape')]
+definitions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in ('location_input_text', 'location_echo_shape', 'location_accept_label')]
 namespace = {}
 # Execute only the actual pure production functions, never GTK imports/actions.
 exec(compile(ast.Module(body=definitions, type_ignores=[]), '<native-dialog-pure>', 'exec'), namespace)
@@ -23,6 +23,30 @@ function run(program) {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout, 'PASS\n');
 }
+
+test('GTK null-label contract uses Open for folder selection and Save only for file saving', () => {
+  run(`
+label = namespace['location_accept_label']
+# GTK 3.24.41 gtkfilechoosernative.c show_dialog, blob
+# 76f7cb6da89b33bad30f9cc934e4e1eddb4463ac: SAVE ? _Save : _Open.
+assert label('choose-folder', 'Choose local vault') == 'Open'
+assert label('choose-folder', 'Save source as') == 'Open'
+assert label('choose', 'Open source') == 'Open'
+assert label('choose', 'Save source as') == 'Save'
+for action in ('cancel', 'button', '', 'unknown'):
+    try:
+        label(action, 'Save source as')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('unknown chooser mode accepted')
+assignments = [node for node in ast.walk(tree) if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'accept' for target in node.targets)]
+assert len(assignments) == 1
+assert ast.unparse(assignments[0].value) == 'location_accept_label(mode, title)'
+assert "if click(accept):" in source
+print('PASS')
+`);
+});
 
 test('folder input requests its explicit separator without changing the selected directory or file input', () => {
   run(`
