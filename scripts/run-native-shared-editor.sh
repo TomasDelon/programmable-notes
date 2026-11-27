@@ -66,7 +66,8 @@ cleanup() {
   fi
   PN_HOST_STATUS="$pn_result" PN_HOST_STAGE="$pn_stage" PN_HOST_CLEAN="$pn_clean" PN_HOST_FORCED="$pn_forced" PN_HOST_RESIDUAL="$pn_residual" "$pn_node" --input-type=module - "$pn_evidence" "$pn_diag" "$pn_payload" <<'REPORT'
 import assert from 'node:assert/strict';
-import {readFile, writeFile, stat, unlink, lstat, realpath, rm} from 'node:fs/promises';
+import {constants} from 'node:fs';
+import {readFile, writeFile, stat, unlink, lstat, realpath, rm, open} from 'node:fs/promises';
 import {join} from 'node:path';
 const [directory, diagnostic, payload = ''] = process.argv.slice(2);
 let cleanupVerified = process.env.PN_HOST_CLEAN === 'true';
@@ -86,9 +87,40 @@ const knownStages = new Set(['role_setup', 'checkout_boundary', 'checkout_ancest
 const stage = knownStages.has(process.env.PN_HOST_STAGE) ? process.env.PN_HOST_STAGE : 'unknown';
 const rawExit = Number(process.env.PN_HOST_STATUS);
 const exitCode = Number.isInteger(rawExit) && rawExit >= 0 && rawExit <= 255 ? rawExit : 255;
+const journeyStages = new Set(['preflight', 'installed_startup', 'authorized_vault_chooser', 'source_autosave', 'undo_redo', 'invalid_source_autosave', 'source_preview_switch', 'preview_caret_autosave', 'preview_undo_redo', 'document_close_reopen', 'os_close', 'fresh_launch_reopen', 'final_os_close']);
+const startupPhases = new Set(['not_started', 'driver_session', 'pid_identity', 'executable_identity', 'process_capture', 'product_ready', 'complete']);
+const failureKinds = new Set(['none', 'webdriver_session_not_created', 'webdriver_unknown_error', 'webdriver_invalid_session_id', 'webdriver_no_such_window', 'webdriver_timeout', 'webdriver_invalid_argument', 'webdriver_other', 'observation_deadline', 'assertion', 'other', 'os_eperm', 'os_eacces', 'os_enoent', 'os_esrch']);
+let journeyStage = 'unknown';
+let startupPhase;
+let failureKind;
+async function collectedReceipt() {
+  const handle = await open(join(directory, 'native-shared-editor.json'), constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const before = await handle.stat();
+    assert(before.isFile() && before.size > 0 && before.size <= 65536);
+    const bytes = Buffer.alloc(65537);
+    let count = 0;
+    while (count < bytes.length) {
+      const read = await handle.read(bytes, count, bytes.length - count, count);
+      if (!read.bytesRead) break;
+      count += read.bytesRead;
+    }
+    assert.equal(count, before.size);
+    assert.equal((await handle.stat()).size, before.size);
+    return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes.subarray(0, count)));
+  } finally { await handle.close(); }
+}
 let result = 'failed';
 try {
-  const receipt = JSON.parse(await readFile(join(directory, 'native-shared-editor.json'), 'utf8'));
+  const receipt = await collectedReceipt();
+  // Output directories and the role home start empty. Only a receipt collected
+  // from this launched journey can contribute inner diagnostics, never a setup
+  // failure or foreign/malformed record. These fields authorize no success.
+  if ((stage === 'journey' || stage === 'journey_finished') && receipt?.schema === 1 && receipt.scope === 'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance' && ['passed', 'failed'].includes(receipt.result) && journeyStages.has(receipt.stage)) {
+    journeyStage = receipt.stage;
+    if (startupPhases.has(receipt.startupPhase)) startupPhase = receipt.startupPhase;
+    if (failureKinds.has(receipt.failureKind)) failureKind = receipt.failureKind;
+  }
   if (receipt.schema === 1 && receipt.result === 'passed' && receipt.cleanupVerified === true && receipt.forcedCleanup === false && process.env.PN_HOST_STATUS === '0' && cleanupVerified && process.env.PN_HOST_FORCED === 'false' && process.env.PN_HOST_RESIDUAL === 'false') result = 'passed';
 } catch { /* Missing/malformed evidence is a failed observation. */ }
 for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
@@ -100,12 +132,12 @@ for (const name of ['screenshot-source.png', 'screenshot-preview.png']) {
 }
 try {if ((await stat(join(directory, 'native-shared-editor.json'))).size > 65536) {await unlink(join(directory, 'native-shared-editor.json')); result = 'failed';}} catch {result = 'failed';}
 const raw = await readFile(diagnostic, 'utf8');
-const denials = [['bubblewrap_message', /bwrap:/], ['namespace_permission', /[Nn]amespace.*[Pp]ermission/], ['sandbox_failure', /[Ss]andbox.*[Ff]ail/], ['operation_not_permitted', /Operation not permitted/]].filter(([, pattern]) => pattern.test(raw)).map(([name]) => name);
-await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
+const denials = [['bubblewrap_message', /bwrap:/], ['namespace_permission', /[Nn]amespace.*[Pp]ermission/], ['sandbox_failure', /[Ss]andbox.*[Ff]ail/], ['operation_not_permitted', /Operation not permitted/], ['bubblewrap_namespace_denied', /^bwrap: Creating new namespace failed: Operation not permitted\r?$/m]].filter(([, pattern]) => pattern.test(raw)).map(([name]) => name);
+await writeFile(join(directory, 'infrastructure.json'), JSON.stringify({schema: 1, result, stage, journeyStage, ...(startupPhase !== undefined ? {startupPhase} : {}), ...(failureKind !== undefined ? {failureKind} : {}), exitCode, cleanupVerified, forcedCleanup: process.env.PN_HOST_FORCED === 'true', residualApplicationProcesses: process.env.PN_HOST_RESIDUAL === 'true', denials, scope: 'Standard Ubuntu hosted editor-only observation; no React or containment acceptance'}, null, 2) + '\n', {mode: 0o600});
 if (result !== 'passed') {
   // Only closed stage names, numeric codes and booleans reach the public API.
   // Never publish diagnostic text, paths, source or framework replies here.
-  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}`);
+  console.log(`::error title=Native shared editor::stage=${stage}; exitCode=${exitCode}; cleanup=${cleanupVerified}; forced=${process.env.PN_HOST_FORCED === 'true'}; residual=${process.env.PN_HOST_RESIDUAL === 'true'}; denialClasses=${denials.join(',') || 'none'}; journeyStage=${journeyStage}; startupPhase=${startupPhase ?? 'unknown'}; failureKind=${failureKind ?? 'unknown'}`);
   process.exitCode = 1;
 }
 REPORT

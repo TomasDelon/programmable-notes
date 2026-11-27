@@ -376,3 +376,42 @@ verification. Only documentation was updated afterward; its formatting was
 rechecked. Staged, complete-history and archived-content secret scans found zero
 findings. The next current-source required CI and actual packaged retry remain
 separate gates.
+
+## Corrected driver, actual installed attempt on10cb8e4
+
+Required [CI46059491223](https://github.com/TomasDelon/programmable-notes/actions/runs/46059491223)
+passed both jobs. The corrected installed [run46060542545](https://github.com/TomasDelon/programmable-notes/actions/runs/46060542545)
+passed provenance, package inspection/installation and driver startup, then failed
+inside the journey. Its fixed annotation reports stage=journey, exitCode=1,
+cleanup=true, forced=false, residual=false and
+denials=operation_not_permitted. This class does not establish an AppArmor or
+namespace cause, and the inner action is not exposed by that reporter. No actual
+editing, chooser, close or restart acceptance is inferred from the outer stage.
+
+The next observation adds only closed journey/startup/failure categories to the
+existing bounded reporter. It preserves application launch, sandbox policy,
+permissions, timeouts, cleanup and every success predicate. Missing or malformed
+receipts remain failed/unknown; raw logs, framework responses, source, paths and
+signed URLs remain excluded. The previous failure is retained rather than repaired
+by a retry or by disabling the WebKit sandbox.
+
+## Independent WebKit mathematical editing regression
+
+[Run46061719333](https://github.com/TomasDelon/programmable-notes/actions/runs/46061719333)
+on10cb8e4 passed the existing optional Playwright WebKit mathematics selection
+with three repetitions and zero retries. The build and selected regression step
+succeeded with zero failure annotations. [Validated metadata](webkit-math-46061719333.json)
+retains the precise scope; the exact executed test count was not available from
+inspected metadata and is not inferred. The [QA artifact](https://github.com/TomasDelon/programmable-notes/actions/runs/46061719333/artifacts/15229122955)
+is available through GitHub. This is browser-engine evidence, not actual GTK,
+installed-application, IPC or resource-containment acceptance. No artifact or raw
+log was downloaded, and no unchanged retry was performed.
+
+The observational packet's full `npm run check` exited0:984 unit,171 tooling
+with zero skips,155 Chromium,9 Pages and4 local cloud cases, plus static checks
+and production build. Afterward, only the harness diagnostics gained two finer
+process-identity stages and four strict OS errno classes. The entire final tooling
+suite reran:173 passed,0 failed,0 skipped; format/lint/types also passed.
+Application source/build inputs did not change, so the browser evidence remains
+applicable. These diagnostic fields carry no new authority and do not repair the
+previous runtime failure. Independent final review found no Important issue.

@@ -570,7 +570,7 @@ test('host annotations expose only closed stages, codes and denial categories ra
     assert.match(
       result.stdout,
       new RegExp(
-        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted\\n$`,
+        `^::error title=Native shared editor::stage=${expectedStage}; exitCode=${expectedCode}; cleanup=true; forced=false; residual=false; denialClasses=bubblewrap_message,operation_not_permitted; journeyStage=unknown; startupPhase=unknown; failureKind=unknown\\n$`,
       ),
     );
     assert.doesNotMatch(
@@ -717,4 +717,182 @@ test('runner report executes the immutable Node snapshot, removes its own payloa
     script.indexOf('PATH=/usr/bin:/bin\n') < script.indexOf('sudo useradd'),
   );
   assert.doesNotMatch(script, /pn_stage=node_path_exposed/);
+});
+
+async function runJourneyReport(
+  t,
+  receipt,
+  diagnosticText = '',
+  outerStage = 'journey',
+) {
+  const directory = await mkdtemp(join(tmpdir(), 'pn-journey-report-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const diagnostic = join(directory, 'diagnostic');
+  await writeFile(diagnostic, diagnosticText);
+  if (receipt !== undefined)
+    await writeFile(
+      join(directory, 'native-shared-editor.json'),
+      typeof receipt === 'string' || Buffer.isBuffer(receipt)
+        ? receipt
+        : JSON.stringify(receipt),
+    );
+  const script = await readFile('scripts/run-native-shared-editor.sh', 'utf8');
+  const report = script.split("<<'REPORT'\n")[1].split('\nREPORT\n')[0];
+  const result = spawnSync(
+    process.execPath,
+    ['--input-type=module', '-', directory, diagnostic],
+    {
+      input: report,
+      encoding: 'utf8',
+      timeout: 5000,
+      env: {
+        PATH: '/usr/bin:/bin',
+        PN_HOST_STAGE: outerStage,
+        PN_HOST_STATUS: '1',
+        PN_HOST_CLEAN: 'true',
+        PN_HOST_FORCED: 'false',
+        PN_HOST_RESIDUAL: 'false',
+      },
+    },
+  );
+  assert.equal(result.status, 1);
+  return {
+    ...result,
+    record: JSON.parse(
+      await readFile(join(directory, 'infrastructure.json'), 'utf8'),
+    ),
+  };
+}
+const journeyScope =
+  'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance';
+const failedJourney = (values = {}) => ({
+  schema: 1,
+  result: 'failed',
+  scope: journeyScope,
+  stage: 'installed_startup',
+  startupPhase: 'driver_session',
+  failureKind: 'webdriver_unknown_error',
+  ...values,
+});
+test('host publishes only this journey scope and exact closed inner diagnostics', async (t) => {
+  for (const stage of [
+    'preflight',
+    'installed_startup',
+    'authorized_vault_chooser',
+    'source_autosave',
+    'undo_redo',
+    'invalid_source_autosave',
+    'source_preview_switch',
+    'preview_caret_autosave',
+    'preview_undo_redo',
+    'document_close_reopen',
+    'os_close',
+    'fresh_launch_reopen',
+    'final_os_close',
+  ]) {
+    const observed = await runJourneyReport(t, failedJourney({ stage }));
+    assert.equal(observed.record.journeyStage, stage);
+    assert.equal(observed.record.startupPhase, 'driver_session');
+    assert.equal(observed.record.failureKind, 'webdriver_unknown_error');
+    assert.match(
+      observed.stdout,
+      new RegExp(
+        `journeyStage=${stage}; startupPhase=driver_session; failureKind=webdriver_unknown_error`,
+      ),
+    );
+  }
+  for (const receipt of [
+    undefined,
+    'not json',
+    null,
+    [],
+    Buffer.alloc(65537, 32),
+    failedJourney({ schema: 2 }),
+    failedJourney({ scope: 'foreign scope' }),
+    failedJourney({ result: 'arbitrary' }),
+  ]) {
+    const observed = await runJourneyReport(t, receipt);
+    assert.equal(observed.record.journeyStage, 'unknown');
+    assert.equal(observed.record.startupPhase, undefined);
+    assert.equal(observed.record.failureKind, undefined);
+  }
+  const stale = await runJourneyReport(
+    t,
+    failedJourney(),
+    '',
+    'observer_access',
+  );
+  assert.equal(stale.record.journeyStage, 'unknown');
+  assert.equal(stale.record.startupPhase, undefined);
+});
+test('journey annotation rejects injected/unknown values and recognizes only the exact namespace denial', async (t) => {
+  const sentinel = 'private-inner-token';
+  const injected = await runJourneyReport(
+    t,
+    failedJourney({
+      stage: `installed_startup%0A${sentinel}`,
+      startupPhase: `driver_session https://${sentinel}.invalid`,
+      failureKind: { message: sentinel },
+    }),
+  );
+  assert.equal(injected.record.journeyStage, 'unknown');
+  assert.equal(injected.record.startupPhase, undefined);
+  assert.equal(injected.record.failureKind, undefined);
+  assert.doesNotMatch(
+    injected.stdout + injected.stderr + JSON.stringify(injected.record),
+    /private-inner-token|https:|%0A/,
+  );
+  const exact = 'bwrap: Creating new namespace failed: Operation not permitted';
+  assert(
+    (
+      await runJourneyReport(t, undefined, exact + '\n')
+    ).record.denials.includes('bubblewrap_namespace_denied'),
+  );
+  for (const text of [
+    'Operation not permitted',
+    'prefix ' + exact,
+    exact + ' https://private.invalid',
+  ])
+    assert(
+      !(await runJourneyReport(t, undefined, text)).record.denials.includes(
+        'bubblewrap_namespace_denied',
+      ),
+    );
+});
+
+test('journey diagnostics preserve only exact OS errno classes and executable/process capture phases', async (t) => {
+  for (const [startupPhase, failureKind] of [
+    ['executable_identity', 'os_eperm'],
+    ['process_capture', 'os_eacces'],
+    ['executable_identity', 'os_enoent'],
+    ['process_capture', 'os_esrch'],
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      failedJourney({ startupPhase, failureKind }),
+    );
+    assert.equal(observed.record.startupPhase, startupPhase);
+    assert.equal(observed.record.failureKind, failureKind);
+    assert.match(
+      observed.stdout,
+      new RegExp(`startupPhase=${startupPhase}; failureKind=${failureKind}`),
+    );
+  }
+  for (const [startupPhase, failureKind] of [
+    ['executable_identity_extra', 'os_enoent '],
+    ['process_capture%0A::error::private-errno', 'EPERM'],
+    [{ message: 'private-errno' }, { code: 'EACCES' }],
+  ]) {
+    const observed = await runJourneyReport(
+      t,
+      failedJourney({ startupPhase, failureKind }),
+    );
+    assert.equal(observed.record.journeyStage, 'installed_startup');
+    assert.equal(observed.record.startupPhase, undefined);
+    assert.equal(observed.record.failureKind, undefined);
+    assert.doesNotMatch(
+      observed.stdout + observed.stderr + JSON.stringify(observed.record),
+      /private-errno|%0A|EPERM|EACCES|executable_identity_extra/,
+    );
+  }
 });

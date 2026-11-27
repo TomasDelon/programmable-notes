@@ -59,11 +59,72 @@ const { dialog, pause, rootPid } = await import('./native-ui-lib.mjs');
 const owned = new Map();
 const checkpoints = [];
 let stage = 'preflight';
+let startupPhase = 'not_started';
+let failureKind = 'none';
 let passed = false;
 let forcedCleanup = false;
 let cleanupVerified = false;
 let binarySha256;
 const absence = (error) => error.code === 'ENOENT' || error.code === 'ESRCH';
+function classifyFailure(error) {
+  if (error?.code === 'ERR_ASSERTION') return 'assertion';
+  if (error?.message === 'observation_deadline') return 'observation_deadline';
+  switch (error?.code) {
+    case 'EPERM':
+      return 'os_eperm';
+    case 'EACCES':
+      return 'os_eacces';
+    case 'ENOENT':
+      return 'os_enoent';
+    case 'ESRCH':
+      return 'os_esrch';
+  }
+  if (typeof error?.message !== 'string' || error.message.length > 65_536)
+    return 'other';
+  try {
+    const kind = JSON.parse(error?.message)?.value?.error;
+    if (typeof kind !== 'string') return 'other';
+    const specific = {
+      'session not created': 'webdriver_session_not_created',
+      'unknown error': 'webdriver_unknown_error',
+      'invalid session id': 'webdriver_invalid_session_id',
+      'no such window': 'webdriver_no_such_window',
+      timeout: 'webdriver_timeout',
+      'invalid argument': 'webdriver_invalid_argument',
+    };
+    if (Object.hasOwn(specific, kind)) return specific[kind];
+    if (
+      [
+        'element click intercepted',
+        'element not interactable',
+        'insecure certificate',
+        'invalid cookie domain',
+        'invalid element state',
+        'invalid selector',
+        'javascript error',
+        'move target out of bounds',
+        'no such alert',
+        'no such cookie',
+        'no such element',
+        'no such frame',
+        'no such shadow root',
+        'detached shadow root',
+        'script timeout',
+        'stale element reference',
+        'unable to capture screen',
+        'unable to set cookie',
+        'unexpected alert open',
+        'unknown command',
+        'unknown method',
+        'unsupported operation',
+      ].includes(kind)
+    )
+      return 'webdriver_other';
+  } catch {
+    /* Unknown diagnostics stay closed; never preserve arbitrary response text. */
+  }
+  return 'other';
+}
 async function identity(pid) {
   try {
     const text = await readFile(`/proc/${pid}/stat`, 'utf8');
@@ -289,15 +350,21 @@ async function chooseAndOpen() {
   );
 }
 async function start() {
+  startupPhase = 'driver_session';
   await protocol.launch();
+  startupPhase = 'pid_identity';
   const pid = await rootPid();
+  startupPhase = 'executable_identity';
   assert.equal(await readlink(`/proc/${pid}/exe`), installed);
+  startupPhase = 'process_capture';
   await capture(pid);
+  startupPhase = 'product_ready';
   await waitFor(() =>
     sync(
       `return document.documentElement.dataset.runtime === 'native' && Boolean(document.querySelector('[aria-label="Document workspace"]'))`,
     ),
   );
+  startupPhase = 'complete';
   return pid;
 }
 async function mode(name) {
@@ -432,8 +499,9 @@ try {
   await closeSession();
   await waitFor(async () => (await liveOwned()).length === 0);
   passed = true;
-} catch {
+} catch (error) {
   // Never expose arbitrary page source, framework replies, file contents or paths.
+  failureKind = classifyFailure(error);
   console.error(`NATIVE_SHARED_EDITOR_FAILED stage=${stage}`);
   process.exitCode = 1;
 } finally {
@@ -455,6 +523,8 @@ try {
         schema: 1,
         result: passed ? 'passed' : 'failed',
         stage,
+        startupPhase,
+        failureKind,
         binarySha256,
         checkpoints,
         cleanupVerified,

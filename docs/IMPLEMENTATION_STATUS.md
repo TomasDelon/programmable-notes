@@ -20,6 +20,24 @@ The read-only `npm run product:audit` reports current direct-entry divergence;
 its informational exit zero is not product readiness. Setup changes documentation,
 agent instructions and audit/packaging diagnostics, not application behavior.
 
+## Current installed acceptance — 27 November 2026
+
+Required CI on10cb8e4 passed both jobs. The corrected installed Ubuntu test passed
+driver startup but failed inside the journey with a fixed operation_not_permitted
+classification. Cleanup passed without force or residual processes. Its inner
+action and the denial's cause remain unknown; no installed editing/close/restart
+acceptance is claimed. The next measurement exposes bounded closed categories
+without changing application behavior, policy, deadlines or success predicates.
+The full local application suite passed984 unit,155 Chromium,9 Pages and4 local
+cloud cases; after the final harness-only refinement all173 tooling controls
+(zero skips) and format/lint/types reran successfully. App inputs are unchanged.
+See the [chronological evidence](security-evidence/2026-11-27-shared-product/README.md).
+
+Independent Playwright WebKit mathematics QA on10cb8e4 passed its selected suite
+with three repetitions and zero retries. Exact test count was not available in
+inspected job metadata. This improves browser-engine coverage without claiming
+actual GTK or native-security acceptance.
+
 ## Latest native validation — 27 November 2026
 
 Required CI on2ad5910 passed both jobs. The packaged Ubuntu run46057748343
