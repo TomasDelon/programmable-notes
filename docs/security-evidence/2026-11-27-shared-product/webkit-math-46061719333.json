@@ -1,0 +1,32 @@
+{
+  "run_id": 46061719333,
+  "job_id": 140717324638,
+  "source_commit": "10cb8e47ae39eecb6276e0d858f6a58b0a1f36f0",
+  "status": "passed",
+  "scope": "Optional Playwright WebKit math regression only",
+  "selection": {
+    "editing_qa": true,
+    "editing_scope": "math",
+    "editing_browser": "webkit",
+    "repetitions": 3,
+    "retries": 0
+  },
+  "build_step": "passed",
+  "selected_regression_step": "passed",
+  "failure_annotations": 0,
+  "observed_test_count": null,
+  "artifacts": [
+    {
+      "expired": false,
+      "id": 15229122955,
+      "name": "preview-input-regression",
+      "size_in_bytes": 316666
+    }
+  ],
+  "evidence_source": "Source-pinned GitHub job/step metadata and check annotations; no artifacts or raw logs downloaded",
+  "limitations": [
+    "Not actual Linux WebKitGTK, installed application, IPC or resource-containment evidence.",
+    "Exact test count is not published in the metadata/annotations inspected; no count inferred.",
+    "Source-dispatch flags supplied by root; source workflow confirms repetition/selection command."
+  ]
+}

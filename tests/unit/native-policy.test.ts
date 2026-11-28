@@ -14,18 +14,32 @@ it('restricts the entire configured capability union to the editor and registere
   expect(cap.remote).toBeUndefined();
   expect(cap.local).toBe(true);
   expect(cap.permissions.sort()).toEqual([
+    'allow-choose-vault',
     'allow-close-document',
     'allow-confirm-discard',
+    'allow-create-vault-source',
+    'allow-desktop-update-check',
+    'allow-desktop-update-install',
+    'allow-editor-close-state',
+    'allow-enable-editor-close-guard',
     'allow-host-probe',
+    'allow-observe-document',
     'allow-open-documents',
+    'allow-open-notes-folder',
+    'allow-open-vault-sources',
+    'allow-poll-document-watch',
     'allow-preview-connection-active',
     'allow-recovery-draft',
     'allow-reopen-document',
+    'allow-resolve-editor-close',
     'allow-save-document',
     'allow-save-document-as',
     'allow-set-documents-dirty',
     'allow-start-preview',
     'allow-stop-preview',
+    'allow-unwatch-document',
+    'allow-vault-inventory',
+    'allow-watch-document',
   ]);
   expect(read('src-tauri/build.rs')).toContain('AppManifest::new().commands(');
   expect(read('src-tauri/Cargo.toml')).not.toMatch(

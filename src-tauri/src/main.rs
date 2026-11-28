@@ -1,13 +1,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod documents;
 mod downloads;
+mod editor_close;
+#[cfg(target_os = "linux")]
+mod preview_activation;
 #[cfg(target_os = "linux")]
 mod preview_failure;
 #[cfg(target_os = "linux")]
+mod preview_permissions;
+#[cfg(target_os = "linux")]
 mod renderer_failure;
+mod updates;
 use documents::{
-    close_document, confirm_discard, open_documents, recovery_draft, reopen_document,
-    save_document, save_document_as, set_documents_dirty,
+    choose_vault, close_document, confirm_discard, create_vault_source, editor_close_state,
+    enable_editor_close_guard, observe_document, open_documents, open_notes_folder,
+    open_vault_sources, poll_document_watch, recovery_draft, reopen_document, resolve_editor_close,
+    save_document, save_document_as, set_documents_dirty, unwatch_document, vault_inventory,
+    watch_document,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -40,11 +49,18 @@ async fn start_preview(
     }
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
     let supervisor = state.supervisor.clone();
+    let app = window.app_handle().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        supervisor
+        let mut supervisor = supervisor
             .lock()
-            .map_err(|_| "Supervisor poisoned".to_string())?
-            .start(&executable, &html)
+            .map_err(|_| "Supervisor poisoned".to_string())?;
+        if app
+            .try_state::<updates::Updates>()
+            .is_some_and(|updates| updates.installing.load(std::sync::atomic::Ordering::SeqCst))
+        {
+            return Err("Preview cannot start while an update is installing".into());
+        }
+        supervisor.start(&executable, &html)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -125,32 +141,59 @@ fn main() {
             child,
             supervisor: std::sync::Arc::new(Mutex::new(Supervisor::default())),
         })
+        .manage(updates::Updates::default())
         .invoke_handler(tauri::generate_handler![
             start_preview,
             stop_preview,
             preview_connection_active,
             host_probe,
             open_documents,
+            open_notes_folder,
+            choose_vault,
+            vault_inventory,
+            open_vault_sources,
+            create_vault_source,
             save_document,
             save_document_as,
             reopen_document,
+            observe_document,
+            watch_document,
+            poll_document_watch,
+            unwatch_document,
             close_document,
             confirm_discard,
             set_documents_dirty,
-            recovery_draft
+            enable_editor_close_guard,
+            editor_close_state,
+            resolve_editor_close,
+            recovery_draft,
+            updates::desktop_update_check,
+            updates::desktop_update_install
         ]);
     if !child {
         builder = builder
             .plugin(tauri_plugin_dialog::init())
+            .plugin(updates::plugin())
             .manage(std::sync::Arc::new(documents::Documents::default()))
             .on_window_event(documents::close_requested);
     }
-    let app=builder
+    let app = builder
         .setup(move |app| {
-            let label=if child {"preview"} else {"editor"};
-            let url=WebviewUrl::App(if child || editor_probe {"native-preview.html"} else {"index.html"}.into());
-            let mut builder=WebviewWindowBuilder::new(app,label,url)
-                .title(if child {"Unprivileged document preview"} else {"Programmable Notes"})
+            let label = if child { "preview" } else { "editor" };
+            let url = WebviewUrl::App(
+                if child || editor_probe {
+                    "native-preview.html"
+                } else {
+                    "index.html"
+                }
+                .into(),
+            );
+            let mut builder = WebviewWindowBuilder::new(app, label, url)
+                .title(if child {
+                    "Unprivileged document preview"
+                } else {
+                    "Programmable Notes"
+                })
                 .disable_drag_drop_handler()
                 // Rebuilding untrusted output must not take source typing focus.
                 // The user can still explicitly activate and interact with it.
@@ -159,23 +202,53 @@ fn main() {
                 .on_navigation(allowed_navigation);
             if child {
                 // Native download handling is independent of IPC and iframe permissions.
-                builder=builder.on_download(downloads::deny);
+                builder = builder.on_download(downloads::deny);
             }
-            if let Some(html)=html.as_ref() {
-                let value=serde_json::to_string(html)?;
-                // The value is serialized data; it is never evaluated as document JavaScript in this shell.
-                builder=builder.initialization_script(format!("addEventListener('DOMContentLoaded',()=>{{document.querySelector('iframe').srcdoc={value};}},{{once:true}});"));
+            #[cfg(target_os = "linux")]
+            let renderer_hook = std::sync::Arc::new(std::sync::Once::new());
+            #[cfg(target_os = "linux")]
+            if child {
+                let html = html.clone();
+                let activation = std::sync::Arc::new(preview_activation::Activation::default());
+                let renderer_hook = renderer_hook.clone();
+                // The shell stays empty until this native callback installs all
+                // guards. Neither DOMContentLoaded nor a renderer message admits author code.
+                builder = builder.on_page_load(move |window, payload| {
+                    if child
+                        && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished)
+                        && preview_activation::trusted_shell(
+                            payload.url().as_str(),
+                            cfg!(feature = "custom-protocol"),
+                        )
+                    {
+                        if preview_permissions::activate(
+                            &window,
+                            child,
+                            activation.clone(),
+                            renderer_hook.clone(),
+                            html.clone(),
+                        )
+                        .is_err()
+                        {
+                            eprintln!("NATIVE_PREVIEW_ACTIVATION_FAILED reason=dispatch");
+                            window.app_handle().exit(1);
+                        }
+                    }
+                });
             }
             let _window = builder.build()?;
             #[cfg(target_os = "linux")]
             if child {
-                preview_failure::install(&_window)?;
+                // Observe startup loss as before. The activation callback repeats
+                // this installation through the same native Once before author code.
+                preview_failure::install_once(&_window, renderer_hook)?;
             } else {
                 renderer_failure::install(&_window)?;
             }
             Ok(())
         })
-        .build(context).expect("Failed to start native runtime");
+        .build(context)
+        .expect("Failed to start native runtime");
     app.run(|app, event| {
         if matches!(event, tauri::RunEvent::Exit) {
             if let Ok(mut supervisor) = app.state::<Host>().supervisor.lock() {

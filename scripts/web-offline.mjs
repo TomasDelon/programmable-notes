@@ -23,7 +23,7 @@ for (const file of files) {
 const version = digest.digest('hex').slice(0, 16);
 // Pages consumes these files instead of serving them as application assets.
 // Keep their bytes in the version digest: header-only updates need a new cache.
-const consumed = new Set(['_headers', '_redirects']);
+const consumed = new Set(['_headers', '_redirects', '_routes.json']);
 const paths = files
   .filter((file) => !consumed.has(path.relative(root, file)))
   .map((file) => '/' + path.relative(root, file).split(path.sep).join('/'));
@@ -48,16 +48,21 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  // Private data and Access handshakes must never resolve to cached app HTML.
+  if (url.pathname === '/api/storage' || url.pathname.startsWith('/api/storage/') ||
+      url.pathname === '/cdn-cgi/access' || url.pathname.startsWith('/cdn-cgi/access/')) return;
   // A release's HTML and lazy chunks stay together until an explicit update.
   if (request.mode === 'navigate') {
     event.respondWith(caches.open(CACHE).then(async cache => {
       const cached = await cache.match('/index.html');
       if (!cached) return fetch(request);
-      // Pages redirects /index.html to /. Navigation requests reject redirected
-      // cached responses; preserve the body and every response policy header.
-      return cached.redirected
-        ? new Response(cached.body, {status: cached.status, statusText: cached.statusText, headers: cached.headers})
-        : cached;
+      if (!cached.redirected) return cached;
+      // Pages redirects /index.html to /. A navigation needs a fresh response.
+      // Fetch decoded the stream. Its original encoding and length describe the wire bytes.
+      const headers = new Headers(cached.headers);
+      headers.delete('Content-Encoding');
+      headers.delete('Content-Length');
+      return new Response(cached.body, {status: cached.status, statusText: cached.statusText, headers});
     }));
   } else if (ASSETS.includes(url.pathname)) {
     event.respondWith(caches.open(CACHE).then(async cache => (await cache.match(url.pathname)) || fetch(request)));

@@ -179,9 +179,9 @@ test('malformed attachment batch and tampered backup never partially replace the
       buffer: Buffer.from('<svg onload="alert(1)"/>'),
     },
   ]);
-  await expect(page.locator('.web-storage-banner')).toContainText(
-    /Unsupported|permitted/i,
-  );
+  await expect(
+    page.locator('[data-notification-id="workspace-storage"]'),
+  ).toContainText(/Unsupported|permitted/i);
   expect(await snapshot(page)).toEqual(before);
   const exported = page.waitForEvent('download');
   await command(page, 'Export workspace backup');
@@ -195,8 +195,8 @@ test('malformed attachment batch and tampered backup never partially replace the
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(envelope)),
   });
-  await expect(page.locator('.web-storage-banner')).toContainText(
-    'integrity check',
-  );
+  await expect(
+    page.locator('[data-notification-id="workspace-storage"]'),
+  ).toContainText('integrity check');
   expect(await snapshot(page)).toEqual(before);
 });

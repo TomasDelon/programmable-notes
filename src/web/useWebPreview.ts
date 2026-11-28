@@ -1,13 +1,20 @@
+import type { CorePluginSettings } from '../plugins/coreRegistry';
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import CompilerWorker from '../compiler/compiler.worker?worker&inline';
 import wasmURL from 'esbuild-wasm/esbuild.wasm?url';
 import { validateFiles } from '../documents/workspace';
+import {
+  verifiedDependencies,
+  workspaceDependenciesMatch,
+  type WorkspaceDependencies,
+} from '../compiler/workspaceDependencies';
 import { isMdxSource } from '../sourceTypes';
 import { webPreviewDocument } from './previewDocument';
 import type { StoredAsset } from '../assets/catalog';
@@ -111,19 +118,79 @@ export function useWebPreview({
   theme,
   images = noImages,
   enabled = true,
+  corePlugins,
+  showComponentSource = false,
+  trackWorkspaceDependencies = false,
 }: {
   files: Record<string, string>;
   entry: string;
   theme: 'light' | 'dark';
   images?: readonly StoredAsset[];
   enabled?: boolean;
+  corePlugins?: CorePluginSettings;
+  showComponentSource?: boolean;
+  trackWorkspaceDependencies?: boolean;
 }) {
-  const [html, setHtml] = useState('');
-  const [error, setError] = useState('');
-  const [locations, setLocations] = useState<WebSourceLocation[]>([]);
-  const [status, setStatus] = useState<WebPreviewStatus>('Waiting');
   const [stopped, setStopped] = useState(false);
   const [revision, setRevision] = useState(0);
+  const mathematics = corePlugins?.mathematics !== false;
+  const options = useMemo(
+    () =>
+      enabled && !stopped
+        ? {
+            entry,
+            images,
+            mathematics,
+            showComponentSource,
+            revision,
+            trackWorkspaceDependencies,
+          }
+        : null,
+    [
+      trackWorkspaceDependencies,
+      entry,
+      images,
+      mathematics,
+      showComponentSource,
+      revision,
+      stopped,
+      enabled,
+    ],
+  );
+  const input = useMemo(() => options && { options, files }, [options, files]);
+  const islandInput = trackWorkspaceDependencies ? input : null;
+  const [island, setIsland] = useState({
+    observed: islandInput,
+    request: islandInput,
+  });
+  const [publication, setPublication] = useState<{
+    request: NonNullable<typeof input>;
+    ticket: number;
+    dependencies?: WorkspaceDependencies;
+    status: WebPreviewStatus;
+    html?: string;
+    error?: string;
+    locations?: WebSourceLocation[];
+  } | null>(null);
+  // Retiring a request for even one commit unmounts its iframe.
+  let islandRequest = island.request;
+  if (island.observed !== islandInput) {
+    const keepFrame =
+      islandInput &&
+      islandRequest &&
+      islandInput.options === islandRequest.options &&
+      publication?.request === islandRequest &&
+      publication.status === 'Preview ready' &&
+      publication.dependencies &&
+      workspaceDependenciesMatch(
+        publication.dependencies,
+        islandRequest.files,
+        islandInput.files,
+      );
+    if (!keepFrame) islandRequest = islandInput;
+    setIsland({ observed: islandInput, request: islandRequest });
+  }
+  const request = trackWorkspaceDependencies ? islandRequest : input;
   const generation = useRef(0);
   const readyGeneration = useRef<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -140,10 +207,7 @@ export function useWebPreview({
     workerRef.current = null;
     cancelInitialization(initializationRef.current);
     setStopped(true);
-    setHtml('');
-    setError('');
-    setLocations([]);
-    setStatus('Preview stopped');
+    setPublication(null);
   }, []);
 
   const rebuild = useCallback(() => {
@@ -156,14 +220,33 @@ export function useWebPreview({
     setRevision((value) => value + 1);
   }, []);
 
-  const reportRuntimeError = useCallback((message: string) => {
-    if (readyGeneration.current !== generation.current) return;
-    setError(message.slice(0, 2000));
-    setStatus('Runtime error');
-  }, []);
+  const reportRuntimeError = useCallback(
+    (message: string) => {
+      const ticket = readyGeneration.current;
+      if (ticket !== generation.current) return;
+      setPublication((previous) =>
+        previous && previous.ticket === ticket && previous.request === request
+          ? {
+              ...previous,
+              error: message.slice(0, 2000),
+              status: 'Runtime error',
+            }
+          : previous,
+      );
+    },
+    [request],
+  );
 
   useEffect(() => {
-    if (stopped || !enabled) return;
+    if (!request) return;
+    const { files, options } = request;
+    const {
+      entry,
+      images,
+      mathematics,
+      showComponentSource,
+      trackWorkspaceDependencies,
+    } = options;
     const ticket = ++generation.current;
     readyGeneration.current = null;
     let active = true;
@@ -175,37 +258,31 @@ export function useWebPreview({
       worker?.terminate();
       if (workerRef.current === worker) workerRef.current = null;
     };
-    queueMicrotask(() => {
-      if (current()) {
-        setHtml('');
-        setError('');
-        setLocations([]);
-        setStatus('Compiling');
-      }
-    });
     // One deadline covers download, worker compilation and CSP/script hashing.
     // An output message is not completion until the usable document exists.
     const deadline = setTimeout(() => {
-      if (!current()) return;
-      active = false;
-      terminateWorker();
-      cancelInitialization(initialization);
-      setError(
+      fail(
         'Compilation exceeded 15 seconds. Your source is retained; try Rebuild.',
+        'Build timed out',
       );
-      setStatus('Build timed out');
     }, 15000);
     const fail = (
       failure: unknown,
       status: WebPreviewStatus = 'Build failed',
+      locations?: WebSourceLocation[],
     ) => {
       if (!current()) return;
       active = false;
       clearTimeout(deadline);
       terminateWorker();
       cancelInitialization(initialization);
-      setError(String(failure).slice(0, 2000));
-      setStatus(status);
+      setPublication({
+        request,
+        ticket,
+        status,
+        error: String(failure).slice(0, 2000),
+        locations,
+      });
     };
     const timer = setTimeout(async () => {
       try {
@@ -237,6 +314,7 @@ export function useWebPreview({
           event: MessageEvent<{
             id: number;
             code?: string;
+            dependencies?: WorkspaceDependencies;
             error?: string;
             locations?: { file: string; line: number; offset: number }[];
           }>,
@@ -246,7 +324,9 @@ export function useWebPreview({
           terminateWorker();
           const result = event.data;
           if (typeof result.error === 'string') {
-            setLocations(
+            fail(
+              result.error,
+              'Build failed',
               (Array.isArray(result.locations) ? result.locations : [])
                 .filter(
                   (location) =>
@@ -264,9 +344,8 @@ export function useWebPreview({
                   source: files[location.file]!,
                 })),
             );
-            fail(result.error);
           } else if (typeof result.code === 'string') {
-            setStatus('Preparing preview');
+            setPublication({ request, ticket, status: 'Preparing preview' });
             void webPreviewDocument(
               result.code,
               currentTheme.current,
@@ -278,8 +357,15 @@ export function useWebPreview({
                 active = false;
                 clearTimeout(deadline);
                 readyGeneration.current = ticket;
-                setHtml(document);
-                setStatus('Preview ready');
+                setPublication({
+                  request,
+                  ticket,
+                  status: 'Preview ready',
+                  html: document,
+                  dependencies: trackWorkspaceDependencies
+                    ? verifiedDependencies(result.dependencies, entry, files)
+                    : undefined,
+                });
               },
               (failure: unknown) => fail(failure),
             );
@@ -293,6 +379,9 @@ export function useWebPreview({
           entry,
           wasmModule,
           webMode: true,
+          trackWorkspaceDependencies,
+          mathematics,
+          showComponentSource,
         });
       } catch (failure) {
         fail(failure);
@@ -301,6 +390,12 @@ export function useWebPreview({
     return () => {
       active = false;
       readyGeneration.current = null;
+      // React can disconnect effects while retaining component state. A reconnected
+      // island must not reuse a receipt from the retired compiler generation.
+      if (trackWorkspaceDependencies)
+        setPublication((previous) =>
+          previous?.ticket === ticket ? null : previous,
+        );
       clearTimeout(timer);
       clearTimeout(deadline);
       terminateWorker();
@@ -309,13 +404,17 @@ export function useWebPreview({
       if (initializationRef.current === initialization)
         initializationRef.current = null;
     };
-  }, [files, entry, images, revision, stopped, enabled]);
+  }, [request]);
 
+  // A retired result can still be in React state on the first render of a new request.
+  const current = publication?.request === request ? publication : null;
+  const status: WebPreviewStatus =
+    current?.status ?? (request ? 'Compiling' : 'Preview stopped');
   return {
-    html,
+    html: current?.html ?? '',
     status,
-    error,
-    locations,
+    error: current?.error ?? '',
+    locations: current?.locations ?? [],
     stopped,
     stop,
     rebuild,

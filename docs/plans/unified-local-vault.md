@@ -1,0 +1,439 @@
+# Living plan: coherent local-vault application
+
+Updated: 27 November 2026. Scope: setup and subsequent architecture-led migration.
+Requirements: [PRODUCT_CONTRACT](../PRODUCT_CONTRACT.md); engineering boundaries:
+[ARCHITECTURE_TARGET](../ARCHITECTURE_TARGET.md); exit gates:
+[PRODUCT_ACCEPTANCE](../PRODUCT_ACCEPTANCE.md). This plan does not authorize public
+release, merge, paid services, history rewriting or weaker isolation.
+
+## Approved local execution — 28 November 2026
+
+The owner approved the detailed twelve-phase local development and acceptance
+plan. Execute small checked packets on `fix/preview-markdown-input`, keeping
+PR #9 draft. Start by sealing the existing launcher/fixture packet and resolving
+native-entry asynchronous test ownership, then execute installed recovery using
+the retained restricted account. Continue with external observation and disjoint
+three-way reconciliation, inventory, real scoped lifecycle, verified reference
+patches/journals, vault-local Trash, shared editing/plugin acceptance, integrated
+native React security gates, final installed validation and inactive updater work.
+Cloud synchronization and provider selection remain deferred. Distribution and
+key custody require the later explicit decision; this plan publishes no release.
+
+The real local installed editor journey passed with exact bytes/mode, real
+Source/Preview keyboard undo/redo, ordinary close and fresh-process reopen;
+see the current [implementation status](../IMPLEMENTATION_STATUS.md). The mode
+fixture correction changes no application permission assertion. The recovery packet below adds its own scoped acceptance. Full
+external-writer/lifecycle/React gates remain incomplete; historical progress
+below is not evidence for those gates.
+
+## Installed recovery packet — 28 November 2026
+
+The current local candidate passed failed-save/interruption/restart recovery,
+read-only discovery with invalid sibling, cancel, actual native exclusive-create
+collision, private exact-byte new copy, real history/autosave and restart/reopen.
+The existing restricted account and all20 prior recovery records were preserved;
+both cleanup receipts passed without force/residuals. Current-source confirmation
+in the existing passive save status follows the durable/readback receipt and
+binds exact lifetime/revision, without new source/history or file authority.
+See [scoped evidence](../security-evidence/2026-11-28-local-recovery/README.md).
+Final Phase2 checks passed1022 units,227 scanner-enabled tooling/zero skips,160
+browser,9 Pages and4 local storage cases with static checks. Keep the installed
+result separate from the retained deliberate-crash diagnostic failures and the
+required local one-byte process core limit. Continue with read-only live
+external observation and conflict reconciliation; general native React stays off.
+
+## External observation core — installed background acceptance passed
+
+The uncommitted Phase3 candidate now passed the strengthened installed journey on
+production V3 ELF827ce097…: independent direct/rename writes, three background
+revisions, four exact Undo/four Redo steps including physical-only line endings,
+five no-echo checks, unaffected other-note bytes/mode and fresh-process chooser
+reopen. All51 prior recovery entries were preserved. Both cleanup receipts passed
+without force or residuals. Sampled visibility was213.868ms direct/107.076ms rename.
+See [source-bound evidence](../security-evidence/2026-11-28-local-external-source/README.md).
+
+Checked descriptor reads and grant-owned inotify hints feed bounded periodic/focus
+reconciliation through existing session/autosave authority. Canonical adoption and
+persistence baseline change together; composition/native input readiness and
+session/vault/selection generations prevent unsafe replacement. Existing genuine
+history now retains separate background revisions and physical-only Redo effects.
+Retained external versions/read failures keep original-file writes paused across
+worker restarts. Independent review findings received RED→GREEN regressions.
+
+The earlier V2 background-history failure and first V3 driver-readiness failure
+remain failures. The read-only driver eligibility correction has a negative test
+and independent review; the same V3 application passed afterward.1088 units and
+focused matching-browser history/composition controls passed. Actual4editor/4preview
+registered-command controls passed separately in empty test-feature shells, with
+no authored runtime workload. Final local checks passed1088units,253scanner-enabled tooling/0skips,165matching
+browser,9Pages and4local storage cases, with Vitest2/Playwright2 and process core1.
+Native112passed/7reportedignored (one owned helper, six required CI cases); native
+fmt/focusedClippy passed. Independent packet/fixture review found no remaining
+material issue. Checked commit and actual required CI remain pending. No simultaneous-write CAS, general native React,
+containment, distribution or full milestone acceptance is claimed. Phase4 must
+retain both conflict versions durably and resolve the optimistic publication race.
+
+## Purpose
+
+Deliver one coherent application whose document is the actual local file, whose
+accepted edits autosave, and whose real React components are interactive inline
+without privileged execution. Linux first. Existing code is reused only where it
+fits the architecture. Obsidian explains the local-vault persistence expectation;
+it is not a UI/product to clone.
+
+## Progress
+
+- [x] Compose native vault selection, inventory, selective open/create and
+      close in shared application use cases, reusing the canonical session and
+      autosave owners. Unit controls and a real Store open/save/close/conflict
+      witness pass. Confirmed no-effect acquisition refusals are typed; UI activation, uncertain
+      outcome reconciliation and installed acceptance remain incomplete; see ADR037.
+- [x] Implement/review share-free preparation and fixed OS-admission tooling;
+      real image assembly, layout and complete hosted guest OS admission passed.
+      The first native profile failed desktop startup before both cases; authored
+      native interaction and full application acceptance remain pending.
+- [x] Isolate inline editor execution behind an explicit trusted runtime renderer;
+      web supplies its adapter and the shared default is unavailable. The explicit
+      whole-document browser boundary is implemented too. Native adapters
+      and the shared product workspace remain incomplete.
+- [x] Owner's six questions answered; architecture-first reuse, inline React,
+      local autosave, real file operations/Trash, Linux-first and rendering privileges
+      recorded separately from engineering choices.
+- [x] Existing handoff and web/native seams inspected; rejected shell and stale
+      authority recorded. No application redesign/fix performed during setup.
+- [x] Initial target architecture, acceptance gates and ordered work defined.
+- [x] Read-only AST entry audit and fixture tests implemented; informational
+      divergence cannot be presented as product readiness.
+- [x] Local setup checks passed: 638 unit tests, 92 tooling controls, 150
+      Chromium cases, 9 local Pages cases and 4 inactive-cloud cases. Current
+      publication/head-CI evidence is tracked in draft PR #9; this is not
+      application acceptance or a replacement app download.
+- [x] Assess existing modules against the target and record concrete interfaces;
+      see the dated shared code-fit report.
+- [ ] Prove isolated native inline presentation and resource/lifecycle ownership.
+- [x] Extract and verify the existing document panels as one shared leaf (ADR038);
+      controlled native-session bindings and actual browser interactions pass.
+      This is not a shared root or installed native acceptance.
+- [x] Compose actual shared navigation, header, settings, palette and document
+      interaction in ProductRoot with existing NativeWorkspace/DocumentSessions.
+      The native development entry now selects one guarded window-lifetime owner;
+      no legacy/browser fallback is permitted. This is structural/controlled-input
+      evidence, not installed product acceptance.
+- [x] Join clean editor detachment, aggregate autosave/recovery admission and the
+      fixed native close handshake. Exact cancellation preserves history; unknown
+      outcomes remain held. Browser transport is synthetic; real installed close
+      and physical IME remain separate witnesses.
+- [ ] Complete scoped local vault/file lifecycle. Choose/inventory/selective open,
+      create and exact-byte autosave have controller/real Store evidence; native
+      installed interaction, rename/move/Trash, restart recovery discovery and
+      continuous external observation remain incomplete.
+- [ ] Adapt both inline and full-document execution paths to platform services.
+- [ ] Execute reusable interaction/fidelity acceptance and exact-package native
+      persistence/security journeys; only then deliver the accepted editor candidate.
+      A reviewed optional hosted editor-only witness reuses the exact successful CI
+      package under a fresh ordinary account. Adding that runner is not execution;
+      React remains disabled and containment is not exercised by this journey.
+- [ ] Complete separately authorized signed distribution and installed updates.
+
+## First autonomous work packet after setup
+
+Read the contract and record the outcome, invariants, witness and done gates using
+requirement/acceptance IDs. Build a dependency/fit map of the current SourceEditor,
+patch/history engine, plugins, compiler, workspace controller, native file store
+and both runtime paths. Record reuse/refactor/replace choices with reasons.
+Specify the smallest typed interfaces necessary for that map; do not build a
+speculative plugin marketplace or generalized backend framework.
+
+In parallel, investigate native inline presentation with a bounded engineering
+spike. Use actual React interactions and process/containment witnesses; do not
+substitute a screenshot, ordinary iframe or a separate-window demo. Reuse current
+supervision where it fits. Compare a narrowly scoped alternative only if evidence
+shows the current host cannot satisfy the architecture. Stop unsuccessful design
+loops, record the failed hypothesis and revise the approach before another patch.
+
+This spike is not a user-facing application release. If suitable native
+infrastructure is unavailable, record the precise blocker and proceed with safe
+independent domain/adapter work; do not mark native inline/security acceptance done.
+
+## Migration packets
+
+1. **Shared domain and application ports.** Keep one canonical source/history
+   authority, vault identities and use cases. Isolate browser storage/download/
+   lifecycle assumptions and native IPC behind services selected before startup.
+   Preserve useful behavior rather than preserving incompatible controller code.
+2. **Local vault vertical slice.** Choose a vault, create/open a real note, type,
+   observe automatic atomic persistence, switch and restart. Add watcher/conflict
+   handling, latest-write scheduling, close protection and safe failure retention.
+   Index the vault independently of bounded loaded/compiler files.
+3. **Real file operations.** Add rename/move/Trash/restoration with scoped grants,
+   external-writer/revision checks, reference strategy and collision-safe recovery.
+   Do not activate controls backed only by browser metadata or no-op adapters.
+4. **Runtime adapter integration.** Adapt both inline islands and full-document
+   execution to the proven host service. Preserve same-window presentation,
+   input/focus/scroll semantics and aggregate resource policies. Rendering never
+   acquires document/file authority.
+5. **Shared product integration.** Reuse/refactor compatible presentation into one
+   product root/use-case flow. Implement Source/Preview/hover and other specified
+   interactions in that product, then retire rejected production routing safely.
+   Migrate useful fidelity/security cases from legacy shell tests; their current
+   Split/X and fork-specific selectors are implementation history, not requirements.
+6. **Exact installed acceptance.** Run A01–A12 on the exact candidate. Reproduce
+   errors rather than accepting retries or deleting negative controls. Protect
+   existing owner data during any migration/installation. Mobile/web compatibility
+   remains a separate actual-target gate.
+
+Packets may overlap only with independent file ownership, interfaces and test/server
+ownership. Prefer a small number of useful workers with concise requirement-linked
+briefs. The coordinator owns requirement reconciliation and integration, not merely
+aggregation of workers that share the same untested premise.
+
+## Validation and delivery discipline
+
+Use a failing witness for a concrete bug and the cheapest discriminating probe.
+Run the relevant engine/platform early. Run the required final checks after source
+inputs stabilize; preserve unchanged-input evidence. Record commands, revisions,
+artifact identity, observed results and missing gates. Keep one watcher per run.
+
+The entry audit is deliberately narrow. Different bootstraps can wrap one product;
+a common module can also hide divergence. Its strict flag checks direct identity
+only. Extend/adapt audit fixtures to the reviewed architecture when necessary;
+never restructure the product merely to satisfy a filename/entry heuristic.
+Functional, semantic and native-security acceptance remain independent.
+
+Before a user-facing delivery, inspect the actual boot route, artifact and the
+acceptance matrix. Reject a different interface, hidden capability loss, lack of
+autosave, separate-window substitute or a mock/native evidence substitution.
+Update the contract, status and decision log together. If a required gate is
+blocked, say so and continue safe independent work rather than declare success.
+
+## Decision log
+
+- 26 November, owner: architecture quality governs conditional reuse; preserve
+  existing material for evaluation, not every implementation choice indefinitely.
+- 26 November, owner: same-document/window React is required; untrusted rendering
+  has no filesystem or privileged access.
+- 26 November, owner: vault files are fully local and writing autosaves to real
+  files; recovery is secondary; Obsidian is not a cloning brief.
+- 26 November, owner: real rename/move/delete with recoverable Trash; Linux first.
+- 26 November, engineering: source/core/file-safety work may advance independently
+  while native inline feasibility is blocked, but cannot establish A09/A11.
+
+## Discoveries and unresolved risks
+
+Current boot chooses legacy App/native shell versus WebApp. Browser-specific
+runtime dependencies exist in both WebApp and RenderedRuntime. Browser workspace
+metadata/save semantics differ from a real vault; replacing a hook name is not an
+adapter design. The current native window/expiry model does not yet prove inline
+parity. Current green tests do not establish the new product contract.
+
+## Outcomes and handoff
+
+Setup is a specification/workflow deliverable, not application completion. Keep
+this section and Progress current after each packet. Record actual commit/run
+identities and remaining blockers; avoid replaying the whole chat. No future
+agent should infer product approval from an implemented ADR or a green build.
+
+## Active packet — 26 November 2026
+
+- **Outcome:** DATA-01/A04 shared persistence coordination retains accepted source
+  revisions and automatically schedules serialized writes through an injected
+  document writer. This is a domain implementation, not activation in the rejected UI.
+- **Invariants:** editor revision, document identity and disk CAS remain distinct;
+  no normalization of source, no preview authority, no silent retries or overwrites
+  after write uncertainty, no false durability or dropped in-flight edits.
+- **Witness:** gated writer tests reproduce rapid edits, undo during an in-flight
+  save, separate-document callbacks, stale revisions, conflicts and non-durable
+  receipts. Native writer adapter retains existing opaque grants and CAS semantics.
+- **Done:** bounded code-fit/native feasibility reports, tested coordinator and
+  adapter, independent review, required full checks and a coherent pushed commit.
+  Actual installed autosave and inline security remain separate uncompleted gates.
+
+Engineering choice: implement a platform-independent coordinator before wiring a
+shared product. Adapting the rejected shell directly would preserve the wrong
+product boundary; embedding native execution without a containment proof would
+violate A09/A11. Existing owner authorization covers this implementation packet;
+no additional library/product-choice question is needed.
+
+Packet observations: shared coordinator tests exposed and fixed uncertain-write/undo
+and retired-session callback hazards. The real native Store harness passes and
+its omitted-scheduling negative control fails as required. This validates backend
+coordination, not active application autosave or installed A03–A05. A native CI
+step now runs the harness. Final complete-check/run evidence belongs in the PR
+and the dated receipt; no native inline acceptance is inferred.
+
+Packet validation: full npm check exit 0 (663 unit, 150 Chromium, 9 Pages,
+4 inactive-cloud); scanner-enabled tooling rerun 92 passed/zero skips; native
+Store ordinary suite 51 passed/7 existing ignored; actual Store autosave and
+post-publication lost-reply CAS controls passed. The negative scheduling control
+failed exactly as required. See dated receipts under security-evidence.
+
+Native inline outcome: two actual disposable Ubuntu GTK/WebKit diagnostics failed
+to render before the fixed deadline. The new VM/container are stopped; failed
+observations and exact small probes are retained. No parity/security gate is
+checked off. Next work: an actual pinned-Wry embedding/lifecycle proof, while
+shared vault/session/controller adapters can advance independently. Do not begin
+a third shell or activate browser storage as local vault truth.
+
+Inventory subpacket now implements the Rust retained-root metadata boundary with
+11 filesystem tests and independent review; source loading keeps its old budgets.
+See [its packet plan](vault-inventory.md) and ADR026. This completes an indexing
+substep, not the whole vault lifecycle or any installed application gate.
+
+Scoped lazy opening is implemented as another Rust-only substep (ADR027): 9 new
+filesystem tests/71 native crate tests passed; independent review found no blocker.
+No IPC/UI activation. The actual-Wry follow-up establishes partial same-window
+GtkSocket/Plug painting, while input/React/Stop remain unproven. Next runtime probe
+needs explicit readiness/input receipts, not another assumed-success screenshot.
+
+Creation and status-observation subpacket completed at `485de38`: atomic scoped
+no-replace creation, guarded asynchronous persistence subscriptions, 79 native
+crate tests and the final full 673/92/150/9/4 check passed. These are foundations,
+not active native product behavior. The follow-up Wry input packet established
+ordinary pointer input and valid pre-expiry Stop; normal keyboard focus and real
+React remain blocked. See the dated input receipt. Next independent source work
+is the editor-only vault adapter and explicit source-session/revision receipts;
+shared UI integration must not invent a third shell or activate privileged React.
+
+Editor-only native vault service implemented: OS chooser plus token-scoped
+inventory/open/create reuse the existing Store and captured descriptor root.
+Cancellation/replacement/guard tests and independent review passed; final full
+check 676 unit/96 tooling/150 Chromium/9 Pages/4 inactive-cloud passed. Actual
+new-command GUI/ACL acceptance remains unexecuted and is a pre-activation gate;
+see ADR030 and its receipt. Shared source-revision receipt work follows with
+production callers disabled until its complete protocol is reviewed and tested.
+
+Hosted CI at `32b1cd4` passed both required jobs (`45882998330`); dispatch-only
+preview/native-preflight/deployment jobs were skipped, not executed. The subsequent
+one-case normal-focus diagnostic missed readiness by its declared 44-second
+window, so no component input or React ran. Trusted pre-expiry Stop completed in
+0.83 seconds with working host input. Exact evidence preserves this bounded
+outcome, infrastructure prerequisite correction and unknown cause. New VM/runtime
+resources were removed. Native-adapter build scratch cleanup was interrupted;
+its private temporary source/target is not application data or published evidence.
+No new VM retry is planned without a discriminating hypothesis.
+
+Optional editor receipts and the shared DocumentSessions controller now have
+independent review and a final combined check: exit 0, 726 unit, 96 tooling/zero
+skips, 152 Chromium, 9 Pages and 4 inactive-cloud passed. Source/test hashes bind
+those receipts. Neither protocol nor controller is activated in production UI.
+Next: bind private native grants, exercise controller publication against real
+Store/files, then extract the single shared product/controller boundary. Preserve
+native close/dirty acknowledgements and separate recovery; do not treat controlled
+writer tests as installed autosave or inline runtime/security acceptance.
+
+Private native-session binding now connects the existing controller to exact
+save/close ports, with real Store publication observed before flush and explicit
+close/reopen/external-conflict witnesses. Original harness/negative controls remain.
+Root final check passed 735 unit/96 tooling/152 Chromium/9 Pages/4 inactive-cloud,
+plus 79 Rust document tests and formatting; independent review found no blocker.
+No UI or registered Tauri GUI/ACL activation is implied. Next shared-product work
+can use this tested seam; native inline keyboard/geometry/full security remains
+an independent release gate. A separate bounded actual-React pointer question
+is being investigated without weakening the failed keyboard/startup results.
+
+The one actual React pointer diagnostic reached Count 2, but its infrastructure
+violated the explicit no-host-share invariant by including a task-generated guest
+transport key in a writable synthetic share. All new runtime/key resources were
+removed; no owner credentials/notes were involved. The observation is excluded
+from VM/full security acceptance. Stop cleanup also remains unproven after ESRCH.
+Before more native tests, correct/version/review share-free provisioning with
+negative preflight controls. Shared UI/data work can remain independent; do not
+promote another installer or treat these partial observations as product readiness.
+
+## Current checkpoint after shared surface and Debian validation
+
+The share-free provisioning gate is now versioned, independently reviewed and
+actually exercised. Ubuntu still refuses effective network isolation; its
+failures are retained. Debian OS-only admission passed, followed by a fixed
+native run that admitted isolation/embedding but failed React readiness and
+application cleanup. The earlier shared-key pointer observation remains excluded.
+The reviewed close-protocol correction and passive readiness category are
+published in190dbf0. Its predefined fresh-guest sequence finished2/3: two
+complete fixed-helper passes and one native-only React-ready timeout. Stop,
+host input and session cleanup passed in all three. Startup reliability remains
+failed; the next probe must distinguish native building/loading/termination.
+
+The shared DocumentSurface and cached DocumentSessions observation hook now
+reuse existing panels/controller authority without a replacement UI. Real Store
+autosave/session tests remain separate from injected UI/controller tests. Real
+Vault directory creation is published; empty directories are not yet discoverable
+through the inventory protocol. Avoid adding an unused parallel inventory API:
+when needed, extend the existing secure walker and separated directory data
+through the existing wire/controller together.
+
+Next gates: finish native inline interaction/geometry/lifecycle proof and its
+security matrix; compose the shared product root with explicit platform services;
+prove native vault autosave/recovery in that actual interface. Scoped uncertainty
+reconciliation and real rename/move/recoverable Trash remain unimplemented. A
+Store-wide write freeze was rejected because it would block unrelated notes.
+No corrected installer or accepted native product is delivered by these foundations.
+
+## Shared product packet — 27 November 2026
+
+ProductRoot now consumes extracted WebApp interaction/navigation/header/settings
+and composes the actual NativeWorkspace/DocumentSessions source authority through
+nativeProduct. The logical source path no longer has to double as the editor's
+history identity. The original browser storage and entry points are preserved.
+Injected-port UI/controller tests cover autosave, mode/history, pending IME,
+loaded documents absent from refreshed inventory, recovery acknowledgements and
+fresh-session reopen. They do not establish actual disk/OS-dialog acceptance.
+
+Independent review found no new Important/Critical issue in this inactive packet.
+A deferred robustness issue remains: direct choose/create completion UI updates
+are not scoped to a replacement application instance. Source writes remain bound
+to the original application; guard those UI completions before supporting live
+bootstrap replacement. The aggregate close protocol deliberately refuses final
+release; its design is in native-editor-close-handshake.md. Native entry activation
+and installed acceptance remain blocked until that protocol and real editor
+quiescence are implemented and validated. Do not promote the old installer.
+
+The latest native diagnostic on ad0ffca compiled and reached React/pointer/focus,
+but failed its keyboard command deadline; Stop, host input and cleanup passed,
+expiry did not run. This does not repair the earlier intermittent startup failure.
+Required CI on that commit passed both jobs. No unchanged runtime retry follows.
+
+## Current checkpoint: shared native startup and recovery copies
+
+The native entry now activates the guarded shared ProductRoot; it no longer waits
+for the inactive packet described above. Singleton startup, editor quiescence and
+the exact close protocol are implemented. They still require installed close and
+restart acceptance, not just browser/controller/backend evidence.
+
+Required CI46062811208 passed both jobs onacbec3a. The actual installed Ubuntu
+observation46064143844 reached shared ProductRoot readiness and passed process
+identity checks, then failed during the vault-chooser journey. Cleanup passed.
+The generic permission substring is not a namespace diagnosis. Next expose only
+closed helper signatures and a bounded startup image; do not relax PID/title/path,
+chooser acknowledgement, sandbox or deadline checks to claim acceptance.
+
+Explicit recovery-copy discovery/read and new-file creation are implemented in
+4bbc739. Read-only opening cannot initialize or prune the snapshot store. Captured
+vault/selection/generation/cancellation checks guard creation; uncertain outcomes
+retain source and destination and block retry. Local full checks and independent
+review passed; installed recovery/restart and native command compilation remain
+separate gates at this checkpoint. See ADR042 and the dated evidence.
+
+A fixed sealed Debian React helper passed real input, Stop, expiry and cleanup,
+while general native React remains disabled. Inline Wry native browser guards,
+actual editor integration/geometry, the full hostile-workload matrix and repeatable
+startup are required before activation. Physical GPU/Wayland coverage is separate.
+Real rename/move/recoverable Trash, continuous external observation and configured
+signed updates remain pending. No new installer is promoted as accepted, and no
+release, merge or PR readiness change follows from this checkpoint.
+
+### Current correction checkpoint
+
+CI46066421522 passed the real recovery-command SDK build. Installed46067552665
+reached the owned chooser and failed exact location echo before acceptance;
+cleanup passed. The next changed helper retains strict echo/ownership checks,
+types the GTK directory separator, uses the pinned Open acceptance label and
+projects only closed echo-shape diagnostics. Installed editing/restart remains
+pending. The startup PNG artifact is retained but not visually inspected here.
+
+Recovery-copy form styling/focus now has actual controlled-port browser evidence.
+The inline guard foundation is implemented as strictly guarded-v2, including
+source-bound manifests and prepublication native handlers, but its GTK compile
+and actual runtime observation remain pending. Historical v1 evidence cannot
+activate it. Full local checks:1006 unit,157 Chromium,9 Pages,4 local cloud;
+final helper tooling185/zero skips plus static checks. No new installer acceptance,
+merge, release or general native React activation follows.

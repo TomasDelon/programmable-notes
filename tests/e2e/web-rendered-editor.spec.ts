@@ -1,12 +1,53 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import {
+  openMath,
+  sourceForMath,
+  replaceDocumentText,
+} from './helpers/math-text';
 
 const editor = (page: Page) => page.locator('.rendered-editor .ProseMirror');
+
+// Only synthetic test documents are inspected. On failure, expose the owner's
+// explicit reason in CI annotations instead of hiding it inside a trace ZIP.
+async function typingDiagnostics(page: Page) {
+  const view = editor(page);
+  const messages = await page
+    .getByRole('region', { name: 'Notifications' })
+    .allTextContents();
+  const recovery = page
+    .getByRole('alert')
+    .filter({ hasText: 'Your edit was kept for recovery.' });
+  let reason = '';
+  if (await recovery.count()) {
+    await recovery
+      .getByRole('button', { name: 'Details', exact: true })
+      .click();
+    reason = await page
+      .getByRole('dialog', { name: 'Notification details' })
+      .innerText();
+    await page
+      .getByRole('button', { name: 'Close details', exact: true })
+      .click();
+  }
+  return JSON.stringify({
+    document: (await view.innerText()).slice(-3000),
+    messages,
+    reason,
+  });
+}
 
 async function command(page: Page, name: string) {
   await page.locator('.doc-title-row').click();
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Command palette' });
+  try {
+    await expect(palette).toBeVisible({ timeout: 5000 });
+  } catch (error) {
+    throw new Error(String(error) + '\n' + (await typingDiagnostics(page)), {
+      cause: error,
+    });
+  }
   await palette.getByLabel('Search commands and notes').fill(name);
   await palette
     .getByRole('button', { name: new RegExp('^' + name) })
@@ -43,6 +84,29 @@ test.beforeEach(async ({ page }) => {
     page.getByRole('main', { name: 'Document workspace' }),
   ).toBeVisible();
 });
+
+for (const marker of ['1.', '-', '*', '+']) {
+  test(`typing ${marker} space starts a list in a mixed MDX document`, async ({
+    page,
+  }) => {
+    const original =
+      '\uFEFF# Writing\r\n\r\nStart here.\r\n\r\n<span data-opaque="kept">Opaque</span>\r\n';
+    await importNote(page, original);
+    await editor(page).getByText('Start here.', { exact: true }).click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type(marker + ' first');
+    await expect(editor(page).locator('li')).toContainText('first');
+    await expect(
+      page.getByText('This edit cannot be represented faithfully', {
+        exact: false,
+      }),
+    ).toHaveCount(0);
+    expect(await exportedSource(page)).toContain(
+      '<span data-opaque="kept">Opaque</span>\r\n',
+    );
+  });
+}
 
 test('Preview renders a real editable document with bullets, tasks and centered math', async ({
   page,
@@ -155,22 +219,19 @@ test('table cells and equations can be edited in the rendered document', async (
   expect(afterCell).toContain('Old value updated');
   expect(afterCell).toContain('A result $x^2$.');
 
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(latex).toHaveValue('$x^2$');
+  const latex = await openMath(page, '$x^2$');
+  await expect(latex).toHaveText('$x^2$');
   await expect(page.getByRole('dialog', { name: 'Edit equation' })).toHaveCount(
     0,
   );
-  await latex.fill('$x^3 + 1$');
-  await latex.press('Enter');
+  await replaceDocumentText(page, latex, '$x^3 + 1$');
+  await editor(page).getByRole('cell').first().click();
   expect(await exportedSource(page)).toBe(
     afterCell.replace('$x^2$', '$x^3 + 1$'),
   );
 });
 
-test('an unsaved equation draft survives another tab moving its note to Trash', async ({
+test('a same-document equation edit preserves local text when another tab moves its note to Trash', async ({
   page,
   context,
 }) => {
@@ -180,11 +241,7 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   const other = await context.newPage();
   await other.goto('/');
   await saved(other);
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await latex.fill('$x^7 + 1$');
+  const latex = await openMath(page, '$x^2$');
 
   await other.getByRole('button', { name: 'Open right panel' }).click();
   await other
@@ -200,31 +257,10 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
     .click();
   await saved(other);
 
-  // Observe real storage calls without replacing their results. A pending
-  // widget draft must prevent a focus refresh from even starting its read.
-  const refreshReads = await page.evaluate(() => {
-    const open = indexedDB.open;
-    let calls = 0;
-    indexedDB.open = function (name: string, version?: number) {
-      calls++;
-      return open.call(indexedDB, name, version);
-    };
-    try {
-      window.dispatchEvent(new Event('focus'));
-      return calls;
-    } finally {
-      indexedDB.open = open;
-    }
-  });
-  expect(refreshReads).toBe(0);
-  await expect(latex).toHaveValue('$x^7 + 1$');
-  await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Editing');
-
-  // Applying the local draft preserves it and reports the genuine concurrent
-  // content conflict, instead of silently overwriting the remote Trash change.
-  await latex.press('Enter');
+  // Direct editing commits through the canonical source immediately. A stale
+  // local edit must encounter the real CAS conflict rather than overwrite Trash.
+  await replaceDocumentText(page, latex, '$x^7 + 1$');
+  await expect(sourceForMath(page, '$x^7 + 1$')).toHaveText('$x^7 + 1$');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -235,7 +271,7 @@ test('an unsaved equation draft survives another tab moving its note to Trash', 
   await other.close();
 });
 
-test('an equation opened during a real focus read prevents stale workspace adoption', async ({
+test('a same-document equation edit during a real focus read prevents stale workspace adoption', async ({
   page,
   context,
 }) => {
@@ -286,11 +322,8 @@ test('an equation opened during a real focus read prevents stale workspace adopt
       typeof (window as Window & { __releaseFocusRead?: () => void })
         .__releaseFocusRead === 'function',
   );
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const field = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await field.fill('$x^7 + 1$');
+  const field = await openMath(page, '$x^2$');
+  await replaceDocumentText(page, field, '$x^7 + 1$');
   await page.evaluate(() =>
     (window as Window & { __releaseFocusRead?: () => void })
       .__releaseFocusRead!(),
@@ -299,12 +332,10 @@ test('an equation opened during a real focus read prevents stale workspace adopt
     () =>
       (window as Window & { __focusReadClosed?: boolean }).__focusReadClosed,
   );
-  // A late open also closes after the storage watchdog fires. That is not a
-  // successful refresh: assert its error was not mistaken for race protection.
-  await saved(page);
-  await expect(field).toHaveValue('$x^7 + 1$');
+  // The local source revision changed while refresh was reading. The older
+  // snapshot must not replace that content; the actual save reports CAS conflict.
+  await expect(sourceForMath(page, '$x^7 + 1$')).toHaveText('$x^7 + 1$');
   await expect(editor(page)).toContainText('Local tail.');
-  await field.press('Enter');
   await expect(page.locator('.web-shell')).toHaveAttribute(
     'data-save-status',
     'conflict',
@@ -529,22 +560,215 @@ test('Shift+Enter inserts a real Markdown hard break within the paragraph', asyn
   await expect(editor(page)).toContainText('Second line.');
 });
 
-test('clicking outside a focused inline equation commits its dollar-delimited source without a popup', async ({
+test('clicking outside same-document math renders its already committed source without a popup', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const source = '# Math in context\n\nTry $x^2$ here.\n';
   await importNote(page, source);
-  await editor(page)
-    .getByRole('button', { name: 'Edit inline equation: x^2' })
-    .click();
-  const latex = page.getByRole('textbox', { name: 'Inline LaTeX source' });
-  await expect(latex).toHaveValue('$x^2$');
-  await latex.fill('$x^3$');
+  const latex = await openMath(page, '$x^2$');
+  await expect(latex).toHaveText('$x^2$');
+  await replaceDocumentText(page, latex, '$x^3$');
   await editor(page).getByRole('heading', { name: 'Math in context' }).click();
-  await expect(latex).toHaveCount(0);
+  await expect(sourceForMath(page, '$x^3$')).toBeHidden();
   await expect(
-    editor(page).getByRole('button', { name: 'Edit inline equation: x^3' }),
+    editor(page).locator('.rendered-math-render .katex'),
   ).toBeVisible();
   expect(await exportedSource(page)).toBe(source.replace('x^2', 'x^3'));
+});
+
+test('Markdown keyboard authoring handles lists, nesting, headings, formatting and exact history without a toolbar', async ({
+  page,
+}) => {
+  const original =
+    '\uFEFF# Writing\r\n\r\nStart here.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
+  await importNote(page, original);
+  await expect(
+    page.getByRole('toolbar', { name: 'Text formatting' }),
+  ).toHaveCount(0);
+  const view = editor(page);
+  await view.getByText('Start here.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('1. first');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('second');
+  await expect(
+    view.locator('ol > li'),
+    await typingDiagnostics(page),
+  ).toHaveCount(2);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('ordered nested');
+  await expect(view.locator('ol ol li')).toHaveText('ordered nested');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('- bullet');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('nested');
+  await expect(view.locator('ul ul li')).toHaveText('nested');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('## New heading');
+  await expect(
+    view.getByRole('heading', { level: 2, name: 'New heading' }),
+  ).toBeVisible();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('**bold** and *italic* with `code`.');
+  await expect(view.locator('strong')).toHaveText('bold');
+  await expect(view.locator('em')).toHaveText('italic');
+  await expect(
+    view.locator('code').filter({ hasText: 'code' }),
+    await view.innerText(),
+  ).toHaveText('code');
+  await page.keyboard.press('Control+Shift+K');
+  await expect(page.getByRole('textbox', { name: 'Link URL' })).toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Command palette' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.locator('.pn-notice[data-tone="error"]')).toHaveCount(0);
+  const after = await exportedSource(page);
+  expect(after.startsWith('\uFEFF# Writing\r\n\r\nStart here.\r\n')).toBe(true);
+  expect(after.endsWith('<span data-kept="yes">Opaque JSX</span>\r\n')).toBe(
+    true,
+  );
+  await command(page, 'Edit source');
+  const source = page.getByRole('textbox', { name: 'MDX source' });
+  await source.press('Control+z');
+  expect(await exportedSource(page)).not.toBe(after);
+  await source.press('Control+Shift+Z');
+  expect(await exportedSource(page)).toBe(after);
+  await saved(page);
+  await page.reload();
+  await command(page, 'Preview document');
+  await expect(
+    editor(page).getByRole('heading', { name: 'New heading', exact: true }),
+  ).toBeVisible();
+  expect(await exportedSource(page)).toBe(after);
+});
+
+for (const width of [1440, 820, 390]) {
+  test(`minimal error notifications keep the document stable at ${width}px`, async ({
+    page,
+    browserName,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const source =
+      "import {useState} from 'react'\n\nexport function Probe(){const [n,setN]=useState(0);return <><button onClick={()=>setN(n+1)}>Counter: {n}</button><button onClick={()=>{throw new Error('Notification demonstration')}}>Trigger error</button></>}\n\n# A quiet document\n\nWrite here.\n\n<Probe />\n";
+    await importNote(page, source);
+    const view = editor(page);
+    const frame = page.frameLocator('iframe[title="Document preview"]');
+    await frame.getByRole('button', { name: 'Counter: 0' }).click();
+    await expect(
+      frame.getByRole('button', { name: 'Counter: 1' }),
+    ).toBeVisible();
+    const before = await view.boundingBox();
+    await frame.getByRole('button', { name: 'Trigger error' }).click();
+    const notice = page
+      .getByRole('alert')
+      .filter({ hasText: 'Preview needs attention' });
+    await expect(notice).toHaveCount(1);
+    await view.getByText('Write here.', { exact: true }).click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' Continue writing.');
+    await expect(view).toBeFocused();
+    await expect(
+      page.getByRole('button', { name: 'Review draft' }),
+      await typingDiagnostics(page),
+    ).toHaveCount(0);
+    await expect(view.locator('[role="alert"]')).toHaveCount(0);
+    await expect(
+      page.getByRole('toolbar', { name: 'Text formatting' }),
+    ).toHaveCount(0);
+    expect((await view.boundingBox())!.y).toBe(before!.y);
+    expect(await exportedSource(page)).toBe(
+      source.replace('Write here.', 'Write here.&#32;Continue&#32;writing.'),
+    );
+    await expect(
+      frame.getByRole('button', { name: 'Counter: 1' }),
+    ).toBeVisible();
+    const path = test.info().outputPath(`preview-notifications-${width}.png`);
+    await page.screenshot({ path, fullPage: true, animations: 'disabled' });
+    await test
+      .info()
+      .attach(`Preview ${width}px`, { path, contentType: 'image/png' });
+    await notice.getByRole('button', { name: 'Details' }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'Notification details' }),
+    ).toContainText(
+      browserName === 'webkit' ? 'Script error.' : 'Notification demonstration',
+    );
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    if (width === 1440) {
+      await command(page, 'Settings');
+      await expect(
+        page.getByRole('dialog', { name: 'Settings', exact: true }),
+      ).toBeVisible();
+      await notice.getByRole('button', { name: 'Details' }).click();
+      await expect(
+        page.getByRole('dialog', { name: 'Notification details' }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(
+        page.getByRole('dialog', { name: 'Notification details' }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole('dialog', { name: 'Settings', exact: true }),
+      ).toBeVisible();
+      await page.keyboard.press('Escape');
+    }
+  });
+}
+
+test('excessive whitespace opens as exact Source and remains editable without synchronous visual parsing', async ({
+  page,
+}) => {
+  const source = '\uFEFFa' + ' '.repeat(20_000) + 'b\r\n';
+  await importNote(page, source);
+  await expect(editor(page).locator('.rendered-source-block')).toHaveCount(1);
+  await command(page, 'Edit source');
+  const raw = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(raw).toBeVisible();
+  expect(await exportedSource(page)).toBe(source);
+  await raw.press('Control+End');
+  await page.keyboard.insertText('Tail.');
+  expect(await exportedSource(page)).toBe(source + 'Tail.');
+});
+
+test('a visual work-budget refusal retains an exact downloadable draft until explicit discard', async ({
+  page,
+}) => {
+  const source =
+    '\uFEFFParagraph.\r\n\r\n<span data-kept="yes">Opaque JSX</span>\r\n';
+  const inserted = ' '.repeat(8193) + 'next';
+  await importNote(page, source);
+  const view = editor(page);
+  await view.getByText('Paragraph.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(inserted);
+  await expect(view).toContainText('Paragraph.');
+  await expect(view.locator('[role="alert"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review draft' }).click();
+  const modal = page.getByRole('dialog', { name: 'Retained edit' });
+  await expect(modal).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await modal.getByRole('button', { name: 'Download retained source' }).click();
+  const download = await pending;
+  expect(readFileSync((await download.path())!, 'utf8')).toBe(
+    source.replace('Paragraph.', 'Paragraph.' + inserted),
+  );
+  await expect(modal).toBeVisible();
+  await modal.getByRole('button', { name: 'Discard retained draft' }).click();
+  expect(await exportedSource(page)).toBe(source);
+  await view.getByText('Paragraph.', { exact: true }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.insertText(' Safe.');
+  expect(await exportedSource(page)).toBe(
+    source.replace('Paragraph.', 'Paragraph. Safe.'),
+  );
 });

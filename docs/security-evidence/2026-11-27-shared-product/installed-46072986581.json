@@ -1,0 +1,27 @@
+{
+  "evidence_source": "Source-pinned fixed GitHub check annotations and API metadata only; no artifacts or raw logs accessed",
+  "run_id": 46072986581,
+  "job_id": 140754083589,
+  "source_commit": "25041e75c1226be2154e85d204f13bca57256844",
+  "status": "failed",
+  "scope": "installed-editor-only",
+  "startup_phase": "complete",
+  "journey_stage": "authorized_vault_chooser",
+  "failure_kind": "other",
+  "dialog_classes": ["dialog_dismissal_unconfirmed"],
+  "dialog_echo_shape": "unknown",
+  "cleanup": {
+    "passed": true,
+    "forced": false,
+    "residual": false
+  },
+  "artifact_id": 15234585492,
+  "editing_disk_close_restart_verified": false,
+  "native_react_security_verified": false,
+  "limitations": [
+    "Exact path echo completed according to the source-bound helper flow; dialog dismissal did not.",
+    "Acceptance-action state was not available; no cause is inferred.",
+    "Generic operation_not_permitted substring is advisory, not a namespace diagnosis.",
+    "Startup PNG retained but not downloaded or visually inspected in this cloud workspace."
+  ]
+}

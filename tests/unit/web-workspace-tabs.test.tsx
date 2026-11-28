@@ -1,10 +1,19 @@
 import { webcrypto } from 'node:crypto';
+import { File as NodeFile } from 'node:buffer';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as persistence from '../../src/web/persistence';
 import { useWebWorkspace } from '../../src/web/useWebWorkspace';
-import { trashDocument, updateDocumentSource } from '../../src/web/workspace';
+import {
+  createWebState,
+  importSources,
+  selectDocument,
+  serializeBackup,
+  trashDocument,
+  updateDocumentSource,
+} from '../../src/web/workspace';
+import { compilerFiles } from '../../src/documents/workspace';
 
 beforeEach(() => {
   vi.stubGlobal('indexedDB', new IDBFactory());
@@ -22,6 +31,118 @@ async function openSavedTab() {
 }
 
 describe('workspace navigation across tabs', () => {
+  it('normalizes historical backup navigation only after explicit replacement', async () => {
+    const tab = await openSavedTab();
+    const baseline = (await persistence.readWorkspace())!;
+    const state = importSources(createWebState(1), [
+      { logicalPath: 'Measurements.mdx', source: '\uFEFF# Measurements\r\n' },
+    ]);
+    state.workspace.selected = 'welcome/Welcome.mdx';
+    const backup = new NodeFile([serializeBackup(state)], 'workspace.json', {
+      type: 'application/json',
+    }) as unknown as File;
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await act(async () => tab.result.current.restoreBackup(backup));
+    expect((await persistence.readWorkspace())!.revision).toBe(
+      baseline.revision,
+    );
+    expect(tab.result.current.state).toEqual(baseline.state);
+    confirm.mockReturnValue(true);
+    await act(async () => tab.result.current.restoreBackup(backup));
+    const restored = (await persistence.readWorkspace())!.state;
+    expect(restored.workspace.selected).toBe(state.workspace.selected);
+    expect(restored.workspace.entry).toBe(state.workspace.selected);
+    expect(restored.workspace.files).toEqual(state.workspace.files);
+    expect(tab.result.current.state).toEqual(restored);
+  });
+
+  it('opens a historically mismatched saved note without changing stored source or revision', async () => {
+    const state = importSources(createWebState(1), [
+      { logicalPath: 'Measurements.mdx', source: '\uFEFF# Measurements\r\n' },
+    ]);
+    state.workspace.selected = 'welcome/Welcome.mdx';
+    const stored = await persistence.writeWorkspace(state, 0);
+    const tab = await openSavedTab();
+    expect(tab.result.current.state!.workspace.entry).toBe(
+      state.workspace.selected,
+    );
+    expect(tab.result.current.state!.workspace.files).toEqual(
+      state.workspace.files,
+    );
+    const after = (await persistence.readWorkspace())!;
+    expect(after.revision).toBe(stored.revision);
+    expect(after.state).toEqual(stored.state);
+  });
+
+  it('retains a surviving module selection and its previous note entry on refresh', async () => {
+    let state = importSources(createWebState(1), [
+      { logicalPath: 'Measurements.mdx', source: '# Measurements\r\n' },
+      { logicalPath: 'unused.ts', source: 'export const value = 1;\r\n' },
+    ]);
+    const entry = state.workspace.entry;
+    const module = Object.keys(state.workspace.files).find((key) =>
+      key.endsWith('/unused.ts'),
+    )!;
+    state = selectDocument(state, module);
+    await persistence.writeWorkspace(state, 0);
+    const tab = await openSavedTab();
+    const baseline = (await persistence.readWorkspace())!;
+    const welcome = 'welcome/Welcome.mdx';
+    await persistence.writeWorkspace(
+      updateDocumentSource(
+        selectDocument(baseline.state, welcome),
+        welcome,
+        'Published remotely',
+      ),
+      baseline.revision,
+    );
+    act(() => window.dispatchEvent(new Event('focus')));
+    await waitFor(() =>
+      expect(tab.result.current.state!.workspace.files[welcome]).toBe(
+        'Published remotely',
+      ),
+    );
+    expect(tab.result.current.state!.workspace.selected).toBe(module);
+    expect(tab.result.current.state!.workspace.entry).toBe(entry);
+    expect(tab.result.current.conflict).toBe(false);
+  });
+
+  it('keeps a remote Trash fallback note and its executable entry together', async () => {
+    let state = importSources(createWebState(1), [
+      { logicalPath: 'Measurements.mdx', source: '# Measurements\r\n' },
+      { logicalPath: 'unused.ts', source: 'export const value = 1;\r\n' },
+    ]);
+    const entry = state.workspace.entry;
+    const module = Object.keys(state.workspace.files).find((key) =>
+      key.endsWith('/unused.ts'),
+    )!;
+    state = selectDocument(state, module);
+    await persistence.writeWorkspace(state, 0);
+    const tab = await openSavedTab();
+    const baseline = (await persistence.readWorkspace())!;
+    // A remote tab navigates back to Welcome while trashing this tab's module.
+    const welcome = 'welcome/Welcome.mdx';
+    const remote = selectDocument(
+      trashDocument(baseline.state, module),
+      welcome,
+    );
+    await persistence.writeWorkspace(remote, baseline.revision);
+    act(() => window.dispatchEvent(new Event('focus')));
+    await waitFor(() =>
+      expect(tab.result.current.state!.workspace.selected).toBe(welcome),
+    );
+    const refreshed = tab.result.current.state!;
+    expect(refreshed.workspace.entry).toBe(welcome);
+    expect(compilerFiles(refreshed.workspace)[welcome]).toBe(
+      state.workspace.files[welcome],
+    );
+    expect(refreshed.workspace.files[entry]).toBe('# Measurements\r\n');
+    expect(refreshed.workspace.files[module]).toBe(
+      state.workspace.files[module],
+    );
+    expect(tab.result.current.conflict).toBe(false);
+  });
+
   it("rebases a stale mode switch onto the other tab's saved text", async () => {
     const first = await openSavedTab();
     const second = await openSavedTab();
@@ -336,5 +457,30 @@ describe('workspace navigation across tabs', () => {
       baseline.state.workspace.files[key],
     );
     expect((await persistence.readWorkspace())!.state.mode).toBe('live');
+  });
+});
+
+describe('core plugin view preferences across tabs', () => {
+  it('rebases toggles on newer saved source without overwriting it or creating a text conflict', async () => {
+    const first = await openSavedTab();
+    const second = await openSavedTab();
+    const key = first.result.current.state!.workspace.selected;
+    const exact = '\uFEFF# Other tab\r\n\r\n$x$\r\n';
+    act(() => first.result.current.updateSource(key, exact));
+    await act(async () => {
+      expect(await first.result.current.saveNow()).toBe(true);
+    });
+    act(() => {
+      second.result.current.setCorePlugin('react', false);
+      second.result.current.setShowComponentSource(true);
+    });
+    await act(async () => {
+      expect(await second.result.current.saveNow()).toBe(true);
+    });
+    const stored = (await persistence.readWorkspace())!.state;
+    expect(stored.workspace.files[key]).toBe(exact);
+    expect(stored.corePlugins?.react).toBe(false);
+    expect(stored.previewPreferences?.showComponentSource).toBe(true);
+    expect(second.result.current.conflict).toBe(false);
   });
 });

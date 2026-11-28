@@ -22,6 +22,47 @@ function view(container: HTMLElement): EditorView {
 }
 
 describe('real editor raw source bridge', () => {
+  it('ignores an obsolete React echo while preserving newer canonical edits and exact history', () => {
+    let owned = 'First.\r\n';
+    const onChange = (next: string) => {
+      owned = next;
+    };
+    const sourceIsCurrent = (snapshot: string) => snapshot === owned;
+    const renderEditor = (snapshot: string) => (
+      <SourceEditor
+        source={snapshot}
+        onChange={onChange}
+        sourceIsCurrent={sourceIsCurrent}
+      />
+    );
+    const ui = render(renderEditor(owned));
+    const editor = view(ui.container);
+    act(() =>
+      editor.dispatch({
+        changes: { from: 0, insert: 'A' },
+        annotations: isolateHistory.of('full'),
+      }),
+    );
+    const earlier = owned;
+    act(() =>
+      editor.dispatch({
+        changes: { from: 0, insert: 'B' },
+        annotations: isolateHistory.of('full'),
+      }),
+    );
+    const latest = owned;
+    ui.rerender(renderEditor(earlier));
+    expect(rawSource(editor.state)).toBe(latest);
+    ui.rerender(renderEditor(latest));
+    act(() => undo(editor));
+    expect(owned).toBe(earlier);
+    act(() => redo(editor));
+    expect(owned).toBe(latest);
+    owned = '\uFEFFExternal.\r\n';
+    ui.rerender(renderEditor(owned));
+    expect(rawSource(editor.state)).toBe(owned);
+  });
+
   it('preserves mixed CRLF, LF, CR, BOM and Unicode through edit, grouped undo and redo', () => {
     const original = '\uFEFF# Title\r\nfirst 🧠\nsecond\rlast';
     const change = vi.fn();
@@ -267,4 +308,120 @@ describe('math and Live syntax ownership', () => {
     expect(change).not.toHaveBeenCalled();
     expect(pending).toHaveBeenLastCalledWith(false);
   });
+});
+
+describe('multiline math physical line endings', () => {
+  it.each(['\r\n', '\r', '\n'])(
+    'adds a mathematical source line without changing the document physical breaks (%j)',
+    (ending) => {
+      const source = [
+        '# Original',
+        '',
+        '$$',
+        'x^2',
+        '$$',
+        '',
+        '<span>Opaque</span>',
+        '',
+      ].join(ending);
+      const span = collectLiveMath(source)[0]!;
+      expect(span).toBeDefined();
+      const next = source.replace(`x^2${ending}`, `x^2${ending}+ y^2${ending}`);
+      expect(
+        planMathReplacement(source, source, span, '\nx^2\n+ y^2\n'),
+      ).toEqual({
+        ok: true,
+        source: next,
+        replacement: `${ending}x^2${ending}+ y^2${ending}`,
+      });
+      expect(collectLiveMath(next)).toHaveLength(1);
+    },
+  );
+});
+
+it('measures source navigation synchronously before focus and refuses a source changed during measurement', () => {
+  const original = '\uFEFFBefore\r\n\r\n<section>Target</section>\r\n';
+  const commands = createRef<EditorCommands>();
+  const mounted = render(
+    <SourceEditor
+      source={original}
+      onChange={vi.fn()}
+      commandsRef={commands}
+    />,
+  );
+  const editor = view(mounted.container);
+  const focus = vi.spyOn(editor, 'focus').mockImplementation(() => {});
+  const measure = vi.spyOn(editor, 'requestMeasure');
+  const rects = vi
+    .spyOn(editor.dom, 'getClientRects')
+    .mockReturnValue([new DOMRect(0, 0, 100, 100)] as unknown as DOMRectList);
+  const coords = vi.spyOn(editor, 'coordsAtPos').mockImplementation(() => {
+    expect(focus).not.toHaveBeenCalled();
+    expect(measure).toHaveBeenCalled();
+    return { left: 0, right: 1, top: 0, bottom: 20 };
+  });
+  const target = original.indexOf('<section>');
+  act(() => commands.current!.revealSource(target, original));
+  expect(coords).toHaveBeenCalledWith(
+    new RawSourceMap(original).toDisplay(target),
+  );
+  expect(focus).toHaveBeenCalledOnce();
+  expect(rawSource(editor.state)).toBe(original);
+  focus.mockClear();
+  coords.mockImplementation(() => {
+    editor.dispatch({ changes: { from: 0, insert: 'New ' } });
+    return { left: 0, right: 1, top: 0, bottom: 20 };
+  });
+  act(() => commands.current!.revealSource(target, original));
+  expect(focus).not.toHaveBeenCalled();
+  focus.mockRestore();
+  measure.mockRestore();
+  coords.mockRestore();
+  rects.mockRestore();
+});
+
+it('reveals the native caret when a hidden source editor retains a stale selection cache', () => {
+  const original = '\uFEFFBefore\r\n\r\n<section>Target</section>\r\n';
+  const commands = createRef<EditorCommands>();
+  const mounted = render(
+    <SourceEditor
+      source={original}
+      onChange={vi.fn()}
+      commandsRef={commands}
+    />,
+  );
+  const editor = view(mounted.container);
+  vi.spyOn(editor.dom, 'getClientRects').mockReturnValue([
+    new DOMRect(0, 0, 100, 100),
+  ] as unknown as DOMRectList);
+  // jsdom has no layout; keep real focus and native Selection behavior.
+  vi.spyOn(editor, 'coordsAtPos').mockReturnValue({
+    left: 0,
+    right: 1,
+    top: 0,
+    bottom: 20,
+  });
+  const target = original.indexOf('<section>');
+  const display = new RawSourceMap(original).toDisplay(target)!;
+  act(() => commands.current!.revealSource(target, original));
+  const outside = mounted.container.appendChild(
+    document.createElement('button'),
+  );
+  outside.focus();
+  const previous = editor.domAtPos(display);
+  document.getSelection()!.collapse(previous.node, previous.offset);
+  // A selectionchange can reach CodeMirror while another control is focused.
+  document.dispatchEvent(new Event('selectionchange'));
+  // Revealing/focusing a formerly hidden contenteditable can reset the native
+  // caret before CodeMirror repairs it. Its state still contains the target.
+  const start = editor.domAtPos(0);
+  document.getSelection()!.collapse(start.node, start.offset);
+  act(() => commands.current!.revealSource(target, original));
+  const selection = document.getSelection()!;
+  expect(editor.state.selection.main.anchor).toBe(display);
+  expect(editor.posAtDOM(selection.anchorNode!, selection.anchorOffset)).toBe(
+    display,
+  );
+  expect(rawSource(editor.state)).toBe(original);
+  outside.remove();
 });

@@ -1,12 +1,86 @@
 # Linux desktop testing package
 
+## Shared local-vault development candidate
+
+The current native entry mounts the shared Source/Preview workspace through its
+guarded window-lifetime owner. Authorize a disposable folder using **Choose local
+vault**. Edits target original files automatically; there is no manual Save
+workflow in this candidate. Reselect the vault after restarting. React execution,
+file lifecycle/Trash and update integration remain incomplete. Recovery discovery
+and explicit new-copy restoration passed the scoped installed journey in
+[the local recovery evidence](security-evidence/2026-11-28-local-recovery/README.md).
+External-writer, lifecycle and React acceptance remain pending. Do not treat this as the accepted application or production security readiness.
+
+Actual installed validation must use a disposable ordinary account and synthetic files.
+The approved local journey reuses the retained locked account and preserves its
+existing recovery store; do not clear or recreate it. Verify:
+open through the real OS folder picker; type in Source and Preview; independently
+compare original-file bytes and permissions; undo/redo; close/reopen the document;
+send a real desktop close request; wait for process exit and launch a fresh process;
+re-authorize the vault and compare the exact file. Preserve BOM, physical line
+endings, Unicode, comments and opaque JSX. Cancelled/failed writes must not silently
+overwrite originals. Compilation and injected-port tests do not satisfy this gate.
+
+The dedicated `scripts/native-shared-editor.mjs` witness targets that shared UI
+using the existing external WebKit driver and PID-bound GTK picker helper. It is
+not a document API or security-test feature. Its fixed receipt records executable
+hash, checkpoints and cleanup, with synthetic Source/Preview screenshots. Actual
+execution results are recorded separately; adding a runner is not a passing test.
+
+After both mandatory jobs pass for the current branch head, the optional hosted
+witness reuses that exact package without rebuilding the application:
+
+```sh
+gh workflow run ci.yml --ref fix/preview-markdown-input -f native_shared_run=SUCCESSFUL_CI_RUN_ID
+```
+
+Use a completed required CI run from this repository and exact branch head. The
+job rejects mismatched head/tree/digest, fork runs, missing required jobs and mixed
+dispatch modes before installation. It uses a fresh ordinary account on the
+standard ubuntu-24.04 runner and uploads only two fixed JSON receipts and synthetic
+startup/Source/Preview PNGs as `native-shared-editor-witness`. Missing receipts, forced
+app cleanup and residual app/WebKit processes are failures. Ordinary display/driver
+service cleanup is separate. This is a free standard public-repository runner;
+there are no paid services, public releases or update feed changes.
+
+An editor-only hosted attempt does not require the separate preview's systemd
+PrivateNetwork/cgroup admission because the shared native React adapter is disabled.
+It still requires the production package policy and working WebKit sandbox, DBus,
+X display and accessibility. Never bypass sandboxing or report this limited journey
+as native React/network/resource-containment acceptance.
+
+## Local deliberate browser-crash diagnostics
+
+The matching Chromium suite deliberately crashes two renderers to test persisted
+composition recovery. On a Linux host with a piped `core_pattern`, a zero core
+limit does not suppress that pipe. The kernel reserves a one-byte `RLIMIT_CORE`
+for suppressing recursive piped dumps; see the
+[kernel implementation](https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable.git/+/refs/tags/v6.12.27/fs/coredump.c).
+For this local host, run the test process with `prlimit --core=1 -- npm run check`
+and the pinned toolchain/scanner/browser environment. This limit applies only to
+that process and its descendants. It changes no system setting, browser assertion,
+timeout, runtime permission or native resource policy. Preserve failed crash
+observations; a passing retry is not a clean acceptance result. Record the actual
+limit and diagnostic repetition results with the candidate evidence.
+
+## Historical manual-save application procedures
+
+The controls and legacy security journeys below describe the previous App/engine
+regression path. They cannot be reused unchanged as acceptance of the shared UI.
+
+Historical implementation testing guide: the owner rejected the separate native
+interface in version0.1.2. These procedures reproduce that implementation; they
+do not install an accepted replacement. Read the [current product contract](PRODUCT_CONTRACT.md)
+and [implementation status](IMPLEMENTATION_STATUS.md) first. Preserve personal
+notes and recovery data; run acceptance procedures only in disposable profiles.
+
 Build with Node from `.nvmrc`, Rust stable and the native development packages listed in [NATIVE_SECURITY.md](NATIVE_SECURITY.md). No test feature is included:
 
 ```sh
 npm ci
 npm run native:package
-node scripts/verify-linux-package.mjs 'src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb'
-sudo apt install './src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb'
+node scripts/verify-linux-package.mjs 'src-tauri/target/release/bundle/deb/Programmable Notes_0.1.2_amd64.deb'
+sudo apt install './src-tauri/target/release/bundle/deb/Programmable Notes_0.1.2_amd64.deb'
 programmable-notes
 ```
 
@@ -55,7 +129,9 @@ Use the installed .deb in a disposable Ubuntu desktop profile with a working use
 NATIVE_DISPOSABLE_PROFILE=1 node scripts/native-acceptance.mjs
 ```
 
-The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is available as `playable-editor-demo` under Artifacts on successful PR workflow runs.
+The runner requires an empty recovery slot and a fresh fixture directory. It edits a CRLF MDX file through the desktop editor, checks undo and redo, verifies exact saved bytes, cancels a dirty close, and relaunches the application. It then checks explicit recovery, collision refusal, invalid UTF-8 rejection and deletion of its own draft. Run the separate native IPC suite to verify the preview cannot call the recovery command. The browser demo is generated only by an explicit workflow dispatch with
+`review_artifacts=true`; after that run succeeds, download `playable-editor-demo`
+from its Artifacts section. Ordinary PR runs do not produce this demo.
 
 ## Automatic recovery after process death
 
@@ -362,3 +438,108 @@ and per-case deadlines unchanged. Record controller exit status as well as JSON.
 completed acceptance, retained resource/latency failures and reproducible limits](security-evidence/2026-11-24-current-package/README.md).
 The [next hosted acceptance plan](plans/2026-11-24-native-hosted-acceptance.md)
 is a handoff, not an already-executed GitHub native GUI job.
+
+## Packaged shared-editor chooser observation
+
+The current hosted editor-only journey is `scripts/native-shared-editor.mjs`,
+launched by the closed standard-Ubuntu runner in `run-native-shared-editor.sh`.
+Use the manual CI input native_shared_run with the successful required CI run ID
+at the same repository/branch head. It verifies the production package before
+installation and runs under a fresh ordinary account. This is not renderer
+security acceptance, and native arbitrary React remains disabled.
+
+The journey captures screenshot-startup.png once after actual shared-workspace
+readiness and before vault authorization. The native-shared-editor-witness
+artifact retains it even if a later chooser step fails. Capturing an image is not
+visual inspection or proof of editing, saving or recovery.
+
+For a folder chooser the external driver types an explicit trailing directory
+separator and requires that exact field echo. GTK3 folder inline completion
+appends directory separators; the unchanged file-chooser mode keeps its original
+input bytes. PID/title/focus checks, actual Return/Open acknowledgement,1ms key
+delay and30s deadline remain intact. This is a supported directory spelling, not
+proof that a previous echo failure had that exact cause. No prefix acceptance or
+native filesystem grant shortcut is permitted.
+
+If echo still differs, the driver emits only a closed shape category from its
+existing final read. The reporter projects it only for a validated failed chooser
+journey and one unambiguous known marker. Do not publish paths, values, raw logs or
+signed artifact URLs. Retain each failed run and distinguish a helper signature
+from an application or namespace diagnosis.
+
+The pinned rfd GTK backend passes null accept labels. GTK3.24.41 therefore uses
+Open for folder selection, and Save only for its save action. The helper now uses
+that exact default label rather than Select; it does not try alternative buttons.
+This independently verified SDK mismatch was after the previous failed echo
+stage, so it is not claimed as the cause of that earlier failure.
+
+The next diagnostic records one closed acceptance state only when exact chooser
+dismissal fails: not_attempted, not_found, action_error, action_rejected or
+action_acknowledged. It reuses existing lookup/action results and adds no click or time. An action acknowledgement still does not prove selection or
+closure. The observer publishes only one validated bare marker for the matching
+failed journey; missing, duplicate or malformed markers stay unknown. This is a
+measurement, not a fix for installed run46072986581's dismissal failure.
+
+Button lookup now traverses only the unique exact-title top-level child of the
+owned PID, matching the already-used location-entry topology. Previously it
+searched every same-PID window, which could act on a different window or spend
+the observation budget traversing WebKit. Duplicate matching roots fail before
+any action; there is no global fallback. This is a proven selector narrowing,
+not proof that it caused or fixes the observed native dismissal failure.
+
+When the acceptance state is not_found, a second closed lookup marker now
+separates an unobserved owned-title root, an unobserved matching button, an
+unreadable matching button state, or the last matching candidate's four native
+flags (visible/showing/enabled/sensitive, in that order). It reuses the same
+StateSet and traversal. It does not prove complete-tree absence or explain a GTK
+cause. The reporter validates the complete paired marker frame and withholds
+lookup values outside a failed not-found context; impossible all-eligible or
+not-attempted combinations remain unknown. No raw names, paths or exceptions are
+published, and no state predicate or action is bypassed.
+
+The native vault picker candidate now supplies the trusted platform Home as its
+initial directory, so a fresh profile has a concrete folder view. This does not
+select or activate a vault: acceptance and selected-path validation remain
+mandatory, and cancellation preserves the previous scope. No fallback path is
+accepted if Home resolution fails. The change is awaiting current-package SDK and
+GUI validation; the earlier disabled-button observation remains a failed test.
+
+## Local admission fixtures and installed editor witness
+
+Run admission-tooling fixtures and the final local check with `umask 077`.
+The native admission tests intentionally reject nonprivate source/dependency
+fixtures; inherited group-writable creation is a refused fixture, not permission
+to weaken admission. Preserve incompatible-run failures. Use the prepared pinned
+Node/npm, matching Playwright browser and scanner-enabled tooling. One runner
+owns build output and browser ports at a time.
+
+`scripts/run-native-shared-editor-local.sh` is a separate Ubuntu26.04 editor-only
+launcher for the retained restricted account `pn-local-20261128`. It checks
+account/home isolation, payload ownership/read-only access, fixed payload paths,
+exact installed ELF/Node/driver hashes, and process start identities. Its desktop
+runs under that account with a clean environment; evidence collection drops
+privileges. Existing accounts and recovery data are not cleared. Administrative
+execution uses the already authorized system authentication flow.
+
+The synthetic original is explicitly chmodded to0640 and asserted before launch:
+`writeFile(mode: 0640)` alone becomes0600 under private umask077. The unchanged
+post-save assertion still requires0640. The successful retained local receipts
+at `/tmp/pn-local-collected-ubmdql/` prove only the listed installed editing and
+restart checkpoints, not recovery, hostile runtime containment or React.
+
+The two persistent-profile composition/recovery witnesses deliberately crash
+renderers. The `chromium-crash-recovery` project now waits for every enabled
+ordinary browser project, then runs these faults with one worker. Keeping only
+the two cases in a sequential group did not prevent stalls during unrelated
+browser work; both full-run failures and the unsuccessful task-local corelimit0
+probe remain retained. Exact focused isolated journeys passed, motivating full
+browser-job ownership for deliberate faults. The kernel/browser cause remains
+unproven. All159 original Chromium test titles and assertions remain covered:
+157 ordinary cases plus2 dependent crash/restart/recovery cases. No timeout or
+retry is changed. Never change system crash or storage policy for this witness.
+
+The default `npm run check` includes the ordinary and crash-recovery projects.
+Selecting `--project chromium` alone now intentionally selects only the157
+ordinary cases; it cannot support a complete browser-gate claim. Run the default
+suite for all159. The Chromium-only crash cases were previously skipped in the
+optional Firefox/WebKit projects; moving them removes no executable coverage.

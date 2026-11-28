@@ -1,0 +1,209 @@
+{
+  "result": {
+    "react_pointer": "PASS_FIXED_MDX_REACT_POINTER_ONLY",
+    "normal_keyboard": "OPEN_NOT_TESTED",
+    "stop": "NOT_PROVEN: [Errno 3] No such process",
+    "host_input": "NOT_RUN",
+    "forced_focus": "FORBIDDEN_NOT_USED",
+    "unit": "programmable-notes-preview-554-1795729201710542660.service",
+    "host_pid": 554,
+    "main_pid": 565,
+    "socket_xid": 4194315,
+    "host_xid": 4194307,
+    "unit_start_monotonic": 81.27433,
+    "policy": {
+      "cpu.max": "25000 100000",
+      "memory.max": "536870912",
+      "memory.swap.max": "0",
+      "pids.max": "128"
+    },
+    "case_deadlines": {
+      "ready_age_seconds": 44,
+      "input_age_seconds": 49,
+      "stop_start_before_age_seconds": 50,
+      "stop_cleanup_seconds": 5
+    },
+    "native_bridge": "PASS",
+    "child_xid": 10485763,
+    "last_react_state": {
+      "ready": true,
+      "count": 2,
+      "field": "",
+      "focus": "counter",
+      "error": ""
+    },
+    "x_errors": []
+  },
+  "events": [
+    {
+      "kind": "unit_verified",
+      "monotonic": 81.790030705,
+      "react_pointer": "NOT_RUN",
+      "normal_keyboard": "OPEN_NOT_TESTED",
+      "stop": "NOT_RUN",
+      "host_input": "NOT_RUN",
+      "forced_focus": "FORBIDDEN_NOT_USED",
+      "unit": "programmable-notes-preview-554-1795729201710542660.service",
+      "host_pid": 554,
+      "main_pid": 565,
+      "socket_xid": 4194315,
+      "host_xid": 4194307,
+      "unit_start_monotonic": 81.27433,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      }
+    },
+    {
+      "kind": "native_bridge_sentinel",
+      "monotonic": 84.465150355,
+      "child_xid": 10485763
+    },
+    {
+      "kind": "script_ready",
+      "monotonic": 120.667982095,
+      "child_xid": 10485763,
+      "state": {
+        "ready": true,
+        "count": 0,
+        "field": "",
+        "focus": "",
+        "error": ""
+      },
+      "geometry": {
+        "x": 0,
+        "y": 0,
+        "width": 300,
+        "height": 120,
+        "border": 0,
+        "depth": 24
+      },
+      "unit_age": 39.393610734999996
+    },
+    {
+      "kind": "mounted_react_count_zero",
+      "monotonic": 120.939379035,
+      "state": {
+        "ready": true,
+        "count": 0,
+        "field": "",
+        "focus": "",
+        "error": ""
+      },
+      "unit_age": 39.66501013499999
+    },
+    {
+      "kind": "real_pointer_input_begin",
+      "monotonic": 120.940701375,
+      "child_xid": 10485763,
+      "unit_age": 39.666354195
+    },
+    {
+      "kind": "state",
+      "monotonic": 121.224561755,
+      "child_xid": 10485763,
+      "state": {
+        "ready": true,
+        "count": 0,
+        "field": "",
+        "focus": "",
+        "error": ""
+      },
+      "unit_age": 39.950210485
+    },
+    {
+      "kind": "state",
+      "monotonic": 122.479526565,
+      "child_xid": 10485763,
+      "state": {
+        "ready": true,
+        "count": 1,
+        "field": "",
+        "focus": "counter",
+        "error": ""
+      },
+      "unit_age": 41.205175325
+    },
+    {
+      "kind": "state",
+      "monotonic": 122.999008865,
+      "child_xid": 10485763,
+      "state": {
+        "ready": true,
+        "count": 2,
+        "field": "",
+        "focus": "counter",
+        "error": ""
+      },
+      "unit_age": 41.72466220499999
+    },
+    {
+      "kind": "react_count_two_acknowledged",
+      "monotonic": 123.000811455,
+      "state": {
+        "ready": true,
+        "count": 2,
+        "field": "",
+        "focus": "counter",
+        "error": ""
+      },
+      "unit_age": 41.726432884999994
+    },
+    {
+      "kind": "verified_live_before_stop",
+      "monotonic": 123.333981415,
+      "unit": "programmable-notes-preview-554-1795729201710542660.service",
+      "main_pid": 565,
+      "start_identity": "8069",
+      "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-554-1795729201710542660.service",
+      "unit_age": 42.04210481499999,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "identities": [
+        [
+          "565",
+          "8069"
+        ],
+        [
+          "583",
+          "8528"
+        ],
+        [
+          "591",
+          "9026"
+        ],
+        [
+          "595",
+          "9107"
+        ],
+        [
+          "597",
+          "9217"
+        ],
+        [
+          "600",
+          "9317"
+        ],
+        [
+          "601",
+          "9356"
+        ],
+        [
+          "602",
+          "9486"
+        ]
+      ]
+    },
+    {
+      "kind": "stop_not_proven",
+      "monotonic": 123.679742345,
+      "error": "[Errno 3] No such process"
+    }
+  ]
+}

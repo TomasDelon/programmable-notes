@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "failure": "none",
+  "diagnosticBinarySha256": "59ca91ca7ecffe7d2725c8bb8916ca30f9b436d39565ce89ec73bb508e857136",
+  "editorCommands": 4,
+  "previewDenials": 4,
+  "sessionsClosed": 2,
+  "retainedEntries": 36,
+  "retainedPreserved": true,
+  "scope": "Test-feature empty-shell registered editor/preview IPC; no authored code, process isolation or production runtime acceptance"
+}

@@ -1,0 +1,167 @@
+{
+  "classification": "NORMAL_FOCUS_AND_KEYBOARD_NOT_RUN_STARTUP_WINDOW; TARGETED_STOP_OBSERVED",
+  "repository_head_at_start": "485de384e44fd797eca6c6e5848d6338fe1085a3",
+  "repository_head_at_observation": "32b1cd4b4f6cef011272a2cc4fc1e12b33cc06f9",
+  "source_sha256": {
+    "repro/Cargo.lock": "d58ed3cf445cfb00cf31e5a4d7f9bb9b5c1b86fbf8023677af4a1eb7eabd0b1a",
+    "repro/Cargo.toml": "2b9225c00eb436e978de2f7f69419295f41c780478f4101a293233bc43b6e7c9",
+    "repro/inspect.py": "7f35d08f3105563798f09f283b2a224cc4ab3bae49fb0fdfab675dba892d501b",
+    "repro/main.rs": "d7ed81be9a01b70913d934cc4e9ef670ed8e23b6b4362d4e3e926ef0fa9c1579",
+    "repro/observer.py": "6825e5295f4e5fb80e9afea930d8b3cda14692d48344277c524dfea70615b0e2",
+    "raw/fixture.html": "5a4b83959ce7aa0deff4237ae45839138d44d3a3f8fc7b000150f86779fae77a"
+  },
+  "artifact_sha256": "357a46fc9491c7619bd17b47743c163c64552e0cd71b013ff6c33a93333da81f",
+  "artifact_note": "Same Rust/HTML artifact as previous property variant; new staged observer and fresh environment. Do not transfer prior interaction evidence to this case.",
+  "case": {
+    "result": {
+      "normal_input": "NOT_RUN_STARTUP_EXCEEDED_DECLARED44S_WINDOW",
+      "stop": "TARGETED_BOUNDED_OBSERVATION_PASS_NOT_FULL_SECURITY_MATRIX",
+      "host_input": "PASS",
+      "forced_focus": "FORBIDDEN_NOT_USED",
+      "unit": "programmable-notes-preview-553-1795720832028740830.service",
+      "host_pid": 553,
+      "main_pid": 564,
+      "socket_xid": 4194315,
+      "host_xid": 4194307,
+      "unit_start_monotonic": 113.1527,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "case_deadlines": {
+        "ready_age_seconds": 44,
+        "input_age_seconds": 49,
+        "stop_start_before_age_seconds": 50,
+        "stop_cleanup_seconds": 5
+      },
+      "native_bridge": "PASS",
+      "x_errors": []
+    },
+    "events": [
+      {
+        "kind": "unit_verified",
+        "monotonic": 113.675329482,
+        "normal_input": "NOT_RUN",
+        "stop": "NOT_RUN",
+        "host_input": "NOT_RUN",
+        "forced_focus": "FORBIDDEN_NOT_USED",
+        "unit": "programmable-notes-preview-553-1795720832028740830.service",
+        "host_pid": 553,
+        "main_pid": 564,
+        "socket_xid": 4194315,
+        "host_xid": 4194307,
+        "unit_start_monotonic": 113.1527,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        }
+      },
+      {
+        "kind": "native_bridge_sentinel",
+        "monotonic": 118.596807852,
+        "child_xid": 10485763
+      },
+      {
+        "kind": "verified_live_before_stop",
+        "monotonic": 157.399246562,
+        "unit": "programmable-notes-preview-553-1795720832028740830.service",
+        "main_pid": 564,
+        "start_identity": "11241",
+        "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-553-1795720832028740830.service",
+        "unit_age": 44.22792065200001,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        },
+        "identities": [
+          ["564", "11241"],
+          ["581", "12083"],
+          ["592", "13354"],
+          ["594", "13454"],
+          ["595", "13535"],
+          ["598", "13695"],
+          ["599", "13764"],
+          ["600", "13984"]
+        ]
+      },
+      {
+        "kind": "bounded_stop_observed",
+        "monotonic": 158.230790012,
+        "elapsed": 0.8285350699999867,
+        "unit_age": 45.078049441999994,
+        "identities": [
+          ["564", "11241"],
+          ["581", "12083"],
+          ["592", "13354"],
+          ["594", "13454"],
+          ["595", "13535"],
+          ["598", "13695"],
+          ["599", "13764"],
+          ["600", "13984"]
+        ],
+        "host_stop_receipt": true
+      },
+      {
+        "kind": "host_input_after_stop",
+        "monotonic": 158.578618782,
+        "text": "hostok"
+      }
+    ]
+  },
+  "journal": [
+    {
+      "__REALTIME_TIMESTAMP": "1795720877871488",
+      "MESSAGE": "Stopping programmable-notes-preview-553-1795720832028740830.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-normal-focus-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child...",
+      "MESSAGE_ID": "de5b426a63be47a7b6ac3eaac82e2f6f",
+      "USER_UNIT": "programmable-notes-preview-553-1795720832028740830.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1795720878268762",
+      "MESSAGE": "Stopped programmable-notes-preview-553-1795720832028740830.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-normal-focus-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child.",
+      "MESSAGE_ID": "9d1aaa27d60140bd96365438aad20286",
+      "USER_UNIT": "programmable-notes-preview-553-1795720832028740830.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1795720878273680",
+      "MESSAGE": "programmable-notes-preview-553-1795720832028740830.service: Consumed 11.427s CPU time, 86.8M memory peak, 0B memory swap peak.",
+      "MESSAGE_ID": "ae8f7b866b0347b9af31fe1c80b127c0",
+      "USER_UNIT": "programmable-notes-preview-553-1795720832028740830.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    }
+  ],
+  "setup": {
+    "initial_auth_preflight": "REFUSED before any runtime payload: newly created auth directory0777 under inherited container umask000; public key matched.",
+    "correction": "Task-owned guest clean powerdown; explicit umask022 and0700 auth/0755 trusted directories/0644 configs audited; fresh rootfs rebuilt and booted before the single native case. No policy relaxation.",
+    "readiness": "6.8.0-149-generic\nqemu\nTARGET               SOURCE     FSTYPE     OPTIONS\n/sys/kernel/security securityfs securityfs rw,nosuid,nodev,noexec,relatime\nrunning",
+    "permission_audit": "All task-created trusted setup directories/files have explicit non-world-writable modes.",
+    "namespace_sysctls": "kernel.unprivileged_userns_clone = 1\nkernel.apparmor_restrict_unprivileged_userns = 1"
+  },
+  "late_sampler": "NOT_RUN: exact collected/empty cgroup rejected before reading any process; no independent at-Stop CPU/process-state snapshot.",
+  "post_stop": {
+    "scope": "Collected after the case, not contemporaneous with readiness/Stop; cannot establish startup cause.",
+    "guest_time": "Thu Nov 26 19:22:49 UTC 2026",
+    "guest_pressure_and_load": "some avg10=0.00 avg60=8.56 avg300=10.45 total=52890210\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\nsome avg10=0.00 avg60=0.00 avg300=0.00 total=13\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=13\n0.26 0.74 0.38 1/137 654",
+    "guest_matching_pid_query": "PID    PPID S COMMAND",
+    "host_time": "Thu Nov 26 19:22:52 UTC 2026",
+    "host_load": "1.04 4.21 3.64 4/5552 1938140",
+    "host_psi": "UNAVAILABLE: /proc/pressure/cpu and memory absent"
+  },
+  "browser_availability_controls": "Matching Firefox launch and explicit-profile launch both failed Could not find profile folder with content sandbox level6. No sandbox-disabled fallback; no fixture browser execution.",
+  "react": "NOT_RUN: conditional normal HTML focus/keyboard prerequisite not observed. Fixed source preparation was not compilation/runtime evidence.",
+  "full_security_matrix": "NOT_RUN; no CPU loop/memory workloads/native app commands/ACL or filesystem acceptance.",
+  "cleanup": "Fresh guest powered down; task-owned runtime container/heavies/ephemeral keys removed after retention. Existing approved clean tooling image and original infrastructure unchanged."
+}

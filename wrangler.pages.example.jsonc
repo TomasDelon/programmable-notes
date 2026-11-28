@@ -1,0 +1,22 @@
+// Copy outside the tracked tree and replace deployment-specific values.
+// The template is intentionally not an active Wrangler configuration.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "programmable-notes",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-11-01",
+  "d1_databases": [
+    {
+      "binding": "NOTES_DB",
+      "database_name": "programmable-notes-private",
+      "database_id": "REPLACE_WITH_FREE_DATABASE_ID",
+      "migrations_dir": "backend/migrations",
+    },
+  ],
+  "vars": {
+    "APP_ORIGIN": "https://notes.example.com",
+    "ACCESS_ISSUER": "https://REPLACE.cloudflareaccess.com",
+    "ACCESS_AUD": "REPLACE_WITH_ACCESS_APPLICATION_AUDIENCE",
+    "OWNER_SUBJECT": "REPLACE_WITH_VERIFIED_OWNER_SUBJECT",
+  },
+}

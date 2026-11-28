@@ -126,7 +126,9 @@ test('ordinary Markdown keeps expressions and import statements as source text',
   await expect(rendered).toContainText('A set {x: x > 0}.');
   await expect(rendered).toContainText('import Secret from');
   await expect(rendered.locator('script')).toHaveCount(0);
-  await expect(page.locator('.web-preview-error')).toHaveCount(0);
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Preview needs attention' }),
+  ).toHaveCount(0);
 });
 
 test('MDX imports local TSX and mode switches preserve interactive React state', async ({
@@ -190,10 +192,9 @@ test('compile errors and runtime failures retain editable source and recover aft
   const editor = page.getByRole('textbox', { name: 'MDX source' });
   await editor.fill('# Broken\n\n<Unclosed');
   await setMode(page, 'preview');
-  await expect(page.locator('.web-preview-error')).toContainText(
-    'Preview needs attention',
-    { timeout: 20000 },
-  );
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Preview needs attention' }),
+  ).toContainText('Preview needs attention', { timeout: 20000 });
   await setMode(page, 'source');
   await expect(editor).toContainText('<Unclosed');
   await editor.fill(
@@ -201,7 +202,10 @@ test('compile errors and runtime failures retain editable source and recover aft
   );
   await setMode(page, 'preview');
   await expect(
-    page.getByRole('alert').filter({ hasText: 'Fixture runtime failure' }),
+    page
+      .getByRole('alert')
+      .filter({ hasText: 'Preview needs attention' })
+      .first(),
   ).toBeVisible({ timeout: 20000 });
   await setMode(page, 'source');
   await editor.fill('# Recovered\n\nMy source survived both failures.');
@@ -211,7 +215,9 @@ test('compile errors and runtime failures retain editable source and recover aft
       .locator('.rendered-editor')
       .getByRole('heading', { name: 'Recovered' }),
   ).toBeVisible({ timeout: 20000 });
-  await expect(page.locator('.web-preview-error')).toHaveCount(0);
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Preview needs attention' }),
+  ).toHaveCount(0);
 });
 
 test('web sandbox denies parent storage and network, and ignores forged authority and size messages', async ({

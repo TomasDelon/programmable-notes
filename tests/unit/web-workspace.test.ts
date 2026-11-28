@@ -101,6 +101,47 @@ describe('web workspace identity and source fidelity', () => {
     expect(state.workspace.selected).toBe(key);
     expect(state.workspace.files[key]).toBe(source);
   });
+
+  it.each(['selected module', 'preview entry', 'unrelated document'] as const)(
+    'keeps the selected document and compiler group consistent when trashing the %s',
+    (target) => {
+      const initial = createWebState(1);
+      const fallback = initial.workspace.selected;
+      const imported = importSources(initial, [
+        {
+          logicalPath: 'Readings.mdx',
+          source: '\uFEFF# Readings\r\n\n<Widget />\n',
+        },
+        { logicalPath: 'helper.ts', source: 'export const unit = "µ";\r\n' },
+      ]);
+      const note = imported.workspace.selected;
+      const module = `${imported.workspace.groups[note]}/helper.ts`;
+      const active = selectDocument(imported, module);
+      const cases = {
+        'selected module': {
+          trash: module,
+          selected: fallback,
+          entry: fallback,
+        },
+        'preview entry': { trash: note, selected: module, entry: fallback },
+        'unrelated document': {
+          trash: fallback,
+          selected: module,
+          entry: note,
+        },
+      };
+      const { trash, selected, entry } = cases[target];
+      const next = trashDocument(active, trash, 100);
+      expect(next.workspace.selected).toBe(selected);
+      expect(next.workspace.entry).toBe(entry);
+      expect(compilerFiles(next.workspace)).toHaveProperty(
+        [entry],
+        active.workspace.files[entry],
+      );
+      expect(next.workspace.files).toEqual(active.workspace.files);
+      expect(next.documents[trash]!.trashedAt).toBe(100);
+    },
+  );
 });
 
 describe('untrusted backup and import validation', () => {

@@ -42,6 +42,11 @@ test('consumed Pages metadata changes offline version without entering cache req
     const headers = join(directory, 'dist/_headers');
     await writeFile(headers, '/*\n  Referrer-Policy: no-referrer\n');
     await writeFile(join(directory, 'dist/_redirects'), '/old /new 302\n');
+    const routes = join(directory, 'dist/_routes.json');
+    await writeFile(
+      routes,
+      JSON.stringify({ version: 1, include: ['/api/*'] }),
+    );
     const first = await generate(directory);
     assert.deepEqual(first.assets, ['/assets/app.js', '/index.html']);
     await writeFile(headers, '/*\n  Referrer-Policy: same-origin\n');
@@ -52,6 +57,13 @@ test('consumed Pages metadata changes offline version without entering cache req
       'Header-only updates must replace cached response policies',
     );
     assert.deepEqual(second.assets, first.assets);
+    await writeFile(
+      routes,
+      JSON.stringify({ version: 1, include: ['/api/storage/*'] }),
+    );
+    const third = await generate(directory);
+    assert.notEqual(third.cache, second.cache);
+    assert.deepEqual(third.assets, first.assets);
   });
 });
 test('ordinary builds still cache all application assets without Pages metadata', async () => {

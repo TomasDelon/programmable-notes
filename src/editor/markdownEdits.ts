@@ -12,12 +12,18 @@ export interface MarkdownRange {
 }
 
 const plain = /^[\P{Cc}\t\r\n]+$/u;
-// Conservative synchronous-work budget for the measured dense quote/link classes.
+// Conservative synchronous-work budget for measured dense quote/link and long whitespace classes.
 // This is not a universal parser deadline; complex documents remain Source-editable.
 export function visualAnalysisLimited(source: string): boolean {
   if (source.length > 500_000) return true;
   let markers = 0;
+  let horizontalRun = 0;
   for (const character of source) {
+    // The upstream Markdown parser also retries long internal whitespace runs.
+    // Keep these raw documents Source-editable without synchronously parsing them.
+    horizontalRun =
+      character === ' ' || character === '\t' ? horizontalRun + 1 : 0;
+    if (horizontalRun > 8192) return true;
     if (
       (character === '>' || character === '[' || character === ']') &&
       ++markers > 4096

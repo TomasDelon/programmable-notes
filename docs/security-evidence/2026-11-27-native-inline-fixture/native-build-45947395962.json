@@ -1,0 +1,22 @@
+{
+  "evidence_source": "GitHub job/step metadata and locked-crate source review; compiler stderr was not retrieved",
+  "run_id": 45947395962,
+  "job_id": 140335130312,
+  "source_commit": "cac83997bb59883909baa918d1b4fa08e0c266cf",
+  "scope": "fixed-native-diagnostic-build-only",
+  "status": "blocked",
+  "stage": "host_compilation",
+  "exit_code": 101,
+  "guest_allocated": false,
+  "native_payload_executed": false,
+  "native_app_tested": false,
+  "source_review": {
+    "finding": "The host imports WebViewExt from webkit2gtk::prelude, but locked webkit2gtk2.0.2 has no such module and exports the trait at crate root.",
+    "independent_reviews": 2
+  },
+  "limitations": [
+    "Exit101 alone does not establish the complete compiler diagnostic; direct log retrieval was unavailable.",
+    "No guest/runtime observation was executed, and earlier startup failures remain unchanged.",
+    "The import-only correction requires actual GTK compilation before another guest."
+  ]
+}

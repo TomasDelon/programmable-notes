@@ -1,0 +1,32 @@
+{
+  "scope": "Optional trusted editor receipt protocol, production callers unchanged",
+  "source_sha256": {
+    "src/editor/SourceEditor.tsx": "22ba3ffc0a1ceba4c18ff4895ca0bcf6dfdee0e42ba9bfd7b4bcf596ce17d796",
+    "src/editor/rendered/RenderedEditor.tsx": "5ec84f553b2066b619113821b93d1dc57003134fbb47436a0713faad4247b803",
+    "src/editor/sourceWitness.ts": "42b3ad459d95acd9af3f609bc2b35091bc9ee68b16b2c845cc8dbe44198a6d1a",
+    "tests/unit/source-witness.test.tsx": "347b24692215e85f920f99fa436b21c410d2bd9a32cc2eff40a53d5eef824a59",
+    "tests/e2e/source-witness.spec.ts": "713b06b6cdcacdae4042e45910b4b12d9fe880b3c5846645181b7674f93adc6e",
+    "tests/fixtures/source-witness.tsx": "d903329d42f324eed539499badeec9868822c984abfd99e60da38a9ae8d90e0c"
+  },
+  "targeted": {
+    "witnessUnitPassed": 23,
+    "affectedUnitPassed": 161,
+    "pinnedChromiumFixturePassed": 2,
+    "independentWitnessReviewPassed": 23
+  },
+  "fullCheck": {
+    "exitCode": 0,
+    "unitPassed": 726,
+    "toolingPassed": 96,
+    "toolingSkipped": 0,
+    "chromiumPassed": 152,
+    "pagesPassed": 9,
+    "inactiveCloudPassed": 4,
+    "scope": "Joint source-receipt and application-controller candidate; not native GUI or active product acceptance"
+  },
+  "notExecuted": [
+    "installed shared application autosave",
+    "native GUI interaction with this optional protocol",
+    "native inline React/security matrix"
+  ]
+}

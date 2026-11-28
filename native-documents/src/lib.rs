@@ -38,6 +38,9 @@ pub const MAX_TOTAL_BYTES: usize = 8 * 1024 * 1024;
 pub enum Error {
     Rejected(&'static str),
     Io(std::io::Error),
+    /// A filesystem publication was attempted; failure does not establish non-publication.
+    /// Reconcile the target before retrying, even though no mutation was acknowledged.
+    PublicationUncertain(std::io::Error),
     UnknownGrant,
     StaleRevision,
     Conflict,
@@ -47,6 +50,10 @@ impl fmt::Display for Error {
         match self {
             Self::Rejected(message) => write!(f, "{message}"),
             Self::Io(e) => write!(f, "File operation failed: {e}"),
+            Self::PublicationUncertain(_) => write!(
+                f,
+                "File publication outcome is uncertain; reconcile before retrying"
+            ),
             Self::UnknownGrant => write!(f, "Unknown document authorization"),
             Self::StaleRevision => write!(f, "Stale document revision; reopen before saving"),
             Self::Conflict => write!(
@@ -80,18 +87,43 @@ pub struct Saved {
     pub durable: bool,
 }
 
+/// Observed metadata only: neither a source snapshot nor a document write grant.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InventoryEntry {
+    pub logical_path: String,
+    pub bytes: u64,
+}
+
+/// Acknowledged directory publication, not a child capability or current-path snapshot.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreatedDirectory {
+    pub logical_path: String,
+    pub durability_warning: bool,
+}
+
 #[cfg(target_os = "linux")]
 pub mod draft;
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
+mod vault;
+#[cfg(target_os = "linux")]
 use linux::AuthorizedFile;
 use std::collections::HashMap;
+#[cfg(target_os = "linux")]
+pub use vault::Vault;
 fn random_id() -> Result<String, Error> {
     let mut bytes = [0u8; 16];
     getrandom::fill(&mut bytes)
         .map_err(|_| Error::Rejected("Secure authorization entropy unavailable"))?;
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
+}
+/// Mint an opaque native vault-session token; this alone conveys no filesystem authority.
+/// The trusted host must bind it to an OS-authorized Vault and enforce caller authorization.
+pub fn new_vault_session_token() -> Result<String, Error> {
+    random_id()
 }
 #[cfg(target_os = "linux")]
 struct Grant {
@@ -99,6 +131,8 @@ struct Grant {
     revision: String,
     size: usize,
     logical_path: String,
+    observations: Vec<ObservedRevision>,
+    watch: Option<(String, SourceWatch)>,
 }
 #[cfg(target_os = "linux")]
 pub struct PendingSave {
@@ -156,6 +190,42 @@ impl Store {
                 common = common.and_then(|p| p.parent().map(Path::to_path_buf));
             }
         }
+        self.publish(prepared, common.as_deref().unwrap_or(Path::new("/")))
+    }
+    /// Only native-dialog-selected roots may reach this method; never expose a path IPC.
+    pub fn open_folder(&mut self, root: &Path) -> Result<Vec<Document>, Error> {
+        let selected = vault::collect(root)?;
+        self.capacity(
+            selected.len(),
+            selected.iter().map(|(_, source)| source.len()).sum(),
+            0,
+        )?;
+        let prepared = selected
+            .into_iter()
+            .map(|(file, source)| Ok((random_id()?, random_id()?, file, source)))
+            .collect::<Result<Vec<_>, Error>>()?;
+        self.publish(prepared, root)
+    }
+    /// Trusted-host relative selection from an existing vault capability; never a path IPC.
+    /// Validate the entire batch before I/O and publish all grants only after every read succeeds.
+    pub fn open_vault(&mut self, vault: &Vault, paths: &[String]) -> Result<Vec<Document>, Error> {
+        vault::validate_source_paths(paths)?;
+        self.capacity(paths.len(), 0, 0)?;
+        let mut prepared = Vec::new();
+        let mut bytes = 0;
+        for path in paths {
+            let (file, source) = vault.select_source(path)?;
+            bytes += source.len();
+            self.capacity(paths.len(), bytes, 0)?;
+            prepared.push((random_id()?, random_id()?, file, source));
+        }
+        self.publish(prepared, vault.display_root())
+    }
+    fn publish(
+        &mut self,
+        prepared: Vec<(String, String, AuthorizedFile, String)>,
+        root: &Path,
+    ) -> Result<Vec<Document>, Error> {
         let mut documents = Vec::new();
         let mut grants = Vec::new();
         for (id, revision, file, source) in prepared {
@@ -167,7 +237,7 @@ impl Store {
                 .into_owned();
             let logical_path = file
                 .path
-                .strip_prefix(common.as_deref().unwrap_or(Path::new("/")))
+                .strip_prefix(root)
                 .unwrap()
                 .to_str()
                 .ok_or(Error::Rejected("Selected file names must be UTF-8"))?
@@ -188,6 +258,8 @@ impl Store {
                     logical_path: d.logical_path.clone(),
                     file,
                     revision,
+                    observations: Vec::new(),
+                    watch: None,
                 },
             ));
             documents.push(d);
@@ -200,13 +272,26 @@ impl Store {
             return Err(Error::Rejected("File exceeds 500 KB limit"));
         }
         let old = self.grants.get(id).ok_or(Error::UnknownGrant)?;
-        if old.revision != revision {
-            return Err(Error::StaleRevision);
-        }
+        let observed = if old.revision == revision {
+            None
+        } else {
+            Some(
+                old.observations
+                    .iter()
+                    .find(|entry| entry.revision == revision)
+                    .ok_or(Error::StaleRevision)?
+                    .snapshot
+                    .clone(),
+            )
+        };
         self.capacity(0, source.len(), old.size)?;
         let next = random_id()?;
         let grant = self.grants.get_mut(id).unwrap();
-        let durable = grant.file.write(source)?;
+        let durable = match observed {
+            Some(snapshot) => grant.file.write_observed(source, &snapshot)?,
+            None => grant.file.write(source)?,
+        };
+        grant.observations.clear();
         grant.size = source.len();
         grant.revision = next.clone();
         Ok(Saved {
@@ -221,8 +306,33 @@ impl Store {
     }
     pub fn commit_save_as(
         &mut self,
-        mut pending: PendingSave,
+        pending: PendingSave,
         source: &str,
+    ) -> Result<Document, Error> {
+        self.commit_authorized(pending.file, source, None)
+    }
+
+    /// Create only: an existing/racing destination is never replaced or read.
+    pub fn create_vault(
+        &mut self,
+        vault: &Vault,
+        path: &str,
+        source: &str,
+    ) -> Result<Document, Error> {
+        vault::validate_source_path(path)?;
+        if source.len() > MAX_SOURCE_BYTES {
+            return Err(Error::Rejected("File exceeds 500 KB limit"));
+        }
+        self.capacity(1, source.len(), 0)?;
+        let file = vault.prepare_create(path)?;
+        self.commit_authorized(file, source, Some(path))
+    }
+
+    fn commit_authorized(
+        &mut self,
+        mut file: AuthorizedFile,
+        source: &str,
+        logical_path: Option<&str>,
     ) -> Result<Document, Error> {
         if source.len() > MAX_SOURCE_BYTES {
             return Err(Error::Rejected("File exceeds 500 KB limit"));
@@ -230,20 +340,19 @@ impl Store {
         self.capacity(1, source.len(), 0)?;
         let id = random_id()?;
         let revision = random_id()?;
-        let name = pending
-            .file
+        let name = file
             .path
             .file_name()
             .unwrap()
             .to_str()
             .ok_or(Error::Rejected("Selected file name must be UTF-8"))?
             .to_string();
-        let durable = pending.file.write(source)?;
+        let durable = file.write(source)?;
         let d = Document {
             id: id.clone(),
             revision: revision.clone(),
-            logical_path: name.clone(),
-            display_path: pending.file.path.to_string_lossy().into_owned(),
+            logical_path: logical_path.unwrap_or(&name).to_owned(),
+            display_path: file.path.to_string_lossy().into_owned(),
             name,
             source: source.into(),
             durability_warning: !durable,
@@ -251,10 +360,12 @@ impl Store {
         self.grants.insert(
             id,
             Grant {
-                file: pending.file,
+                file,
                 revision,
                 size: source.len(),
                 logical_path: d.logical_path.clone(),
+                observations: Vec::new(),
+                watch: None,
             },
         );
         Ok(d)
@@ -278,6 +389,7 @@ impl Store {
         let next = random_id()?;
         let grant = self.grants.get_mut(id).unwrap();
         grant.file.snapshot = Some(snapshot);
+        grant.observations.clear();
         grant.size = source.len();
         grant.revision = next.clone();
         Ok(Document {
@@ -323,3 +435,178 @@ impl Store {
 
 #[cfg(target_os = "linux")]
 pub mod snapshots;
+
+/// Checked, read-only current source. The baseline grant remains unchanged.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+pub enum Observation {
+    Unchanged {
+        revision: String,
+    },
+    Changed {
+        baseline_revision: String,
+        revision: String,
+        source: String,
+    },
+    Unavailable {
+        reason: ObservationIssue,
+    },
+}
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ObservationIssue {
+    Missing,
+    Permission,
+    Invalid,
+    Unstable,
+    Retired,
+    Unreadable,
+}
+impl Observation {
+    pub fn unavailable(error: &Error) -> Self {
+        let reason = match error {
+            Error::UnknownGrant | Error::StaleRevision => ObservationIssue::Retired,
+            Error::Conflict => ObservationIssue::Unstable,
+            Error::Rejected(_) => ObservationIssue::Invalid,
+            Error::Io(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                ObservationIssue::Missing
+            }
+            Error::Io(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+                ObservationIssue::Permission
+            }
+            _ => ObservationIssue::Unreadable,
+        };
+        Self::Unavailable { reason }
+    }
+}
+
+#[cfg(test)]
+mod observation_issue_tests {
+    use super::*;
+    #[test]
+    fn issue_codes_are_closed_and_never_serialize_native_error_contents() {
+        for (error, expected) in [
+            (Error::UnknownGrant, "retired"),
+            (Error::StaleRevision, "retired"),
+            (Error::Conflict, "unstable"),
+            (Error::Rejected("private-source-sentinel"), "invalid"),
+            (Error::Io(std::io::ErrorKind::NotFound.into()), "missing"),
+            (
+                Error::Io(std::io::ErrorKind::PermissionDenied.into()),
+                "permission",
+            ),
+            (
+                Error::Io(std::io::Error::other("private-source-sentinel")),
+                "unreadable",
+            ),
+        ] {
+            assert_eq!(
+                serde_json::to_value(Observation::unavailable(&error)).unwrap(),
+                serde_json::json!({"status":"unavailable", "reason":expected})
+            );
+        }
+    }
+}
+#[cfg(target_os = "linux")]
+impl Store {
+    pub fn observe(&mut self, id: &str, revision: &str) -> Result<Observation, Error> {
+        let grant = self.grants.get(id).ok_or(Error::UnknownGrant)?;
+        let expected = if grant.revision == revision {
+            grant.file.snapshot.as_ref().ok_or(Error::StaleRevision)?
+        } else {
+            &grant
+                .observations
+                .iter()
+                .find(|entry| entry.revision == revision)
+                .ok_or(Error::StaleRevision)?
+                .snapshot
+        };
+        let (snapshot, source) = grant.file.observe()?;
+        if expected.matches(&snapshot) {
+            return Ok(Observation::Unchanged {
+                revision: revision.into(),
+            });
+        }
+        let candidate = grant
+            .observations
+            .iter()
+            .find(|entry| entry.snapshot.matches(&snapshot))
+            .map(|entry| entry.revision.clone())
+            .map(Ok)
+            .unwrap_or_else(random_id)?;
+        let grant = self.grants.get_mut(id).unwrap();
+        // Keep only the requested observation baseline and newest candidate.
+        // Tokens contain metadata/digest, never another full retained source.
+        grant
+            .observations
+            .retain(|entry| entry.revision == revision && entry.revision != candidate);
+        grant.observations.push(ObservedRevision {
+            revision: candidate.clone(),
+            snapshot,
+        });
+        debug_assert!(grant.observations.len() <= 2);
+        Ok(Observation::Changed {
+            baseline_revision: revision.into(),
+            revision: candidate,
+            source,
+        })
+    }
+}
+
+#[cfg(target_os = "linux")]
+struct ObservedRevision {
+    revision: String,
+    snapshot: linux::Snapshot,
+}
+
+#[cfg(target_os = "linux")]
+mod watch;
+#[cfg(target_os = "linux")]
+use watch::SourceWatch;
+#[cfg(target_os = "linux")]
+impl Store {
+    pub fn watch(&mut self, id: &str, revision: &str) -> Result<String, Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        if grant.revision != revision
+            && !grant
+                .observations
+                .iter()
+                .any(|entry| entry.revision == revision)
+        {
+            return Err(Error::StaleRevision);
+        }
+        if let Some((token, _)) = &grant.watch {
+            return Ok(token.clone());
+        }
+        let watch = grant.file.watch()?;
+        let token = random_id()?;
+        grant.watch = Some((token.clone(), watch));
+        Ok(token)
+    }
+    /// Nonblocking and bounded: IPC polling never occupies the source store while waiting.
+    pub fn poll_watch(&mut self, id: &str, watch: &str) -> Result<bool, Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        let (_, entry) = grant
+            .watch
+            .as_mut()
+            .filter(|(token, _)| token == watch)
+            .ok_or(Error::Rejected("Unknown document observation"))?;
+        entry.poll_hint(0)
+    }
+    pub fn unwatch(&mut self, id: &str, watch: &str) -> Result<(), Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        if !grant
+            .watch
+            .as_ref()
+            .is_some_and(|(token, _)| token == watch)
+        {
+            return Err(Error::Rejected("Unknown document observation"));
+        }
+        grant.watch = None;
+        Ok(())
+    }
+}

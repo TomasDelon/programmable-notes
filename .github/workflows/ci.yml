@@ -1,4 +1,12 @@
 name: CI
+run-name: >-
+  CI · event=${{ github.event_name }} · ref=${{ github.ref }} ·
+  group=ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
+  (inputs.native_shared_run && format('native-shared-{0}', github.run_id) || (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+  inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
+  inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
+  'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
+  inputs.browser_qa && 'browser-qa') || 'build' }}
 
 on:
   push:
@@ -6,6 +14,30 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      native_shared_run:
+        description: Installed shared-editor witness using linux-amd64-testing from this successful required CI run ID at the same branch head. All other inputs must remain defaults.
+        type: string
+        default: ''
+      native_vm:
+        description: Disposable share-free Ubuntu VM OS admission only; leave all other inputs at defaults.
+        type: boolean
+        default: false
+      native_inline_react:
+        description: Fixed native React input/Stop/expiry diagnostic; requires native_vm and no other modes. Not application acceptance.
+        type: boolean
+        default: false
+      native_debian13:
+        description: Use the sealed Debian 13 guest; requires native_vm. Ubuntu remains the default.
+        type: boolean
+        default: false
+      native_preflight:
+        description: Check stock Linux native capabilities only. Leave all other inputs at their defaults.
+        type: boolean
+        default: false
+      kvm_role_probe:
+        description: Also query KVM under a temporary isolated account; requires native_preflight and never starts a VM.
+        type: boolean
+        default: false
       browser_qa:
         description: Run all browser tests in Chromium, Firefox and WebKit without a duplicate native build
         type: boolean
@@ -14,6 +46,24 @@ on:
         description: Capture browser walkthrough and upload testing artifacts
         type: boolean
         default: false
+      editing_qa:
+        description: Run repeatable Preview input diagnostics only; does not replace mandatory PR checks
+        type: boolean
+        default: false
+      editing_core_only:
+        description: Limit optional repeated diagnostics to core-plugin and source-selection cases
+        type: boolean
+        default: false
+      editing_scope:
+        description: Optional diagnostic scope; final acceptance still requires all
+        type: choice
+        default: all
+        options: [all, core, math, source, authoring, pages]
+      editing_browser:
+        description: Browser for the optional Preview input diagnostics
+        type: choice
+        default: all
+        options: [all, firefox, webkit, chromium]
       deployment_url:
         description: HTTPS root URL for deployed web acceptance only (no native build)
         type: string
@@ -23,12 +73,89 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.deployment_url && 'deployment' || 'build' }}
+  # Keep the group shown in run-name aligned with the scheduler's group.
+  group: >-
+    ci-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' &&
+    (inputs.native_shared_run && format('native-shared-{0}', github.run_id) || (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13) && format('native-vm-{0}', github.run_id) || (inputs.native_preflight || inputs.kvm_role_probe) && ((!inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa ||
+    inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' ||
+    inputs.editing_browser != 'all') && format('native-preflight-invalid-{0}', github.run_id) ||
+    'native-preflight') || inputs.editing_qa && 'editing' || inputs.deployment_url && 'deployment' ||
+    inputs.browser_qa && 'browser-qa') || 'build' }}
   cancel-in-progress: true
 
 jobs:
+  native-shared-editor:
+    if: github.event_name == 'workflow_dispatch' && inputs.native_shared_run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Reject combined shared-editor and other dispatch modes
+        if: ${{ inputs.native_vm || inputs.native_inline_react || inputs.native_debian13 || inputs.native_preflight || inputs.kvm_role_probe || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all' }}
+        run: |
+          echo 'Shared-editor witness requires every other dispatch input at its default.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Require successful mandatory CI for this exact repository branch head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PN_NATIVE_SHARED_RUN: ${{ inputs.native_shared_run }}
+        run: node scripts/verify-native-shared-artifact.mjs --run
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: linux-amd64-testing
+          path: .cache/native-shared-package
+          run-id: ${{ inputs.native_shared_run }}
+          github-token: ${{ github.token }}
+      - name: Verify source tree, package hash and production inspection before installation
+        id: package
+        run: node scripts/verify-native-shared-artifact.mjs --artifact .cache/native-shared-package
+      - name: Select standard Ubuntu archive sources
+        run: bash scripts/ci-ubuntu-apt.sh
+      - name: Install editor-only desktop observation dependencies
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y webkit2gtk-driver xvfb xauth openbox python3-pyatspi xdotool dbus-x11 at-spi2-core libatk-adaptor gsettings-desktop-schemas x11-utils
+      - name: Install only the verified production package
+        env:
+          PN_NATIVE_PACKAGE: ${{ steps.package.outputs.package }}
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y "$PN_NATIVE_PACKAGE"
+      - name: Prepare locked observer JavaScript dependencies
+        run: |
+          npm install --global npm@11.9.0
+          npm ci
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: 1.100.0
+      - name: Build the pinned external driver, never the application
+        run: |
+          cargo install tauri-driver --version 2.1.0 --locked --root "$RUNNER_TEMP/pn-shared-driver"
+          sudo install -m 0755 "$RUNNER_TEMP/pn-shared-driver/bin/tauri-driver" /usr/local/bin/pn-shared-tauri-driver
+      - name: Run installed editor under a fresh ordinary account and clean environment
+        run: bash scripts/run-native-shared-editor.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: native-shared-editor-witness
+          include-hidden-files: true
+          path: |
+            .cache/native-shared-evidence/infrastructure.json
+            .cache/native-shared-evidence/native-shared-editor.json
+            .cache/native-shared-evidence/screenshot-startup.png
+            .cache/native-shared-evidence/screenshot-source.png
+            .cache/native-shared-evidence/screenshot-preview.png
+          if-no-files-found: warn
+          retention-days: 3
+
   check:
-    if: github.event_name != 'workflow_dispatch' || !inputs.deployment_url
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa && 45 || 15 }}
     env:
@@ -50,6 +177,8 @@ jobs:
       - name: Verify the secret scanner refuses a synthetic key
         run: PN_GITLEAKS_BIN="$PWD/.cache/security-tools/gitleaks" node --test tests/tooling/secret-scan.test.mjs
       - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install matching browser dependencies
         run: |
           if [ "$PN_ALL_BROWSERS" = 1 ]; then
@@ -59,7 +188,15 @@ jobs:
           fi
       - name: Generate preview runtime for tests
         run: npm run prepare:runtime
-      - run: npm run check
+      - name: Report product entry architecture (informational, not acceptance)
+        run: npm run product:audit
+      - name: Check editor, storage and local Cloudflare runtime
+        # Includes real local workerd/D1 and authenticated browser acceptance.
+        # Synthetic identity verifies the JWT path; no account secrets or paid services.
+        run: npm run check
+      - name: Verify shared product editor with synthetic vault transport
+        # Real Chromium input and source/history; simulated OS ports, not native acceptance.
+        run: npm run test:product:browser
       - name: Capture the browser walkthrough
         if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
         run: |
@@ -67,32 +204,44 @@ jobs:
           server=$!
           trap 'kill "$server" || true' EXIT
           curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4188/ -o /dev/null
-          node scripts/demo-editor.mjs
-          python3 scripts/package-review-demo.py
-          python3 scripts/verify-review-demo.py --browser
-          python3 -m zipfile -e .cache/review-demo.zip .cache/review-demo-unpacked
+          node scripts/demo-web-editor.mjs
+          python3 scripts/package-review-demo.py --profile web-editor
+          python3 scripts/verify-review-demo.py --profile web-editor --browser
+          python3 -m zipfile -e .cache/web-review-demo.zip .cache/web-review-demo-unpacked
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: github.event_name == 'workflow_dispatch' && inputs.review_artifacts
         with:
           name: playable-editor-demo
-          path: .cache/review-demo-unpacked/**
+          path: .cache/web-review-demo-unpacked/**
           if-no-files-found: error
           retention-days: 7
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: failure() || (github.event_name == 'workflow_dispatch' && inputs.browser_qa)
+        # Keep successful interface screenshots too. Native-entry tests use a
+        # synthetic IPC adapter; this artifact does not attest Linux GUI behavior.
+        if: always() && !cancelled()
         with:
           name: playwright-results
+          # Whitelist synthetic outputs; never upload the cache directory itself.
+          include-hidden-files: true
           path: |
             playwright-report/
             test-results/
+            .cache/product-browser-results.json
+            .cache/product-browser.png
+            .cache/product-browser.png.failure.png
+            .cache/product-browser.png.tablet.png
+            .cache/product-browser.png.mobile.png
           retention-days: 7
 
   native-check:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.browser_qa && !inputs.deployment_url)
+    if: github.event_name != 'workflow_dispatch' || (!inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && !inputs.browser_qa && !inputs.deployment_url && !inputs.editing_qa)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       CARGO_BUILD_JOBS: 2
+      # Public key only, never the private signing key. An absent value leaves
+      # the testing channel disabled; no fixture key is accepted by the app.
+      PN_UPDATE_PUBLIC_KEY: ${{ secrets.PN_UPDATE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -104,7 +253,22 @@ jobs:
         run: npm install --global npm@11.9.0
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
+          toolchain: 1.100.0
           components: rustfmt
+      - name: Reuse native build dependencies within the default cache allowance
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            src-tauri/target
+            native-documents/target
+            native-policy/target
+            native-updates/target
+          key: ${{ runner.os }}-${{ runner.arch }}-native-${{ hashFiles('rust-toolchain.toml', 'src-tauri/Cargo.lock', 'native-documents/Cargo.lock', 'native-policy/Cargo.lock', 'native-updates/Cargo.lock', 'scripts/native-inline-react-v1/host/Cargo.lock') }}
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install native dependencies with bounded network retries
         shell: bash
         run: |
@@ -114,14 +278,31 @@ jobs:
           echo '::remove-matcher owner=programmable-notes-apt::'
       - run: npm ci
       - run: npm run native:wry:verify
-      - run: npm run native:package
+      - name: Register native compiler error annotations
+        run: echo '::add-matcher::.github/native-problem-matcher.json'
+      - name: Check the fixed inline host Rust formatting
+        run: cargo fmt --manifest-path scripts/native-inline-react-v1/host/Cargo.toml -- --check
+      - name: Compile the fixed inline host (not GUI acceptance)
+        run: cargo build --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Test fixed native lifecycle state (headless logic, not GUI acceptance)
+        run: cargo test --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Build the production Linux package
+        shell: bash
+        run: |
+          npm run native:package
       - name: Inspect production package (does not claim runtime validation)
-        run: node scripts/verify-linux-package.mjs "src-tauri/target/release/bundle/deb/Programmable Notes_0.1.0_amd64.deb"
+        run: node scripts/verify-linux-package.mjs
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - name: Test native document and close guards (headless, not GUI acceptance)
+        run: timeout -k 5s 300s cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol --locked
       - run: cargo fmt --manifest-path native-policy/Cargo.toml -- --check
       - run: cargo test --manifest-path native-policy/Cargo.toml --locked
       - run: cargo fmt --manifest-path native-documents/Cargo.toml -- --check
       - run: cargo test --manifest-path native-documents/Cargo.toml --locked
+      - name: Verify shared autosave against real native files (not GUI acceptance)
+        run: npm run native:autosave:test
+      - run: cargo fmt --manifest-path native-updates/Cargo.toml -- --check
+      - run: cargo test --manifest-path native-updates/Cargo.toml --locked
       - name: Verify recovery and original Save under real ENOSPC on a disposable tmpfs
         shell: bash
         run: |
@@ -160,11 +341,17 @@ jobs:
           grep -F 'INJECTED_SYNC_ERROR_PASS stage=publication ' /tmp/recovery-sync-errors.log
           grep -F 'INJECTED_SYNC_ERROR_PASS stage=retention ' /tmp/recovery-sync-errors.log
       - run: cargo test --manifest-path src-tauri/Cargo.toml --release --features custom-protocol,security-test --locked
-      # Native installers remain local to this job until their complete native
-      # redistribution notice inventory is implemented. Build/inspection stay mandatory.
+      - name: Prepare inspected Linux testing download with native notices
+        run: node scripts/package-linux-testing.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-amd64-testing
+          path: .cache/linux-testing/**
+          if-no-files-found: error
+          retention-days: 7
 
   deployment-check:
-    if: github.event_name == 'workflow_dispatch' && inputs.deployment_url != ''
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.deployment_url != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -183,6 +370,8 @@ jobs:
       - name: Pin the repository npm version
         run: npm install --global npm@11.9.0
       - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
       - name: Install matching browser dependencies
         run: |
           if [ "$PN_ALL_BROWSERS" = 1 ]; then
@@ -190,6 +379,10 @@ jobs:
           else
             npx playwright install --with-deps chromium
           fi
+      - name: Build the expected deployment from this checkout
+        run: npm run build:cloudflare
+      - name: Require the expected deployed build before interaction tests
+        run: node scripts/verify-deployment-build.mjs
       - name: Validate the actual deployed app in fresh browser profiles
         run: npx playwright test --config playwright.cloudflare.config.ts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -200,3 +393,218 @@ jobs:
             playwright-report/cloudflare/
             test-results/cloudflare/
           retention-days: 7
+
+  # Optional, explicitly named diagnostics. Pull requests still run the complete
+  # check/native-check gates above; success here is never a substitute for them.
+  preview-input-regression:
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && !inputs.native_preflight && !inputs.kvm_role_probe && inputs.editing_qa
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PN_ALL_BROWSERS: '1'
+      PN_EDITING_BROWSER: ${{ inputs.editing_browser }}
+      PN_EDITING_CORE_ONLY: ${{ inputs.editing_core_only }}
+      PN_EDITING_SCOPE: ${{ inputs.editing_scope }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Pin the repository npm version
+        run: npm install --global npm@11.9.0
+      - run: npm ci
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
+      - name: Install the requested matching browsers
+        run: |
+          case "$PN_EDITING_BROWSER" in
+            all) npx playwright install --with-deps chromium firefox webkit ;;
+            chromium|firefox|webkit) npx playwright install --with-deps "$PN_EDITING_BROWSER" ;;
+            *) exit 1 ;;
+          esac
+      - run: npm run build
+      - name: Repeat selected authoring or Pages checks without retries
+        run: |
+          browser_args=()
+          config_args=()
+          repeat_count=3
+          if [ "$PN_EDITING_BROWSER" != all ]; then
+            browser_args=(--project "$PN_EDITING_BROWSER")
+          fi
+          test_files=(tests/e2e/bootstrap.spec.ts tests/e2e/web-rendered-editor.spec.ts tests/e2e/web-update.spec.ts tests/e2e/web-live.spec.ts tests/e2e/web-math-composition.spec.ts tests/e2e/web-core-plugins.spec.ts tests/e2e/web-unified-math.spec.ts)
+          grep_args=(--grep 'Markdown keyboard authoring|minimal error notifications|excessive whitespace|work-budget refusal|real service worker update|caret math is same-document|display math reveals|moving between equations|normal document flow|math composition|document mathematics composition|final Unicode composition|blurred composition|invalid LaTeX stays red|setup is invisible|core plugins can be disabled|disabled mathematics stays literal|preview messages cannot change|hidden setup survives|core plugin settings remain usable|unfinished display dollars|removing a dollar|typing a first dollar|literal mathematics work budget|unfinished dollars are ordinary|mathematics uses the document caret|invalid closed mathematics|document selection crosses|arrow keys and extended selection|arrow navigation enters and leaves|removing a math delimiter|opaque source navigation is explicit|JavaScript Unicode line terminators navigate')
+          case "$PN_EDITING_SCOPE" in
+            pages)
+              if [ "$PN_EDITING_CORE_ONLY" != true ]; then
+                npm run prepare:cloudflare
+                test_files=(tests/deployment/cloudflare.spec.ts)
+                config_args=(--config playwright.cloudflare.config.ts)
+                grep_args=()
+              fi
+              ;;
+            authoring)
+              repeat_count=5
+              test_files=(tests/e2e/web-authoring-acceptance.spec.ts tests/e2e/bootstrap.spec.ts)
+              grep_args=(--grep 'keyboard authoring in mixed MDX|the same document caret|Rebuild restarts the live Counter|long visual paragraphs')
+              ;;
+            source)
+              repeat_count=20
+              test_files=(tests/e2e/bootstrap.spec.ts)
+              grep_args=(--grep 'opaque source navigation is explicit|JavaScript Unicode line terminators navigate')
+              ;;
+            math)
+              test_files=(tests/e2e/web-live.spec.ts tests/e2e/web-unified-math.spec.ts)
+              grep_args=(--grep 'unfinished display dollars|removing a dollar|typing a first dollar|literal mathematics work budget|invalid LaTeX stays red|unfinished dollars are ordinary|mathematics uses the document caret|invalid closed mathematics|document selection crosses|arrow keys and extended selection|arrow navigation enters and leaves|removing a math delimiter')
+              ;;
+            core)
+              test_files=(tests/e2e/web-core-plugins.spec.ts)
+              grep_args=()
+              ;;
+          esac
+          if [ "$PN_EDITING_CORE_ONLY" = true ]; then
+            repeat_count=3
+            test_files=(tests/e2e/web-core-plugins.spec.ts)
+            grep_args=()
+          fi
+          npx playwright test "${test_files[@]}" "${config_args[@]}" "${browser_args[@]}" "${grep_args[@]}" --repeat-each="$repeat_count" --retries=0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: preview-input-regression
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  native-preflight:
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && !inputs.native_vm && !inputs.native_inline_react && !inputs.native_debian13 && (inputs.native_preflight || inputs.kvm_role_probe)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Reject combined preflight and other dispatch modes
+        if: ${{ !inputs.native_preflight || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all' }}
+        run: |
+          echo 'Native preflight is required; all unrelated dispatch inputs must use their defaults.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Observe ordinary-account KVM API without creating a VM
+        run: |
+          pn_kvm_status=0
+          python3 -I -B scripts/native-kvm-probe.py || pn_kvm_status=$?
+          case "$pn_kvm_status" in
+            0|2) ;;
+            *) exit "$pn_kvm_status" ;;
+          esac
+      - name: Opt-in fixed KVM API observation under an isolated temporary role
+        if: inputs.kvm_role_probe
+        run: bash scripts/native-kvm-role-probe.sh --api-only
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
+      - name: Check restricted Ubuntu Linux capabilities
+        run: bash scripts/native-hosted-preflight.sh
+
+  native-vm:
+    if: github.event_name == 'workflow_dispatch' && !inputs.native_shared_run && (inputs.native_vm || inputs.native_inline_react || inputs.native_debian13)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Reject combined VM and other dispatch modes
+        if: ${{ !inputs.native_vm || inputs.native_preflight || inputs.kvm_role_probe || inputs.browser_qa || inputs.review_artifacts || inputs.editing_qa || inputs.editing_core_only || inputs.deployment_url != '' || inputs.editing_scope != 'all' || inputs.editing_browser != 'all' }}
+        run: |
+          echo 'VM admission requires every unrelated dispatch input to use its default.' >&2
+          exit 2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Select the runner Ubuntu archive sources for host dependencies
+        run: bash scripts/ci-ubuntu-apt.sh
+      - name: Install host QEMU on the disposable standard runner
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends qemu-system-x86 qemu-utils openssh-client
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: inputs.native_inline_react
+        with:
+          node-version-file: .nvmrc
+      - name: Prepare locked native diagnostic dependencies
+        if: inputs.native_inline_react
+        run: |
+          npm install --global npm@11.9.0
+          npm ci
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends libwebkit2gtk-4.1-dev libgtk-3-dev
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        if: inputs.native_inline_react
+        with:
+          toolchain: 1.100.0
+      - name: Register fixed host compiler error annotations
+        if: inputs.native_inline_react
+        run: echo '::add-matcher::.github/native-problem-matcher.json'
+      - name: Compile only the fixed diagnostic host (not the product application)
+        if: inputs.native_inline_react
+        env:
+          CARGO_BUILD_JOBS: 2
+        run: cargo build --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Test fixed native lifecycle state before guest admission (headless logic only)
+        if: inputs.native_inline_react
+        env:
+          CARGO_BUILD_JOBS: 2
+        run: cargo test --manifest-path scripts/native-inline-react-v1/host/Cargo.toml --release --locked --target-dir src-tauri/target
+      - name: Allocate a private fixture parent
+        id: fixture
+        run: |
+          pn_vm_parent=$(mktemp -d "${RUNNER_TEMP}/pn-native-vm-XXXXXX")
+          printf 'PN_VM_ROOT=%s/fixture\n' "$pn_vm_parent" >> "$GITHUB_ENV"
+          printf 'created=true\n' >> "$GITHUB_OUTPUT"
+      - name: Prepare host-only authentication and public context
+        if: ${{ !inputs.native_debian13 }}
+        run: python3 -I -B scripts/native-vm-provision.py --prepare "$PN_VM_ROOT"
+      - name: Prepare sealed Debian 13 context
+        if: inputs.native_debian13
+        run: python3 -I -B scripts/native-vm-provision.py --prepare-debian13 "$PN_VM_ROOT"
+      - name: Assemble the guest without host mounts
+        run: python3 -I -B scripts/native-vm-pack.py --pack "$PN_VM_ROOT"
+      - name: Check the exact share-free launch layout
+        run: python3 -I -B scripts/native-vm-launch.py --check "$PN_VM_ROOT/launch.json"
+      - name: Verify boot, SSH identity and OS admission (not native application acceptance)
+        if: ${{ !inputs.native_inline_react }}
+        run: python3 -I -B scripts/native-vm-smoke.py --smoke "$PN_VM_ROOT"
+      - name: Run the fixed native diagnostic after same-lifecycle OS admission
+        if: inputs.native_inline_react
+        run: python3 -I -B scripts/native-vm-inline-react.py --run "$PN_VM_ROOT"
+      - name: Retain only the sanitized admission receipt
+        id: os_evidence
+        if: always() && steps.fixture.outputs.created == 'true'
+        run: |
+          mkdir -p .cache/native-vm-evidence
+          if test -f "$PN_VM_ROOT/smoke-receipt.json"; then
+            install -m 0600 "$PN_VM_ROOT/smoke-receipt.json" .cache/native-vm-evidence/smoke.json
+            python3 -I -B scripts/report-native-vm-receipt.py "$GITHUB_WORKSPACE/.cache/native-vm-evidence/smoke.json"
+            printf 'copied=true\n' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.os_evidence.outputs.copied == 'true'
+        with:
+          name: native-vm-os-admission
+          path: .cache/native-vm-evidence/smoke.json
+          if-no-files-found: error
+          retention-days: 3
+      - name: Retain the validated fixed diagnostic summary only
+        id: inline_evidence
+        if: always() && inputs.native_inline_react && steps.fixture.outputs.created == 'true'
+        run: |
+          if test -f "$PN_VM_ROOT/inline-react-receipt.json"; then
+            install -m 0600 "$PN_VM_ROOT/inline-react-receipt.json" .cache/native-vm-evidence/inline-react.json
+            printf 'copied=true\n' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.inline_evidence.outputs.copied == 'true'
+        with:
+          name: fixed-native-inline-react-diagnostic
+          path: .cache/native-vm-evidence/inline-react.json
+          if-no-files-found: error
+          retention-days: 3

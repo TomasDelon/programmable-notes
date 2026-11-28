@@ -2627,3 +2627,70 @@ scan zero additional findings; all12tooling tests passed with zero skips, includ
 synthetic Git/ZIP credential-refusal controls. The exact six known historical
 false-positive fingerprints do not waive any credential rule or future finding.
 The next push waits for the new postcommit scan to finish before publication.
+
+## Resume — hosted dependency correction and Debian diagnostic
+
+On fd6f7f2 the required check job passed; native-check failed before compilation
+because an unrelated Microsoft runner APT source returned403. A reviewed fixed
+helper now selects the runner's existing Ubuntu source, preserving archive
+signing, authentication and expiry checks. All six dependency-installing jobs
+invoke it. Real offline APT URI planning includes an omitted-filter negative
+control. No paid runner or mandatory-test change. Full local check exited0:
+808 unit,133 tooling/zero skips,153 Chromium,9 Pages and4 local cloud-storage
+cases; format/lint/types/build passed. Hosted rerun remains required.
+
+Debian OS-only run45939785719 passed actual assembly/boot/identity negatives and
+normal shutdown. Native run45940249067 passed effective isolation admission and
+the native bridge, but React readiness timed out. Stop termination and host
+input passed individually; pointer/key/expiry did not run and session cleanup
+failed. Dated bounded evidence preserves this failure. A concrete test-driver
+shutdown defect was identified independently: XDestroyWindow bypasses the GTK
+delete-event handler. Its separate correction and discriminating readiness
+diagnostic are prepared, not yet native-verified. No product installer accepted.
+
+### Native shutdown correction and readiness probe
+
+Source-reviewed WM_DELETE_WINDOW correction and advisory cached readiness
+category are complete locally. Independent controls passed38session,31observer,
+14helper,21driver. Full check exited0 with808 unit,133 tooling/zero skips,
+153 Chromium,9 Pages,4 local cloud-storage cases; format/lint/types/build pass.
+Functional input hashes stayed fixed; only separately reviewed/formatted README
+changed during the run. Native execution remains pending. No deadline, resource
+limit, cleanup or title acceptance was relaxed. Historical failure evidence stays.
+
+README/Linux guide now accurately mark the rejected legacy installer, existing
+notice-bearing artifact and explicit demo-dispatch condition. Independent
+contract/workflow review cleared those documentation corrections.
+
+### Shared navigation leaf and passive native-load observation
+
+190dbf0 required CI45943437218 passed both jobs. Its predefined fixed native
+sequence finished2/3:45943438955 and45944086321 passed all fixed observations;
+45944129836 failed the original ready deadline with last state native_only.
+Stop, host input and session cleanup passed in all three. Keep every receipt;
+startup reliability failed acceptance and no unchanged retry is planned.
+
+The shared document row is extracted without host authority or DOM changes.
+Independent13 row/surface tests and10 real Chromium navigation/drag cases pass.
+The next passive native probe records only bounded sticky lifecycle flags; four
+actual-module Rust controls and36 observer/15 sanitizer/22 driver controls pass.
+Hosted GTK compilation/runtime remains pending; no readiness repair is claimed.
+
+Combined full check first failed one tooling guard-oracle gap after814 unit
+passes. The new lifecycle unit step was added to the oracle, with omitted and
+unlocked negative controls RED then GREEN12 routing cases. Full rerun exited0:
+814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 local cloud cases plus
+format/lint/types/build. Functional hashes stayed fixed; documentation formatted
+separately. History/archive and staged scans found zero findings before commits.
+
+### Locked WebKitGTK import correction
+
+The instrumented candidatecac8399 failed hosted compilation before any guest.
+Independent source review confirmed locked WebKitGTK2.0.2 exports WebViewExt
+at crate root and has no prelude module. Corrected only the import; moved the
+existing compiler matcher before both host builds, retaining optional guards.
+All12 routing controls and independent review passed. Full local check exited0:
+814 unit,133 tooling/zero skips,153 Chromium,9 Pages,4 cloud-local cases plus
+format/lint/types/build. Real GTK compilation still requires the hosted gate.
+Local SDK setup is separate; bounded archive downloads have not produced an SDK
+or any compiler result. No new native execution or startup fix is claimed.

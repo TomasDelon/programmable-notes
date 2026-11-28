@@ -1,0 +1,13 @@
+{
+  "problemMatcher": [
+    {
+      "owner": "programmable-notes-native",
+      "pattern": [
+        {
+          "regexp": "^(?:error(?:\\[[A-Z0-9]+\\])?:|Error:)\\s*(.+)$",
+          "message": 1
+        }
+      ]
+    }
+  ]
+}

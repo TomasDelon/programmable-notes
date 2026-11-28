@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "stage": "recovery_copy_restart",
+  "startupPhase": "complete",
+  "failureKind": "none",
+  "assertionKind": "none",
+  "sourcePhase": "not_started",
+  "fixtureId": "pn-native-shared-uJF4S8",
+  "journey": "recovery",
+  "interruptionState": "confirmed",
+  "recovery": {
+    "initialRecords": 20,
+    "originalDigest": "3afcfe56704c5c75141baff740bb3420d636346ef66743986813693008308c65",
+    "pendingDigest": "c06e7bc27994d185caad1b0ae476eec95d2c85b5db0d7281b608b248b2848ed3",
+    "restoredName": "recovered-pn-native-shared-uJF4S8.mdx",
+    "fixtureRetained": true,
+    "snapshotRetained": "before-close-and-interruption",
+    "snapshot": {
+      "file": "cfd03a4367fecd08bc82deb2258b0012-00000000000000000016-f7b0716d3678215c636dda0024779375e2580f65f39d239191f16ef108a4ae43.pnrec",
+      "id": "f7b0716d3678215c636dda0024779375e2580f65f39d239191f16ef108a4ae43",
+      "metadata": {
+        "schema": 1,
+        "documentId": "cfd03a4367fecd08bc82deb2258b0012",
+        "name": "primary.mdx",
+        "baseline": "3afcfe56704c5c75141baff740bb3420d636346ef66743986813693008308c65",
+        "parent": "6f64e8a9862d33245e31b846bdf0f4f4937a8eb4017c849e286d2dfbae4791c9",
+        "generation": 16,
+        "createdAtMs": 1795876558220,
+        "sourceBytes": 185
+      }
+    },
+    "collision": "native_exclusive_create_conflict",
+    "intentionalInterruption": true,
+    "restoredDigest": "98eb6182fb80f193fd0bc0b2215e5360a8780785d64f9b905aebfabbb7971d96"
+  },
+  "binarySha256": "434535a20ac0b669b107304b81484fa66f8d2ea2f7ffc671e245687200fc5aa3",
+  "checkpoints": [
+    "actual-vault-chooser-and-shared-source",
+    "real-save-failure-visible-text-and-original-bytes-retained",
+    "integrity-valid-app-snapshot-before-close-or-interruption",
+    "intentional-identity-checked-interruption-and-owned-descendants-gone",
+    "fresh-process-readonly-discovery-and-cancellation",
+    "invalid-sibling-warning-valid-version-discoverable-and-store-unchanged",
+    "exclusive-create-collision-refuses-original-overwrite",
+    "exclusive-new-copy-exact-bom-mixed-ending-jsx-private-mode",
+    "restored-copy-real-keyboard-undo-redo-autosave",
+    "restored-copy-normal-close-restart-reauthorize-exact-reopen"
+  ],
+  "cleanupVerified": true,
+  "forcedCleanup": false,
+  "scope": "Installed shared editor save failure, interruption and explicit new-copy recovery; no React or containment acceptance"
+}

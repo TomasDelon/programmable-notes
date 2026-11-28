@@ -1,0 +1,44 @@
+{
+  "description": "Verbatim root license texts omitted by the exact published build-tool tarballs. No project license is selected.",
+  "repository": "https://github.com/cloudflare/workers-sdk",
+  "retrieved": "2026-11-26",
+  "provenanceMethod": "npm view metadata has no gitHead. npm registry SLSA provenance resolvedDependencies names sourceCommit; official annotated package-version Git tags peel to the same commit. Decoding the published statement is not an independent attestation-signature verification. Source package manifests match published versions and license declarations. Root texts independently matched official Git blob IDs.",
+  "packages": [
+    {
+      "name": "wrangler",
+      "version": "4.168.0",
+      "license": "MIT OR Apache-2.0",
+      "registryGitHead": null,
+      "registryIntegrity": "sha512-CqxlSPbapKwhH2moKcJlWCYqzB/Gk93rKQcul0KioLLYDKgJpuwuddE5rminAgDkI0YyEjzw4MoCasojog4lJw==",
+      "provenanceURL": "https://registry.npmjs.org/-/npm/v1/attestations/wrangler@4.168.0",
+      "releaseTag": "wrangler@4.168.0",
+      "sourceCommit": "4dff55a55a5d801c2cd5cd5321eb3272092ccdb7",
+      "licenseFiles": ["LICENSE-MIT", "LICENSE-APACHE"]
+    },
+    {
+      "name": "miniflare",
+      "version": "5.20261123.1-beta",
+      "license": "MIT",
+      "registryGitHead": null,
+      "registryIntegrity": "sha512-o2a+xv6Ug144FgUJm7ciSWMiI7R0OH0svGCfqb1+6l9cUfZebc6YMWIK43PeyzWr3x6BLq2j4O9i8BsKk055oA==",
+      "provenanceURL": "https://registry.npmjs.org/-/npm/v1/attestations/miniflare@5.20261123.1-beta",
+      "releaseTag": "miniflare@5.20261123.1-beta",
+      "sourceCommit": "4dff55a55a5d801c2cd5cd5321eb3272092ccdb7",
+      "licenseFiles": ["LICENSE-MIT"]
+    }
+  ],
+  "files": [
+    {
+      "path": "licenses/WORKERS_SDK_LICENSE_MIT.txt",
+      "upstreamPath": "LICENSE-MIT",
+      "sha256": "9bb3b077cc8628334bab25961223dd8207252c8a56aa054195be38f1c042aaf4",
+      "gitBlob": "a0e7ebf133868d6c1759cfb09f3c05d4cce430c8"
+    },
+    {
+      "path": "licenses/WORKERS_SDK_LICENSE_APACHE.txt",
+      "upstreamPath": "LICENSE-APACHE",
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "gitBlob": "1b5ec8b78e237b5c3b3d812a7c0a6589d0f7161d"
+    }
+  ]
+}

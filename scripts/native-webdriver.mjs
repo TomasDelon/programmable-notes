@@ -14,6 +14,14 @@ import {
   session,
   binary,
 } from './native-webdriver-lib.mjs';
+import {
+  verifyEditorCloseCommands,
+  verifyPreviewCloseCommands,
+} from './native-close-controls.mjs';
+import {
+  verifyEditorObservationCommands,
+  verifyPreviewObservationCommands,
+} from './native-observation-controls.mjs';
 await preflight();
 function denied(result) {
   console.log('IPC_DENIED', JSON.stringify(result));
@@ -39,6 +47,33 @@ try {
     ok: true,
     value: 'editor-host-only',
   });
+  // Correct-shaped editor calls must reach the registered handlers and their
+  // token validation. Unknown-command/ACL errors cannot substitute for this.
+  for (const [command, args] of [
+    ['vault_inventory', { vaultId: 'forged-vault' }],
+    ['open_vault_sources', { vaultId: 'forged-vault', paths: ['note.mdx'] }],
+    [
+      'create_vault_source',
+      {
+        vaultId: 'forged-vault',
+        path: 'note.mdx',
+        source: 'registration control',
+      },
+    ],
+  ]) {
+    const result = await invoke(command, args);
+    assert.deepEqual(result, {
+      ok: false,
+      error: 'Unknown or replaced vault session; select a vault again',
+    });
+    console.log('IPC_EDITOR_VAULT_REGISTERED', command);
+  }
+  // Unsupported version and forged epochs prove registration without enabling
+  // guarded mode in the legacy app, which has no close-request consumer.
+  await verifyEditorCloseCommands(invoke);
+  console.log('IPC_EDITOR_CLOSE_REGISTERED');
+  await verifyEditorObservationCommands(invoke);
+  console.log('IPC_EDITOR_OBSERVATION_REGISTERED');
   await wd(`/session/${session}/execute/sync`, {
     script:
       "localStorage.setItem('pn-native-validation-secret','editor-only-marker'); return true;",
@@ -142,6 +177,11 @@ try {
     'stop_preview',
     'preview_connection_active',
     'open_documents',
+    'open_notes_folder',
+    'choose_vault',
+    'vault_inventory',
+    'open_vault_sources',
+    'create_vault_source',
     'save_document',
     'save_document_as',
     'reopen_document',
@@ -155,6 +195,9 @@ try {
         html: counter,
         action: 'restore',
         id: 'forged',
+        vaultId: 'forged-vault',
+        paths: ['../outside.mdx'],
+        path: '../outside.mdx',
         revision: 'forged',
         source: 'malicious overwrite',
         name: 'note.mdx',
@@ -162,6 +205,10 @@ try {
         busy: false,
       }),
     );
+  await verifyPreviewObservationCommands(invoke);
+  console.log('IPC_PREVIEW_OBSERVATION_DENIED');
+  await verifyPreviewCloseCommands(invoke);
+  console.log('IPC_PREVIEW_CLOSE_DENIED');
   for (const action of [
     'list',
     'append',

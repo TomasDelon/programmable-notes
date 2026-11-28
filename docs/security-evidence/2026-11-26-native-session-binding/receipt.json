@@ -1,0 +1,33 @@
+{
+  "scope": "Private trusted binding and actual Store harness, no production UI or Tauri GUI acceptance",
+  "source_sha256": {
+    "src/documents/nativeSessions.ts": "3b1923f7bd029dd656d9537bb2c78766831ed416484f7c235270a935c465d60b",
+    "tests/unit/native-sessions.test.ts": "2d1096269a627ae21bcd2e958ed6e58416cefe93cf8c176176e010bf5544fd10",
+    "scripts/native-autosave.mjs": "42a48601850cc1a49b3d0842115052927420cc8df9853a4903ae42391241e282",
+    "native-documents/examples/autosave-writer.rs": "c7bf7d291feec01ee1fa2351d84942dfcad44c075ddee1399ba4484f95c2c26e"
+  },
+  "executed": {
+    "targetedTypeScriptPassed": 36,
+    "newBindingTests": 9,
+    "rustDocumentPassed": 79,
+    "rustDocumentFailed": 0,
+    "rustIgnoredSlots": 7,
+    "rustFormat": "passed",
+    "realStorePositive": "passed including original and new controller cases",
+    "originalNegativeControl": "expected exit1 at original automatic disk observation"
+  },
+  "fullCheck": {
+    "exitCode": 0,
+    "unitPassed": 735,
+    "toolingPassed": 96,
+    "toolingSkipped": 0,
+    "chromiumPassed": 152,
+    "pagesPassed": 9,
+    "inactiveCloudPassed": 4
+  },
+  "notExecuted": [
+    "new commands actual registered Tauri ACL/chooser GUI",
+    "installed shared product autosave/close/restart",
+    "native runtime/full hostile-document security matrix"
+  ]
+}

@@ -14,7 +14,7 @@ the requested rendered-document editing experience.
 Preview is now a trusted ProseMirror projection of the note's Markdown syntax
 tree. Paragraphs, headings, formatting, lists, tasks, tables and mathematical
 atoms are edited directly. Keyboard commands, Markdown input rules, list
-continuation and a formatting toolbar operate on that projection.
+continuation and editor-owned formatting commands operate on that projection.
 
 The existing CodeMirror instance remains the canonical source transaction and
 undo engine. Every projected change must serialize and reparse successfully
@@ -76,7 +76,130 @@ paragraph/task continuation, mixed line endings, code pipes in tables, shifted
 math offsets, rejected drafts, IME refresh, late attachment catalogs, shared
 compiler leases and competing tab writes.
 
-Browser acceptance covers rendered editing, toolbar and Markdown commands, real
+Browser acceptance covers rendered editing, keyboard/palette and Markdown commands, real
 task controls, table and equation editing, undo across modes, source export and
 reload, composition, narrow layouts, React state, full-document execution and
 host security. The existing native/browser suite remains required before release.
+
+## 24 November: keyboard authoring and notifications
+
+The web Preview no longer displays a formatting toolbar. Markdown input rules,
+keyboard shortcuts and editor-owned command-palette actions invoke the same
+revision-guarded source transactions. Ctrl/Cmd+Shift+K opens the explicit link
+form; Ctrl/Cmd+Shift+7/8 starts ordered/bullet lists. The native `/engine` UI is
+unchanged.
+
+Ordinary typing includes incomplete Markdown prefixes, trailing spaces and empty
+nested list items. Text serialization must preserve these intermediate states:
+escape literal prefixes once, use numeric references for authored trailing
+spaces that CommonMark would discard, and retain a paragraph separator before an
+empty nested list (otherwise a dash can become a Setext underline). Decoded
+punctuation offsets are accepted only after the complete decoded span matches the
+parser text. The two emitted whitespace references have verified offsets; unknown entity
+mappings still fall back to block serialization. Typed whitespace may remain
+represented by standard Markdown character references; existing raw source is
+not decoded or normalized for presentation.
+Strict semantic reparse, source revision checks and opaque JSX remain required.
+Unchanged blocks and unrelated raw slices are reused byte-for-byte.
+
+Editor and web workspace feedback use a host-owned notification provider. Notices
+never take writing focus; transient notices pause for keyboard focus, hover or
+inspection, and animations respect reduced-motion preferences. Detailed errors
+appear only after an explicit Details action. No preview message can call this
+provider or authorize edits, exports or filesystem operations.
+
+A refused transaction retains the first complete serialized source candidate and
+blocks later modifications until explicit resolution. The notification opens an
+editor-owned recovery dialog; downloading its retained source preserves BOM and
+physical line endings. Copying the textarea may normalize line endings according
+to browser behavior. Downloading never replaces the accepted document, and the
+draft remains pending until explicitly discarded. Navigation guards remain active.
+
+### Measured synchronous whitespace work
+
+A follow-up review measured a quadratic trailing-space regex on long _internal_
+whitespace runs. Match each horizontal run once and inspect its following
+character in a callback. The serialization regression covers 100,000 internal
+spaces. This removes the new quadratic matcher; it is not a universal parser
+deadline. The upstream Markdown parser independently remained slow on that
+input, so the existing visual-analysis budget now treats runs above 8,192
+horizontal whitespace characters as Source-only before parsing. Exact source
+remains editable/exportable in Source. A visual candidate crossing that budget
+is refused with a specific reason and retained for explicit recovery; no
+original is overwritten. Ordinary whitespace and Markdown limits are unchanged.
+
+### Veto obsolete controlled-source echoes
+
+Rapid input can advance the canonical editor/model before a deferred React source
+prop is reconciled. Replaying an older prop as an external source edit can rewind
+CodeMirror, add a phantom history event, and cause the next rendered transaction
+to fail its valid raw-source equality check. Two controlled regression tests
+reproduce both the rewind and the subsequent visual refusal.
+
+The workspace supplies a private read-only `sourceIsCurrent` witness backed by its
+synchronous current-source reference. Both SourceEditor and RenderedEditor veto
+obsolete prop echoes before reconciliation. Current external snapshots, exact
+undo/redo and existing compare-and-swap validation remain unchanged. The witness
+grants no edit, storage or IPC authority and is never passed to document code.
+Browser repetition remains required to verify the observed Firefox failure.
+
+### Complete worker activation before app reload
+
+Cross-browser acceptance exposed WebKit remaining in `activating` after reload.
+`controllerchange` can precede completion of the activation event and its
+`waitUntil` work. The editor's explicit update action now waits for both the
+selected worker's `activated` state and control of the page, then verifies a fresh
+completed workspace save before reloading. The update promise stays in flight
+through these stages; raw edits arriving during activation are covered by the
+final save drain and existing unload guards.
+
+Attempts are deduplicated, listeners/timers are cleaned up, and a 15-second
+activation deadline leaves the current workspace open. A late save/event after
+failure cannot reload the page. An activated worker is retained for an explicit
+retry if persistence was not confirmed. No worker, origin, cache or document
+permission is relaxed; document content still never enters the app asset cache.
+
+## 25 November: mathematical source follows the caret
+
+The mathematical NodeView now embeds the existing CodeMirror dependency as an
+unframed contenteditable source surface. It has no input/textarea, separate
+form, Done or Cancel buttons. Rendered equations retain a focusable accessible
+activation target. Pointer activation and arrow entry reveal the exact original
+dollar-delimited source; hover does nothing. Horizontal boundary arrows,
+vertical boundary arrows, Tab or blur attempt the guarded patch and return the
+caret to the surrounding ProseMirror document. Display Enter inserts a newline.
+
+The nested source buffer owns only temporary draft text and local undo/redo.
+Successful exit still applies one canonical CodeMirror source transaction using
+`planMathReplacement` and the exact snapshot guard. The existing pending-draft
+barrier remains until commit or explicit Escape cancellation. Changed delimiters
+and stale revisions remain refused with retained text and host notifications.
+ADR 015 supersedes the original invalid-LaTeX refusal: closed malformed TeX now
+saves as raw red source without a global editing lock or notification. This deliberately does not grant arbitrary math delimiter
+rewrites or make unfinished drafts crash-durable. Document code cannot access
+the nested editor or authorize source writes.
+
+The Markdown parser preserves physical breaks in multiline math node values.
+Compare both parser value and candidate inner span with normalized comparison
+breaks, while retaining original raw coordinates and writing physical breaks via
+`preserveMathBreaks`. Normalizing only one comparison operand incorrectly refused
+multiline CRLF/CR formulas. This comparison fix neither changes raw source bytes
+nor relaxes quote/list-prefix exclusion or span revalidation.
+
+### Source navigation and measured focus
+
+Revealing an offset in a previously hidden source viewport must return with native
+input ready. Set the guarded canonical selection, request CodeMirror measurement,
+then read `coordsAtPos(anchor)` through its public API to flush pending measurement
+synchronously while the view is idle. Focus only after revalidating the editor
+instance, exact snapshot, no pending mathematical draft, visible viewport and still-
+collapsed target selection. This avoids both an old native DOM caret and a queued-
+focus interval in which immediate typing can be lost. No view dispatch occurs in a
+measurement write callback. Source navigation itself never patches text or grants
+preview messages editing rights.
+
+CodeMirror's cached selection can still report the requested position after native
+focus resets the browser caret. Navigation therefore rechecks the exact target
+after focus and reasserts the collapsed native selection using public `domAtPos`
+and native Selection APIs. An equal model-selection dispatch does not reliably
+repair this cache edge. This does not modify document text or relax authority.

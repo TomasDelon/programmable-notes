@@ -1,3 +1,9 @@
+import {
+  validCorePluginSettings,
+  validPreviewPreferences,
+  type CorePluginSettings,
+  type PreviewPreferences,
+} from '../plugins/coreRegistry';
 import type { Workspace } from '../documents/workspace';
 import {
   MAX_FILE_BYTES,
@@ -24,6 +30,8 @@ export interface DocumentMetadata {
 
 export interface WebState {
   version: 1;
+  corePlugins?: CorePluginSettings;
+  previewPreferences?: PreviewPreferences;
   workspace: Workspace;
   documents: Record<string, DocumentMetadata>;
   folders: string[];
@@ -437,6 +445,16 @@ export function validateWebState(value: unknown): WebState {
       value.mode === 'preview',
     'Invalid editor mode.',
   );
+  assert(
+    value.corePlugins === undefined ||
+      validCorePluginSettings(value.corePlugins),
+    'Invalid core plugin settings.',
+  );
+  assert(
+    value.previewPreferences === undefined ||
+      validPreviewPreferences(value.previewPreferences),
+    'Invalid preview preferences.',
+  );
   if (value.assets !== undefined) validateAssetCatalog(value.assets);
   assert(
     encoder.encode(serializeBackup(value as unknown as WebState)).byteLength <=
@@ -446,10 +464,17 @@ export function validateWebState(value: unknown): WebState {
   return value as unknown as WebState;
 }
 
-export function createWebState(now = Date.now()): WebState {
+export function createWebState(
+  now = Date.now(),
+  storage: 'browser' | 'cloud' = 'browser',
+): WebState {
+  const storageNotice =
+    storage === 'cloud'
+      ? 'Your workspace saves automatically to your private cloud. Keep independent backups.'
+      : 'Your workspace saves automatically in this browser. It is not synchronized between devices.';
   const files = {
-    'welcome/Welcome.mdx': `Your notes, with room to think.\n\nWrite Markdown, add mathematics, or turn an idea into a small React experiment.\n\n## Start here\n\n- Switch to **Source** to edit this document.\n- Create a note from the left sidebar.\n- Use the command palette with **Ctrl/Cmd + K**.\n- Export a workspace backup from Settings to keep an independent copy.\n\nYour workspace saves automatically in this browser. It is not synchronized between devices.\n\n## A little mathematics\n\nFor a differentiable function $f$, the derivative measures local change:\n\n$$\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\n$$\n\nOpen **React playground** for a live, editable example.\n`,
-    'playground/React-playground.mdx': `import { useState } from 'react'\n\nexport function Counter() {\n  const [count, setCount] = useState(0)\n  return (\n    <div style={{display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0'}}>\n      <button onClick={() => setCount(count - 1)} aria-label="Decrease count">−</button>\n      <strong style={{minWidth: 32, textAlign: 'center'}}>{count}</strong>\n      <button onClick={() => setCount(count + 1)} aria-label="Increase count">+</button>\n    </div>\n  )\n}\n\nA small component, right inside your note. The buttons below are live.\n\n<Counter />\n\nSwitch to **Source** to change the component. Source changes rebuild the preview, which resets component state.\n\nReact and local JavaScript/TypeScript modules are available. Import related files together to preserve their relative paths.\n`,
+    'welcome/Welcome.mdx': `Your notes, with room to think.\n\nWrite Markdown, add mathematics, or turn an idea into a small React experiment.\n\n## Start here\n\n- Write directly in **Preview**, or use **Source** for the original text.\n- Create a note from the left sidebar.\n- Use the command palette with **Ctrl/Cmd + K**.\n- Export a workspace backup from Settings to keep an independent copy.\n\n${storageNotice}\n\n## A little mathematics\n\nFor a differentiable function $f$, the derivative measures local change:\n\n$$\nf'(x) = \\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}.\n$$\n\nOpen **React playground** for a live, editable example.\n`,
+    'playground/React-playground.mdx': `import { useState } from 'react'\n\nexport function Counter() {\n  const [count, setCount] = useState(0)\n  return (\n    <div style={{display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0'}}>\n      <button onClick={() => setCount(count - 1)} aria-label="Decrease count">−</button>\n      <strong style={{minWidth: 32, textAlign: 'center'}}>{count}</strong>\n      <button onClick={() => setCount(count + 1)} aria-label="Increase count">+</button>\n    </div>\n  )\n}\n\nA small component, right inside your note. The buttons below are live.\n\n<Counter />\n\nSwitch to **Source** to change the component. Changing the component code rebuilds it and resets its temporary state. Ordinary Markdown edits preserve unchanged components.\n\nReact and local JavaScript/TypeScript modules are available. Import related files together to preserve their relative paths.\n`,
   };
   const keys = Object.keys(files);
   return {
@@ -500,13 +525,14 @@ export function createDocument(
   title = 'Untitled',
   folder = '',
   now = Date.now(),
+  format: 'md' | 'mdx' = 'mdx',
 ): { state: WebState; key: string } {
   const normalized = normalizeFolder(folder);
   let sequence = state.workspace.sequence;
   let group: string;
   do group = `web-${++sequence}`;
   while (Object.values(state.workspace.groups).includes(group));
-  const key = `${group}/note.mdx`;
+  const key = `${group}/note.${format}`;
   const next: WebState = {
     ...state,
     workspace: {
@@ -733,15 +759,11 @@ export function trashDocument(
   );
   const entry = remaining.find(isMdxSource);
   if (!entry) next = createDocument(next).state;
-  else
+  else if (next.workspace.selected === key) next = selectDocument(next, entry);
+  else if (next.workspace.entry === key)
     next = {
       ...next,
-      workspace: {
-        ...next.workspace,
-        selected:
-          next.workspace.selected === key ? entry : next.workspace.selected,
-        entry: next.workspace.entry === key ? entry : next.workspace.entry,
-      },
+      workspace: { ...next.workspace, entry },
     };
   return validateWebState(next);
 }

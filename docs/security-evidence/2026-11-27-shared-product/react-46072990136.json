@@ -1,0 +1,164 @@
+{
+  "evidence_source": "Strict source-pinned check annotations and API metadata only; no artifacts/raw logs downloaded",
+  "run_id": 46072990136,
+  "job_id": 140754095258,
+  "source_commit": "25041e75c1226be2154e85d204f13bca57256844",
+  "workflow_conclusion": "failure",
+  "native_app_tested": false,
+  "profile": "inline-react-guarded-v2",
+  "session": {
+    "version": 1,
+    "profile": "inline-react-guarded-v2",
+    "scope": "fixed-native-diagnostic-only",
+    "native_app_tested": false,
+    "status": "failed",
+    "phase": "stop",
+    "reason": "observer_failed",
+    "cleanup": "passed",
+    "cases": {
+      "expiry": "not_run",
+      "stop": "failed"
+    },
+    "diagnostics": {
+      "stop": {
+        "original_reason": "observer_failed",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 2
+        }
+      },
+      "expiry": {
+        "original_reason": "not_run",
+        "host_stage": "not_run",
+        "start_failure": "not_run",
+        "host_exit": {
+          "state": "not_started",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "not_started",
+          "code": null
+        }
+      }
+    }
+  },
+  "cases": {
+    "expiry": {
+      "version": 1,
+      "profile": "inline-react-guarded-v2",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "expiry",
+      "status": "not_run",
+      "phase": "not_run",
+      "reason": "not_run",
+      "bridge": "not_run",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "not_run",
+      "host_input": "not_run"
+    },
+    "stop": {
+      "version": 1,
+      "profile": "inline-react-guarded-v2",
+      "scope": "fixed-native-diagnostic-only",
+      "native_app_tested": false,
+      "case": "stop",
+      "status": "failed",
+      "phase": "ready",
+      "reason": "readiness_deadline",
+      "bridge": "passed",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "passed",
+      "host_input": "passed"
+    }
+  },
+  "os_admission": {
+    "status": "passed",
+    "scope": "guest-os-admission-only",
+    "source_profile": "debian13",
+    "environment": {
+      "id": "debian",
+      "version": "13",
+      "kernel_release": "6.12.118+deb13-amd64",
+      "packages": {
+        "libc6": "2.41-12+deb13u5",
+        "libgtk-3-0t64": "3.24.49-3",
+        "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+        "linux-image-amd64": "6.12.118-1",
+        "systemd": "257.13-1~deb13u1"
+      }
+    }
+  },
+  "advisory_diagnostics": [
+    {
+      "case": "stop",
+      "readiness": {
+        "phase": "ready",
+        "state": "native_only"
+      }
+    },
+    {
+      "case": "stop",
+      "native_snapshot": {
+        "version": 1,
+        "built": true,
+        "committed": false,
+        "finished": false,
+        "navigation_denied": false,
+        "load_failed": false,
+        "termination": "none"
+      }
+    },
+    {
+      "case": "stop",
+      "observer_exception": {
+        "phase": "ready",
+        "error_type": "Refused",
+        "errno": null,
+        "frames": [
+          {
+            "function": "run",
+            "line": 796
+          },
+          {
+            "function": "state_until",
+            "line": 777
+          },
+          {
+            "function": "_wait",
+            "line": 754
+          }
+        ]
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 15233517801,
+      "name": "native-vm-os-admission",
+      "expired": false,
+      "size_in_bytes": 551
+    },
+    {
+      "id": 15233114208,
+      "name": "fixed-native-inline-react-diagnostic",
+      "expired": false,
+      "size_in_bytes": 2536
+    }
+  ],
+  "limitations": [
+    "Fixed diagnostic only, not packaged application or general native/security acceptance.",
+    "Pointer and keyboard did not run; expiry did not run.",
+    "Built is published before guard installation; no separate guard-installation/publication witness exists.",
+    "No observed Committed/Finished, denied navigation, load failure or termination signal; cause remains unknown.",
+    "No artifacts/raw logs downloaded, retries or policy/deadline changes."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "evidence_source": "strictly validated GitHub check annotation; exact source-pinned reporter/schema",
+  "run_id": 45923910293,
+  "source_commit": "1396e4862463bee4b0777143e0b9601069da40e5",
+  "job_id": 140260734513,
+  "scope": "guest-os-admission-only",
+  "status": "passed",
+  "native_app_tested": false,
+  "native_payload_executed": false,
+  "verified_by_reporter": {
+    "uid": 1001,
+    "pid1_systemd": true,
+    "cgroup_v2": true,
+    "mounts_allowed": true,
+    "root_ext4_vda": true,
+    "container_absent": true,
+    "logind_active": true,
+    "authorized_count": 1,
+    "authorized_key_hash_validated_not_reproduced": true,
+    "agent_absent": true,
+    "wrong_pin_rejected": true,
+    "wrong_key_rejected": true,
+    "guard_normal_exit": true
+  },
+  "limitations": [
+    "This summarizes validated fields; it is not the raw private receipt.",
+    "No native React host, input, Stop, expiry or resource attack was executed.",
+    "Installed application and production security acceptance remain pending."
+  ]
+}

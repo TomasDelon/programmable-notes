@@ -1,12 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 test.describe.configure({ timeout: 60_000 });
 
 async function launch(page: Page) {
   await page.goto('/');
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue('Welcome');
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText('Welcome');
 }
 
 async function navigation(page: Page) {
@@ -45,19 +46,99 @@ async function createFolder(page: Page, name: string) {
 async function createNote(page: Page, title: string) {
   await documentTools(page);
   await page.getByRole('button', { name: 'New document', exact: true }).click();
-  const input = page.getByRole('textbox', {
-    name: 'Document title',
-    exact: true,
-  });
-  await expect(input).toBeFocused();
-  await input.fill(title);
-  await input.press('Enter');
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue(title);
+    page.getByRole('textbox', { name: 'MDX source', exact: true }),
+  ).toBeFocused();
+  await renameNote(page, title);
   await expect(
     page.getByRole('textbox', { name: 'MDX source', exact: true }),
   ).toBeVisible();
+}
+
+test('new document accepts keyboard input when click animation work is deferred', async ({
+  page,
+}) => {
+  await launch(page);
+  await documentTools(page);
+  // Hold only frames queued by the click, leaving browser actionability and
+  // subsequent editor measurement frames running normally.
+  await page.evaluate(() => {
+    const held: FrameRequestCallback[] = [];
+    (
+      window as Window & { releaseCreationFrames?: () => void }
+    ).releaseCreationFrames = () => {
+      for (const callback of held) callback(performance.now());
+    };
+    document.addEventListener(
+      'click',
+      () => {
+        const schedule = window.requestAnimationFrame;
+        window.requestAnimationFrame = (callback) => {
+          held.push(callback);
+          return -held.length;
+        };
+        document.addEventListener(
+          'click',
+          () => {
+            window.requestAnimationFrame = schedule;
+          },
+          { once: true },
+        );
+      },
+      { capture: true, once: true },
+    );
+  });
+  await page.getByRole('button', { name: 'New document', exact: true }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source', exact: true });
+  await expect(source).toBeFocused();
+  await page.keyboard.type('Immediate new document input');
+  await expect(source).toHaveText('Immediate new document input');
+  await page.keyboard.press('Control+k');
+  const search = page.getByRole('textbox', {
+    name: 'Search commands and notes',
+  });
+  await expect(search).toBeFocused();
+  await page.evaluate(() => {
+    (
+      window as Window & { releaseCreationFrames?: () => void }
+    ).releaseCreationFrames?.();
+  });
+  await expect(search).toBeFocused();
+});
+
+test('new document from the command palette owns focus after the palette closes', async ({
+  page,
+}) => {
+  await launch(page);
+  await documentTools(page);
+  await page.getByRole('button', { name: 'New document', exact: true }).focus();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.getByLabel('Search commands and notes').fill('New document');
+  await palette.getByRole('button', { name: /^New document/ }).click();
+  const source = page.getByRole('textbox', { name: 'MDX source', exact: true });
+  await expect(source).toBeFocused();
+  await page.keyboard.type('Created from palette');
+  await expect(source).toHaveText('Created from palette');
+});
+
+async function renameNote(page: Page, title: string) {
+  await page.locator('.doc-title-row').click();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.getByLabel('Search commands and notes').fill('Rename document');
+  await palette.getByRole('button', { name: /^Rename document/ }).click();
+  const rename = page.getByRole('dialog', {
+    name: 'Rename document',
+    exact: true,
+  });
+  await rename
+    .getByRole('textbox', { name: 'Document title', exact: true })
+    .fill(title);
+  await rename.getByRole('button', { name: 'Rename', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText(title);
 }
 
 async function saved(page: Page) {
@@ -95,6 +176,57 @@ async function chooseMode(page: Page, mode: 'Source' | 'Preview') {
   }
   await button.click();
 }
+
+test('document metadata title is passive text and explicit rename preserves source after reopening', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const title = page.getByRole('heading', {
+    name: 'Document title',
+    exact: true,
+  });
+  await expect(title).toHaveText('Welcome');
+  await expect(title).not.toHaveAttribute('tabindex', /.*/);
+  await expect(title).not.toHaveAttribute('contenteditable', 'true');
+  await expect(
+    page.locator('.doc-title-row input, .doc-title-row textarea'),
+  ).toHaveCount(0);
+  const original =
+    '\uFEFF# Content heading\r\n\r\nKeep \u03b1 and **Markdown** exact.\r\n';
+  await page.getByLabel('Import note files').setInputFiles({
+    name: 'Passive title.mdx',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(original),
+  });
+  await expect(title).toHaveText('Passive title');
+  await page.locator('.doc-title-row').click();
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.getByLabel('Search commands and notes').fill('Rename document');
+  await palette.getByRole('button', { name: /^Rename document/ }).click();
+  const rename = page.getByRole('dialog', {
+    name: 'Rename document',
+    exact: true,
+  });
+  await rename
+    .getByRole('textbox', { name: 'Document title', exact: true })
+    .fill('Renamed with spaces');
+  await rename.getByRole('button', { name: 'Rename', exact: true }).click();
+  await expect(title).toHaveText('Renamed with spaces');
+  await saved(page);
+  await page.reload();
+  await expect(title).toHaveText('Renamed with spaces');
+  await page.locator('.doc-title-row').click();
+  await page.keyboard.press('Control+k');
+  await palette
+    .getByLabel('Search commands and notes')
+    .fill('Export current source');
+  const download = page.waitForEvent('download');
+  await palette.getByRole('button', { name: /^Export current source/ }).click();
+  expect(readFileSync((await (await download).path())!)).toEqual(
+    Buffer.from(original),
+  );
+});
 
 test('creates folders and notes, renames, moves, and searches real source content', async ({
   page,
@@ -142,8 +274,8 @@ test('creates folders and notes, renames, moves, and searches real source conten
     .fill('Linear transformations');
   await rename.getByRole('button', { name: 'Rename', exact: true }).click();
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Linear transformations');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Linear transformations');
 
   await (
     await documentActions(page)
@@ -181,8 +313,8 @@ test('creates folders and notes, renames, moves, and searches real source conten
   await saved(page);
   await page.reload();
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Linear transformations');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Linear transformations');
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toContainText(
     'orbit-8472',
   );
@@ -218,8 +350,8 @@ test('Recent preserves insertion order, removes shortcuts only, and survives rel
     })
     .click();
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('Alpha');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('Alpha');
   await expect(recent).toHaveText(['Welcome', 'Beta', 'Gamma']);
 
   await page
@@ -238,7 +370,7 @@ test('Recent preserves insertion order, removes shortcuts only, and survives rel
   await expect(recent).toHaveText(['Welcome', 'Beta', 'Gamma', 'Alpha']);
 });
 
-test('Trash restores the exact source and a title typed with spaces saves before blur', async ({
+test('Trash restores exact source after an explicit rename with spaces', async ({
   page,
 }) => {
   await launch(page);
@@ -247,11 +379,11 @@ test('Trash restores the exact source and a title typed with spaces saves before
   const body =
     '## Retain this\n\nA removed note is recoverable, including α and β.\n';
   await editor.fill(body);
-  const title = page.getByRole('textbox', { name: 'Document title' });
-  await title.fill('Recoverable note with spaces');
+  const title = page.getByRole('heading', { name: 'Document title' });
+  await renameNote(page, 'Recoverable note with spaces');
   await saved(page);
   await page.reload();
-  await expect(title).toHaveValue('Recoverable note with spaces');
+  await expect(title).toHaveText('Recoverable note with spaces');
   await expect(editor).toContainText('A removed note is recoverable');
 
   await (
@@ -266,7 +398,7 @@ test('Trash restores the exact source and a title typed with spaces saves before
   await remove
     .getByRole('button', { name: 'Move to Trash', exact: true })
     .click();
-  await expect(title).not.toHaveValue('Recoverable note with spaces');
+  await expect(title).not.toHaveText('Recoverable note with spaces');
   const dialog = await settings(page);
   await dialog.getByRole('button', { name: 'Trash', exact: true }).click();
   const row = dialog
@@ -328,8 +460,8 @@ test('mobile navigation closes after creation, mode controls work, and the page 
     'true',
   );
   await expect(
-    page.getByRole('textbox', { name: 'Document title', exact: true }),
-  ).toHaveValue('Welcome');
+    page.getByRole('heading', { name: 'Document title', exact: true }),
+  ).toHaveText('Welcome');
   await chooseMode(page, 'Source');
   await expect(page.getByRole('textbox', { name: 'MDX source' })).toBeVisible();
 });
@@ -369,8 +501,8 @@ test('command palette focuses search, supports keyboard selection, and traps dia
   await search.press('Enter');
   await expect(palette).toHaveCount(0);
   await expect(
-    page.getByRole('textbox', { name: 'Document title' }),
-  ).toHaveValue('React playground');
+    page.getByRole('heading', { name: 'Document title' }),
+  ).toHaveText('React playground');
 
   await editor.focus();
   await page.keyboard.press('Control+k');

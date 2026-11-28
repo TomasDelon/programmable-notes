@@ -1,0 +1,44 @@
+{
+  "status": "NOT_PROVEN",
+  "repository_source": "dc60a3d69913d8e30ae66e1a55591a82d3526a38",
+  "runtime": "Python GTK/WebKitGTK diagnostic; fixed plain HTML, not Wry/application/React",
+  "source_sha256": {
+    "repro/embedding.py": "4ca9063b3841ad9b3c5e51765a455ce85a734590d12e2d86090c8b65356c4d2d",
+    "repro/observe.py": "aa9cfb298d234d3b43120ad8f6bf181250e99c8918d8f57ed2be58e9b13aed8f"
+  },
+  "sampled_controller_files": {
+    "cpu.max": "25000 100000",
+    "memory.max": "536870912",
+    "memory.swap.max": "0",
+    "pids.max": "128"
+  },
+  "cold": {
+    "host_pid": 505,
+    "child_pid": 513,
+    "host_marker_utc": "2026-11-26 17:21:32",
+    "webview_setup_marker_utc": "2026-11-26 17:22:12",
+    "first_load_started_utc": "2026-11-26 17:22:32",
+    "rendered_fixture": false,
+    "component_input_proven": false,
+    "observer_failure": "xwininfo missing; no input sent in first observer"
+  },
+  "warm": {
+    "host_pid": 645,
+    "child_pid": 651,
+    "host_marker_utc": "2026-11-26 17:23:10",
+    "webview_setup_marker_utc": "2026-11-26 17:24:06",
+    "runtime_limit_journal_utc": "2026-11-26 17:24:12",
+    "rendered_fixture": false,
+    "component_input_proven": false,
+    "observer_result": "Input sent; hello appeared in trusted host entry, component rectangle blank"
+  },
+  "warnings": [
+    "AT-SPI bus unavailable",
+    "EGL DRI3 error",
+    "GDK frame-clock assertion",
+    "Foreign-window parent and IDs reported by harness, not independently queried",
+    "Unit kill-control-group Invalid argument warning; later cgroup/PID absence is not bounded cleanup proof"
+  ],
+  "guest_shutdown": "systemctl poweroff; console Power down; QEMU absent in later process listing",
+  "security_acceptance": "NOT RUN"
+}

@@ -4,8 +4,6 @@ import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 import { createHash } from 'node:crypto';
-import { compile } from '@mdx-js/mdx';
-import { build } from 'esbuild';
 const binary = resolve(
   process.env.NATIVE_BINARY || 'src-tauri/target/debug/programmable-notes',
 );
@@ -69,6 +67,11 @@ function systemctl(...args) {
   }).trim();
 }
 async function artifact(source) {
+  // Ordinary observer operations need only Node's built-ins, not compilers.
+  const [{ compile }, { build }] = await Promise.all([
+    import('@mdx-js/mdx'),
+    import('esbuild'),
+  ]);
   const compiled = String(await compile(source));
   const result = await build({
     stdin: {

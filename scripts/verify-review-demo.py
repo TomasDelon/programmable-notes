@@ -3,11 +3,11 @@ import argparse
 import hashlib
 import json
 import os
+from copy import deepcopy
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,9 +17,23 @@ import zipfile
 if sys.platform != 'linux':
     raise SystemExit('NOT RUN: Linux is required for the negative filesystem fixtures')
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--archive', type=Path, default=Path('.cache/review-demo.zip'))
+parser.add_argument('--profile', choices=('legacy', 'web-editor'), default='legacy')
+parser.add_argument('--dist', type=Path, default=Path('dist'))
+parser.add_argument('--capture', type=Path)
+parser.add_argument('--archive', type=Path)
 parser.add_argument('--browser', action='store_true')
 args = parser.parse_args()
+web_editor = args.profile == 'web-editor'
+if args.capture is None:
+    args.capture = Path('.cache/web-editor-demo' if web_editor else '.cache/editor-demo')
+if args.archive is None:
+    args.archive = Path('.cache/web-review-demo.zip' if web_editor else '.cache/review-demo.zip')
+
+def package_command(build, capture, output):
+    return [sys.executable, 'scripts/package-review-demo.py',
+            '--profile', args.profile, '--dist', str(build),
+            '--capture', str(capture), '--output', str(output)]
+
 archive_bytes = args.archive.read_bytes()
 with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
     manifest = json.loads(archive.read('MANIFEST.json'))
@@ -34,13 +48,14 @@ with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
 # wrong reason and conceal a missing guard.
 with tempfile.TemporaryDirectory(prefix='review-positive-', dir='.cache') as temporary:
     output = Path(temporary) / 'baseline.zip'
-    result = subprocess.run([sys.executable, 'scripts/package-review-demo.py',
-                             '--output', str(output)], capture_output=True, text=True)
+    result = subprocess.run(package_command(args.dist, args.capture, output),
+                            capture_output=True, text=True)
     assert result.returncode == 0 and output.exists(), (result.stdout, result.stderr)
     with zipfile.ZipFile(output) as baseline:
         current = json.loads(baseline.read('MANIFEST.json'))
         assert current['capture'] == manifest['capture']
         assert current['sha256'] == manifest['sha256']
+        verified_receipt = current['capture']
 
 cases = ['notice-missing', 'notice-go-truncated', 'capture-change', 'capture-script-change', 'asset-change', 'asset-missing', 'asset-extra',
          'backslash-path', 'windows-dot-space-path', 'symlink', 'failed-capture']
@@ -58,16 +73,20 @@ reasons = {
     'failed-capture': 'Recording did not complete successfully',
 }
 for case in cases:
-    with tempfile.TemporaryDirectory(prefix='review-negative-', dir='.cache') as temporary:
+    with (tempfile.TemporaryDirectory(prefix='review-negative-', dir='.cache') as temporary,
+          zipfile.ZipFile(BytesIO(archive_bytes)) as verified_archive):
         root = Path(temporary)
         build, capture = root / 'dist', root / 'capture'
-        shutil.copytree('dist', build)
-        receipt = json.loads(Path('.cache/editor-demo/capture.json').read_text())
-        capture.mkdir()
-        for name in receipt['files']:
-            target = capture / name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(Path('.cache/editor-demo') / name, target)
+        # Every case begins with the exact bytes approved by the positive package check.
+        receipt = deepcopy(verified_receipt)
+        for destination, prefix, names in (
+            (build, 'browser-build', verified_receipt['buildFiles']),
+            (capture, 'walkthrough', verified_receipt['files']),
+        ):
+            for name in names:
+                target = destination / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(verified_archive.read(f'{prefix}/{name}'))
         if case == 'notice-missing':
             (build / 'THIRD_PARTY_NOTICES.txt').unlink()
         elif case == 'notice-go-truncated':
@@ -99,10 +118,8 @@ for case in cases:
             receipt['verified'] = False
         (capture / 'capture.json').write_text(json.dumps(receipt))
         output = root / 'must-not-exist.zip'
-        result = subprocess.run([
-            sys.executable, 'scripts/package-review-demo.py', '--dist', str(build),
-            '--capture', str(capture), '--output', str(output),
-        ], capture_output=True, text=True)
+        result = subprocess.run(package_command(build, capture, output),
+                                capture_output=True, text=True)
         assert result.returncode != 0 and not output.exists() and reasons[case] in result.stderr, (case, result.stdout, result.stderr)
         print(f'REVIEW_ARTIFACT_REJECTED {case}')
 print(f'REVIEW_ARTIFACT_INTEGRITY_PASS manifest_crc_and_{len(cases)}_negative_cases')
@@ -117,7 +134,10 @@ if args.browser:
             thread.start()
             try:
                 env = dict(os.environ, REVIEW_DEMO_URL=f'http://127.0.0.1:{server.server_port}/')
-                subprocess.run(['node', 'scripts/verify-review-browser.mjs'], env=env,
+                browser_command = (['node', 'scripts/demo-web-editor.mjs', '--verify-extracted']
+                                   if web_editor else
+                                   ['node', 'scripts/verify-review-browser.mjs'])
+                subprocess.run(browser_command, env=env,
                                check=True, timeout=180)
             finally:
                 server.shutdown()

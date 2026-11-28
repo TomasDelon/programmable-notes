@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "stage": "final_os_close",
+  "startupPhase": "complete",
+  "failureKind": "none",
+  "assertionKind": "none",
+  "sourcePhase": "complete",
+  "binarySha256": "9d2409dd8e1781675ed7fe0eb39616cefe55cfaadd60eb1ea99217d59a5e8c06",
+  "checkpoints": [
+    "actual-vault-chooser-and-shared-source",
+    "automatic-exact-bom-mixed-ending-jsx-bytes",
+    "actual-source-keyboard-undo-redo-autosave",
+    "invalid-source-autosave-and-undo-to-valid",
+    "actual-preview-paragraph-caret-autosave-exact-bytes",
+    "actual-preview-keyboard-undo-redo-autosave",
+    "source-preview-switch-preserves-real-file",
+    "document-close-reopen-exact-disk",
+    "actual-wm-close-and-observed-process-exit",
+    "fresh-process-chooser-reopen-exact-file"
+  ],
+  "cleanupVerified": true,
+  "forcedCleanup": false,
+  "scope": "Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance"
+}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-enable-editor-close-guard"
+description = "Enables the enable_editor_close_guard command without any pre-configured scope."
+commands.allow = ["enable_editor_close_guard"]
+
+[[permission]]
+identifier = "deny-enable-editor-close-guard"
+description = "Denies the enable_editor_close_guard command without any pre-configured scope."
+commands.deny = ["enable_editor_close_guard"]

@@ -1,0 +1,57 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not raw private logs",
+  "run_id": 45935023462,
+  "job_id": 140296132828,
+  "source_commit": "f7d6853176d9db93e6340aca68966b39b3c80dc2",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "os_admission": "passed",
+  "normal_shutdown": "passed",
+  "session": {
+    "phase": "cleanup",
+    "reason": "cleanup_failed",
+    "cleanup": "failed"
+  },
+  "stop": {
+    "phase": "host",
+    "reason": "observer_error",
+    "observations": "all_not_run",
+    "original_reason": "observer_failed",
+    "host_exit": 1,
+    "observer_before_teardown": "running",
+    "host_stage": "start_failed",
+    "start_failure": "network_not_isolated",
+    "observer_exception": {
+      "phase": "host",
+      "error_type": "Refused",
+      "errno": null,
+      "frames": [
+        {
+          "function": "run",
+          "line": 620
+        },
+        {
+          "function": "_wait",
+          "line": 594
+        },
+        {
+          "function": "interrupted",
+          "line": 776
+        }
+      ]
+    }
+  },
+  "expiry": "not_run",
+  "interpretation": [
+    "The actual network-namespace admission check refused startup.",
+    "The supervisor returns before sending document input on this error, per the unchanged source control flow.",
+    "The observer receipt was produced by teardown interruption after early host exit.",
+    "Application cleanup remains unconfirmed; normal VM shutdown does not repair that failure."
+  ],
+  "limitations": [
+    "The OS policy reason for the missing namespace is not yet directly established.",
+    "No React pointer/typing, Stop, expiry, hostile workload or production application acceptance passed."
+  ]
+}

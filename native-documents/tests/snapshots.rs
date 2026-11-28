@@ -485,3 +485,114 @@ fn mixed_case_snapshot_names_round_trip_without_allowing_other_formats() {
     assert!(store.append(invalid).is_err());
     assert_eq!(store.list().unwrap().snapshots.len(), 1);
 }
+
+#[test]
+fn readonly_discovery_and_exact_read_never_initialize_or_prune() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new("readonly");
+    let path = f.0.join("recovery");
+    assert!(Recovery::open_readonly(&path).unwrap().is_none());
+    assert!(!path.exists());
+    let first = f
+        .store()
+        .append(input("\u{feff}Café\r\n<Opaque />", None))
+        .unwrap();
+    // Simulate retained valid versions from interrupted maintenance. Writer
+    // retention remains unchanged; a read must not apply it retroactively.
+    let bytes = fs::read(path.join(&first.snapshot.file)).unwrap();
+    for index in 0..7 {
+        let other = f.0.join(format!("other-{index}"));
+        let mut writer = Recovery::open(&other).unwrap();
+        let written = writer
+            .append(input(&format!("version-{index}"), None))
+            .unwrap();
+        fs::copy(
+            other.join(&written.snapshot.file),
+            path.join(&written.snapshot.file),
+        )
+        .unwrap();
+    }
+    fs::write(path.join("broken.pnrec"), b"corrupt").unwrap();
+    fs::set_permissions(path.join("broken.pnrec"), fs::Permissions::from_mode(0o600)).unwrap();
+    let names = || {
+        let mut names: Vec<_> = fs::read_dir(&path)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect();
+        names.sort();
+        names
+    };
+    let before = names();
+    let store = Recovery::open_readonly(&path).unwrap().unwrap();
+    let inventory = store.list().unwrap();
+    assert_eq!(inventory.snapshots.len(), 8);
+    assert!(!inventory.errors.is_empty());
+    let (snapshot, source) = store.read_version(&first.snapshot.file).unwrap();
+    assert_eq!(snapshot.id, first.snapshot.id);
+    assert_eq!(snapshot.metadata, first.snapshot.metadata);
+    assert_eq!(source, "\u{feff}Café\r\n<Opaque />");
+    drop(store);
+    assert_eq!(names(), before);
+    assert_eq!(fs::read(path.join(&first.snapshot.file)).unwrap(), bytes);
+    fs::remove_file(path.join(".lock")).unwrap();
+    assert!(Recovery::open_readonly(&path).is_err());
+    assert!(!path.join(".lock").exists());
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    assert!(Recovery::open_readonly(&path).is_err());
+}
+
+#[test]
+fn readonly_keeps_clean_sequential_versions_that_writer_maintenance_would_prune() {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+    let f = Fixture::new("readonly-clean-retention");
+    let path = f.0.join("recovery");
+    let mut store = f.store();
+    let mut retained = Vec::new();
+    let mut parent = None;
+    for index in 0..8 {
+        let written = store
+            .append(input(&format!("exact version {index}\r\n"), parent))
+            .unwrap();
+        parent = Some(written.snapshot.id.clone());
+        retained.push((
+            written.snapshot.file.clone(),
+            fs::read(path.join(&written.snapshot.file)).unwrap(),
+        ));
+    }
+    drop(store);
+    // Reconstitute a clean interrupted-retention inventory using genuine records.
+    for (name, bytes) in &retained {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(path.join(name))
+            .unwrap();
+        file.write_all(bytes).unwrap();
+    }
+    let reader = Recovery::open_readonly(&path).unwrap().unwrap();
+    let inventory = reader.list().unwrap();
+    assert!(inventory.errors.is_empty());
+    assert_eq!(inventory.snapshots.len(), 8);
+    for (index, (name, bytes)) in retained.iter().enumerate() {
+        assert_eq!(
+            reader.read_version(name).unwrap().1,
+            format!("exact version {index}\r\n")
+        );
+        assert_eq!(fs::read(path.join(name)).unwrap(), *bytes);
+    }
+    drop(reader);
+    // Discriminating control: the previous writer-style open prunes this exact
+    // healthy inventory. Read-only discovery must never invoke that path.
+    assert_eq!(
+        Recovery::open(&path)
+            .unwrap()
+            .list()
+            .unwrap()
+            .snapshots
+            .len(),
+        5
+    );
+}

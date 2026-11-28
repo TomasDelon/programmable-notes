@@ -1,0 +1,27 @@
+{
+  "evidence_source": "strictly validated fixed GitHub check annotations; not the raw private receipt",
+  "run_id": 45931348826,
+  "job_id": 140284468378,
+  "source_commit": "aeff50b371f855d83d3b84e3f0b3c9ff5853441b",
+  "profile": "inline-react-v1",
+  "scope": "fixed-native-diagnostic-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "os_admission": "passed",
+  "normal_shutdown": "passed",
+  "session": {
+    "status": "failed",
+    "phase": "desktop",
+    "reason": "deadline",
+    "cleanup": "passed"
+  },
+  "cases": {
+    "stop": "not_run",
+    "expiry": "not_run"
+  },
+  "limitations": [
+    "The exact desktop substage and cause are not established.",
+    "No pointer, keyboard, Stop, expiry or renderer-policy observation ran.",
+    "Session cleanup passed its own control predicates; no application security acceptance is inferred."
+  ]
+}

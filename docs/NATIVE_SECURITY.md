@@ -14,6 +14,106 @@ failed its resident-page OOM case and remains retained under its own binary
 scope. New observations do not explain historical crashes or certify other
 binaries/environments.
 
+## Current fixture infrastructure scope — 27 November 2026
+
+Share-free guest OS admission passed on the exact sources and updated GTK recipe
+recorded in [the provisioning evidence](security-evidence/2026-11-27-vm-provisioning/README.md).
+This includes strict SSH identity, bracketed wrong-key/pin refusals, actual
+systemd/cgroup/mount facts and acknowledged normal shutdown. It does not execute
+the native application or supersede failed application observations below.
+
+The [fixed inline React diagnostic](plans/native-inline-react-v1.md) is a separate
+engineering probe, not an accepted product. Even a successful helper run cannot
+prove production IPC/filesystem denial, arbitrary geometry, hostile workloads or
+the complete recovery/security matrix. Its native results must be recorded only
+after actual execution; builds and synthetic control tests remain separate.
+
+The first actual fixed host attempt with complete startup diagnostics refused
+with `network_not_isolated` on the fresh Ubuntu guest; no document input was sent
+through the unchanged supervisor gate. Application teardown remained unconfirmed,
+separately from normal VM shutdown. [Exact source-pinned failure](security-evidence/2026-11-27-native-inline-fixture/native-profile-45935023462.json).
+Do not repeat an identical blocked runtime or treat an explicit namespace option
+as permission. A suitable environment must satisfy actual effective checks; no
+sysctl change, executor exemption or weaker assertion is authorized.
+
+The successor experimental host now uses profile inline-react-guarded-v2 and the
+same canonical GTK chooser/permission/dialog/print/fullscreen guards as the Tauri
+preview. Guards and failure hooks precede one-shot authored publication; old v1
+observations do not establish v2. Source review and mutation tests do not prove
+actual native handlers or complete navigation denial. The about:blank exception
+and all original hostile-workload/IPC/filesystem/network gates remain; general
+native React stays disabled. See [ADR043](decisions/ADR-043-inline-native-browser-guards.md).
+
+## New vault-service validation gate — 26 November 2026
+
+This section preserves the preactivation contract. The shared native workspace
+is now connected to these services; current source-bound results are in
+IMPLEMENTATION_STATUS. Actual installed picker/edit/restart gates remain open,
+and historical legacy-app observations cannot satisfy them automatically.
+
+The new `choose_vault`, `vault_inventory`, `open_vault_sources` and
+`create_vault_source` handlers are editor-only foundations, not yet connected to
+the shared product. Their actual registered-command/chooser behavior has **not**
+been validated by the historical native runs above. Backend tests and compilation
+are separate evidence: [current receipt](security-evidence/2026-11-26-native-vault-adapter/README.md).
+
+The updated `native:test` requires correctly shaped editor calls for inventory,
+opening and creation to reach their exact forged-token domain refusal before the
+explicit fixture start and preview-denial phase. Unknown-command or ACL errors
+fail that positive registration control. Preview calls must still be denied,
+including `open_notes_folder` and all four new commands. Do not replace this
+native test with its transport-mocked tooling regression.
+
+Before product activation, also exercise the real picker with two disposable
+vaults: cancellation preserves the active scope; selection replacement rejects
+new admissions using the old vault token; already opened document grants survive;
+in-flight captured operations never retarget to the new root. Verify ordinary
+relative opening/creation, collisions, outside-path/symlink refusal and exact disk
+bytes. No generic filesystem permission or document-supplied root path is allowed.
+Production namespace/seccomp and full containment validation remain required.
+
+## Standalone React fixture is not isolation acceptance
+
+The [26 November React pointer diagnostic](security-evidence/2026-11-26-wry-react-pointer/README.md)
+observed a fixed actual MDX/React counter, but violated its no-host-share plan:
+a writable 9p mount contained the disposable guest transport key. No owner
+credential/vault/home copy or key access by author JS was established. The guest,
+endpoint, backing share and generated keys were removed. This is functional
+pointer evidence only; it cannot satisfy VM or full security acceptance. Its
+bounded Stop observer also aborted with ESRCH and remains unproven.
+
+Before any successor native runtime test, review the actual provisioning/launch
+implementation and enforce absence of host filesystem shares. Keep private
+transport keys outside guest images, payload/evidence trees and mounted paths;
+only the public authorization key belongs in the guest. Stage fixed inputs and
+collect guest-local evidence through authenticated transfer instead of 9p/virtiofs.
+Use a versioned preflight that rejects host-share arguments and credential-path
+overlap before launching QEMU; include negative controls. **End-to-end guest OS
+admission and native application execution still need their own verified results.** Do not waive this gate or
+retroactively promote the deviating fixture.
+
+A [versioned launch boundary](decisions/ADR-035-share-free-native-fixture-launch.md)
+now rejects share arguments and unsafe layouts, pins boot descriptors, keeps the
+transport key out of inherited descriptors and bounds serial output/process
+lifetime. Its CLI/layout and mocked-launch controls are not a guest run. The
+end-to-end guest OS admission and native acceptance remain separately gated. See the
+[boundary evidence](security-evidence/2026-11-26-runtime-boundaries/README.md).
+
+The [private preparation/packing/admission pipeline](decisions/ADR-036-private-guest-preparation-and-os-admission.md)
+has versioned negative controls and independent source review. Root has executed
+real mount-free Docker assembly, verified the copied boot artifacts and checked
+the launcher layout. This satisfies the source-review prerequisite for the fixed
+disposable OS-admission run; it does not establish that a guest booted or authorize
+unverified authored payloads. That run must record authenticated identity,
+complete mount/key checks and normal owned shutdown before native payload work.
+Only its sanitized JSON receipt may be uploaded, never fixture roots or images.
+[Actual preparation evidence and remaining execution gates](security-evidence/2026-11-27-vm-provisioning/README.md).
+
+Reuse established process-identity/cleanup semantics for observer corrections.
+Normalize only known absence races on process-bound reads; arbitrary cgroup,
+permission or control errors remain failures. A successor observer requires its
+own reviewed tests/evidence; the recorded ESRCH abort stays a failed observation.
+
 ## Milestone 3 production configuration
 
 The historical debug/test-feature procedure below remains useful, but does not establish production package behavior. New production work, actual results and limitations are recorded in the [2026-11-18 evidence](security-evidence/2026-11-18/README.md). Read [ADR-004](decisions/ADR-004-linux-persistence-and-production.md) for the authorized file store, actual namespace enforcement, WebKit process sandbox and residual native risks.

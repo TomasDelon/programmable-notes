@@ -55,6 +55,12 @@ async function start() {
   );
   render(<App />);
   await act(async () => {
+    await import('../../src/desktop/NativeWorkspaceShell');
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Show document modes' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Split' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Open right panel' }));
+  await act(async () => {
     await vi.advanceTimersByTimeAsync(300);
   });
   await act(async () => {
@@ -77,14 +83,18 @@ it('confirms native Stop only after success and allows a fresh explicit retry af
   });
   await start();
   fireEvent.click(screen.getByRole('button', { name: 'Stop preview' }));
-  expect(screen.getByRole('status')).toHaveTextContent('Stopping preview');
+  expect(
+    screen.getByRole('status', { name: 'Document status' }),
+  ).toHaveTextContent('Stopping preview');
   await act(async () => {
     await Promise.resolve();
   });
   await act(async () => {
     reject(Error('injected Stop failure'));
   });
-  expect(screen.getByRole('status')).toHaveTextContent('Preview stop failed');
+  expect(
+    screen.getByRole('status', { name: 'Document status' }),
+  ).toHaveTextContent('Preview stop failed');
   expect(screen.getByRole('alert')).toHaveTextContent('injected Stop failure');
   expect(stops).toBe(1);
   fireEvent.click(screen.getByRole('button', { name: 'Stop preview' }));
@@ -92,7 +102,9 @@ it('confirms native Stop only after success and allows a fresh explicit retry af
     await Promise.resolve();
   });
   expect(stops).toBe(2);
-  expect(screen.getByRole('status')).toHaveTextContent('Preview stopped');
+  expect(
+    screen.getByRole('status', { name: 'Document status' }),
+  ).toHaveTextContent('Preview stopped');
   expect(screen.queryByRole('alert')).toBeNull();
 });
 it.each(['success', 'failure'])(
@@ -118,14 +130,18 @@ it.each(['success', 'failure'])(
     await act(async () => {
       await Promise.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Compiling');
+    expect(
+      screen.getByRole('status', { name: 'Document status' }),
+    ).toHaveTextContent('Compiling');
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
     await act(async () => {
       api.worker!.onmessage!({ data: { error: 'current compiler failure' } });
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Build failed');
+    expect(
+      screen.getByRole('status', { name: 'Document status' }),
+    ).toHaveTextContent('Build failed');
     await act(async () => {
       if (outcome === 'failure') reject(Error('superseded failure'));
       else resolve();
@@ -133,7 +149,9 @@ it.each(['success', 'failure'])(
     expect(screen.getByRole('alert')).toHaveTextContent(
       'current compiler failure',
     );
-    expect(screen.getByRole('status')).toHaveTextContent('Build failed');
+    expect(
+      screen.getByRole('status', { name: 'Document status' }),
+    ).toHaveTextContent('Build failed');
   },
 );
 it.each(['success', 'failure'])(
@@ -162,10 +180,14 @@ it.each(['success', 'failure'])(
     });
     expect(screen.queryByRole('alert')).toBeNull();
     expect(pending).toHaveLength(2);
-    expect(screen.getByRole('status')).toHaveTextContent('Stopping preview');
+    expect(
+      screen.getByRole('status', { name: 'Document status' }),
+    ).toHaveTextContent('Stopping preview');
     await act(async () => {
       pending[1]!.resolve();
     });
-    expect(screen.getByRole('status')).toHaveTextContent('Preview stopped');
+    expect(
+      screen.getByRole('status', { name: 'Document status' }),
+    ).toHaveTextContent('Preview stopped');
   },
 );

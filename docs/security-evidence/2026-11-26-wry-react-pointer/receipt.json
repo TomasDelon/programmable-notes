@@ -1,0 +1,366 @@
+{
+  "classification": "FIXED_PINNED_MDX_REACT_POINTER_OBSERVED; BOUNDED_STOP_NOT_PROVEN_OBSERVER_ESRCH",
+  "repository_head_at_preparation": "df572d9f35f677d8a14887e4d4fc18a7f2db1408",
+  "repository_head_at_execution": "4c3da5d09a4c52bbf0ff5072ea9ba182492d524b",
+  "scope": "Standalone GtkSocket/Plug diagnostic; normal keyboard/geometry/hostile matrix/product acceptance remain open.",
+  "source_sha256": {
+    "repro/Cargo.lock": "d58ed3cf445cfb00cf31e5a4d7f9bb9b5c1b86fbf8023677af4a1eb7eabd0b1a",
+    "repro/Cargo.toml": "2b9225c00eb436e978de2f7f69419295f41c780478f4101a293233bc43b6e7c9",
+    "repro/main.rs": "d7ed81be9a01b70913d934cc4e9ef670ed8e23b6b4362d4e3e926ef0fa9c1579",
+    "repro/observer.py": "82c01a7fbc01f8c48ec651a8298c4432bb78a5b1459a051b37eb854190306f81",
+    "raw/compile-react.mjs": "e426c70c128662e9365d66303886a6dedec763a463bb889befab8e770d0de1c9",
+    "raw/compile-receipt.json": "bbc66794792a0941485e513242da24471291ff4a0cf4fff1397ee75a5b51fb69",
+    "raw/counter.mdx": "2340992e400c7e1c00565d84fc44e13360a4d1f070c2bed5e0529546dad9317b",
+    "raw/live-cpu-samples.json": "a0628b286e446240aed2a22d2337b5f2e59da03d396146f66890c3be53d683a5",
+    "raw/result.json": "8e68ae042d0a9944b0aceaffe365f1d04b59e1f3b092d3cb02d7370a1fc9babf",
+    "raw/fixture.html": "108e3e7723c46d600d509be8a4eec6e5e0db233032fc725c77e271f2ed166245",
+    "raw/compiled-mdx.js.txt": "48341f8834b2ce189c4d38ce2ea49eb3ca7f7d7aac9a88b5c206da1f5b86f277"
+  },
+  "artifact_sha256": "a0f56ab6f56c22c0df706e91458ed30a51a5804c87c53479c14732b1455e2a65",
+  "compile": {
+    "kind": "trusted_compile_only_no_generated_code_evaluation",
+    "sourceSha256": "2340992e400c7e1c00565d84fc44e13360a4d1f070c2bed5e0529546dad9317b",
+    "compiledMdxSha256": "48341f8834b2ce189c4d38ce2ea49eb3ca7f7d7aac9a88b5c206da1f5b86f277",
+    "javascriptSha256": "f39ffd636956894ded948c78ff038afa33fa7df0070bbaa1de8c885d4e21ac0e",
+    "htmlSha256": "108e3e7723c46d600d509be8a4eec6e5e0db233032fc725c77e271f2ed166245",
+    "javascriptBytes": 224322,
+    "htmlBytes": 224650,
+    "packageLockSha256": "f12f2332857855a121ccacb1f1a684b81bd8e1e46bbde19b9d0ec0d239d34a86",
+    "dependencies": {
+      "@mdx-js/mdx": {
+        "version": "3.1.1",
+        "packageJsonSha256": "802e17412059976878225fb25c1a04660f8df0d581f35aefc6da8e204e2db0a8"
+      },
+      "esbuild": {
+        "version": "0.28.2",
+        "packageJsonSha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490"
+      },
+      "react": {
+        "version": "19.3.1",
+        "packageJsonSha256": "9cc9c3de5441a2eea7f41f52f3f2a15a4fc51f90c0b72741f0d7638643a85e67"
+      },
+      "react-dom": {
+        "version": "19.3.1",
+        "packageJsonSha256": "89d54f11575c9b0f7819962d9d72a31970dfb4d103f07e8b1d1b37e6d1fc3258"
+      }
+    }
+  },
+  "pre_execution_correction": "Error receipt made sticky before payload; compiled/bundled/rebuilt again. Prior preparation logs retained privately; final executed source hashes verified unchanged after run.",
+  "case": {
+    "result": {
+      "react_pointer": "PASS_FIXED_MDX_REACT_POINTER_ONLY",
+      "normal_keyboard": "OPEN_NOT_TESTED",
+      "stop": "NOT_PROVEN: [Errno 3] No such process",
+      "host_input": "NOT_RUN",
+      "forced_focus": "FORBIDDEN_NOT_USED",
+      "unit": "programmable-notes-preview-554-1795729201710542660.service",
+      "host_pid": 554,
+      "main_pid": 565,
+      "socket_xid": 4194315,
+      "host_xid": 4194307,
+      "unit_start_monotonic": 81.27433,
+      "policy": {
+        "cpu.max": "25000 100000",
+        "memory.max": "536870912",
+        "memory.swap.max": "0",
+        "pids.max": "128"
+      },
+      "case_deadlines": {
+        "ready_age_seconds": 44,
+        "input_age_seconds": 49,
+        "stop_start_before_age_seconds": 50,
+        "stop_cleanup_seconds": 5
+      },
+      "native_bridge": "PASS",
+      "child_xid": 10485763,
+      "last_react_state": {
+        "ready": true,
+        "count": 2,
+        "field": "",
+        "focus": "counter",
+        "error": ""
+      },
+      "x_errors": []
+    },
+    "events": [
+      {
+        "kind": "unit_verified",
+        "monotonic": 81.790030705,
+        "react_pointer": "NOT_RUN",
+        "normal_keyboard": "OPEN_NOT_TESTED",
+        "stop": "NOT_RUN",
+        "host_input": "NOT_RUN",
+        "forced_focus": "FORBIDDEN_NOT_USED",
+        "unit": "programmable-notes-preview-554-1795729201710542660.service",
+        "host_pid": 554,
+        "main_pid": 565,
+        "socket_xid": 4194315,
+        "host_xid": 4194307,
+        "unit_start_monotonic": 81.27433,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        }
+      },
+      {
+        "kind": "native_bridge_sentinel",
+        "monotonic": 84.465150355,
+        "child_xid": 10485763
+      },
+      {
+        "kind": "script_ready",
+        "monotonic": 120.667982095,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "",
+          "error": ""
+        },
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 120,
+          "border": 0,
+          "depth": 24
+        },
+        "unit_age": 39.393610734999996
+      },
+      {
+        "kind": "mounted_react_count_zero",
+        "monotonic": 120.939379035,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "",
+          "error": ""
+        },
+        "unit_age": 39.66501013499999
+      },
+      {
+        "kind": "real_pointer_input_begin",
+        "monotonic": 120.940701375,
+        "child_xid": 10485763,
+        "unit_age": 39.666354195
+      },
+      {
+        "kind": "state",
+        "monotonic": 121.224561755,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 0,
+          "field": "",
+          "focus": "",
+          "error": ""
+        },
+        "unit_age": 39.950210485
+      },
+      {
+        "kind": "state",
+        "monotonic": 122.479526565,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 1,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 41.205175325
+      },
+      {
+        "kind": "state",
+        "monotonic": 122.999008865,
+        "child_xid": 10485763,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 41.72466220499999
+      },
+      {
+        "kind": "react_count_two_acknowledged",
+        "monotonic": 123.000811455,
+        "state": {
+          "ready": true,
+          "count": 2,
+          "field": "",
+          "focus": "counter",
+          "error": ""
+        },
+        "unit_age": 41.726432884999994
+      },
+      {
+        "kind": "verified_live_before_stop",
+        "monotonic": 123.333981415,
+        "unit": "programmable-notes-preview-554-1795729201710542660.service",
+        "main_pid": 565,
+        "start_identity": "8069",
+        "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-554-1795729201710542660.service",
+        "unit_age": 42.04210481499999,
+        "policy": {
+          "cpu.max": "25000 100000",
+          "memory.max": "536870912",
+          "memory.swap.max": "0",
+          "pids.max": "128"
+        },
+        "identities": [
+          ["565", "8069"],
+          ["583", "8528"],
+          ["591", "9026"],
+          ["595", "9107"],
+          ["597", "9217"],
+          ["600", "9317"],
+          ["601", "9356"],
+          ["602", "9486"]
+        ]
+      },
+      {
+        "kind": "stop_not_proven",
+        "monotonic": 123.679742345,
+        "error": "[Errno 3] No such process"
+      }
+    ]
+  },
+  "host_stop_callback_observed": "HOST_BUTTON_STOP Ok(())",
+  "stop_observer_failure": "[Errno 3] No such process. Outer handler retained only str(exception), no traceback/filename/phase. Exact failing process-bound read cannot be established from executed evidence. No source fix/retry or retroactive bounded pass.",
+  "journal": [
+    {
+      "__REALTIME_TIMESTAMP": "1795729244656099",
+      "MESSAGE": "Stopping programmable-notes-preview-554-1795729201710542660.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-react-pointer-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child...",
+      "MESSAGE_ID": "de5b426a63be47a7b6ac3eaac82e2f6f",
+      "USER_UNIT": "programmable-notes-preview-554-1795729201710542660.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1795729245132097",
+      "MESSAGE": "Stopped programmable-notes-preview-554-1795729201710542660.service - /usr/bin/env -i TAURI_WEBVIEW_AUTOMATION=false TAURI_AUTOMATION=false DISPLAY=:99 XDG_RUNTIME_DIR=/run/user/1000 XAUTHORITY=/run/user/1000/wry-react-pointer-Xauthority DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus LANG=C.UTF-8 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 /probe/pn-wry-inline-spike --preview-child.",
+      "MESSAGE_ID": "9d1aaa27d60140bd96365438aad20286",
+      "USER_UNIT": "programmable-notes-preview-554-1795729201710542660.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1795729245135315",
+      "MESSAGE": "programmable-notes-preview-554-1795729201710542660.service: Consumed 10.743s CPU time, 125.7M memory peak, 0B memory swap peak.",
+      "MESSAGE_ID": "ae8f7b866b0347b9af31fe1c80b127c0",
+      "USER_UNIT": "programmable-notes-preview-554-1795729201710542660.service",
+      "_EXE": "/usr/lib/systemd/systemd",
+      "_UID": "1000",
+      "_TRANSPORT": "journal"
+    }
+  ],
+  "live_sampler": {
+    "scope": "Read-only background snapshots, observed before/during Stop request; no deadline changes or causal proof. Snapshot times precede completion of their individual reads.",
+    "sample_count": 42,
+    "last": {
+      "monotonic": 123.437278165,
+      "unit_age": 42.162957344999995,
+      "cpu.stat": "usage_usec 10607963\nuser_usec 8102201\nsystem_usec 2505761\ncore_sched.force_idle_usec 0\nnr_periods 427\nnr_throttled 423\nthrottled_usec 68901440\nnr_bursts 0\nburst_usec 0",
+      "cpu.pressure": "some avg10=62.11 avg60=33.64 avg300=9.07 total=28829651\nfull avg10=61.94 avg60=33.59 avg300=9.06 total=28771679",
+      "memory.current": "131043328",
+      "memory.peak": "131813376",
+      "cgroup.events": "populated 1\nfrozen 0",
+      "cgroup.procs": "565\n583\n591\n595\n597\n600\n601\n602",
+      "processes": [
+        {
+          "pid": 565,
+          "start": "8069",
+          "state": "S",
+          "comm": "pn-wry-inline-s"
+        },
+        {
+          "pid": 583,
+          "start": "8528",
+          "state": "S",
+          "comm": "WebKitNetworkPr"
+        },
+        {
+          "pid": 591,
+          "start": "9026",
+          "state": "S",
+          "comm": "bwrap"
+        },
+        {
+          "pid": 595,
+          "start": "9107",
+          "state": "S",
+          "comm": "bwrap"
+        },
+        {
+          "pid": 597,
+          "start": "9217",
+          "state": "S",
+          "comm": "xdg-dbus-proxy"
+        },
+        {
+          "pid": 600,
+          "start": "9317",
+          "state": "S",
+          "comm": "bwrap"
+        },
+        {
+          "pid": 601,
+          "start": "9356",
+          "state": "S",
+          "comm": "bwrap"
+        },
+        {
+          "pid": 602,
+          "start": "9486",
+          "state": "R",
+          "comm": "WebKitWebProces"
+        }
+      ]
+    }
+  },
+  "post_case_readonly": {
+    "time_utc": "Thu Nov 26 21:42:28 UTC 2026",
+    "cgroup_lookup": "ls: cannot access '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/programmable-notes-preview-554-1795729201710542660.service': No such file or directory",
+    "known_pid_query": "PID    PPID S COMMAND",
+    "interpretation": "Late absence does not establish original5-second cleanup predicate."
+  },
+  "host_input": "NOT_RUN by original observer after ESRCH abort; no acceptance claim.",
+  "environment": {
+    "readiness": "6.8.0-149-generic\nqemu\nTARGET               SOURCE     FSTYPE     OPTIONS\n/sys/kernel/security securityfs securityfs rw,nosuid,nodev,noexec,relatime\nrunning",
+    "setup_audit": "EXPLICIT_TRUSTED_SETUP_MODES_AND_NO_CONTAINER_MARKER_PASS",
+    "namespace_sysctls": "kernel.unprivileged_userns_clone = 1\nkernel.apparmor_restrict_unprivileged_userns = 1",
+    "toolchain": "rustc 1.100.0 (0ef1bc386 2026-11-09)\nbinary: rustc\ncommit-hash: 0ef1bc386059596dada8fb65b50425aab2ea637a\ncommit-date: 2026-11-09\nhost: x86_64-unknown-linux-gnu\nrelease: 1.100.0\nLLVM version: 23.1.5",
+    "runtime_share": "Guest /mnt was read/write9p security_model=none from container /spike, backed by this task-owned synthetic /tmp tree. Not guest-local/SCP."
+  },
+  "full_security_matrix": "NOT_RUN; no application commands/ACL or actual source/file editing proof.",
+  "cleanup": {
+    "guest": "Clean powerdown observed; no QEMU/WebKit jobs remain.",
+    "new_container": "Removed; only original pn-m3-build remains running.",
+    "former_share_backing": "Original task backing path absent;900KiB remaining non-key diagnostics relocated to never-shared retention path.",
+    "new_key_copies": "Dedicated private/public transport files removed; guest/staging/rootfs/disk copies destroyed with new container/heavy cleanup; key was never enrolled elsewhere by this task.",
+    "credential_check": "No private-key markers in sanitized public packet or remaining small retained diagnostics; no key value exposed.",
+    "original_assets": "Original pn-m3-build and approved clean tooling image dd31baa2199e unchanged."
+  },
+  "bundled_notices": "../../demo/THIRD_PARTY_NOTICES.txt: react19.3.1/react-dom19.3.1/scheduler0.28.0 MIT notices; esbuild legal comments preserved in raw fixture.",
+  "observer_normalization_followup": "Existing scripts/native-stress.mjs normalizes ENOENT/ESRCH only for process-bound reads. The diagnostic gap is future work; current str(exception) does not identify the failing call site.",
+  "plan_deviation": {
+    "condition": "No host credentials/shares",
+    "status": "NOT_SATISFIED",
+    "actual": "Guest /mnt was read/write9p security_model=none from container /spike, backed by this task-owned synthetic /tmp tree. Not guest-local/SCP.",
+    "included": "Synthetic source/artifacts/logs, public Cargo cache, newly generated task-local SSH transport private key and known-host metadata.",
+    "excluded": "No original owner credentials/vault/home/retained infrastructure directory shared.",
+    "exposure_observation": "No document-code key access or leakage observed or tested; no privilege-denial/no-share acceptance claim.",
+    "cause": "Prior provisioning reused without noticing this explicit plan restriction.",
+    "followup": "Preserve pointer observation under deviating environment; no rerun/source correction in this packet; remove new runtime/share backing heavies and ephemeral keys.",
+    "key_authority": "Dedicated generated key used only for this disposable guest bootstrap endpoint/staging; no owner/host/other-service enrollment."
+  },
+  "security_acceptance": "NOT_RUN; no-host-shares invariant NOT SATISFIED; VM isolation and fullsecurity acceptance explicitly EXCLUDED."
+}

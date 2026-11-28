@@ -18,8 +18,9 @@ Open the left navigation panel to see Documents, folders, and Recent. The first
 workspace contains a Welcome note and a React playground. Use the new-document
 or new-folder controls to create your own material. New notes open in Source.
 
-The title above the document is editable in Source and Preview. Document actions
-also offer rename, move, source export, and Move to Trash. Titles and workspace
+The title above the document is normal text, not a permanent form field. Use the
+Rename document command or document actions to rename it. Document actions also
+offer move, source export, and Move to Trash. Titles and workspace
 folders are display metadata; stable source keys and relative module imports
 do not change when a note is renamed or moved. Existing resolved wikilinks are
 updated atomically when necessary to preserve their target. If safe rewriting
@@ -76,8 +77,10 @@ MDX/React document in a separate sandboxed runtime, including shared module
 state. **Edit rendered document** returns to editable Preview. These execution
 modes are distinct from the two-way document mode selector.
 
-A source change triggers a preview rebuild after a short debounce. Compile
-errors retain the source and can provide locations to reveal in the editor.
+In editable Preview, ordinary text changes preserve unchanged React components;
+executable-source and dependency changes rebuild the affected runtime. Run full
+document rebuilds its whole runtime after source changes. Compile errors retain
+the source and can provide locations to reveal in the editor.
 Stop invalidates pending work and removes the current preview; Rebuild starts a
 fresh one. Results from an obsolete source revision cannot replace a newer
 preview. The build deadline includes worker initialization and preview-document
@@ -100,24 +103,57 @@ $$
 $$
 ```
 
-In Preview, click an inline `$...$` or display `$$...$$` equation to reveal
-its original dollar-delimited LaTeX **in place**, including on mobile. No
-separate equation dialog is used. `Enter` applies inline edits;
-`Ctrl/Cmd + Enter` applies display edits; **Done** or leaving the field also
-attempts to apply. `Escape` or **Cancel** discards the draft. Invalid LaTeX,
-removed delimiters or stale source revisions keep the editable draft and show
-an error instead of overwriting the source. Resolve an unfinished draft before
-switching documents, exporting, restoring or changing the surrounding document.
-If validation fails, nearby deletion and formatting cannot discard the equation;
-finish it or cancel explicitly before continuing. Cancelling a stale field shows
-the latest canonical source again. Unapplied drafts are memory-only
-and are not included in saved notes or backups.
+In Preview, place the document caret in an inline `$...$` or display `$$...$$`
+equation to reveal its original dollar-delimited source. It is editable child
+text in the same ProseMirror document, not a nested input or CodeMirror instance.
+There is one document selection and canonical undo/redo history. Mathematical
+source has no extra Tab stop, independent focus ring, Apply button or draft
+history. Hover alone does not change a formula. Moving the selection outside a
+valid equation switches its presentation to KaTeX without editing source or
+creating a history entry.
+
+Invalid LaTeX inside complete dollar delimiters remains visible as red source,
+saves normally and does not block writing elsewhere. Correcting it clears red
+feedback; leaving renders the valid formula. There are no notifications for
+ordinary LaTeX errors. Missing dollar delimiters are ordinary paragraph text,
+without red styling, mathematical controls or focus-dependent spacing. Adding
+the missing delimiter enables mathematical presentation again. Unmatched blocks
+do not consume following paragraphs or React components.
+
+Edits still validate exact source revisions and safe spans before application.
+A genuinely refused source write retains the attempted source for explicit
+recovery instead of overwriting accepted data. This recovery is separate from
+ordinary mathematical syntax errors. The web workspace saves a separate bounded,
+checksummed recovery copy when possible. **Recovery copy saved** acknowledges that
+copy; **Keep recovery copy and continue** verifies it before releasing the live
+attempt. Storage failure leaves the live text available for copying/downloading.
+Settings → Recovery → **Retained edits** can download the exact retained text,
+restore `.md` or `.mdx` source as a new Source-mode note, or explicitly discard it.
+Retained JavaScript/TypeScript modules remain downloadable in their original
+format; they are not restored as notes. Original notes
+are not overwritten and recovery never restores filesystem grants. These
+unapplied attempts are separate from saved notes and workspace backups. See
+[the current acceptance receipt](DAILY_USE_STATUS.md) for executed scope and
+remaining validation.
 
 The React playground provides an interactive counter. Editing ordinary Markdown
 in Preview preserves unaffected isolated React islands. **Run full document**
 starts a separate shared-module execution context; returning to **Edit rendered
 document** or changing executable source may restart that context. Component
 state is temporary and is not part of a note backup.
+
+Settings → **Core plugins** independently enables Mathematics and React
+components. These are bundled trusted modules; community plugins are unsupported.
+Disabling Mathematics displays literal dollar-delimited source. Disabling React
+stops execution and removes its frames. Neither toggle changes your note bytes.
+
+Imports, exports, declarations and comment-only expressions are hidden in Preview.
+There are no component setup labels or source-action buttons. Settings →
+**Workspace** → **Show component source in Preview** displays ordinary escaped
+code alongside rendered JSX. Hidden setup is protected against visual deletion;
+edit it explicitly in Source. Select All replacement preserves hidden setup at
+the document edges. Ranges crossing interleaved hidden code require Source editing
+and retain attempted text rather than silently removing invisible code.
 
 The compiler uses the pinned React runtime and its import allowlist. Related
 local `.md`, `.mdx`, `.js`, `.jsx`, `.ts`, and `.tsx` sources can be imported
@@ -392,3 +428,39 @@ engine regressions. Unit storage simulations do not replace actual browser
 reload, offline, multitab, and deployment checks. Report results with their
 exact source revision and runner. Native GUI and process-security acceptance
 require the separate native environment and evidence.
+
+### Download a verified browser walkthrough
+
+The optional CI dispatch with `browser_qa=true` and `review_artifacts=true`
+captures the current web workspace after its browser gate. Its
+**playable-editor-demo** artifact contains `walkthrough/walkthrough.html`, a
+recording, desktop/tablet/mobile screenshots, the exact exported example and a
+portable `browser-build`. Download the artifact from the run linked in the draft
+PR, unzip it, and follow its README. Serve the portable build over loopback HTTP;
+opening its application files directly with `file://` is not supported.
+
+Capture and packaging verify the production build and media checksums, fixed
+file allowlists and dependency notices. The verifier also checks eleven rejected
+artifact mutations and actual offline editing, React interaction, exact export
+and reload from a clean extraction. Artifacts expire after seven days. They are
+review evidence, not a release or native security certification. The original
+`legacy` capture profile remains available for historical engine evidence.
+
+### Writing in Preview
+
+Type Markdown prefixes directly: `1. ` or `- ` starts a list; Enter continues it,
+Enter on an empty item exits, and Tab/Shift+Tab nests or lifts items. `## ` makes
+a heading; `**bold**`, `*italic*` and backticks format inline text. Ctrl/Cmd+B/I
+toggles bold/italic. Ctrl/Cmd+Shift+K inserts a link. Additional table, list and
+equation commands are in Ctrl/Cmd+K; there is no formatting toolbar.
+
+Errors and important workspace feedback appear as small notifications without
+moving the document or taking focus. Details opens an optional dialog. If an edit
+is refused, **Review draft** exposes its retained source; **Download retained
+source** preserves exact bytes. Copy or download before explicitly discarding;
+your accepted source remains unchanged. Keep regular workspace backups.
+
+For responsiveness, documents containing a single run of more than 8,192 spaces
+or tabs use the existing Source-only fallback. Their exact bytes remain editable
+and exportable in Source. An in-progress Preview edit crossing the work budget
+is retained behind Review draft; download it before discarding or changing modes.

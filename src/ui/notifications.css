@@ -1,0 +1,162 @@
+.pn-notifications {
+  position: fixed;
+  right: 20px;
+  bottom: 48px;
+  z-index: 150;
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: 50dvh;
+  overflow: auto;
+  pointer-events: none;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+}
+.pn-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--divider, #ffffff18);
+  border-radius: 12px;
+  color: var(--text-strong, var(--text, #e5e5e5));
+  background: var(--modal, var(--surface, #242527));
+  box-shadow: 0 6px 24px #0002;
+  pointer-events: auto;
+  animation: pn-notice-in 160ms ease-out both;
+}
+.pn-notice > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.65;
+}
+.pn-notice[data-tone='error'] > svg {
+  color: #c98e82;
+  opacity: 1;
+}
+.pn-notice-content {
+  min-width: 0;
+  flex: 1;
+}
+.pn-notice-content > p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pn-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+.pn-notice button {
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.pn-notice-actions button {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.8;
+}
+.pn-notice .pn-notice-dismiss {
+  flex-shrink: 0;
+  padding: 2px;
+  opacity: 0.5;
+}
+.pn-notice button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+.pn-notice[data-leaving='true'] {
+  animation: pn-notice-out 140ms ease-in both;
+}
+@keyframes pn-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pn-notice-out {
+  to {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+.pn-dialog {
+  color: var(--text-strong, var(--text, #e5e5e5));
+  background: var(--modal, var(--surface, #242527));
+  border: 1px solid var(--divider, #ffffff20);
+  border-radius: 14px;
+  width: min(560px, calc(100vw - 32px));
+  padding: 0;
+  max-height: 80dvh;
+  box-shadow: 0 16px 60px #0005;
+}
+.pn-dialog::backdrop {
+  background: #0007;
+}
+.pn-dialog-body {
+  padding: 24px;
+  font:
+    13px/1.6 system-ui,
+    sans-serif;
+}
+.pn-dialog h2 {
+  font-size: 16px;
+  margin: 0 0 14px;
+}
+.pn-dialog pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 50dvh;
+  overflow: auto;
+  font-size: 12px;
+}
+.pn-dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--divider, #ffffff20);
+  background: transparent;
+  color: inherit;
+  padding: 12px;
+  border-radius: 8px;
+  font: 12px/1.6 monospace;
+}
+.pn-dialog button {
+  padding: 7px 12px;
+  margin: 12px 8px 0 0;
+  border: 1px solid var(--divider, #ffffff20);
+  border-radius: 7px;
+  color: inherit;
+  background: transparent;
+  font:
+    12px system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .pn-notifications {
+    right: 16px;
+    bottom: 52px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pn-notice,
+  .pn-notice[data-leaving='true'] {
+    animation: none;
+  }
+}

@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { isTauri } from '@tauri-apps/api/core';
 import { nativeDocuments } from './native';
+import { recoveryDigest, type SnapshotWritten } from './recovery';
 import {
   addDocuments,
   completeSave,
@@ -19,8 +20,42 @@ import {
   MAX_FILES,
   MAX_FILE_BYTES,
   MAX_TOTAL_BYTES,
+  type NativeDocument,
   type Workspace,
 } from './workspace';
+
+interface VisualRecovery {
+  key: string;
+  documentId: string;
+  name: string;
+  baseline: string;
+  source: string;
+  writing?: Promise<SnapshotWritten>;
+  written?: SnapshotWritten;
+}
+
+async function saveVisualRecovery(attempt: VisualRecovery) {
+  if (attempt.written?.durable) return;
+  const writing = (attempt.writing ??= (async () =>
+    nativeDocuments.snapshot({
+      documentId: attempt.documentId,
+      name: attempt.name,
+      source: attempt.source,
+      baseline: await recoveryDigest(attempt.baseline),
+      parent: attempt.written?.snapshot.id ?? null,
+    }))());
+  try {
+    attempt.written = await writing;
+    if (!attempt.written.durable)
+      throw Error(
+        attempt.written.warning ||
+          'A durable recovery copy could not be confirmed. The draft remains open.',
+      );
+  } finally {
+    attempt.writing = undefined;
+  }
+}
+
 export function useDocuments(
   initialFiles: Record<string, string>,
   initialEntry: string,
@@ -32,6 +67,7 @@ export function useDocuments(
   const running = useRef(false);
   const current = useRef(workspace);
   const pendingVisual = useRef(unappliedVisualEdit);
+  const visualRecovery = useRef<VisualRecovery | null>(null);
   useLayoutEffect(() => {
     current.current = workspace;
     pendingVisual.current = unappliedVisualEdit;
@@ -43,6 +79,7 @@ export function useDocuments(
       source: string;
       text: string;
     } | null>(null);
+  const [notesFolder, setNotesFolder] = useState<string | null>(null);
   const native = isTauri(),
     dirty = isDirty(workspace) || unappliedVisualEdit;
   // Native close protection covers all buffers, including edits during an async save.
@@ -89,9 +126,14 @@ export function useDocuments(
     },
     [allowDocumentOperation],
   );
-  async function openNative() {
+  async function openSelection(
+    pick: () => Promise<NativeDocument[]>,
+    folder = false,
+  ) {
     await operation(async () => {
-      const docs = await nativeDocuments.open();
+      if (!native)
+        throw Error('Opening native sources requires the desktop editor.');
+      const docs = await pick();
       if (!docs.length) return;
       let next: Workspace;
       try {
@@ -110,8 +152,20 @@ export function useDocuments(
         throw error;
       }
       setWorkspace(next);
+      if (folder) {
+        const { displayPath, logicalPath } = docs[0]!;
+        const suffix = '/' + logicalPath;
+        // Display text only. This path never authorizes another file operation.
+        setNotesFolder(
+          displayPath.endsWith(suffix)
+            ? displayPath.slice(0, -suffix.length) || '/'
+            : null,
+        );
+      }
     });
   }
+  const openNative = () => openSelection(nativeDocuments.open);
+  const openFolder = () => openSelection(nativeDocuments.openFolder, true);
   function newNote() {
     if (running.current || !allowDocumentOperation()) return;
     setFileError('');
@@ -370,6 +424,17 @@ export function useDocuments(
   }
   function change(source: string) {
     const key = workspace.selected;
+    // A queued callback stays bound to its original file, even after selection
+    // changes. Retain that edit without touching the newly selected document.
+    if (!Object.hasOwn(current.current.files, key)) return;
+    // Descendant layout effects refresh rendered history before this hook's
+    // layout effect runs. Publish the accepted bytes now, so that refresh can
+    // validate the new source without accepting an obsolete rendered snapshot.
+    // Keep the state update functional to preserve queued save/binding changes.
+    current.current = {
+      ...current.current,
+      files: { ...current.current.files, [key]: source },
+    };
     setWorkspace((next) =>
       key in next.files
         ? {
@@ -378,6 +443,38 @@ export function useDocuments(
           }
         : next,
     );
+  }
+  function isCurrentSource(key: string, source: string) {
+    return current.current.files[key] === source;
+  }
+  async function retainVisualAttempt(
+    key: string,
+    baseline: string,
+    source: string,
+  ) {
+    if (!native || !Object.hasOwn(current.current.files, key))
+      throw Error('The desktop source is unavailable.');
+    const attempt: VisualRecovery = {
+      key,
+      documentId: crypto.randomUUID().replaceAll('-', ''),
+      name: current.current.bindings[key]?.name ?? key.split('/').pop()!,
+      baseline,
+      source,
+    };
+    visualRecovery.current = attempt;
+    await saveVisualRecovery(attempt);
+  }
+  async function resolveVisualAttempt(key: string, discard: boolean) {
+    const attempt = visualRecovery.current;
+    if (!attempt || attempt.key !== key)
+      throw Error('This recovery copy is unavailable.');
+    if (discard) {
+      const written = attempt.writing
+        ? await attempt.writing.catch(() => attempt.written)
+        : attempt.written;
+      if (written) await nativeDocuments.deleteSnapshot(written.snapshot.file);
+    } else await saveVisualRecovery(attempt);
+    if (visualRecovery.current === attempt) visualRecovery.current = null;
   }
   return {
     workspace,
@@ -398,7 +495,9 @@ export function useDocuments(
       fileNotice.source === workspace.files[workspace.selected]
         ? fileNotice.text
         : '',
+    notesFolder,
     openNative,
+    openFolder,
     newNote,
     openBrowser,
     restoreBrowserDraft,
@@ -409,5 +508,8 @@ export function useDocuments(
     close,
     select,
     change,
+    isCurrentSource,
+    retainVisualAttempt,
+    resolveVisualAttempt,
   };
 }

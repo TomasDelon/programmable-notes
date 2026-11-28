@@ -1,0 +1,18 @@
+[package]
+name = "pn-wry-inline-spike"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+wry = { path = "/repo/src-tauri/vendor/wry" }
+preview-policy = { path = "/repo/native-policy" }
+gtk = "=0.18.2"
+gdkx11 = "=0.18.2"
+raw-window-handle = "=0.6.2"
+
+[profile.release]
+opt-level = 0
+debug = 0
+debug-assertions = false
+overflow-checks = true
+strip = "debuginfo"

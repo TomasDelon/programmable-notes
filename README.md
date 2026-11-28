@@ -2,7 +2,30 @@
 
 Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed for writing and rendering real interactive React components directly in documents.
 
-## Web workspace
+## Continue development on your Linux computer
+
+Read [START_LOCAL.md](START_LOCAL.md) and the
+[local development handoff](docs/LOCAL_DEVELOPMENT_HANDOFF.md). They identify the
+exact tested checkpoint, current branch/draft PR, local setup, runnable package,
+remaining blockers and a ready-to-use Codex prompt. All required source, design,
+specifications and evidence are in this repository; cloud cache access is unnecessary.
+
+## Current architecture and product target
+
+The owner has confirmed a **fully local file vault with automatic writes**, real
+file operations/recoverable Trash, and interactive React **inside the same document
+and window**, Linux first. Architecture quality governs what existing code is
+reused. Obsidian is a persistence analogy, not a product/interface to clone.
+
+Read the [current product contract](docs/PRODUCT_CONTRACT.md),
+[architecture target](docs/ARCHITECTURE_TARGET.md),
+[acceptance gates](docs/PRODUCT_ACCEPTANCE.md) and
+[living plan](docs/plans/unified-local-vault.md) before implementation.
+The separate native shell was rejected. The implementations described below are
+existing references with known gaps, not acceptance of that target. Cloud
+activation is paused. A green build is not product readiness.
+
+## Existing web workspace reference
 
 The browser app at `/` combines the approved UI Lab interface with the existing
 MDX/React engine. It provides Source and editable Preview modes, notes and
@@ -23,7 +46,49 @@ To try the browser app at a permanent HTTPS address, follow the
 [Cloudflare Pages setup guide](docs/CLOUDFLARE_PAGES.md). Static hosting is included;
 no personal server is needed. Hosting does not synchronize notes between browsers.
 
-## Original engine and native status
+An optional [private cloud storage build](docs/PRIVATE_CLOUD_STORAGE.md) adds
+authenticated Pages Functions and D1, server-confirmed autosave, revision checks
+and recovery. It has local runtime/browser tests; account provisioning, real
+Access login and hosted Free-quota acceptance are still pending. The existing
+website is not switched to cloud storage automatically.
+
+## Shared editor integration checks
+
+`npm run test:product:browser` runs real Chromium caret/history/navigation and
+failure tests against the shared editor with synthetic in-memory vault ports.
+It does not test native OS dialogs or disk access. The ordinary CI `check` job
+also runs it and includes its synthetic screenshots/results in the downloadable
+`playwright-results` artifact. See the
+[dated evidence and limits](docs/security-evidence/2026-11-27-shared-product/README.md).
+The native development entry now mounts this same shared product through a guarded
+window-lifetime owner. Actual installed chooser/autosave/close acceptance remains
+pending; no corrected installer or full native React support is claimed.
+
+## Native development candidate
+
+Native startup now selects the shared editor with scoped local-vault autosave.
+Choose **Choose local vault**, authorize a disposable folder, then open and edit
+a note. Source and Preview share the canonical session/history. Changes target
+the original file automatically; browser storage is not used by this native path.
+The candidate still requires actual packaged Linux acceptance.
+
+Native inline React is currently unavailable; its startup/input and containment
+gates remain unresolved. File rename/move/Trash, continuous external observation,
+recovery discovery after restart and signed updater integration remain pending.
+Testing artifacts are not a public release or production security certification.
+
+## Historical engine and native implementation status
+
+The following describes the prior engine/legacy App regression path at /engine,
+including its separate preview/manual saving controls. It is not the default native
+workspace or the accepted product target.
+
+The [Linux local-editor candidate](docs/LINUX_LOCAL_EDITOR.md) adds an authorized
+notes-folder picker, native Settings and signed-update handling. Successful native
+CI produces a checksummed `linux-amd64-testing` download with redistribution
+notices and a limited product-entry audit. These testing artifacts are not the
+accepted unified application. Installed GUI/update acceptance and signing-channel activation remain
+separate gates; no public release or production security claim is made.
 
 Experimental MDX/React editing engine: edit unsaved CodeMirror buffers, compile
 in a browser worker, use JSX/imports/hooks/events in an isolated preview and
@@ -74,16 +139,15 @@ npm run dev
 The Vite development server listens on port 5173. On a fresh Linux machine, Playwright may also need system libraries: use `npx playwright install --with-deps chromium` with the appropriate system permissions. CI installs those libraries explicitly.
 
 The web workspace opens at `/`. The original engine remains at `/engine` for
-regression testing and is selected automatically by the native application.
+regression testing. The native application now selects the shared ProductRoot;
+it does not select that historical engine interface.
 
-The repository's `.npmrc` keeps npm's cache in ignored `.cache/npm`, which works in restricted cloud workspaces. Codex Cloud already provides Chromium. Use it explicitly for browser checks:
-
-```sh
-export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
-npm run check
-```
-
-CI uses Playwright's matching downloaded browser; cloud validation uses the system Chromium version. To install Playwright browsers in a writable cloud path instead, set `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` for both installation and tests. Browser downloads require the network domains saved in the cloud configuration draft to be active. Neither override is required on ordinary local machines.
+The repository's `.npmrc` keeps npm's cache in ignored `.cache/npm`. Final browser
+checks use Playwright's matching downloaded browser, as CI does. Ordinary local
+machines need no cloud executable/cache override. In Codex Cloud only, the optional
+writable cache is `/workspace/.cache/ms-playwright`; use that path for both browser
+installation and testing. System Chromium is a separately labelled diagnostic,
+not a replacement for matching-browser acceptance.
 
 ## Commands
 
@@ -150,7 +214,12 @@ Codex Cloud installation and restart instructions are saved in the environment c
 
 `npm run native:package` builds an optimized Debian package without test features. Follow [installation and desktop checks](docs/LINUX_DESKTOP_TESTING.md). Native source files are authorized through OS pickers; document code receives no filesystem capability. Conflicts, read-only errors and cancelled dialogs preserve the editor buffer. Automatic private versioned recovery snapshots are implemented, with explicit unsaved restoration and no automatic writes to original files; see [ADR-008](docs/decisions/ADR-008-versioned-recovery.md). The native preview requires actual network namespaces and delegated cgroup controllers and fails closed when unavailable.
 
-CI builds and inspects the production package. Both jobs actually passed on public head `8a8e44c`; the earlier private-account billing refusal is no longer blocking that run. Automatic native installer uploads are paused until the full native redistribution notice inventory is complete. CI does not run the full-system native security matrix; retained runtime evidence and unresolved risks are recorded separately.
+CI builds and inspects the production package and uploads a notice-bearing
+`linux-amd64-testing` artifact after the native checks succeed. This contains the
+existing rejected native interface, not the corrected shared application. Read
+[the current status](docs/IMPLEMENTATION_STATUS.md) before downloading; a fresh
+package is not product acceptance. CI does not run the full-system native
+security matrix; retained runtime evidence and unresolved risks are separate.
 
 ## Public repository and licensing
 
@@ -159,7 +228,10 @@ visibility alone does not grant a general reuse license. Existing upstream
 licenses remain applicable. Browser builds include `THIRD_PARTY_NOTICES.txt`;
 [the preserved review demo notices](docs/demo/THIRD_PARTY_NOTICES.txt) and
 [design font license](docs/design-reference/2026-11-18/FONT_LICENSES.txt) accompany
-older materials. Native binary redistribution notices remain incomplete.
+older materials. Native testing archives also include generated notices for
+locked dependencies and inspected linked libraries; see
+[the notice procedure and limits](docs/NATIVE_NOTICES.md). This is not a project
+license or a legal review.
 
 See [public remediation and owner decisions](docs/PUBLIC_READINESS.md) and
 [security reporting](SECURITY.md). Standard public Ubuntu Actions compute is free;

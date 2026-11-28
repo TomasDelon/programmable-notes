@@ -1,13 +1,21 @@
+import { remarkComponentSource } from '../plugins/core/react';
 import { compile } from '@mdx-js/mdx';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
+import {
+  mathRemarkPlugin,
+  mathRehypePlugin,
+  mathSafety,
+  remarkRawMathematics,
+  remarkInvalidMathematics,
+} from '../plugins/core/math';
 
-/** Browser features are opt-in so the established native pipeline is unchanged. */
+/** Product Markdown/math transforms are opt-in; /engine keeps its legacy fixture. */
 export async function compileDocumentSource(
   source: string,
   path: string,
   webMode = false,
+  mathematics = true,
+  showComponentSource = false,
 ) {
   return compile(
     { value: source, path },
@@ -16,13 +24,17 @@ export async function compileDocumentSource(
           development: false,
           // Ordinary Markdown must keep braces and imports as literal text.
           format: /\.md$/i.test(path) ? 'md' : 'mdx',
-          remarkPlugins: [remarkGfm, remarkMath],
-          rehypePlugins: [
-            [
-              rehypeKatex,
-              { trust: false, maxExpand: 1000, maxSize: 30, strict: 'warn' },
-            ],
+          remarkPlugins: [
+            remarkGfm,
+            mathRemarkPlugin,
+            ...(mathematics
+              ? [remarkInvalidMathematics]
+              : [remarkRawMathematics]),
+            ...(showComponentSource ? [remarkComponentSource] : []),
           ],
+          rehypePlugins: mathematics
+            ? [[mathRehypePlugin, { ...mathSafety, strict: 'warn' }]]
+            : [],
         }
       : { development: false },
   );

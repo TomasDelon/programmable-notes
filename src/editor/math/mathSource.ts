@@ -1,18 +1,25 @@
 import { createProcessor } from '@mdx-js/mdx';
+import type { Processor } from 'unified';
+import type { Extension } from 'mdast-util-from-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
+import { remarkMathAuthoring } from '../../plugins/core/mathSyntax';
 import { visualAnalysisLimited } from '../markdownEdits';
 
 export interface SyntaxNode {
   type: string;
   value?: string;
   depth?: number;
+  data?: {
+    pnMathDraft?: boolean;
+    continuationPrefixes?: Map<number, number> | null;
+  };
   children?: SyntaxNode[];
   position?: { start: { offset?: number }; end: { offset?: number } };
 }
 
 export interface MathSpan {
   kind: 'inline' | 'display';
+  literal?: boolean;
   from: number;
   to: number;
   innerFrom: number;
@@ -21,13 +28,41 @@ export interface MathSpan {
   originalOuter: string;
 }
 
+/** Observe compiler tokens without changing how mdast builds the tree. Each
+ * root owns its witnesses; overflow discards all evidence for that parse. */
+function remarkContainerPrefixes(this: Processor) {
+  const extension: Extension = {
+    beforeEnter(token) {
+      if (
+        token.type !== 'blockQuotePrefix' &&
+        token.type !== 'listItemIndent' &&
+        token.type !== 'linePrefix'
+      )
+        return;
+      const root = this.stack[0] as SyntaxNode;
+      if (root.data?.continuationPrefixes === null) return;
+      if (
+        !this.stack.some(
+          (node) => node.type === 'blockquote' || node.type === 'listItem',
+        )
+      )
+        return;
+      const data = (root.data ??= {});
+      const prefixes = (data.continuationPrefixes ??= new Map());
+      if (prefixes.size >= 4096) data.continuationPrefixes = null;
+      else prefixes.set(token.start.offset, token.end.offset);
+    },
+  };
+  (this.data().fromMarkdownExtensions ??= []).push(extension);
+}
+
 const markdownProcessor = createProcessor({
   format: 'md',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring, remarkContainerPrefixes],
 });
 const mdxProcessor = createProcessor({
   format: 'mdx',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring, remarkContainerPrefixes],
 });
 
 /** Keep frontmatter opaque while preserving every original UTF-16 offset. */
@@ -51,17 +86,33 @@ function parserSource(source: string): string {
   return value.replace(/^\uFEFF/, '\n');
 }
 
+export function analyzeLiveSource(
+  source: string,
+  path = 'note.mdx',
+): { tree: SyntaxNode | null; diagnostic: string | null } {
+  if (visualAnalysisLimited(source)) return { tree: null, diagnostic: null };
+  try {
+    const processor = /\.md$/i.test(path) ? markdownProcessor : mdxProcessor;
+    return {
+      tree: processor.parse(parserSource(source)) as SyntaxNode,
+      diagnostic: null,
+    };
+  } catch (reason) {
+    return {
+      tree: null,
+      diagnostic:
+        reason instanceof Error
+          ? 'Source analysis failed. ' + reason.message.slice(0, 2000)
+          : 'Source analysis failed.',
+    };
+  }
+}
+
 export function parseLiveSource(
   source: string,
   path = 'note.mdx',
 ): SyntaxNode | null {
-  if (visualAnalysisLimited(source)) return null;
-  try {
-    const processor = /\.md$/i.test(path) ? markdownProcessor : mdxProcessor;
-    return processor.parse(parserSource(source)) as SyntaxNode;
-  } catch {
-    return null;
-  }
+  return analyzeLiveSource(source, path).tree;
 }
 
 export function safeMathSpan(
@@ -79,9 +130,23 @@ export function safeMathSpan(
     to > source.length
   )
     return null;
-  const kind = node.type === 'math' ? 'display' : 'inline';
-  const delimiter = kind === 'display' ? '$$' : '$';
   const originalOuter = source.slice(from, to);
+  if (node.data?.pnMathDraft)
+    return {
+      kind: originalOuter.startsWith('$$') ? 'display' : 'inline',
+      literal: true,
+      from,
+      to,
+      innerFrom: from,
+      innerTo: to,
+      originalInner: originalOuter,
+      originalOuter,
+    };
+  const kind =
+    node.type === 'math' || originalOuter.startsWith('$$')
+      ? 'display'
+      : 'inline';
+  const delimiter = kind === 'display' ? '$$' : '$';
   if (
     !originalOuter.startsWith(delimiter) ||
     !originalOuter.endsWith(delimiter) ||
@@ -100,13 +165,18 @@ export function safeMathSpan(
   // We never present quote/list prefixes as editable LaTeX.
   if (
     kind === 'display' &&
-    originalInner.replace(/\r\n?|\n/g, '\n').trim() !== node.value?.trim()
+    originalInner.replace(/\r\n?|\n/g, '\n').trim() !==
+      node.value?.replace(/\r\n?|\n/g, '\n').trim()
   )
     return null;
   return { kind, from, to, innerFrom, innerTo, originalInner, originalOuter };
 }
 
-export function collectLiveMath(source: string, path = 'note.mdx'): MathSpan[] {
+export function collectLiveMath(
+  source: string,
+  path = 'note.mdx',
+  includeLiteral = false,
+): MathSpan[] {
   const tree = parseLiveSource(source, path);
   const spans: MathSpan[] = [];
   function visit(node: SyntaxNode): void {
@@ -118,14 +188,14 @@ export function collectLiveMath(source: string, path = 'note.mdx'): MathSpan[] {
     )
       return;
     const span = safeMathSpan(source, node);
-    if (span) spans.push(span);
+    if (span && (!span.literal || includeLiteral)) spans.push(span);
     if (!span) node.children?.forEach(visit);
   }
   if (tree) visit(tree);
   return spans;
 }
 
-/** A textarea normalizes breaks; retain existing physical breaks when possible. */
+/** Editable surfaces normalize breaks; retain existing physical breaks when possible. */
 export function preserveMathBreaks(original: string, value: string): string {
   const normalized = value.replace(/\r\n?|\n/g, '\n');
   const originalNormalized = original.replace(/\r\n?|\n/g, '\n');
@@ -194,4 +264,101 @@ export function planMathReplacement(
     };
   }
   return { ok: true, source: candidate, replacement };
+}
+
+/** Completed pairs alone are mathematics. Unfinished delimiters are ordinary text. */
+export function completedMath(raw: string): MathSpan | null {
+  const spans = collectLiveMath(raw, 'note.md');
+  return spans.length === 1 &&
+    spans[0]!.from === 0 &&
+    spans[0]!.to === raw.length
+    ? spans[0]!
+    : null;
+}
+
+/** Replace the explicitly activated source span, including its delimiters. */
+export function planMathSourceReplacement(
+  source: string,
+  expectedSource: string,
+  span: MathSpan,
+  input: string,
+  path = 'note.mdx',
+):
+  | { ok: true; source: string; replacement: string }
+  | { ok: false; reason: string } {
+  if (source !== expectedSource)
+    return { ok: false, reason: 'The source changed. Your text is retained.' };
+  if (
+    !collectLiveMath(source, path, true).some(
+      (item) =>
+        item.from === span.from &&
+        item.to === span.to &&
+        item.originalOuter === span.originalOuter &&
+        item.kind === span.kind &&
+        !!item.literal === !!span.literal,
+    )
+  )
+    return {
+      ok: false,
+      reason:
+        'The original source range is no longer available. Your text is retained.',
+    };
+  const replacement = preserveMathBreaks(span.originalOuter, input);
+  const candidate =
+    source.slice(0, span.from) + replacement + source.slice(span.to);
+  if (!mathSourceContextPreserved(source, candidate, span.from, span.to, path))
+    return {
+      ok: false,
+      reason:
+        'The edit cannot be mapped without changing unrelated React source. Your text is retained.',
+    };
+  return { ok: true, source: candidate, replacement };
+}
+
+/** Retain every pre-existing opaque MDX range outside an explicitly owned patch. */
+export function mathSourceContextPreserved(
+  source: string,
+  candidate: string,
+  from: number,
+  to: number,
+  path: string,
+): boolean {
+  const before = parseLiveSource(source, path),
+    after = parseLiveSource(candidate, path);
+  if (!before || !after) return false;
+  const shift = candidate.length - source.length;
+  const opaque = (
+    tree: SyntaxNode,
+    text: string,
+    adjust: boolean,
+  ): string[] => {
+    const result: string[] = [];
+    const visit = (node: SyntaxNode) => {
+      const start = node.position?.start.offset,
+        end = node.position?.end.offset;
+      if (
+        node.type.startsWith('mdx') &&
+        start !== undefined &&
+        end !== undefined
+      ) {
+        const boundary = adjust ? to + shift : to;
+        if (end <= from || start >= boundary)
+          result.push(
+            JSON.stringify([
+              node.type,
+              start >= boundary && adjust ? start - shift : start,
+              text.slice(start, end),
+            ]),
+          );
+        return;
+      }
+      node.children?.forEach(visit);
+    };
+    visit(tree);
+    return result;
+  };
+  return (
+    JSON.stringify(opaque(before, source, false)) ===
+    JSON.stringify(opaque(after, candidate, true))
+  );
 }

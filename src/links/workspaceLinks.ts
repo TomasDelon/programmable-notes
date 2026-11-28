@@ -1,6 +1,6 @@
 import { createProcessor } from '@mdx-js/mdx';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
+import { remarkMathAuthoring } from '../plugins/core/mathSyntax';
 import { isMdxSource } from '../sourceTypes';
 import { parseWikilinks, withinLinkAnalysisBudget } from './parse';
 import { buildLinkCatalog, resolveWithCatalog } from './resolve';
@@ -15,11 +15,11 @@ import type {
 
 const markdown = createProcessor({
   format: 'md',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring],
 });
 const mdx = createProcessor({
   format: 'mdx',
-  remarkPlugins: [remarkGfm, remarkMath],
+  remarkPlugins: [remarkGfm, remarkMathAuthoring],
 });
 
 /** Metadata is opaque. Masking preserves every raw UTF-16 offset. */

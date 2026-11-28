@@ -1,0 +1,277 @@
+{
+  "schema": 1,
+  "packages": {
+    "alloc-stdlib@0.3.0": {
+      "license": "BSD-3-Clause",
+      "checksum": "0b5c1865780388bfa186411ab5f247819487fc4864c6e9c3106611fa347586e1",
+      "gitRevision": "0a81fd6928ea3b33c8cd484aa4575d50ffb98012",
+      "pathInVcs": "alloc-stdlib",
+      "texts": [
+        {
+          "sidecar": "licenses/native/alloc-LICENSE",
+          "sha256": "c0c56f26d9c051cac4d200c34c84e7ae9aaa853e01a982a1df08b09931e518ae",
+          "source": "https://github.com/dropbox/rust-alloc-no-stdlib/blob/0a81fd6928ea3b33c8cd484aa4575d50ffb98012/LICENSE"
+        }
+      ]
+    },
+    "dlopen2@0.8.2": {
+      "license": "MIT",
+      "checksum": "5e2c5bd4158e66d1e215c49b837e11d62f3267b30c92f1d171c4d3105e3dc4d4",
+      "gitRevision": "cc80e4a0a90d499b677fdf7743699b4b3a43a989",
+      "pathInVcs": "dlopen2",
+      "texts": [
+        {
+          "sidecar": "licenses/native/dlopen-LICENSE",
+          "sha256": "39fa265207450e77c62e90c5594a06c085b655d8374c7ced4bf7894b6bd95dd2",
+          "source": "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+        }
+      ]
+    },
+    "dlopen2_derive@0.4.3": {
+      "license": "MIT",
+      "checksum": "0fbbb781877580993a8707ec48672673ec7b81eeba04cfd2310bd28c08e47c8f",
+      "gitRevision": "cc80e4a0a90d499b677fdf7743699b4b3a43a989",
+      "pathInVcs": "dlopen2-derive",
+      "texts": [
+        {
+          "sidecar": "licenses/native/dlopen-LICENSE",
+          "sha256": "39fa265207450e77c62e90c5594a06c085b655d8374c7ced4bf7894b6bd95dd2",
+          "source": "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+        }
+      ]
+    },
+    "libappindicator-sys@0.9.0": {
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "6e9ec52138abedcc58dc17a7c6c0c00a2bdb4f3427c7f63fa97fd0d859155caf",
+      "gitRevision": "eafd1e3682a1247f595410266091e9684021cb6f",
+      "pathInVcs": "sys",
+      "texts": [
+        {
+          "sidecar": "licenses/native/appindicator-LICENSE-MIT",
+          "sha256": "eb227437252b2a7a9c1fc342c93ade1f3d7ce38cc6dd754f613db07d53ceff0b",
+          "source": "https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-MIT"
+        },
+        {
+          "sidecar": "licenses/native/appindicator-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+          "source": "https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-APACHE"
+        }
+      ]
+    },
+    "selectors@0.38.0": {
+      "license": "MPL-2.0",
+      "checksum": "8adfa1c298912827b8a28b223b3b874357397ae706e6190acd9bf28cee99114d",
+      "gitRevision": "572ecba2d1600e7c3d490586692a209faf703baa",
+      "pathInVcs": "selectors",
+      "texts": [
+        {
+          "sidecar": "licenses/native/mozilla-index.txt",
+          "sha256": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04",
+          "source": "https://github.com/mozilla/bedrock/blob/53841715c677954117e752d5bb042b75a985c914/media/MPL/2.0/index.txt"
+        }
+      ],
+      "declarationSource": {
+        "name": "lib.rs",
+        "sha256": "d54c6e13e9e952dac17d209171df8657e3cae93beaddace4906150cdec8d02e9",
+        "requiredText": "https://mozilla.org/MPL/2.0/",
+        "explanation": "Published source explicitly directs recipients to Mozilla Public License v2.0; its release repository omits the full text. Preserved official Mozilla website-source text at pinned commit."
+      }
+    },
+    "tauri-plugin@2.7.3": {
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "51bf2a10dc09e68324a8227b3ec785bd8b61872ddb978c3447b07bc7dd180b25",
+      "gitRevision": "4acdc0a2230ced11567a90962b07eedfa53dc3d2",
+      "pathInVcs": "crates/tauri-plugin",
+      "texts": [
+        {
+          "sidecar": "licenses/native/tauri-LICENSE-MIT",
+          "sha256": "9dd42ea92cff2ede5cd477cbfcce051b2d0115c0ac7f368ee88cb545055dff1d",
+          "source": "https://github.com/tauri-apps/tauri/blob/4acdc0a2230ced11567a90962b07eedfa53dc3d2/LICENSE-MIT"
+        },
+        {
+          "sidecar": "licenses/native/tauri-LICENSE-APACHE-2.0",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+          "source": "https://github.com/tauri-apps/tauri/blob/4acdc0a2230ced11567a90962b07eedfa53dc3d2/LICENSE-APACHE-2.0"
+        }
+      ]
+    }
+  },
+  "wry": {
+    "version": "0.57.2",
+    "archive": "https://static.crates.io/crates/wry/wry-0.57.2.crate",
+    "archiveSha256": "a490119196d02a51d0871df7b9119a1f3e46d75b7e90053a801454d5c6b3491c",
+    "manifestSha256": "a4df9b6934fbd2ed9752ed15e2c6208e81a9a26aeb7ebff930ba6ce109f01fe8",
+    "texts": [
+      {
+        "name": "LICENSE-MIT",
+        "sha256": "ef88893533af22ffbb68ceef0724ba1389518df26165a34f3c99ad30b884df4f",
+        "source": "https://crates.io/api/v1/crates/wry/0.57.2/download"
+      },
+      {
+        "name": "LICENSE-APACHE",
+        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "source": "https://crates.io/api/v1/crates/wry/0.57.2/download"
+      }
+    ]
+  },
+  "rustRuntime": {
+    "release": "1.100.0",
+    "commit": "0ef1bc386059596dada8fb65b50425aab2ea637a",
+    "host": "x86_64-unknown-linux-gnu",
+    "archive": "https://static.rust-lang.org/dist/2026-11-12/rustc-1.100.0-x86_64-unknown-linux-gnu.tar.xz",
+    "archiveSha256": "f1d0b1dec81dab6f523cd098507763487b0d4bd7fd2c87582f154128719be03b",
+    "scope": "Official Rust compiler distribution legal documents, including standard library and its bundled dependencies; conservative compiler/tooling superset, not all components are linked.",
+    "texts": [
+      {
+        "name": "LICENSE-APACHE",
+        "sidecar": "licenses/native/rust-1.100.0/LICENSE-APACHE.gz",
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+        "compressedSha256": "5905648a329dd08fe74a04a9aa63b52679be8c51406eb8a5019559e1bf4795b8",
+        "bytes": 9723,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/LICENSE-APACHE"
+      },
+      {
+        "name": "COPYRIGHT",
+        "sidecar": "licenses/native/rust-1.100.0/COPYRIGHT.gz",
+        "sha256": "172020dbfd5b53a226dfde77616190a48dcff519b0bc0e6deb91a8450782c4af",
+        "compressedSha256": "d74b200ac15903d21548dd84114196b41e009b0e91304648824955fe323a1529",
+        "bytes": 1571,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/COPYRIGHT"
+      },
+      {
+        "name": "LICENSE-MIT",
+        "sidecar": "licenses/native/rust-1.100.0/LICENSE-MIT.gz",
+        "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+        "compressedSha256": "6f90b9fa7aa40785aeb0c0e42fcacd497d82be4014d0ed3cb84bf302cf910966",
+        "bytes": 1068,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/LICENSE-MIT"
+      },
+      {
+        "name": "COPYRIGHT.html",
+        "sidecar": "licenses/native/rust-1.100.0/COPYRIGHT.html.gz",
+        "sha256": "d5a611d33c23248dec086ca86ce6123ecfc26b2b9666e34beaa4dda012d53e4b",
+        "compressedSha256": "d4d3cd580d9423a1f81350378656a6d737eaaeb0113640cce31b081660d30f03",
+        "bytes": 14304607,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/COPYRIGHT.html",
+        "installed": "share/doc/rust/COPYRIGHT.html"
+      },
+      {
+        "name": "COPYRIGHT-library.html",
+        "sidecar": "licenses/native/rust-1.100.0/COPYRIGHT-library.html.gz",
+        "sha256": "626556344c12679d7cab2c1aa2ce80de01937b62c2c88c62f0650a469be18799",
+        "compressedSha256": "0d7eea7631f31092235334ae5dbeeb18943042026a3aa1042b6c31918c360440",
+        "bytes": 1512515,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/COPYRIGHT-library.html",
+        "installed": "share/doc/rust/COPYRIGHT-library.html"
+      },
+      {
+        "name": "licenses/Apache-2.0.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_Apache-2.0.txt.gz",
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+        "compressedSha256": "51e82ff7f0582e5d7637c9738d61c602ee629e8734e642f014bc2b0a0457f2bd",
+        "bytes": 10280,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/Apache-2.0.txt",
+        "installed": "share/doc/rust/licenses/Apache-2.0.txt"
+      },
+      {
+        "name": "licenses/Unicode-3.0.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_Unicode-3.0.txt.gz",
+        "sha256": "f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443",
+        "compressedSha256": "7295012ecffc0ae355bf72cde7519e02c5c8e9997538e9496febd195161aef91",
+        "bytes": 1995,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/Unicode-3.0.txt",
+        "installed": "share/doc/rust/licenses/Unicode-3.0.txt"
+      },
+      {
+        "name": "licenses/CC-BY-SA-4.0.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_CC-BY-SA-4.0.txt.gz",
+        "sha256": "23ee78c8bae49cf08ea2f0c84945c66b987ebe4520881fb51b3dad4fb43d07c2",
+        "compressedSha256": "aa56af9da024a08560402f1857d01c10de25fbb1cc6655c5fe55e71b13c3a21f",
+        "bytes": 20137,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/CC-BY-SA-4.0.txt",
+        "installed": "share/doc/rust/licenses/CC-BY-SA-4.0.txt"
+      },
+      {
+        "name": "licenses/OFL-1.1.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_OFL-1.1.txt.gz",
+        "sha256": "8eea8287e5876b539670cadb82e99f9a7afddec6f6730811be1daf25d2e9bcfd",
+        "compressedSha256": "50d1ddafa3cd6b53ce3bcb689355749de4c7c8b3d7ab20e292a5cd499be9af3b",
+        "bytes": 4016,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/OFL-1.1.txt",
+        "installed": "share/doc/rust/licenses/OFL-1.1.txt"
+      },
+      {
+        "name": "licenses/GCC-exception-3.1.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_GCC-exception-3.1.txt.gz",
+        "sha256": "a3966c9410ef94a1efbfa9ec04e9c1994026a70623fbf0885ce36737bfba3b54",
+        "compressedSha256": "310c68c88c3d30e4171cbe3feeb1dd21d300195143d6d906e4995db953cd5fbc",
+        "bytes": 3320,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/GCC-exception-3.1.txt",
+        "installed": "share/doc/rust/licenses/GCC-exception-3.1.txt"
+      },
+      {
+        "name": "licenses/NCSA.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_NCSA.txt.gz",
+        "sha256": "39cb0234065c92b9e6cee3830cbb52b1aa289aa8fe9ba2e66730fec5cf05c630",
+        "compressedSha256": "94927a14f76afc99abf9fe4ce951ad932fd83b15af48631e34c335b3840fabe4",
+        "bytes": 1676,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/NCSA.txt",
+        "installed": "share/doc/rust/licenses/NCSA.txt"
+      },
+      {
+        "name": "licenses/ISC.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_ISC.txt.gz",
+        "sha256": "0ff61769b238634e042ab759dddfd104a8e69d091e3600ae3410e401a6164381",
+        "compressedSha256": "aed8af54e30bd880812aae558d9474567f16b24fd94abef816dfa0c1afa435e5",
+        "bytes": 730,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/ISC.txt",
+        "installed": "share/doc/rust/licenses/ISC.txt"
+      },
+      {
+        "name": "licenses/MIT.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_MIT.txt.gz",
+        "sha256": "b85dcd3e453d05982552c52b5fc9e0bdd6d23c6f8e844b984a88af32570b0cc0",
+        "compressedSha256": "1b2c3dab562b46a73fb1c3287699ac590fefc6367c5b014a37e3991a599c0227",
+        "bytes": 1078,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/MIT.txt",
+        "installed": "share/doc/rust/licenses/MIT.txt"
+      },
+      {
+        "name": "licenses/BSD-2-Clause.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_BSD-2-Clause.txt.gz",
+        "sha256": "f32fb3b417a194167cfad068223fc975ba96c5960513a10f66a3c28720aec1df",
+        "compressedSha256": "4436e2d0f808e3d7549a0b9539b8926ff30b7b1d1bf47d54bff694802770288b",
+        "bytes": 1267,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/BSD-2-Clause.txt",
+        "installed": "share/doc/rust/licenses/BSD-2-Clause.txt"
+      },
+      {
+        "name": "licenses/LLVM-exception.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_LLVM-exception.txt.gz",
+        "sha256": "e34c58338bd89d43e709e226610d8f32b3e3c47f4ad9a99a8dc1d4ac7842488e",
+        "compressedSha256": "ca7d05171d8d9bed8094a2701439e3b0356d27c4f3e515593c7d2c1590659a74",
+        "bytes": 919,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/LLVM-exception.txt",
+        "installed": "share/doc/rust/licenses/LLVM-exception.txt"
+      },
+      {
+        "name": "licenses/GPL-3.0-or-later.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_GPL-3.0-or-later.txt.gz",
+        "sha256": "05315fce6c35f79b8a35454828995fa26336f235895ac64557abc028f4ffcea2",
+        "compressedSha256": "a7620439ffd1fd7919181bbb3b22e49b20df11f4a7c81b86656e97a5485d4e55",
+        "bytes": 34795,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/GPL-3.0-or-later.txt",
+        "installed": "share/doc/rust/licenses/GPL-3.0-or-later.txt"
+      },
+      {
+        "name": "licenses/GPL-2.0-only.txt",
+        "sidecar": "licenses/native/rust-1.100.0/licenses_GPL-2.0-only.txt.gz",
+        "sha256": "54b212ba1f97f6948fa5486239ab505dd820b02e50cbfd296b4062c8609a70af",
+        "compressedSha256": "3bda2e3e1037c3965227551f20498dc4cfaf86c4a97f1c553ec88377368c7c86",
+        "bytes": 17642,
+        "archiveMember": "rustc-1.100.0-x86_64-unknown-linux-gnu/rustc/share/doc/rust/licenses/GPL-2.0-only.txt",
+        "installed": "share/doc/rust/licenses/GPL-2.0-only.txt"
+      }
+    ]
+  }
+}

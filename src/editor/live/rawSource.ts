@@ -109,7 +109,14 @@ export const rawSourceField: StateField<string> = StateField.define({
 export const rawSourceHistory = invertedEffects.of((transaction) => {
   if (
     !transaction.docChanged &&
-    transaction.annotation(explicitRawSource) === undefined
+    transaction.annotation(explicitRawSource) === undefined &&
+    // Undo can restore only physical endings. Its restoration needs an inverse
+    // too, otherwise Redo silently skips this source-only history event.
+    !transaction.effects.some(
+      (effect) =>
+        effect.is(restorePhysicalBreaks) &&
+        effect.value.doc.eq(transaction.newDoc),
+    )
   )
     return [];
   const raw = transaction.startState.field(rawSourceField);

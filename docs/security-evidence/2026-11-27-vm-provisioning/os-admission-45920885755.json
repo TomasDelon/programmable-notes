@@ -1,0 +1,26 @@
+{
+  "evidence_source": "validated GitHub check annotation and source-pinned control flow",
+  "run_id": 45920885755,
+  "source_commit": "d8119a733ef3793f01fbc5ca94013d32724178ec",
+  "job_id": 140251092453,
+  "scope": "guest-os-admission-only",
+  "native_app_tested": false,
+  "status": "failed",
+  "stage": "guard_exit",
+  "reason": "timeout",
+  "ssh_error": "none",
+  "returncode": 0,
+  "guard_status": 2,
+  "completed_phases": [
+    "SSH positive probe",
+    "then-current OS facts (before container/logind predicates)",
+    "wrong pin refused then positive probe",
+    "wrong key refused then positive probe",
+    "HMP powerdown bytes written without acknowledgement"
+  ],
+  "limitations": [
+    "Normal guest poweroff/guard exit did not pass.",
+    "Writing HMP bytes does not establish command acceptance.",
+    "No native application payload executed."
+  ]
+}

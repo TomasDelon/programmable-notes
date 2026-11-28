@@ -1,0 +1,29 @@
+{
+  "evidence_source": "Source-pinned fixed GitHub check annotations and API metadata only; no artifact/raw logs accessed",
+  "run_id": 46075394392,
+  "job_id": 140761826709,
+  "source_commit": "3b92912e0cbf95c4c3d4d8456ca9e5227c2ead82",
+  "status": "failed",
+  "scope": "installed-editor-only",
+  "startup_phase": "complete",
+  "journey_stage": "authorized_vault_chooser",
+  "failure_kind": "other",
+  "dialog_classes": ["dialog_dismissal_unconfirmed"],
+  "dialog_echo_shape": "unknown",
+  "dialog_accept_state": "not_found",
+  "cleanup": {
+    "passed": true,
+    "forced": false,
+    "residual": false
+  },
+  "artifact_id": 15234638211,
+  "editing_disk_close_restart_verified": false,
+  "native_react_security_verified": false,
+  "limitations": [
+    "Exact path echo completed according to the source-bound helper; no eligible matching acceptance button was found.",
+    "not_found does not distinguish missing title/button, ineligible states or swallowed accessibility-read errors.",
+    "No alternative label or missing-state acceptance is justified.",
+    "Generic operation_not_permitted is advisory, not a namespace diagnosis.",
+    "Retained startup image was not downloaded or visually inspected here."
+  ]
+}

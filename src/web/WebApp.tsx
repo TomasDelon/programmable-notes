@@ -1,16 +1,33 @@
 import {
+  useWorkspaceInteraction,
+  documentFormattingCommands,
+  filterDocumentCommands,
+} from '../product/useWorkspaceInteraction';
+import {
+  WorkspaceNavigation,
+  type WorkspaceNavigationHandle,
+} from '../product/WorkspaceNavigation';
+import { DocumentCommandPalette } from '../product/DocumentCommandPalette';
+import {
+  CorePluginSettings,
+  AppearanceSettings,
+} from '../product/CorePluginSettings';
+import { ProductDialog as Dialog } from '../ui/ProductDialog';
+import { DocumentHeader } from '../product/DocumentHeader';
+import { corePluginEnabled } from '../plugins/coreRegistry';
+import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type FormEvent,
   type DragEvent,
   type ReactNode,
+  type ComponentType,
 } from 'react';
 import {
   AlertCircle,
-  ArrowLeft,
-  ArrowRight,
   BookOpen,
   Check,
   ChevronDown,
@@ -30,10 +47,6 @@ import {
   LoaderCircle,
   Moon,
   Network,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
   Pause,
   Paperclip,
   Pencil,
@@ -49,21 +62,27 @@ import {
 } from 'lucide-react';
 import '@fontsource-variable/dm-sans';
 import '@fontsource-variable/dm-sans/wght-italic.css';
-import {
-  SourceEditor,
-  type EditorCommands,
-  type EditorHistory,
-} from '../editor/SourceEditor';
+import type { EditorCommands, EditorHistory } from '../editor/SourceEditor';
+import { DocumentSurface } from '../workspace/DocumentSurface';
+import { DocumentNavigationRow } from '../workspace/DocumentNavigationRow';
 import { compilerFiles } from '../documents/workspace';
 import { isMdxSource } from '../sourceTypes';
 import { useWebWorkspace } from './useWebWorkspace';
-import { useWebPreview } from './useWebPreview';
-import { WebPreview } from './WebPreview';
+import { cloudStorageEnabled } from './storage';
+import {
+  DocumentRuntime,
+  type DocumentRuntimeInput,
+  type DocumentRuntimeProps,
+  type DocumentRuntimeSession,
+} from '../preview/DocumentRuntime';
+import { WebDocumentRuntime } from './WebDocumentRuntime';
+import { shouldCompileWholeDocument } from './previewExecution';
+import { WebRenderedRuntime } from './WebRenderedRuntime';
 import { useOffline, activateUpdate } from './offline';
-import { createHoverIntentController } from './hoverIntent';
 import { indexWorkspaceLinks } from '../links';
 import { NoteConnections } from './NoteConnections';
 import { AttachmentGallery } from './AttachmentGallery';
+import { RetainedEdits } from './RetainedEdits';
 import { attachmentReferences, referencedPreviewAssets } from './previewAssets';
 import {
   normalizeFolder,
@@ -73,9 +92,10 @@ import {
   type WebState,
 } from './workspace';
 import './web.css';
+import { useNotifications } from '../ui/useNotifications';
 
 type WorkspaceModel = ReturnType<typeof useWebWorkspace>;
-type SettingsTab = 'storage' | 'recovery' | 'trash' | 'help';
+type SettingsTab = 'storage' | 'plugins' | 'recovery' | 'trash' | 'help';
 type NewItem = {
   kind: 'note' | 'folder';
   parent: string;
@@ -94,88 +114,6 @@ const dateLabel = (value: number) =>
     timeStyle: 'short',
   });
 
-function Dialog({
-  title,
-  children,
-  onClose,
-  className = '',
-}: {
-  title: string;
-  children: ReactNode;
-  onClose: () => void;
-  className?: string;
-}) {
-  const panel = useRef<HTMLDivElement>(null);
-  const close = useRef(onClose);
-  useEffect(() => {
-    close.current = onClose;
-  }, [onClose]);
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const first =
-      panel.current?.querySelector<HTMLElement>('[data-autofocus]') ??
-      panel.current?.querySelector<HTMLElement>('input, button');
-    first?.focus();
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        close.current();
-      }
-      if (event.key !== 'Tab') return;
-      const elements = [
-        ...(panel.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
-        ) ?? []),
-      ].filter((element) => element.getClientRects().length > 0);
-      const firstItem = elements[0],
-        lastItem = elements[elements.length - 1];
-      if (!firstItem || !lastItem) return;
-      if (event.shiftKey && document.activeElement === firstItem) {
-        event.preventDefault();
-        lastItem.focus();
-      } else if (!event.shiftKey && document.activeElement === lastItem) {
-        event.preventDefault();
-        firstItem.focus();
-      }
-    };
-    document.addEventListener('keydown', keydown, true);
-    return () => {
-      document.removeEventListener('keydown', keydown, true);
-      previous?.focus();
-    };
-  }, []);
-  return (
-    <div
-      className="modal-overlay web-modal-overlay"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        ref={panel}
-        className={'web-dialog ' + className}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <header className="web-dialog-heading">
-          <h2>{title}</h2>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={'Close ' + title}
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
-        </header>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export function WebApp() {
   const model = useWebWorkspace();
   if (model.loading)
@@ -187,7 +125,13 @@ export function WebApp() {
       </div>
     );
   if (!model.state) return <StorageFailure model={model} />;
-  return <WorkspaceApp model={model} state={model.state} />;
+  return (
+    <WorkspaceApp
+      model={model}
+      state={model.state}
+      runtimeRenderer={WebDocumentRuntime}
+    />
+  );
 }
 
 function StorageFailure({ model }: { model: WorkspaceModel }) {
@@ -198,14 +142,53 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
   const [historyError, setHistoryError] = useState('');
   return (
     <div className="web-loading web-storage-failure">
-      <AlertCircle size={26} />
-      <h1>Your workspace could not open</h1>
-      <p role="alert">{model.error || 'Browser storage is unavailable.'}</p>
+      {model.cloudWorkspaceEmpty ? (
+        <HardDrive size={26} />
+      ) : (
+        <AlertCircle size={26} />
+      )}
+      <h1>
+        {model.cloudWorkspaceEmpty
+          ? 'Your private workspace is empty'
+          : 'Your workspace could not open'}
+      </h1>
+      {(!model.cloudWorkspaceEmpty || model.error) && (
+        <p role="alert">
+          {model.error ||
+            (cloudStorageEnabled
+              ? 'Cloud storage is unavailable.'
+              : 'Browser storage is unavailable.')}
+        </p>
+      )}
       <p>
-        Retry, restore a workspace backup, or check recovery history. Use a
-        regular browser window with site storage enabled.
+        {model.cloudWorkspaceEmpty
+          ? 'Create a workspace, or restore a backup exported from your browser. Nothing is uploaded until you choose.'
+          : cloudStorageEnabled
+            ? 'Check your connection and sign-in, then try again. Keep any existing backups.'
+            : 'Retry, restore a workspace backup, or check recovery history. Use a regular browser window with site storage enabled.'}
       </p>
+      <RetainedEdits attempts={model.attempts} error={model.attemptError} />
       <div className="web-inline-actions">
+        {cloudStorageEnabled && (
+          <a
+            className="web-button"
+            href="/api/storage/session"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Sign in
+          </a>
+        )}
+        {model.cloudWorkspaceEmpty && (
+          <button
+            className="web-button"
+            type="button"
+            disabled={busy}
+            onClick={() => void model.createCloudWorkspace()}
+          >
+            Create workspace
+          </button>
+        )}
         <button
           className="web-button"
           type="button"
@@ -288,69 +271,30 @@ function StorageFailure({ model }: { model: WorkspaceModel }) {
   );
 }
 
-function DocumentTitle({
-  title,
-  onRename,
-  disabled,
-}: {
-  title: string;
-  onRename: (title: string) => void;
-  disabled?: boolean;
-}) {
-  const [draft, setDraft] = useState(title);
-  const [previousTitle, setPreviousTitle] = useState(title);
-  // Preserve spaces while typing; external renames and restores update the input.
-  if (previousTitle !== title) {
-    setPreviousTitle(title);
-    if (draft.trim() !== title) setDraft(title);
-  }
-  return (
-    <input
-      aria-label="Document title"
-      disabled={disabled}
-      className="doc-title-input"
-      value={draft}
-      maxLength={200}
-      spellCheck={false}
-      onChange={(event) => {
-        const value = event.target.value;
-        setDraft(value);
-        if (value.trim() && value.trim() !== title) onRename(value.trim());
-      }}
-      onBlur={() => {
-        if (!draft.trim()) setDraft(title);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur();
-        if (event.key === 'Escape') {
-          setDraft(title);
-          event.currentTarget.blur();
-        }
-      }}
-    />
-  );
+interface WorkspaceExecution {
+  files: DocumentRuntimeInput['files'];
+  images: DocumentRuntimeInput['images'];
+  fullDocument: boolean;
+  requested: boolean;
+  setRequested: (requested: boolean) => void;
 }
 
 function WorkspaceApp({
   model,
   state,
+  runtimeRenderer,
 }: {
   model: WorkspaceModel;
   state: WebState;
+  runtimeRenderer?: ComponentType<DocumentRuntimeProps>;
 }) {
   const { workspace } = state;
-  const offline = useOffline();
   const selected = workspace.selected;
-  const metadata = state.documents[selected]!;
-  const source = workspace.files[selected] ?? '';
-  const attachmentRefs = useMemo(
-    () => attachmentReferences(source, selected),
-    [source, selected],
-  );
-  const attachmentIds = useMemo(
-    () => [...new Set(attachmentRefs.map((reference) => reference.id))],
-    [attachmentRefs],
-  );
+  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
+  const mode =
+    isMdxSource(selected) && state.mode !== 'source' ? 'preview' : 'source';
+  const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
+  const fullDocument = reactEnabled && runtimeDocument === selected;
   const previewImages = useMemo(
     () =>
       referencedPreviewAssets(
@@ -369,12 +313,89 @@ function WorkspaceApp({
       }),
     [workspace.files, workspace.groups, workspace.entry],
   );
-  const preview = useWebPreview({
-    files,
-    entry: workspace.entry,
-    theme: state.theme,
-    images: previewImages,
-  });
+  return (
+    <DocumentRuntime
+      renderer={runtimeRenderer}
+      input={{
+        files,
+        entry: workspace.entry,
+        theme: state.theme,
+        images: previewImages,
+        corePlugins: state.corePlugins,
+        showComponentSource: state.previewPreferences?.showComponentSource,
+        enabled: shouldCompileWholeDocument(reactEnabled, mode, fullDocument),
+      }}
+    >
+      {(documentPreview) => (
+        <WorkspaceBody
+          model={model}
+          state={state}
+          documentPreview={documentPreview}
+          execution={{
+            files,
+            images: previewImages,
+            fullDocument,
+            requested: runtimeDocument === selected,
+            setRequested: (requested) =>
+              setRuntimeDocument(requested ? selected : null),
+          }}
+        />
+      )}
+    </DocumentRuntime>
+  );
+}
+
+function WorkspaceBody({
+  model,
+  state,
+  execution,
+  documentPreview,
+}: {
+  model: WorkspaceModel;
+  state: WebState;
+  execution: WorkspaceExecution;
+  documentPreview: DocumentRuntimeSession;
+}) {
+  const { notify, dismiss } = useNotifications();
+  const { workspace } = state;
+  const reactEnabled = corePluginEnabled(state.corePlugins, 'react');
+  const offline = useOffline();
+  const selected = workspace.selected;
+  const metadata = state.documents[selected]!;
+  const source = workspace.files[selected] ?? '';
+  const selectedIsNote = isMdxSource(selected);
+  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+  const { files, images: previewImages, fullDocument } = execution;
+  const [analysisDiagnostic, setAnalysisDiagnostic] = useState<{
+    path: string;
+    source: string;
+    message: string | null;
+  } | null>(null);
+  const [islandRebuildVersion, setIslandRebuildVersion] = useState(0);
+  const attachmentRefs = useMemo(
+    () => attachmentReferences(source, selected),
+    [source, selected],
+  );
+  const attachmentIds = useMemo(
+    () => [...new Set(attachmentRefs.map((reference) => reference.id))],
+    [attachmentRefs],
+  );
+  const preview = {
+    ...documentPreview,
+    error:
+      documentPreview.error ||
+      (mode === 'preview' &&
+      !fullDocument &&
+      analysisDiagnostic?.path === selected &&
+      analysisDiagnostic.source === source
+        ? (analysisDiagnostic.message ?? '')
+        : ''),
+    rebuild: () => {
+      documentPreview.rebuild();
+      if (mode === 'preview' && !fullDocument)
+        setIslandRebuildVersion((value) => value + 1);
+    },
+  };
   const histories = useRef<EditorHistory>(new Map());
   const commands = useRef<EditorCommands>(null);
   const documentScroll = useRef<HTMLDivElement>(null);
@@ -384,16 +405,9 @@ function WorkspaceApp({
   const backupInput = useRef<HTMLInputElement>(null);
   const attachmentInput = useRef<HTMLInputElement>(null);
   const newItemInput = useRef<HTMLInputElement>(null);
-  const pendingLocation = useRef<{
-    key: string;
-    offset: number;
-    source: string;
-  } | null>(null);
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const [runtimeDocument, setRuntimeDocument] = useState<string | null>(null);
-  const [islandOpen, setIslandOpen] = useState(false);
-  const [peekSide, setPeekSide] = useState<'left' | 'right' | null>(null);
+
   const [sidebarView, setSidebarView] = useState<'documents' | 'connections'>(
     'documents',
   );
@@ -423,16 +437,17 @@ function WorkspaceApp({
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [persistentStatus, setPersistentStatus] = useState('');
   const [operationPending, setOperationPending] = useState(false);
+
   const [pendingEdit, setPendingEdit] = useState(false);
   const [toast, setToast] = useState('');
-  const [visitHistory, setVisitHistory] = useState({
-    entries: [selected],
-    cursor: 0,
-  });
-  const controller = useRef<ReturnType<
-    typeof createHoverIntentController
-  > | null>(null);
-  const panels = useRef({ leftExpanded: false, rightExpanded: false });
+  const recoveryNoticeShown = useRef(false);
+  useEffect(() => {
+    if (model.attempts.length && !pendingEdit && !recoveryNoticeShown.current) {
+      recoveryNoticeShown.current = true;
+      setToast('A retained edit is available in Settings → Recovery.');
+    }
+  }, [model.attempts.length, pendingEdit]);
+  const navigation = useRef<WorkspaceNavigationHandle | null>(null);
   const activeKeys = Object.keys(state.documents).filter(
     (key) => !state.documents[key]!.trashedAt,
   );
@@ -458,8 +473,7 @@ function WorkspaceApp({
   const visibleRecent = recentShowAll
     ? recentKeys
     : recentKeys.slice(0, RECENT_VISIBLE);
-  const selectedIsNote = isMdxSource(selected);
-  const mode = selectedIsNote && state.mode !== 'source' ? 'preview' : 'source';
+
   useEffect(() => {
     if (state.mode === 'live') model.setMode('preview');
   }, [state.mode, model]); // Migrate legacy stored view preference.
@@ -478,14 +492,18 @@ function WorkspaceApp({
   );
   const words = source.trim() ? source.trim().split(/\s+/).length : 0;
   const saveLabel = pendingEdit
-    ? 'Apply or cancel your math draft'
+    ? 'Resolve the pending edit before saving'
     : (
         {
           loading: 'Opening workspace',
           saving: 'Saving…',
-          saved: 'Saved in this browser',
+          saved: cloudStorageEnabled
+            ? 'Saved to cloud'
+            : 'Saved in this browser',
           error: 'Not saved',
-          conflict: 'Another tab changed this workspace',
+          conflict: cloudStorageEnabled
+            ? 'This workspace was saved elsewhere'
+            : 'Another tab changed this workspace',
         } as const
       )[model.saveStatus];
 
@@ -494,65 +512,15 @@ function WorkspaceApp({
     document.title = metadata.title + ' · Programmable Notes';
   }, [state.theme, metadata.title]);
   useEffect(() => {
-    panels.current = { leftExpanded: leftOpen, rightExpanded: rightOpen };
-  }, [leftOpen, rightOpen]);
-  useEffect(() => {
-    const hover = createHoverIntentController({
-      onShow: (zone) =>
-        zone === 'top' ? setIslandOpen(true) : setPeekSide(zone),
-      onHide: (zone) =>
-        zone === 'top'
-          ? setIslandOpen(false)
-          : setPeekSide((old) => (old === zone ? null : old)),
-    });
-    controller.current = hover;
-    const canHover = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const move = (event: PointerEvent) => {
-      if (!canHover.matches) return;
-      hover.move(
-        {
-          x: event.clientX,
-          y: event.clientY,
-          width: window.innerWidth,
-          time: performance.now(),
-          pointerType: event.pointerType,
-        },
-        panels.current,
-      );
-    };
-    const leave = (event: PointerEvent) => {
-      if (!event.relatedTarget) hover.clear();
-    };
-    window.addEventListener('pointermove', move, { passive: true });
-    document.documentElement.addEventListener('pointerleave', leave);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      document.documentElement.removeEventListener('pointerleave', leave);
-      hover.destroy();
-      controller.current = null;
-    };
-  }, []);
-  useEffect(() => {
     if (newItem) newItemInput.current?.focus();
   }, [newItem?.kind, newItem?.parent]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!toast) return;
+    notify({ id: 'workspace-feedback', message: toast });
     const timer = setTimeout(() => setToast(''), 3500);
     return () => clearTimeout(timer);
-  }, [toast]);
-  useEffect(() => {
-    const location = pendingLocation.current;
-    if (location && selected === location.key && mode === 'source') {
-      commands.current?.revealSource(location.offset, location.source);
-      pendingLocation.current = null;
-    }
-  }, [selected, mode]);
-
-  const closePeek = () => {
-    controller.current?.clear();
-    setPeekSide(null);
-  };
-  const canLeaveDraft = () => {
+  }, [toast, notify]);
+  const admitNavigation = () => {
     if (operationPending) {
       setToast('Wait for the current import or restore to finish.');
       return false;
@@ -563,8 +531,42 @@ function WorkspaceApp({
     );
     return false;
   };
+  const interaction = useWorkspaceInteraction({
+    selected,
+    mode,
+    canLeave: admitNavigation,
+    documentPath: (id) =>
+      state.documents[id] && !state.documents[id]!.trashedAt ? id : null,
+    selectDocument: (id) => model.select(id),
+    setMode: model.setMode,
+    sourcePanel,
+    documentScroll,
+    commands,
+    onOpened: () => {
+      if (window.innerWidth <= 720) setLeftOpen(false);
+    },
+    isCurrentSource: model.isCurrentSource,
+    onError: (reason) =>
+      setToast(
+        reason instanceof Error
+          ? reason.message
+          : 'The note could not be opened.',
+      ),
+  });
+  const {
+    canLeaveDraft,
+    switchMode,
+    openDocument,
+    moveHistory,
+    visitHistory,
+    setVisitHistory,
+    showSource,
+    focusCreatedDocument,
+  } = interaction;
+  const closePeek = () => navigation.current?.closePeek();
   const importAttachments = async (files: File[]) => {
-    if (!files.length || !selectedIsNote || !canLeaveDraft()) return;
+    if (!files.length || !selectedIsNote || model.conflict || !canLeaveDraft())
+      return;
     const target = selected;
     setOperationPending(true);
     try {
@@ -573,63 +575,8 @@ function WorkspaceApp({
       setOperationPending(false);
     }
   };
-  const openLeft = (view: 'documents' | 'connections' = 'documents') => {
-    closePeek();
-    setSidebarView(view);
-    setLeftOpen(true);
-    if (window.innerWidth <= 720) setRightOpen(false);
-  };
-  const openRight = () => {
-    closePeek();
-    setRightOpen(true);
-    if (window.innerWidth <= 720) setLeftOpen(false);
-  };
-  const switchMode = (next: 'source' | 'preview') => {
-    if (next !== 'source' && !selectedIsNote) return;
-    if (!canLeaveDraft()) return;
-    const initiator = document.activeElement;
-    model.setMode(next);
-    if (next === 'source') {
-      requestAnimationFrame(() => {
-        // A newer user focus choice owns the next keystroke. In particular,
-        // do not interrupt title input or IME composition after mode switching.
-        const active = document.activeElement;
-        if (active && active !== document.body && active !== initiator) return;
-        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus();
-      });
-    }
-  };
-  const openDocument = (key: string) => {
-    if (!canLeaveDraft()) return;
-    if (!state.documents[key] || state.documents[key]!.trashedAt) return;
-    model.select(key);
-    if (!isMdxSource(key)) model.setMode('source');
-    setVisitHistory((history) => {
-      if (history.entries[history.cursor] === key) return history;
-      const entries = [
-        ...history.entries.slice(0, history.cursor + 1),
-        key,
-      ].slice(-40);
-      return { entries, cursor: entries.length - 1 };
-    });
-    if (window.innerWidth <= 720) setLeftOpen(false);
-    documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-  };
-  const moveHistory = (offset: number) => {
-    if (!canLeaveDraft()) return;
-    let cursor = visitHistory.cursor + offset;
-    while (cursor >= 0 && cursor < visitHistory.entries.length) {
-      const key = visitHistory.entries[cursor]!;
-      if (state.documents[key] && !state.documents[key]!.trashedAt) {
-        model.select(key);
-        if (!isMdxSource(key)) model.setMode('source');
-        setVisitHistory((old) => ({ ...old, cursor }));
-        documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-        return;
-      }
-      cursor += offset;
-    }
-  };
+  const openLeft = (view: 'documents' | 'connections' = 'documents') =>
+    navigation.current?.openLeft(view);
   const startNew = (kind: 'note' | 'folder', parent = selectedFolder) => {
     if (!canLeaveDraft()) return;
     setSidebarQuery('');
@@ -648,6 +595,7 @@ function WorkspaceApp({
       }
       const key = model.createNote(name, parent);
       if (!key) return;
+      focusCreatedDocument(key);
       setNewItem(null);
       model.setMode('source');
       documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
@@ -656,12 +604,6 @@ function WorkspaceApp({
         return { entries, cursor: entries.length - 1 };
       });
       if (window.innerWidth <= 720) setLeftOpen(false);
-      requestAnimationFrame(() => {
-        const titleInput =
-          document.querySelector<HTMLInputElement>('.doc-title-input');
-        titleInput?.focus();
-        titleInput?.select();
-      });
       return;
     }
     openLeft();
@@ -722,11 +664,9 @@ function WorkspaceApp({
         newItem.parent,
       );
       if (!key) return;
+      focusCreatedDocument(key);
       model.setMode('source');
       documentScroll.current?.scrollTo({ top: 0, behavior: 'instant' });
-      requestAnimationFrame(() =>
-        sourcePanel.current?.querySelector<HTMLElement>('.cm-content')?.focus(),
-      );
       setVisitHistory((history) => {
         const entries = [...history.entries.slice(0, history.cursor + 1), key];
         return { entries, cursor: entries.length - 1 };
@@ -751,7 +691,11 @@ function WorkspaceApp({
     setRecoveryLoading(true);
     setRecoveryError('');
     try {
-      setRecoveryPoints(await model.listRecovery());
+      const [points] = await Promise.all([
+        model.listRecovery(),
+        model.reloadAttempts(),
+      ]);
+      setRecoveryPoints(points);
     } catch (error) {
       setRecoveryError(
         error instanceof Error
@@ -785,6 +729,7 @@ function WorkspaceApp({
     }
   };
   const requestPersistentStorage = async () => {
+    if (cloudStorageEnabled) return;
     try {
       const granted = await navigator.storage?.persist?.();
       setPersistentStatus(
@@ -801,12 +746,16 @@ function WorkspaceApp({
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (event.isComposing || event.repeat) return;
+      if (event.defaultPrevented || event.isComposing || event.repeat) return;
       const key = event.key.toLocaleLowerCase();
       if ((event.metaKey || event.ctrlKey) && key === 's') {
         event.preventDefault();
         if (canLeaveDraft()) void model.saveNow();
-      } else if ((event.metaKey || event.ctrlKey) && key === 'k') {
+      } else if (
+        (event.metaKey || event.ctrlKey) &&
+        key === 'k' &&
+        !event.shiftKey
+      ) {
         event.preventDefault();
         if (!canLeaveDraft()) return;
         setModal(null);
@@ -963,14 +912,13 @@ function WorkspaceApp({
     const note = state.documents[key]!;
     const Icon = isMdxSource(key) ? FileText : Code2;
     return (
-      <button
-        type="button"
+      <DocumentNavigationRow
         key={key}
-        className={
-          'nav-file ' +
-          (key === selected ? 'selected' : '') +
-          treeDropClass({ kind: 'document', id: key })
-        }
+        title={note.title}
+        selected={key === selected}
+        depth={depth}
+        icon={Icon}
+        extraClass={treeDropClass({ kind: 'document', id: key })}
         draggable
         onDragStart={(event) =>
           startTreeDrag(event, { kind: 'document', id: key })
@@ -994,21 +942,8 @@ function WorkspaceApp({
           if (!event.currentTarget.contains(event.relatedTarget as Node))
             setDropHint(null);
         }}
-        style={{
-          /* Exactly one indentation level belongs outside each row.
-             The inner icon padding is fixed to match sibling folders. */
-          marginLeft: depth * 16,
-          paddingLeft: 7,
-          width: 'calc(100% - ' + depth * 16 + 'px)',
-        }}
-        onClick={() => openDocument(key)}
-        title={note.title}
-        aria-label={'Open ' + note.title}
-        aria-current={key === selected ? 'page' : undefined}
-      >
-        <Icon size={14} strokeWidth={1.65} />
-        <span>{note.title}</span>
-      </button>
+        onOpen={() => openDocument(key)}
+      />
     );
   }
   function draftRow(parent: string, depth: number) {
@@ -1176,115 +1111,121 @@ function WorkspaceApp({
     .filter((key) => matches(key, commandNeedle))
     .sort((first, second) => commandMatchRank(first) - commandMatchRank(second))
     .slice(0, 30);
-  const actions = [
-    {
-      name: 'New document',
-      description: 'Create a note in this workspace',
-      icon: FilePlus2,
-      actionId: 'new',
-    },
-    {
-      name: 'Import notes or modules',
-      description: 'Choose related MDX and React files together',
-      icon: Upload,
-      actionId: 'import',
-    },
-    {
-      name: 'Import a folder',
-      description: 'Keep relative module paths together',
-      icon: FolderInput,
-      actionId: 'folder',
-    },
-    ...(selectedIsNote
-      ? [
-          {
-            name: 'Add image or PDF',
-            description: 'Attach files to this note, including them in backups',
-            icon: Paperclip,
-            actionId: 'attachment',
-          },
-        ]
-      : []),
-    {
-      name: 'Edit source',
-      description: 'Open the source editor',
-      icon: Code2,
-      actionId: 'source',
-    },
-    ...(selectedIsNote
-      ? [
-          {
-            name: 'Preview document',
-            description:
-              'Edit the rendered note with live Markdown and equations',
-            icon: Eye,
-            actionId: 'preview',
-          },
-        ]
-      : []),
-    {
-      name: 'Save workspace',
-      description: 'Save all changes in this browser',
-      icon: Save,
-      actionId: 'save',
-    },
-    {
-      name: 'Export current source',
-      description: 'Download the exact source text',
-      icon: Download,
-      actionId: 'export',
-    },
-    {
-      name: 'Export workspace backup',
-      description: 'Download every note, folder, and setting',
-      icon: HardDrive,
-      actionId: 'backup',
-    },
-    {
-      name: 'Rename document',
-      description: metadata.title,
-      icon: Pencil,
-      actionId: 'rename',
-    },
-    {
-      name: 'Move document',
-      description: 'Choose a workspace folder',
-      icon: FolderInput,
-      actionId: 'move',
-    },
-    {
-      name: 'Recovery history',
-      description: 'Restore a previous workspace snapshot',
-      icon: RotateCcw,
-      actionId: 'recovery',
-    },
-    {
-      name: 'Open Trash',
-      description: 'Restore removed documents',
-      icon: Trash2,
-      actionId: 'trash',
-    },
-    {
-      name:
-        state.theme === 'dark'
-          ? 'Switch to light theme'
-          : 'Switch to dark theme',
-      description: 'Change appearance',
-      icon: state.theme === 'dark' ? Sun : Moon,
-      actionId: 'theme',
-    },
-    {
-      name: 'Settings',
-      description: 'Storage, backups, and keyboard shortcuts',
-      icon: Settings2,
-      actionId: 'settings',
-    },
-  ].filter(
-    (action) =>
-      !commandNeedle ||
-      (action.name + ' ' + action.description)
-        .toLocaleLowerCase()
-        .includes(commandNeedle),
+  const actions = filterDocumentCommands(
+    [
+      ...documentFormattingCommands(selectedIsNote, mode).map((command) => ({
+        name: command.name,
+        description: command.description,
+        icon: command.icon,
+        actionId: command.id.slice('action:'.length),
+      })),
+      {
+        name: 'New document',
+        description: 'Create a note in this workspace',
+        icon: FilePlus2,
+        actionId: 'new',
+      },
+      {
+        name: 'Import notes or modules',
+        description: 'Choose related MDX and React files together',
+        icon: Upload,
+        actionId: 'import',
+      },
+      {
+        name: 'Import a folder',
+        description: 'Keep relative module paths together',
+        icon: FolderInput,
+        actionId: 'folder',
+      },
+      ...(selectedIsNote
+        ? [
+            {
+              name: 'Add image or PDF',
+              description:
+                'Attach files to this note, including them in backups',
+              icon: Paperclip,
+              actionId: 'attachment',
+            },
+          ]
+        : []),
+      {
+        name: 'Edit source',
+        description: 'Open the source editor',
+        icon: Code2,
+        actionId: 'source',
+      },
+      ...(selectedIsNote
+        ? [
+            {
+              name: 'Preview document',
+              description:
+                'Edit the rendered note with live Markdown and equations',
+              icon: Eye,
+              actionId: 'preview',
+            },
+          ]
+        : []),
+      {
+        name: 'Save workspace',
+        description: cloudStorageEnabled
+          ? 'Save all changes to cloud storage'
+          : 'Save all changes in this browser',
+        icon: Save,
+        actionId: 'save',
+      },
+      {
+        name: 'Export current source',
+        description: 'Download the exact source text',
+        icon: Download,
+        actionId: 'export',
+      },
+      {
+        name: 'Export workspace backup',
+        description: 'Download every note, folder, and setting',
+        icon: HardDrive,
+        actionId: 'backup',
+      },
+      {
+        name: 'Rename document',
+        description: metadata.title,
+        icon: Pencil,
+        actionId: 'rename',
+      },
+      {
+        name: 'Move document',
+        description: 'Choose a workspace folder',
+        icon: FolderInput,
+        actionId: 'move',
+      },
+      {
+        name: 'Recovery history',
+        description: 'Restore a previous workspace snapshot',
+        icon: RotateCcw,
+        actionId: 'recovery',
+      },
+      {
+        name: 'Open Trash',
+        description: 'Restore removed documents',
+        icon: Trash2,
+        actionId: 'trash',
+      },
+      {
+        name:
+          state.theme === 'dark'
+            ? 'Switch to light theme'
+            : 'Switch to dark theme',
+        description: 'Change appearance',
+        icon: state.theme === 'dark' ? Sun : Moon,
+        actionId: 'theme',
+      },
+      {
+        name: 'Settings',
+        description: 'Storage, backups, and keyboard shortcuts',
+        icon: Settings2,
+        actionId: 'settings',
+      },
+    ],
+    commandNeedle,
   );
   const commandResults = [
     ...commandDocuments.map((key) => ({
@@ -1298,67 +1239,179 @@ function WorkspaceApp({
       id: 'action:' + action.actionId,
     })),
   ];
-  const runCommand = (result: { id: string }) => {
-    setCommandOpen(false);
-    if (result.id.startsWith('document:')) {
-      openDocument(result.id.slice('document:'.length));
-      return;
-    }
-    switch (result.id.slice('action:'.length)) {
-      case 'new':
-        startNew('note', '');
-        break;
-      case 'import':
-        noteInput.current?.click();
-        break;
-      case 'folder':
-        folderInput.current?.click();
-        break;
-      case 'attachment':
-        if (canLeaveDraft()) attachmentInput.current?.click();
-        break;
-      case 'source':
-        switchMode('source');
-        break;
-      case 'preview':
-        switchMode('preview');
-        break;
-      case 'save':
-        if (canLeaveDraft()) void model.saveNow();
-        break;
-      case 'export':
-        exportSource();
-        break;
-      case 'backup':
-        model.exportBackup();
-        break;
-      case 'rename':
-        openDocumentAction('rename');
-        break;
-      case 'move':
-        openDocumentAction('move');
-        break;
-      case 'recovery':
-        showSettings('recovery');
-        break;
-      case 'trash':
-        showSettings('trash');
-        break;
-      case 'theme':
-        model.setTheme(state.theme === 'dark' ? 'light' : 'dark');
-        break;
-      case 'settings':
-        showSettings();
-        break;
-    }
-  };
+  const runCommand = (result: { id: string }) =>
+    interaction.runCommand(
+      result,
+      () => setCommandOpen(false),
+      (action) => {
+        switch (action) {
+          case 'new':
+            startNew('note', '');
+            break;
+          case 'import':
+            noteInput.current?.click();
+            break;
+          case 'folder':
+            folderInput.current?.click();
+            break;
+          case 'attachment':
+            if (canLeaveDraft()) attachmentInput.current?.click();
+            break;
+          case 'save':
+            if (canLeaveDraft()) void model.saveNow();
+            break;
+          case 'export':
+            exportSource();
+            break;
+          case 'backup':
+            model.exportBackup();
+            break;
+          case 'rename':
+            openDocumentAction('rename');
+            break;
+          case 'move':
+            openDocumentAction('move');
+            break;
+          case 'recovery':
+            showSettings('recovery');
+            break;
+          case 'trash':
+            showSettings('trash');
+            break;
+          case 'theme':
+            model.setTheme(state.theme === 'dark' ? 'light' : 'dark');
+            break;
+          case 'settings':
+            showSettings();
+            break;
+        }
+      },
+    );
   useEffect(() => {
-    if (commandOpen)
-      document
-        .querySelector('.web-command-dialog .keyboard-selected')
-        ?.scrollIntoView({ block: 'nearest' });
-  }, [commandIndex, commandOpen]);
-
+    if (offline.error)
+      notify({
+        id: 'app-offline',
+        tone: 'error',
+        persistent: true,
+        message: 'Offline access needs attention',
+        detail: offline.error,
+      });
+    else dismiss('app-offline');
+  }, [offline.error, notify, dismiss]);
+  const latestActions = useRef({
+    model,
+    canLeaveDraft,
+    preview,
+    switchMode,
+    showSource,
+  });
+  useLayoutEffect(() => {
+    latestActions.current = {
+      model,
+      canLeaveDraft,
+      preview,
+      switchMode,
+      showSource,
+    };
+  });
+  useEffect(() => {
+    if (model.error || model.conflict)
+      notify({
+        id: 'workspace-storage',
+        tone: 'error',
+        persistent: true,
+        dismissible: false,
+        message: model.conflict
+          ? cloudStorageEnabled
+            ? 'This workspace was saved elsewhere.'
+            : 'This workspace changed in another tab.'
+          : model.error,
+        detail: model.conflict ? model.error : undefined,
+        actions: [
+          ...(cloudStorageEnabled && !model.conflict
+            ? [
+                {
+                  label: 'Sign in',
+                  run: () => {
+                    window.open(
+                      '/api/storage/session',
+                      '_blank',
+                      'noopener,noreferrer',
+                    );
+                  },
+                },
+              ]
+            : []),
+          {
+            label: 'Export current backup',
+            run: () => latestActions.current.model.exportBackup(),
+          },
+          model.conflict
+            ? {
+                label: 'Load latest saved workspace',
+                run: () => {
+                  if (latestActions.current.canLeaveDraft())
+                    void latestActions.current.model.reloadFromStorage();
+                },
+              }
+            : {
+                label: 'Retry save',
+                run: () => {
+                  void latestActions.current.model.saveNow();
+                },
+              },
+        ],
+      });
+    else dismiss('workspace-storage');
+    // Actions read the current verified model; notifications never authorize a write.
+  }, [model.error, model.conflict, notify, dismiss]);
+  useEffect(() => {
+    if (model.backupNotice)
+      notify({
+        id: 'workspace-backup',
+        tone: 'success',
+        message: model.backupNotice,
+      });
+  }, [model.backupNotice, notify]);
+  useEffect(() => {
+    if (preview.error)
+      notify({
+        id: 'document-preview',
+        tone: 'error',
+        persistent: true,
+        message: 'Preview needs attention',
+        detail: preview.error,
+        actions: [
+          {
+            label: 'Try preview again',
+            run: () => latestActions.current.preview.rebuild(),
+          },
+          {
+            label: 'Show source',
+            run: () => {
+              const { preview, canLeaveDraft, switchMode, showSource } =
+                latestActions.current;
+              if (!canLeaveDraft()) return;
+              const location = preview.locations[0];
+              if (location)
+                void showSource(
+                  location.file,
+                  location.offset,
+                  location.source,
+                ).catch((reason) =>
+                  setToast(
+                    reason instanceof Error
+                      ? reason.message
+                      : 'The source could not be opened.',
+                  ),
+                );
+              else switchMode('source');
+            },
+          },
+        ],
+      });
+    else dismiss('document-preview');
+  }, [preview.error, notify, dismiss]);
   return (
     <div
       className={
@@ -1369,206 +1422,22 @@ function WorkspaceApp({
       data-save-status={model.saveStatus}
       data-editor-mode={mode}
     >
-      <div className={'mode-island ' + (islandOpen ? 'is-open' : '')}>
-        <div className="mode-island-surface">
-          <div
-            id="mode-island-actions"
-            className={'mode-island-actions mode-is-' + mode}
-            role="group"
-            aria-label="Document mode"
-          >
-            <span className="mode-island-selection" aria-hidden="true" />
-            {(['source', 'preview'] as const).map((value) => (
-              <button
-                type="button"
-                key={value}
-                className={mode === value ? 'selected' : ''}
-                aria-pressed={mode === value}
-                disabled={value !== 'source' && !selectedIsNote}
-                title={
-                  value === 'preview' && !selectedIsNote
-                    ? 'Select a Markdown or MDX note to preview'
-                    : undefined
-                }
-                onClick={(event) => {
-                  switchMode(value);
-                  event.currentTarget.blur();
-                }}
-              >
-                {value === 'source' ? 'Source' : 'Preview'}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button
-          type="button"
-          className="mode-island-handle"
-          aria-label="Show document modes"
-          title="Document modes"
-          aria-controls="mode-island-actions"
-          aria-expanded={islandOpen}
-          onClick={() => {
-            const next = !islandOpen;
-            if (next) controller.current?.markShown('top');
-            else controller.current?.clear('top');
-            setIslandOpen(next);
-          }}
-        />
-      </div>
-      <nav
-        className={
-          'peek-rail peek-rail-left ' +
-          (peekSide === 'left' && !leftOpen ? 'visible' : '')
-        }
-        aria-label="Left quick-access panel"
-        aria-hidden={peekSide !== 'left' || leftOpen}
-        inert={peekSide !== 'left' || leftOpen}
-      >
-        <div className="peek-rail-top">
-          <button
-            type="button"
-            className={sidebarView === 'documents' ? 'active' : ''}
-            aria-label="Open documents"
-            title="Documents"
-            onClick={() => openLeft()}
-          >
-            <BookOpen size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            className={sidebarView === 'connections' ? 'active' : ''}
-            aria-label="Open connections"
-            title="Connections"
-            onClick={() => openLeft('connections')}
-          >
-            <Network size={18} strokeWidth={1.7} />
-          </button>
-          <span className="peek-rail-divider" aria-hidden="true" />
-          <button
-            type="button"
-            aria-label="Search documents"
-            title="Search documents"
-            onClick={() => {
-              openLeft();
-              requestAnimationFrame(() =>
-                document
-                  .querySelector<HTMLInputElement>('.left-panel-search input')
-                  ?.focus(),
-              );
-            }}
-          >
-            <Search size={18} strokeWidth={1.7} />
-          </button>
-        </div>
-        <div className="peek-rail-bottom">
-          <button
-            type="button"
-            aria-label="Open settings"
-            title="Settings"
-            onClick={() => showSettings()}
-          >
-            <Settings2 size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            aria-label="Workspace storage"
-            title="Personal workspace"
-            onClick={() => showSettings()}
-          >
-            <span className="peek-rail-avatar" aria-hidden="true">
-              T
-            </span>
-          </button>
-        </div>
-      </nav>
-      <nav
-        className={
-          'peek-rail peek-rail-right ' +
-          (peekSide === 'right' && !rightOpen ? 'visible' : '')
-        }
-        aria-label="Right quick-access panel"
-        aria-hidden={peekSide !== 'right' || rightOpen}
-        inert={peekSide !== 'right' || rightOpen}
-      >
-        <div className="peek-rail-top">
-          <button
-            type="button"
-            aria-label="Open right panel"
-            title="Open right panel"
-            onClick={openRight}
-          >
-            <PanelRightOpen size={18} strokeWidth={1.7} />
-          </button>
-          <span className="peek-rail-divider" />
-          <button
-            type="button"
-            aria-label="Previous document"
-            title="Previous document"
-            disabled={visitHistory.cursor <= 0}
-            onClick={() => moveHistory(-1)}
-          >
-            <ArrowLeft size={18} strokeWidth={1.7} />
-          </button>
-          <button
-            type="button"
-            aria-label="Next document"
-            title="Next document"
-            disabled={visitHistory.cursor >= visitHistory.entries.length - 1}
-            onClick={() => moveHistory(1)}
-          >
-            <ArrowRight size={18} strokeWidth={1.7} />
-          </button>
-        </div>
-      </nav>
-      <button
-        type="button"
-        className="floating-toggle floating-left"
-        aria-label={leftOpen ? 'Close navigation' : 'Open navigation'}
-        title="Navigation (Ctrl/Cmd + \)"
-        aria-expanded={leftOpen}
-        aria-controls="notes-navigation"
-        onClick={() => {
-          closePeek();
-          setLeftOpen((open) => !open);
-          if (window.innerWidth <= 720) setRightOpen(false);
-        }}
-      >
-        {leftOpen ? (
-          <PanelLeftClose size={19} strokeWidth={1.65} />
-        ) : (
-          <PanelLeftOpen size={19} strokeWidth={1.65} />
-        )}
-      </button>
-      <button
-        type="button"
-        className="floating-toggle floating-right"
-        aria-label={rightOpen ? 'Close right panel' : 'Open right panel'}
-        title="Right panel"
-        aria-expanded={rightOpen}
-        aria-controls="notes-details"
-        onClick={() => {
-          closePeek();
-          setRightOpen((open) => !open);
-          if (window.innerWidth <= 720) setLeftOpen(false);
-        }}
-      >
-        {rightOpen ? (
-          <PanelRightClose size={19} strokeWidth={1.65} />
-        ) : (
-          <PanelRightOpen size={19} strokeWidth={1.65} />
-        )}
-      </button>
-      {(leftOpen || rightOpen) && (
-        <button
-          type="button"
-          className="mobile-scrim"
-          onClick={() => {
-            setLeftOpen(false);
-            setRightOpen(false);
-          }}
-          aria-label="Close open panel"
-        />
-      )}
+      <WorkspaceNavigation
+        mode={mode}
+        selectedIsNote={selectedIsNote}
+        switchMode={switchMode}
+        leftOpen={leftOpen}
+        rightOpen={rightOpen}
+        setLeftOpen={setLeftOpen}
+        setRightOpen={setRightOpen}
+        sidebarView={sidebarView}
+        setSidebarView={setSidebarView}
+        showSettings={() => showSettings()}
+        moveHistory={moveHistory}
+        canBack={visitHistory.cursor > 0}
+        canForward={visitHistory.cursor < visitHistory.entries.length - 1}
+        controlsRef={navigation}
+      />
       <aside
         id="notes-navigation"
         className="sidebar workspace-sidebar"
@@ -1860,7 +1729,11 @@ function WorkspaceApp({
               </span>
               <span className="left-panel-account-label">
                 <strong>Personal workspace</strong>
-                <small>Stored in this browser</small>
+                <small>
+                  {cloudStorageEnabled
+                    ? 'Private cloud storage'
+                    : 'Stored in this browser'}
+                </small>
               </span>
               <ChevronDown size={14} />
             </button>
@@ -1872,12 +1745,7 @@ function WorkspaceApp({
           <div className="document-wrap">
             <div className="document-heading">
               <div className="doc-title-row">
-                <DocumentTitle
-                  key={selected}
-                  title={metadata.title}
-                  disabled={pendingEdit}
-                  onRename={(title) => model.rename(selected, title)}
-                />
+                <DocumentHeader title={metadata.title} />
               </div>
             </div>
             <div
@@ -1904,133 +1772,73 @@ function WorkspaceApp({
                 void importAttachments(files);
               }}
             >
-              <div
-                ref={sourcePanel}
-                className="web-source-panel"
-                hidden={mode === 'preview' && runtimeDocument === selected}
-              >
-                <SourceEditor
-                  key={selected}
-                  source={source}
-                  rendered={
-                    selectedIsNote
-                      ? {
-                          active:
-                            mode === 'preview' && runtimeDocument !== selected,
-                          files,
-                          entry: workspace.entry,
-                          theme: state.theme,
-                          images: previewImages,
-                          stopped:
-                            preview.stopped || runtimeDocument === selected,
-                        }
-                      : undefined
-                  }
-                  wikilinks={linkIndex.outgoing[selected] ?? []}
-                  onOpenNote={openDocument}
-                  busy={operationPending}
-                  onPendingChange={(value) => {
+              <DocumentSurface
+                documentId={selected}
+                mode={mode}
+                fullDocument={fullDocument}
+                reactEnabled={reactEnabled}
+                runtime={preview}
+                sourcePanelRef={sourcePanel}
+                editor={{
+                  source,
+                  sourceIsCurrent: (snapshot) =>
+                    model.isCurrentSource(selected, snapshot),
+                  rendered: selectedIsNote
+                    ? {
+                        active: mode === 'preview' && !fullDocument,
+                        renderer: WebRenderedRuntime,
+                        files,
+                        entry: workspace.entry,
+                        theme: state.theme,
+                        images: previewImages,
+                        corePlugins: state.corePlugins,
+                        showComponentSource:
+                          state.previewPreferences?.showComponentSource,
+                        stopped: preview.stopped || fullDocument,
+                        rebuildVersion: islandRebuildVersion,
+                      }
+                    : undefined,
+                  wikilinks: linkIndex.outgoing[selected] ?? [],
+                  onOpenNote: openDocument,
+                  busy: operationPending,
+                  readOnly: model.conflict,
+                  onRetainAttempt: (base, text) =>
+                    model.retainAttempt(selected, base, text),
+                  onDiscardAttempt: model.discardLiveAttempt,
+                  onKeepAttempt: model.keepLiveAttempt,
+                  onAnalysisDiagnostic: (path, snapshot, message) => {
+                    if (!model.isCurrentSource(path, snapshot)) return;
+                    setAnalysisDiagnostic((current) =>
+                      current?.path === path &&
+                      current.source === snapshot &&
+                      current.message === message
+                        ? current
+                        : { path, source: snapshot, message },
+                    );
+                  },
+                  onPendingChange: (value) => {
                     model.setPendingEditorDraft(value);
                     setPendingEdit(value);
-                  }}
-                  documentKey={selected}
-                  histories={histories}
-                  commandsRef={commands}
-                  acceptChange={(value) =>
-                    model.canUpdateSource(selected, value)
-                  }
-                  onChange={(value) => model.updateSource(selected, value)}
-                  onShowSource={(offset, snapshot) => {
-                    if (!canLeaveDraft()) return;
-                    model.setMode('source');
-                    requestAnimationFrame(() =>
-                      commands.current?.revealSource(offset, snapshot),
+                  },
+                  documentKey: selected,
+                  histories,
+                  commandsRef: commands,
+                  acceptChange: (value) =>
+                    model.canUpdateSource(selected, value),
+                  onChange: (value) => model.updateSource(selected, value),
+                  onShowSource: (offset, snapshot) => {
+                    void showSource(selected, offset, snapshot).catch(
+                      (reason) =>
+                        setToast(
+                          reason instanceof Error
+                            ? reason.message
+                            : 'The source could not be opened.',
+                        ),
                     );
-                  }}
-                />
-              </div>
-              <div className="web-preview-panel" hidden={mode !== 'preview'}>
-                {preview.error && (
-                  <section className="web-preview-error" role="alert">
-                    <div>
-                      <AlertCircle size={18} />
-                      <strong>Preview needs attention</strong>
-                    </div>
-                    <pre>{preview.error}</pre>
-                    {preview.locations.map((location, index) => (
-                      <button
-                        type="button"
-                        className="web-button"
-                        key={location.file + ':' + index}
-                        onClick={() => {
-                          if (!canLeaveDraft()) return;
-                          pendingLocation.current = {
-                            key: location.file,
-                            offset: location.offset,
-                            source: location.source,
-                          };
-                          model.select(location.file);
-                          model.setMode('source');
-                          requestAnimationFrame(() =>
-                            commands.current?.revealSource(
-                              location.offset,
-                              location.source,
-                            ),
-                          );
-                        }}
-                      >
-                        Open{' '}
-                        {location.file.slice(location.file.indexOf('/') + 1)}
-                        {location.line ? ':' + location.line : ''}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="web-button"
-                      onClick={preview.rebuild}
-                    >
-                      <RotateCcw size={14} /> Try preview again
-                    </button>
-                  </section>
-                )}
-                {preview.html && runtimeDocument === selected && (
-                  <WebPreview
-                    html={preview.html}
-                    theme={state.theme}
-                    onError={preview.reportRuntimeError}
-                  />
-                )}
-                {!preview.html &&
-                  !preview.error &&
-                  runtimeDocument === selected && (
-                    <div className="web-preview-placeholder" role="status">
-                      {preview.stopped ? (
-                        <>
-                          <Pause size={20} />
-                          <p>Preview is paused.</p>
-                          <button
-                            type="button"
-                            className="web-button"
-                            onClick={preview.rebuild}
-                          >
-                            <Play size={14} /> Resume preview
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <LoaderCircle className="web-spin" size={20} />
-                          <span>Preparing preview…</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-              </div>
+                  },
+                }}
+              />
             </div>
-            {model.backupNotice && (
-              <p className="web-backup-notice" role="status">
-                {model.backupNotice}
-              </p>
-            )}
           </div>
         </div>
       </main>
@@ -2104,7 +1912,7 @@ function WorkspaceApp({
               assets={state.assets}
               onAdd={() => attachmentInput.current?.click()}
               onDownload={model.downloadAttachment}
-              disabled={operationPending || pendingEdit}
+              disabled={operationPending || pendingEdit || model.conflict}
             />
           )}
           {selectedIsNote && (
@@ -2113,11 +1921,20 @@ function WorkspaceApp({
               aria-label="Preview controls"
             >
               <h3>Preview</h3>
-              <p className="web-inspector-subtitle">{preview.status}</p>
+              <p className="web-inspector-subtitle">
+                {mode === 'preview' &&
+                !fullDocument &&
+                reactEnabled &&
+                preview.available &&
+                !preview.stopped
+                  ? 'Editable preview'
+                  : preview.status}
+              </p>
               <div className="web-inline-actions">
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2126,6 +1943,7 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild
@@ -2133,15 +1951,13 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
-                  disabled={pendingEdit}
+                  disabled={pendingEdit || !reactEnabled || !preview.available}
                   onClick={() => {
-                    setRuntimeDocument(
-                      runtimeDocument === selected ? null : selected,
-                    );
+                    execution.setRequested(!execution.requested);
                     model.setMode('preview');
                   }}
                 >
-                  {runtimeDocument === selected
+                  {execution.requested
                     ? 'Edit rendered document'
                     : 'Run full document'}
                 </button>
@@ -2162,47 +1978,6 @@ function WorkspaceApp({
           </section>
         </div>
       </aside>
-      {(model.error || model.conflict) && (
-        <div className="web-storage-banner" role="alert">
-          <AlertCircle size={17} />
-          <div>
-            <strong>
-              {model.conflict
-                ? 'This workspace changed in another tab.'
-                : 'Your latest changes need attention.'}
-            </strong>
-            <p>{model.error}</p>
-            <div className="web-inline-actions">
-              <button
-                type="button"
-                className="web-button"
-                onClick={model.exportBackup}
-              >
-                <Download size={14} /> Export current backup
-              </button>
-              {model.conflict ? (
-                <button
-                  type="button"
-                  className="web-button"
-                  onClick={() => {
-                    if (canLeaveDraft()) void model.reloadFromStorage();
-                  }}
-                >
-                  Load latest saved workspace
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="web-button"
-                  onClick={() => void model.saveNow()}
-                >
-                  Retry save
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       <input
         ref={attachmentInput}
         hidden
@@ -2261,77 +2036,16 @@ function WorkspaceApp({
       />
 
       {commandOpen && (
-        <Dialog
-          title="Command palette"
+        <DocumentCommandPalette
+          shouldRestoreFocus={interaction.shouldRestoreDialogFocus}
+          query={commandQuery}
+          index={commandIndex}
+          results={commandResults}
+          onQuery={setCommandQuery}
+          onIndex={setCommandIndex}
+          onRun={runCommand}
           onClose={() => setCommandOpen(false)}
-          className="web-command-dialog"
-        >
-          <div className="modal-search">
-            <Search size={20} />
-            <input
-              data-autofocus
-              placeholder="Search notes or run a command…"
-              aria-label="Search commands and notes"
-              value={commandQuery}
-              onChange={(event) => {
-                setCommandQuery(event.target.value);
-                setCommandIndex(0);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault();
-                  setCommandIndex((old) =>
-                    Math.min(old + 1, commandResults.length - 1),
-                  );
-                }
-                if (event.key === 'ArrowUp') {
-                  event.preventDefault();
-                  setCommandIndex((old) => Math.max(0, old - 1));
-                }
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  const result = commandResults[commandIndex];
-                  if (result) runCommand(result);
-                }
-              }}
-            />
-            <kbd>ESC</kbd>
-          </div>
-          <div className="modal-content">
-            {commandResults.map((result, index) => (
-              <button
-                type="button"
-                key={result.id}
-                className={
-                  'cmd-result ' +
-                  (index === commandIndex ? 'keyboard-selected' : '')
-                }
-                onClick={() => runCommand(result)}
-              >
-                <result.icon size={16} />
-                <span>
-                  {result.name}
-                  <small>{result.description}</small>
-                </span>
-                <ArrowRight size={14} />
-              </button>
-            ))}
-            {!commandResults.length && (
-              <p className="no-results">No matching notes or commands.</p>
-            )}
-          </div>
-          <div className="modal-footer">
-            <span>
-              <kbd>↑ ↓</kbd> Navigate
-            </span>
-            <span>
-              <kbd>↵</kbd> Select
-            </span>
-            <span>
-              <kbd>ESC</kbd> Close
-            </span>
-          </div>
-        </Dialog>
+        />
       )}
       {modal === 'settings' && (
         <Dialog
@@ -2343,6 +2057,7 @@ function WorkspaceApp({
             {(
               [
                 ['storage', 'Workspace', HardDrive],
+                ['plugins', 'Core plugins', Settings2],
                 ['recovery', 'Recovery', RotateCcw],
                 ['trash', 'Trash', Trash2],
                 ['help', 'Guide', CircleHelp],
@@ -2364,29 +2079,21 @@ function WorkspaceApp({
             ))}
           </nav>
           <div className="web-settings-content">
+            {settingsTab === 'plugins' && (
+              <CorePluginSettings
+                plugins={state.corePlugins}
+                onPlugin={model.setCorePlugin}
+                onReactDisabled={() => execution.setRequested(false)}
+              />
+            )}
             {settingsTab === 'storage' && (
               <>
-                <section>
-                  <h3>Appearance</h3>
-                  <div className="left-panel-theme-buttons">
-                    <button
-                      type="button"
-                      className={state.theme === 'dark' ? 'selected' : ''}
-                      onClick={() => model.setTheme('dark')}
-                      aria-pressed={state.theme === 'dark'}
-                    >
-                      <Moon size={15} /> Dark
-                    </button>
-                    <button
-                      type="button"
-                      className={state.theme === 'light' ? 'selected' : ''}
-                      onClick={() => model.setTheme('light')}
-                      aria-pressed={state.theme === 'light'}
-                    >
-                      <Sun size={15} /> Light
-                    </button>
-                  </div>
-                </section>
+                <AppearanceSettings
+                  preferences={state.previewPreferences}
+                  theme={state.theme}
+                  onSource={model.setShowComponentSource}
+                  onTheme={model.setTheme}
+                />
                 <section>
                   <h3>Current document</h3>
                   <button
@@ -2403,31 +2110,41 @@ function WorkspaceApp({
                     {activeKeys.length} documents · {trashKeys.length} in Trash
                   </p>
                   <p>
-                    Notes save automatically in this browser on this device.
-                    There is no account or cloud sync. Clearing site data
-                    removes the local workspace.
+                    {cloudStorageEnabled
+                      ? 'Notes autosave to your private cloud workspace. A connection and sign-in are required to open and save notes. To move notes from a browser workspace, export a backup there and restore it here.'
+                      : 'Notes save automatically in this browser on this device. There is no account or cloud sync. Clearing site data removes the local workspace.'}
                   </p>
                   <p className="web-storage-state">
                     <Check size={15} />
                     {saveLabel}
                   </p>
-                  <button
-                    type="button"
-                    className="web-button"
-                    onClick={() => void requestPersistentStorage()}
-                  >
-                    <HardDrive size={15} /> Protect browser storage
-                  </button>
-                  {persistentStatus && <p role="status">{persistentStatus}</p>}
+                  {!cloudStorageEnabled && (
+                    <>
+                      <button
+                        type="button"
+                        className="web-button"
+                        onClick={() => void requestPersistentStorage()}
+                      >
+                        <HardDrive size={15} /> Protect browser storage
+                      </button>
+                      {persistentStatus && (
+                        <p role="status">{persistentStatus}</p>
+                      )}
+                    </>
+                  )}
                 </section>
                 <section>
                   <h3>Web app</h3>
                   <p>
-                    {offline.ready
+                    {cloudStorageEnabled
                       ? offline.online
-                        ? 'Ready to open offline on this device.'
-                        : 'Working offline. Your notes still save in this browser.'
-                      : offline.error || 'Preparing offline access…'}
+                        ? 'Cloud notes need a connection even when the app is installed.'
+                        : 'You are offline. Keep this tab open or export a backup to keep unsaved edits.'
+                      : offline.ready
+                        ? offline.online
+                          ? 'Ready to open offline on this device.'
+                          : 'Working offline. Your notes still save in this browser.'
+                        : offline.error || 'Preparing offline access…'}
                   </p>
                   {offline.updateAvailable && (
                     <button
@@ -2440,7 +2157,7 @@ function WorkspaceApp({
                         void model
                           .saveNow()
                           .then((saved) => {
-                            if (saved) activateUpdate();
+                            if (saved) return activateUpdate(model.saveNow);
                             else
                               setToast(
                                 'Save your workspace before applying the update.',
@@ -2458,7 +2175,9 @@ function WorkspaceApp({
                   <p>
                     Export a backup regularly. A workspace backup includes all
                     sources, folders, Recent shortcuts, settings, and Trash.
-                    Keep it somewhere outside this browser.
+                    {cloudStorageEnabled
+                      ? ' Keep a copy outside cloud storage.'
+                      : ' Keep it somewhere outside this browser.'}
                   </p>
                   <div className="web-inline-actions">
                     <button
@@ -2512,6 +2231,14 @@ function WorkspaceApp({
             )}
             {settingsTab === 'recovery' && (
               <section>
+                <RetainedEdits
+                  attempts={model.attempts}
+                  error={model.attemptError}
+                  disabled={operationPending}
+                  onRestore={model.restoreAttempt}
+                  onDiscard={model.discardAttempt}
+                  onRestored={() => setModal(null)}
+                />
                 <h3>Recovery history</h3>
                 <p>
                   Recovery points contain the whole workspace. Restoring a point
@@ -2584,9 +2311,9 @@ function WorkspaceApp({
                 <section>
                   <h3>Write, preview, experiment</h3>
                   <p>
-                    Use Source for Markdown, LaTeX mathematics, and MDX with
-                    React components. Preview runs the current note in an
-                    isolated frame.
+                    Write Markdown and mathematics directly in Preview, or use
+                    Source for the original text and React code. Interactive
+                    React components run in isolated frames.
                   </p>
                   <p>
                     Inline mathematics uses <code>$...$</code>. Display
@@ -2594,11 +2321,20 @@ function WorkspaceApp({
                     TypeScript imports work when related files are imported
                     together.
                   </p>
+                  {cloudStorageEnabled && (
+                    <p>
+                      Cloud saves finish when the server confirms them. If
+                      saving fails, keep this tab open or export a backup to
+                      keep your edits.
+                    </p>
+                  )}
                   <p>
-                    Preview cannot access your workspace storage or the network.
-                    Remote images and arbitrary npm imports are unavailable.
-                    Changing source rebuilds the preview and resets its
-                    component state.
+                    Document React cannot access your workspace storage or the
+                    network. Remote images and arbitrary npm imports are
+                    unavailable. Ordinary text edits preserve unchanged
+                    components; changing executable code or using Rebuild resets
+                    their temporary state. Run full document rebuilds the whole
+                    runtime after source changes.
                   </p>
                 </section>
                 <section>
@@ -2698,11 +2434,20 @@ function WorkspaceApp({
             </div>
             <section className="web-detail-section">
               <h4>Preview</h4>
-              <p>{preview.status}</p>
+              <p>
+                {mode === 'preview' &&
+                !fullDocument &&
+                reactEnabled &&
+                preview.available &&
+                !preview.stopped
+                  ? 'Editable preview'
+                  : preview.status}
+              </p>
               <div className="web-inline-actions">
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.stopped ? preview.rebuild : preview.stop}
                 >
                   {preview.stopped ? <Play size={14} /> : <Pause size={14} />}
@@ -2711,14 +2456,16 @@ function WorkspaceApp({
                 <button
                   type="button"
                   className="web-button"
+                  disabled={!reactEnabled || !preview.available}
                   onClick={preview.rebuild}
                 >
                   <RotateCcw size={14} /> Rebuild
                 </button>
               </div>
               <p className="web-hint">
-                Source changes rebuild the preview and reset interactive
-                component state.
+                Rebuild resets interactive state. Ordinary text edits preserve
+                unchanged components in editable Preview; Run full document
+                rebuilds after source changes.
               </p>
             </section>
             <section className="web-detail-section">
@@ -2826,12 +2573,6 @@ function WorkspaceApp({
             </div>
           </div>
         </Dialog>
-      )}
-      {toast && (
-        <div role="status" className="toast">
-          <Check size={15} />
-          {toast}
-        </div>
       )}
     </div>
   );

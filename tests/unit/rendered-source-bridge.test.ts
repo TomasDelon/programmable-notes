@@ -4,9 +4,14 @@ import {
   TextSelection,
   type Transaction,
 } from 'prosemirror-state';
-import { splitListItem } from 'prosemirror-schema-list';
+import {
+  sinkListItem,
+  splitListItem,
+  wrapInList,
+} from 'prosemirror-schema-list';
 import { addRowAfter } from 'prosemirror-tables';
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
+import { parseSourceWikilinks } from '../../src/links';
 import {
   renderedSchema as schema,
   safeRenderedHref,
@@ -14,7 +19,9 @@ import {
 import {
   parseRenderedSource,
   rebaseRenderedProjection,
+  renderedPositionFromSourceOffset,
   renderedSourceRange,
+  renderedTextSourceOffset,
   serializeRenderedChange,
   type RenderedProjection,
 } from '../../src/editor/rendered/sourceBridge';
@@ -58,6 +65,364 @@ function replace(
 }
 
 describe('rendered Markdown source bridge', () => {
+  it.each([
+    'and tea',
+    '&amp; tea',
+    '&#38; and &#x26;',
+    'first&#13;second&#xD;&#10;third',
+    '&#x1F9EA; and &NotEqualTilde;',
+    String.raw`\&amp; and \[brackets\] and &#91;&#91;Ghost]]`,
+  ])('preserves authored wikilinks and source spelling beside %s', (prose) => {
+    const source =
+      '\uFEFFexport const A = 1\r\n\r\nCafé ' +
+      prose +
+      '.\r\nSee [[Other]].\r\n\r\nPrice $5\n\n<Thing />\r\n';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    const result = apply(
+      projection,
+      state.tr.insertText('!', findText(state.doc, 'Café') + 4),
+    );
+    expect(
+      parseSourceWikilinks(result.mapping.source, 'note.mdx').map(
+        (link) => link.raw,
+      ),
+    ).toEqual(['[[Other]]']);
+    expect(result.mapping.source).toBe(source.replace('Café', 'Café!'));
+    expect(findNode(projection.doc, 'wikilink').node.attrs.raw).toBe(
+      '[[Other]]',
+    );
+  });
+
+  it.each([
+    ['&#x1F9EA;', '🧪'],
+    ['&NotEqualTilde;', '≂\u0338'],
+  ])('maps only complete boundaries of %s', (raw, visible) => {
+    const source = 'Before ' + raw + ' &amp; [[Other]]';
+    const projection = parseRenderedSource(source);
+    const from = findText(projection.doc, visible);
+    const start = source.indexOf(raw);
+    expect(renderedTextSourceOffset(projection, from)).toBe(start);
+    expect(renderedTextSourceOffset(projection, from + 1)).toBeNull();
+    expect(renderedTextSourceOffset(projection, from + visible.length)).toBe(
+      start + raw.length,
+    );
+    expect(renderedPositionFromSourceOffset(projection, start)).toBe(from);
+    expect(renderedPositionFromSourceOffset(projection, start + 1)).toBeNull();
+    expect(
+      renderedPositionFromSourceOffset(projection, start + raw.length),
+    ).toBe(from + visible.length);
+  });
+
+  it('replaces the whole reference when editing one of its decoded characters', () => {
+    const source = 'Before &NotEqualTilde; &amp; [[Other]]';
+    const projection = parseRenderedSource(source);
+    const result = replace(projection, '\u0338', '!');
+    expect(result.mapping.source).toBe(source.replace('&NotEqualTilde;', '≂!'));
+    expect(findNode(result.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+  });
+
+  it.each([
+    ['quote', '> ', '> '],
+    ['list', '- ', '  '],
+    ['nested quote/list', '> - ', '>   '],
+    ['tabbed continuation', '> ', '> \t'],
+  ])(
+    'preserves %s continuation bytes when typing on either side',
+    (_label, opening, continuation) => {
+      const source =
+        '\uFEFF---\nname: note\r\n---\n\n' +
+        opening +
+        'Café &amp; &#10; tea\r\n' +
+        continuation +
+        'See [[Other]] 🧪 and &NotEqualTilde;.\n\n<Thing />\r\n';
+      const projection = parseRenderedSource(source);
+      const state = EditorState.create({ doc: projection.doc });
+      const step = state.tr.insertText('!', findText(state.doc, 'Café') + 4);
+      const first = apply(projection, step);
+      expect(first.mapping.source).toBe(source.replace('Café', 'Café!'));
+      expect(findNode(first.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+      const second = apply(
+        first,
+        EditorState.create({ doc: first.doc }).tr.insertText(
+          '?',
+          findText(first.doc, 'See') + 3,
+        ),
+      );
+      expect(second.mapping.source).toBe(
+        source.replace('Café', 'Café!').replace('See', 'See?'),
+      );
+      const undone = apply(
+        first,
+        EditorState.create({ doc: first.doc }).tr.step(
+          step.steps[0]!.invert(state.doc),
+        ),
+      );
+      expect(undone.mapping.source).toBe(source);
+    },
+  );
+
+  it.each(['> Café\r\n> a', 'Café a'])(
+    'preserves the untouched spelling when adjacent entities display identically after %s',
+    (prefix) => {
+      const source = prefix + '&#38;&amp; [[Other]]';
+      const projection = parseRenderedSource(source);
+      const from = findText(projection.doc, '&&');
+      const result = apply(
+        projection,
+        EditorState.create({ doc: projection.doc }).tr.delete(from, from + 1),
+      );
+      expect(result.mapping.source).toBe(source.replace('&#38;', ''));
+    },
+  );
+
+  it('preserves the surviving physical line ending when deleting repeated prose', () => {
+    const source = 'a\r\na\na';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    expect(projection.doc.textContent).toBe('a\na\na');
+    const removeFirst = state.tr.delete(1, 3);
+    expect(apply(projection, removeFirst).mapping.source).toBe('a\na');
+    expect(apply(projection, state.tr.delete(3, 5)).mapping.source).toBe(
+      'a\r\na',
+    );
+  });
+
+  it('refuses a snapshot with an ambiguous physical line ending', () => {
+    const projection = parseRenderedSource('a\r\na\na');
+    const state = EditorState.create({ doc: projection.doc });
+    const candidate = state.tr.delete(1, 3).doc;
+    expect(() => serializeRenderedChange(projection, candidate)).toThrow(
+      'source spelling',
+    );
+    expect(projection.mapping.source).toBe('a\r\na\na');
+  });
+
+  it('refuses an unwitnessed deletion with ambiguous raw spelling and accepts plain repetitions', () => {
+    const source = 'Café &#38;&amp; tea';
+    const projection = parseRenderedSource(source);
+    const state = EditorState.create({ doc: projection.doc });
+    const from = findText(state.doc, '&&');
+    expect(() =>
+      serializeRenderedChange(projection, state.tr.delete(from, from + 1).doc),
+    ).toThrow('source spelling');
+    expect(projection.mapping.source).toBe(source);
+    const e = findText(state.doc, 'tea') + 2;
+    expect(
+      serializeRenderedChange(projection, state.tr.insertText('e', e).doc),
+    ).toBe(source.replace('tea', 'teea'));
+  });
+
+  it('keeps lazy continuation and escaped literal greater-than prose editable across successive parses', () => {
+    for (const [source, shown] of [
+      ['> A &amp;\r\n> \\> See [[Other]]', '> See'],
+      ['> B &#13;\rSee [[Other]]', 'See'],
+      ['- D\n  See &#x1F9EA; &NotEqualTilde; [[Other]]', 'See'],
+    ] as const) {
+      const projection = parseRenderedSource(source);
+      const pos = findText(projection.doc, shown) + shown.length;
+      const result = apply(
+        projection,
+        EditorState.create({ doc: projection.doc }).tr.insertText('!', pos),
+      );
+      expect(result.mapping.source).toBe(source.replace('See', 'See!'));
+      expect(findNode(result.doc, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+    }
+  });
+
+  it('discards a partial prefix witness at its per-parse bound', () => {
+    const source = '- A [[Other]]\n' + '  more\n'.repeat(4097);
+    const projection = parseRenderedSource(source);
+    expect(() => replace(projection, 'more', 'more!')).toThrow('wikilink');
+    expect(projection.mapping.source).toBe(source);
+    const next = replace(
+      parseRenderedSource('- A [[Other]]\n  more tea'),
+      'tea',
+      'tea!',
+    );
+    expect(next.mapping.source).toBe('- A [[Other]]\n  more tea!');
+  });
+
+  it('refuses ambiguous caret, cross-prefix and structural edits in visible quoted prose', () => {
+    const source =
+      '> Café &amp; tea\r\n> See [[Other]] and **bold**.\n\nOutside.';
+    const projection = parseRenderedSource(source);
+    expect(parseSourceWikilinks(source).map((link) => link.raw)).toEqual([
+      '[[Other]]',
+    ]);
+    const body = projection.doc.firstChild!.firstChild!;
+    expect(body.firstChild?.isText).toBe(true);
+    expect(body.textContent).toBe('Café & tea\nSee  and bold.');
+    expect(findNode(body, 'wikilink').node.attrs.raw).toBe('[[Other]]');
+    const boundary = findText(projection.doc, 'See');
+    const rawPrefix = source.indexOf('> See');
+    expect(renderedTextSourceOffset(projection, boundary)).toBeNull();
+    for (const offset of [rawPrefix, rawPrefix + 1, rawPrefix + 2])
+      expect(renderedPositionFromSourceOffset(projection, offset)).toBeNull();
+    const typing = EditorState.create({ doc: projection.doc });
+    expect(() =>
+      apply(projection, typing.tr.insertText('S', boundary)),
+    ).toThrow('wikilink');
+    expect(() =>
+      apply(projection, typing.tr.insertText('!', boundary - 2, boundary + 2)),
+    ).toThrow('wikilink');
+    expect(projection.mapping.source).toBe(source);
+    const adjacent = replace(projection, 'bold', 'bright');
+    expect(adjacent.mapping.source).toBe(source.replace('bold', 'bright'));
+    expect(replace(adjacent, 'Outside', 'After').mapping.source).toBe(
+      source.replace('bold', 'bright').replace('Outside', 'After'),
+    );
+    const state = EditorState.create({ doc: projection.doc });
+    expect(() =>
+      apply(
+        projection,
+        state.tr.delete(0, projection.doc.firstChild!.nodeSize),
+      ),
+    ).toThrow('wikilink');
+  });
+
+  it('reports an explicit work budget refusal while preserving the accepted source', () => {
+    const projection = parseRenderedSource('a b');
+    const state = EditorState.create({ doc: projection.doc });
+    const transaction = state.tr.insertText('a' + ' '.repeat(8193) + 'b', 1, 4);
+    const candidate = serializeRenderedChange(projection, transaction.doc);
+    expect(() =>
+      rebaseRenderedProjection(projection, transaction.doc, candidate),
+    ).toThrow('visual editing work budget');
+    expect(projection.mapping.source).toBe('a b');
+  });
+
+  it('handles a long internal whitespace run without retrying it at every offset', () => {
+    const projection = parseRenderedSource('a b');
+    const value = 'a' + ' '.repeat(100_000) + 'b';
+    const state = EditorState.create({ doc: projection.doc });
+    const transaction = state.tr.insertText(value, 1, 4);
+    const started = performance.now();
+    expect(serializeRenderedChange(projection, transaction.doc)).toBe(value);
+    // A generous host-work regression bound: the quadratic matcher previously
+    // took tens of seconds. Parsing has its own measured Source-only work budget.
+    expect(performance.now() - started).toBeLessThan(5000);
+  }, 10_000);
+
+  it('keeps sibling list markers and mixed physical breaks after a trailing space is followed by text', () => {
+    let projection = parseRenderedSource('+ one\r\n+ untouched\n');
+    projection = replace(projection, 'one', 'one ');
+    projection = replace(projection, 'one ', 'one next');
+    expect(projection.mapping.source).toBe('+ one&#32;next\r\n+ untouched\n');
+  });
+
+  it.each(['#', '##', '1.', '+', '-'])(
+    'keeps %s literal before physical soft line breaks',
+    (prefix) => {
+      for (const newline of ['\n', '\r\n']) {
+        const result = replace(
+          parseRenderedSource('a' + newline + 'tail'),
+          'a',
+          prefix,
+        );
+        expect(result.doc.childCount).toBe(1);
+        expect(result.doc.textContent).toBe(prefix + '\ntail');
+        expect(result.mapping.source.endsWith(newline + 'tail')).toBe(true);
+      }
+    },
+  );
+  it.each(['#', '##', '1.', '+', '---'])(
+    'keeps %s literal in compact quote containers',
+    (prefix) => {
+      for (const source of ['>foo', '>>foo', '- >foo']) {
+        const result = replace(parseRenderedSource(source), 'foo', prefix);
+        expect(result.doc.textContent).toBe(prefix);
+        expect(
+          result.mapping.source.startsWith(
+            source.slice(0, source.indexOf('foo')),
+          ),
+        ).toBe(true);
+      }
+    },
+  );
+  it.each([
+    '1.',
+    '+',
+    '-',
+    '*',
+    '2)',
+    '>',
+    '##',
+    '###',
+    '####',
+    '#####',
+    '######',
+    '---',
+  ])(
+    'keeps the incomplete typed prefix %s literal until an input rule transforms it',
+    (prefix) => {
+      let projection = parseRenderedSource(
+        'Before.\r\n\r\n<span>Opaque</span>\r\n',
+      );
+      let state = EditorState.create({ doc: projection.doc });
+      projection = apply(projection, state.tr.split(8));
+      for (const character of prefix) {
+        state = EditorState.create({ doc: projection.doc });
+        projection = apply(
+          projection,
+          state.tr.insertText(
+            character,
+            10 + projection.doc.child(1).content.size,
+          ),
+        );
+      }
+      expect(projection.doc.child(1).type).toBe(schema.nodes.paragraph);
+      expect(projection.doc.child(1).textContent).toBe(prefix);
+      expect(projection.mapping.source).toContain('<span>Opaque</span>\r\n');
+    },
+  );
+  it('keeps heading-like text literal inside a nested list item', () => {
+    const source = '+ outer\r\n  + inner\r\n+ tail\r\n';
+    const result = replace(parseRenderedSource(source), 'inner', '##');
+    expect(result.doc.firstChild!.child(0).lastChild!.textContent).toBe('##');
+  });
+  it('preserves list markers and mixed breaks while a nested heading prefix is typed incrementally', () => {
+    const source = '+ outer\r\n  + inner\n+ tail\r\n';
+    let projection = replace(parseRenderedSource(source), 'inner', '#');
+    expect(projection.mapping.source).toBe(source.replace('inner', '\\#'));
+    projection = replace(projection, '#', '##');
+    expect(projection.mapping.source).toBe(source.replace('inner', '\\##'));
+  });
+  it('preserves an ordinary hyphen-led paragraph without normalizing unrelated punctuation', () => {
+    const source = '-not-a-list has  spaces  here.\r\n';
+    const projection = replace(parseRenderedSource(source), 'here.', 'there.');
+    expect(projection.mapping.source).toBe(source.replace('here.', 'there.'));
+  });
+  it('reopens an unfinished blockquote as an editable empty paragraph', () => {
+    const projection = parseRenderedSource('> ');
+    expect(projection.doc.firstChild!.firstChild?.type.name).toBe('paragraph');
+    const state = EditorState.create({ doc: projection.doc });
+    const result = apply(projection, state.tr.insertText('quote', 2));
+    expect(result.mapping.source).toContain('> quote');
+  });
+  it.each(['bullet_list', 'ordered_list'])(
+    'accepts a newly wrapped empty %s before its first character',
+    (type) => {
+      let projection = parseRenderedSource('');
+      const state = EditorState.create({
+        doc: projection.doc,
+        selection: TextSelection.create(projection.doc, 1),
+      });
+      let transaction: Transaction | undefined;
+      expect(
+        wrapInList(schema.nodes[type]!)(state, (tr) => {
+          transaction = tr;
+        }),
+      ).toBe(true);
+      projection = apply(projection, transaction!);
+      const next = EditorState.create({ doc: projection.doc });
+      projection = apply(projection, next.tr.insertText('first', 3));
+      expect(projection.doc.textContent).toBe('first');
+      expect(projection.mapping.source).toContain(
+        type === 'bullet_list' ? '- first' : '1. first',
+      );
+    },
+  );
   it('projects all ordinary Markdown structures into editable semantic nodes', () => {
     const source =
       '# Heading\n\nA **bold**, *italic*, ~~deleted~~ and `code` paragraph.\n\n- item\n  - nested\n- [ ] task\n\n3. three\n4. four\n\n> quote\n\n---\n\n```ts\nconst x = 1;\n```\n\n| A | B |\n| :--- | ---: |\n| x | y |\n\n$x$\n\n$$\nx^2\n$$\n\n[[Target|Label]] and ![Alt](attachment:abc)';
@@ -204,6 +569,74 @@ describe('rendered Markdown source bridge', () => {
     expect(projection.mapping.source).toBe('First\n\n\n\nAB');
   });
 
+  it.each([
+    '**one**\n\ntwo',
+    '| one | two |\n| --- | --- |\n| a | b |',
+    '- one\r- two',
+  ])(
+    'types trailing whitespace inside marks, cells and CR paragraphs: %s',
+    (source) => {
+      expect(
+        replace(parseRenderedSource(source), 'one', 'one ').doc.textContent,
+      ).toContain('one ');
+    },
+  );
+  it.each([
+    '- one\n- two',
+    '> one\n>\n> two',
+    '- one\n  - two',
+    '- one\n\n  two',
+  ])(
+    'types a space at the end of a nonfinal nested paragraph: %s',
+    (source) => {
+      const result = replace(parseRenderedSource(source), 'one', 'one ');
+      expect(result.doc.textContent).toContain('one ');
+      expect(result.mapping.source).toContain('two');
+    },
+  );
+  it('preserves a typed space at the end of a paragraph', () => {
+    const projection = parseRenderedSource('Write here.\n\n<Probe />\n');
+    const result = replace(projection, 'Write here.', 'Write here. ');
+    expect(result.doc.textContent).toContain('Write here. ');
+  });
+  it('indents an empty list item before typing its text', () => {
+    const projection = parseRenderedSource('- bullet\n- \n');
+    const state = EditorState.create({
+      doc: projection.doc,
+      selection: TextSelection.create(
+        projection.doc,
+        projection.doc.content.size - 3,
+      ),
+    });
+    let transaction: Transaction | undefined;
+    expect(
+      sinkListItem(schema.nodes.list_item!)(state, (tr) => {
+        transaction = tr;
+      }),
+    ).toBe(true);
+    const result = apply(projection, transaction!);
+    expect(result.mapping.source).toContain('  - ');
+  });
+  it('indents an empty ordered list item before typing its text', () => {
+    const projection = parseRenderedSource('1. first\n2. \n');
+    const state = EditorState.create({
+      doc: projection.doc,
+      selection: TextSelection.create(
+        projection.doc,
+        projection.doc.content.size - 3,
+      ),
+    });
+    let transaction: Transaction | undefined;
+    expect(
+      sinkListItem(schema.nodes.list_item!)(state, (tr) => {
+        transaction = tr;
+      }),
+    ).toBe(true);
+    const next = apply(projection, transaction!);
+    expect(next.doc.firstChild!.firstChild!.lastChild!.type.name).toBe(
+      'ordered_list',
+    );
+  });
   it('continues a list with Enter and accepts text in the new list item', () => {
     const initial = parseRenderedSource('- First\n');
     const end = findText(initial.doc, 'First') + 5;
@@ -304,7 +737,10 @@ describe('rendered Markdown source bridge', () => {
     const next = apply(
       initial,
       state.tr.replaceSelectionWith(
-        schema.nodes.math_block!.create({ value: 'x^2' }),
+        schema.nodes.math_block!.create(
+          { value: 'x^2' },
+          schema.text('$$\nx^2\n$$'),
+        ),
       ),
     );
     expect(next.mapping.source).toBe('$$\nx^2\n$$');
@@ -439,12 +875,9 @@ describe('rendered Markdown source bridge', () => {
       'Before',
       'Before plus more',
     );
-    const { node, pos } = findNode(projection.doc, 'inline_math');
+    const { pos } = findNode(projection.doc, 'inline_math');
     const state = EditorState.create({ doc: projection.doc });
-    projection = apply(
-      projection,
-      state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, value: 'x^2' }),
-    );
+    projection = apply(projection, state.tr.insertText('^2', pos + 3));
     expect(projection.mapping.source).toBe('Before plus more\r\n\r\n$x^2$\n');
   });
 
@@ -495,4 +928,19 @@ describe('rendered Markdown source bridge', () => {
       '[https://example.com](https://example.com/path)',
     );
   });
+});
+
+it('does not invent closing dollars when changing a paragraph containing unfinished mathematical text into a heading', () => {
+  const source = '\uFEFFBefore $x \\mathbb{R}\r\n\r\n<Counter />\r\n';
+  const projection = parseRenderedSource(source);
+  const node = projection.doc.firstChild!;
+  const state = EditorState.create({ doc: projection.doc });
+  const changed = apply(
+    projection,
+    state.tr.setNodeMarkup(0, schema.nodes.heading, {
+      ...node.attrs,
+      level: 2,
+    }),
+  );
+  expect(changed.mapping.source).toBe(source.replace('Before', '## Before'));
 });

@@ -1,10 +1,11 @@
+import { CORE_PLUGINS, type CorePluginId } from '../plugins/coreRegistry';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MAX_FILE_BYTES,
   MAX_FILES,
   MAX_TOTAL_BYTES,
 } from '../documents/workspace';
-import { isSupportedSource } from '../sourceTypes';
+import { isMdxSource, isSupportedSource } from '../sourceTypes';
 import {
   attachmentMarkdown,
   downloadAttachment,
@@ -36,6 +37,11 @@ import {
   type WebState,
 } from './workspace';
 import {
+  cloudStorageEnabled,
+  deleteRetainedAttempt,
+  readRetainedAttempts,
+  type RetainedAttempt,
+  writeRetainedAttempt,
   listRecoveryVersions,
   readRecoveryVersion,
   readRecoverySnapshots,
@@ -43,8 +49,9 @@ import {
   readWorkspace,
   readWorkspaceRevision,
   WorkspaceConflictError,
+  workspaceAutosaveDelay,
   writeWorkspace,
-} from './persistence';
+} from './storage';
 
 export type SaveStatus = 'loading' | 'saving' | 'saved' | 'error' | 'conflict';
 
@@ -53,6 +60,8 @@ function documentContent(state: WebState): string {
   return JSON.stringify({
     ...state,
     theme: null,
+    corePlugins: null,
+    previewPreferences: null,
     mode: null,
     recentIds: null,
     workspace: { ...state.workspace, selected: null, entry: null },
@@ -63,24 +72,31 @@ function documentContent(state: WebState): string {
 function retainView(content: WebState, view: WebState): WebState {
   const available = (key: string) =>
     Object.hasOwn(content.documents, key) && !content.documents[key]!.trashedAt;
+  const selected = available(view.workspace.selected)
+    ? view.workspace.selected
+    : content.workspace.selected;
   return {
     ...content,
     theme: view.theme,
+    corePlugins: view.corePlugins,
+    previewPreferences: view.previewPreferences,
     mode: view.mode,
     recentIds: view.recentIds.filter(available),
     workspace: {
       ...content.workspace,
-      selected: available(view.workspace.selected)
-        ? view.workspace.selected
-        : content.workspace.selected,
-      entry: available(view.workspace.entry)
-        ? view.workspace.entry
-        : content.workspace.entry,
+      selected,
+      entry: isMdxSource(selected)
+        ? selected
+        : available(view.workspace.entry)
+          ? view.workspace.entry
+          : content.workspace.entry,
     },
   };
 }
 
 function errorMessage(error: unknown): string {
+  if (cloudStorageEnabled && error instanceof WorkspaceConflictError)
+    return 'This workspace was saved elsewhere. Your edits remain in this tab. Export a backup before reloading.';
   if (error instanceof DOMException && error.name === 'QuotaExceededError') {
     return 'This browser has no storage space available. Your previous saved workspace is intact and your edits remain here. Export a backup before closing this tab.';
   }
@@ -112,18 +128,30 @@ async function downloadBackup(state: WebState): Promise<string> {
   anchor.download = `programmable-notes-${new Date().toISOString().slice(0, 10)}${recoveryIncluded ? '' : '-rescue'}.json`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
-  return recoveryIncluded
-    ? 'Backup exported with current notes, attachments, Trash and recovery history.'
-    : 'Rescue backup exported with all current notes, metadata, Trash and attachments. Browser recovery history could not be read and is not included. Keep this file before closing the tab.';
+  if (recoveryIncluded)
+    return 'Backup exported with current notes, attachments, Trash and recovery history.';
+  const storage = cloudStorageEnabled ? 'Cloud' : 'Browser';
+  return `Rescue backup exported with all current notes, metadata, Trash and attachments. ${storage} recovery history could not be read and is not included. Keep this file before closing the tab.`;
 }
 
 export function useWebWorkspace() {
   const [state, setState] = useState<WebState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cloudWorkspaceEmpty, setCloudWorkspaceEmpty] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('loading');
   const [error, setError] = useState('');
   const [backupNotice, setBackupNotice] = useState('');
   const [conflict, setConflict] = useState(false);
+  const [attempts, setAttempts] = useState<RetainedAttempt[]>([]);
+  const [attemptError, setAttemptError] = useState('');
+  const attemptRead = useRef(0);
+  const liveAttempt = useRef<{
+    key: string;
+    baseRevision: number;
+    text: string;
+    base: string;
+    writing: Promise<RetainedAttempt>;
+  } | null>(null);
   const [persistentStorage, setPersistentStorage] = useState<boolean | null>(
     null,
   );
@@ -147,6 +175,94 @@ export function useWebWorkspace() {
   const setPendingEditorDraft = useCallback((pending: boolean) => {
     pendingEditorDraft.current = pending;
   }, []);
+
+  const reloadAttempts = useCallback(async () => {
+    const token = ++attemptRead.current;
+    try {
+      const inventory = await readRetainedAttempts();
+      if (!mounted.current || token !== attemptRead.current) return;
+      setAttempts(inventory.attempts);
+      setAttemptError(inventory.error);
+    } catch (reason) {
+      if (mounted.current && token === attemptRead.current)
+        setAttemptError(errorMessage(reason));
+    }
+  }, []);
+
+  async function retainAttempt(
+    key: string,
+    base: string,
+    text: string,
+  ): Promise<void> {
+    if (!current.current || !Object.hasOwn(current.current.documents, key))
+      throw new Error(
+        'This note is unavailable. Download the live draft to keep it.',
+      );
+    const baseRevision = revision.current;
+    const writing = writeRetainedAttempt(key, baseRevision, base, text);
+    const live = { key, baseRevision, base, text, writing };
+    liveAttempt.current = live;
+    try {
+      await writing;
+    } catch (reason) {
+      const error = new Error(
+        `Could not save the retained edit. Download the live draft before closing this tab. ${reason instanceof Error ? reason.message : ''}`,
+      );
+      if (mounted.current) setAttemptError(error.message);
+      throw error;
+    }
+    await reloadAttempts();
+  }
+
+  async function discardStoredAttempt(attempt: RetainedAttempt): Promise<void> {
+    try {
+      await deleteRetainedAttempt(attempt);
+      await reloadAttempts();
+    } catch (reason) {
+      await reloadAttempts();
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      throw reason;
+    }
+  }
+
+  async function keepLiveAttempt(): Promise<void> {
+    const live = liveAttempt.current;
+    if (!live)
+      throw new Error(
+        'The retained edit is available only in this editor. Download its text before leaving.',
+      );
+    const previous = await live.writing.catch(() => undefined);
+    try {
+      // The transaction checks only this live entry or republishes its original
+      // text and provenance after a failed first write or a competing discard.
+      await writeRetainedAttempt(
+        live.key,
+        live.baseRevision,
+        live.base,
+        live.text,
+        previous,
+      );
+      if (liveAttempt.current === live) liveAttempt.current = null;
+      void reloadAttempts();
+    } catch (reason) {
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      throw reason;
+    }
+  }
+
+  async function discardAttempt(id: string): Promise<void> {
+    const attempt = attempts.find((item) => item.id === id);
+    if (attempt) await discardStoredAttempt(attempt);
+  }
+
+  async function discardLiveAttempt(): Promise<void> {
+    const live = liveAttempt.current;
+    if (!live) return;
+    // When the original insertion failed, only the editor's in-memory copy exists.
+    const attempt = await live.writing.catch(() => null);
+    if (attempt) await discardStoredAttempt(attempt);
+    if (liveAttempt.current === live) liveAttempt.current = null;
+  }
 
   const report = useCallback((reason: unknown) => {
     if (!mounted.current) return;
@@ -227,7 +343,10 @@ export function useWebWorkspace() {
     workspaceEpoch.current++;
     const token = ++loadSequence.current;
     const startingGeneration = generation.current;
-    if (mounted.current) setLoading(true);
+    if (mounted.current) {
+      setLoading(true);
+      setCloudWorkspaceEmpty(false);
+    }
     try {
       const stored = await readWorkspace();
       if (!mounted.current || token !== loadSequence.current) return;
@@ -236,7 +355,21 @@ export function useWebWorkspace() {
           'The workspace changed while reloading. Your newer edits were retained. Save or export them before trying again.',
         );
       }
-      const next = stored?.state ?? createWebState();
+      if (cloudStorageEnabled && !stored) {
+        current.current = null;
+        savedState.current = null;
+        revision.current = 0;
+        conflicting.current = false;
+        setConflict(false);
+        setState(null);
+        setError('');
+        setSaveStatus('loading');
+        setCloudWorkspaceEmpty(true);
+        return;
+      }
+      const next = stored
+        ? retainView(stored.state, stored.state)
+        : createWebState();
       workspaceEpoch.current++;
       current.current = next;
       savedState.current = stored?.state ?? null;
@@ -250,12 +383,13 @@ export function useWebWorkspace() {
       setState(next);
       setError('');
       setSaveStatus(stored ? 'saved' : 'saving');
-      void navigator.storage
-        ?.persisted?.()
-        .then((persisted) => {
-          if (mounted.current) setPersistentStorage(persisted);
-        })
-        .catch(() => {});
+      if (!cloudStorageEnabled)
+        void navigator.storage
+          ?.persisted?.()
+          .then((persisted) => {
+            if (mounted.current) setPersistentStorage(persisted);
+          })
+          .catch(() => {});
     } catch (reason) {
       if (token === loadSequence.current) report(reason);
     } finally {
@@ -263,17 +397,55 @@ export function useWebWorkspace() {
     }
   }, [report]);
 
+  const createCloudWorkspace = useCallback(async () => {
+    if (
+      !cloudStorageEnabled ||
+      !cloudWorkspaceEmpty ||
+      current.current ||
+      operationBusy.current
+    )
+      return;
+    operationBusy.current = true;
+    setLoading(true);
+    try {
+      const next = createWebState(Date.now(), 'cloud');
+      // Revision zero is the explicit initialization grant. A competing device
+      // creating notes in the meantime must cause a conflict, never replacement.
+      const stored = await writeWorkspace(next, 0);
+      if (!mounted.current) return;
+      workspaceEpoch.current++;
+      current.current = next;
+      savedState.current = stored.state;
+      revision.current = stored.revision;
+      savedGeneration.current = ++generation.current;
+      conflicting.current = false;
+      setConflict(false);
+      setState(next);
+      setCloudWorkspaceEmpty(false);
+      setError('');
+      setSaveStatus('saved');
+    } catch (reason) {
+      report(reason);
+    } finally {
+      operationBusy.current = false;
+      if (mounted.current) setLoading(false);
+    }
+  }, [cloudWorkspaceEmpty, report]);
+
   useEffect(() => {
     mounted.current = true;
     let active = true;
     queueMicrotask(() => {
-      if (active) void load();
+      if (active) {
+        void load();
+        void reloadAttempts();
+      }
     });
     return () => {
       active = false;
       mounted.current = false;
     };
-  }, [load]);
+  }, [load, reloadAttempts]);
 
   useEffect(() => {
     async function refreshCleanTab() {
@@ -334,7 +506,7 @@ export function useWebWorkspace() {
 
   useEffect(() => {
     if (!state || loading || conflict || saveStatus === 'error') return;
-    const timer = setTimeout(() => void persist(), 250);
+    const timer = setTimeout(() => void persist(), workspaceAutosaveDelay);
     return () => clearTimeout(timer);
   }, [state, loading, conflict, saveStatus, persist]);
 
@@ -361,8 +533,16 @@ export function useWebWorkspace() {
   }, [persist]);
 
   const mutate = useCallback(
-    (update: (previous: WebState) => WebState): void => {
-      if (!current.current || operationBusy.current) return;
+    (
+      update: (previous: WebState) => WebState,
+      kind: 'content' | 'view' = 'content',
+    ): void => {
+      if (
+        !current.current ||
+        operationBusy.current ||
+        (conflicting.current && kind === 'content')
+      )
+        return;
       try {
         const next = update(current.current);
         if (next === current.current) return;
@@ -391,7 +571,11 @@ export function useWebWorkspace() {
     // Persistent-storage permission is an optional preference, not a write.
     // Some browsers leave this promise pending while waiting for a user prompt.
     // Deduplicate that request without holding Save or app updates open.
-    if (navigator.storage?.persist && !storagePermission.current) {
+    if (
+      !cloudStorageEnabled &&
+      navigator.storage?.persist &&
+      !storagePermission.current
+    ) {
       try {
         const request = navigator.storage
           .persist()
@@ -493,8 +677,25 @@ export function useWebWorkspace() {
       )
     )
       return;
+    // Historical backups can contain a note selection with another note's
+    // preview entry. Normalize navigation only; retain every source byte.
+    next = retainView(next, next);
+    const hadWorkspace = current.current !== null;
     await persist();
     if (operationBusy.current) return;
+    if (
+      hadWorkspace &&
+      (conflicting.current || savedGeneration.current < generation.current)
+    )
+      return;
+    if (pendingEditorDraft.current) {
+      report(
+        new Error(
+          'Finish or retain the editor draft before restoring a backup. The workspace was not replaced.',
+        ),
+      );
+      return;
+    }
     operationBusy.current = true;
     workspaceEpoch.current++;
     if (mounted.current) {
@@ -502,7 +703,13 @@ export function useWebWorkspace() {
       setSaveStatus('saving');
     }
     try {
-      const expectedRevision = await readWorkspaceRevision();
+      // Confirmation reviewed this tab's acknowledged state, not a later unseen
+      // device's content. Only explicit damaged-browser recovery has no baseline.
+      const expectedRevision = hadWorkspace
+        ? revision.current
+        : cloudStorageEnabled
+          ? 0
+          : await readWorkspaceRevision();
       const stored = await writeWorkspace(
         next,
         expectedRevision,
@@ -520,12 +727,75 @@ export function useWebWorkspace() {
       setConflict(false);
       setError('');
       setState(next);
+      setCloudWorkspaceEmpty(false);
       setSaveStatus('saved');
     } catch (reason) {
       report(reason);
     } finally {
       operationBusy.current = false;
       if (mounted.current) setLoading(false);
+    }
+  }
+
+  async function restoreAttempt(id: string): Promise<boolean> {
+    const attempt = attempts.find((item) => item.id === id);
+    if (!attempt) return false;
+    try {
+      if (!isMdxSource(attempt.documentKey))
+        throw new Error(
+          'Download the retained source to preserve this file type. Recovered notes support Markdown and MDX.',
+        );
+      await persist();
+      if (
+        !current.current ||
+        operationBusy.current ||
+        pendingEditorDraft.current ||
+        conflicting.current ||
+        savedGeneration.current < generation.current
+      )
+        throw new Error(
+          'Finish the current draft and open the saved workspace before restoring a recovered copy.',
+        );
+      operationBusy.current = true;
+      try {
+        const title =
+          current.current.documents[attempt.documentKey]?.title ??
+          attempt.documentKey.split('/').pop();
+        const copy = createDocument(
+          current.current,
+          ('Recovered ' + title).slice(0, 200),
+          '',
+          Date.now(),
+          /\.md$/i.test(attempt.documentKey) ? 'md' : 'mdx',
+        );
+        const next = updateDocumentSource(copy.state, copy.key, attempt.text);
+        const stored = await writeWorkspace(
+          next,
+          revision.current,
+          true,
+          [],
+          attempt,
+        );
+        workspaceEpoch.current++;
+        current.current = next;
+        savedState.current = stored.state;
+        revision.current = stored.revision;
+        savedGeneration.current = ++generation.current;
+        if (mounted.current) {
+          setState(next);
+          setSaveStatus('saved');
+          setError('');
+        }
+      } finally {
+        operationBusy.current = false;
+      }
+      await reloadAttempts();
+      return true;
+    } catch (reason) {
+      if (reason instanceof WorkspaceConflictError) report(reason);
+      await reloadAttempts();
+      if (mounted.current) setAttemptError(errorMessage(reason));
+      return false;
     }
   }
 
@@ -648,15 +918,29 @@ export function useWebWorkspace() {
 
   return {
     state,
+    cloudWorkspaceEmpty,
+    createCloudWorkspace,
     loading,
     saveStatus,
     error,
     backupNotice,
     conflict,
     setPendingEditorDraft,
+    attempts,
+    attemptError,
+    reloadAttempts,
+    retainAttempt,
+    restoreAttempt,
+    discardAttempt,
+    discardLiveAttempt,
+    keepLiveAttempt,
     persistentStorage,
+    // Read-only freshness witness. It grants no mutation or storage authority.
+    isCurrentSource: (key: string, source: string): boolean =>
+      current.current?.workspace.files[key] === source,
     canUpdateSource: (key: string, source: string): boolean => {
-      if (!current.current || operationBusy.current) return false;
+      if (!current.current || conflicting.current || operationBusy.current)
+        return false;
       try {
         updateDocumentSource(current.current, key, source);
         return true;
@@ -671,10 +955,11 @@ export function useWebWorkspace() {
         return false;
       }
     },
-    updateSource: (key: string, source: string) =>
-      mutate((previous) => updateDocumentSource(previous, key, source)),
+    updateSource: (key: string, source: string) => {
+      mutate((previous) => updateDocumentSource(previous, key, source));
+    },
     select: (key: string) =>
-      mutate((previous) => selectDocument(previous, key)),
+      mutate((previous) => selectDocument(previous, key), 'view'),
     createNote: (title?: string, folder?: string): string | null => {
       let key: string | null = null;
       mutate((previous) => {
@@ -702,17 +987,47 @@ export function useWebWorkspace() {
     restore: (key: string) =>
       mutate((previous) => restoreDocument(previous, key)),
     removeRecent: (key: string) =>
-      mutate((previous) => ({
-        ...previous,
-        recentIds: previous.recentIds.filter((id) => id !== key),
-      })),
+      mutate(
+        (previous) => ({
+          ...previous,
+          recentIds: previous.recentIds.filter((id) => id !== key),
+        }),
+        'view',
+      ),
     setMode: (mode: WebState['mode']) =>
-      mutate((previous) =>
-        previous.mode === mode ? previous : { ...previous, mode },
+      mutate(
+        (previous) =>
+          previous.mode === mode ? previous : { ...previous, mode },
+        'view',
+      ),
+    setCorePlugin: (id: CorePluginId, enabled: boolean) =>
+      mutate((previous) => {
+        if (
+          !CORE_PLUGINS.some((plugin) => plugin.id === id) ||
+          typeof enabled !== 'boolean'
+        )
+          throw new Error('Unknown core plugin setting.');
+        return {
+          ...previous,
+          corePlugins: { ...previous.corePlugins, [id]: enabled },
+        };
+      }, 'view'),
+    setShowComponentSource: (showComponentSource: boolean) =>
+      mutate(
+        (previous) => ({
+          ...previous,
+          previewPreferences: {
+            ...previous.previewPreferences,
+            showComponentSource,
+          },
+        }),
+        'view',
       ),
     setTheme: (theme: WebState['theme']) =>
-      mutate((previous) =>
-        previous.theme === theme ? previous : { ...previous, theme },
+      mutate(
+        (previous) =>
+          previous.theme === theme ? previous : { ...previous, theme },
+        'view',
       ),
     importFiles,
     importAttachments,

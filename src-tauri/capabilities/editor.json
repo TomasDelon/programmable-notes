@@ -10,12 +10,26 @@
     "allow-preview-connection-active",
     "allow-host-probe",
     "allow-open-documents",
+    "allow-open-notes-folder",
+    "allow-choose-vault",
+    "allow-vault-inventory",
+    "allow-open-vault-sources",
+    "allow-create-vault-source",
     "allow-save-document",
     "allow-save-document-as",
     "allow-reopen-document",
+    "allow-observe-document",
+    "allow-watch-document",
+    "allow-poll-document-watch",
+    "allow-unwatch-document",
     "allow-close-document",
     "allow-confirm-discard",
     "allow-set-documents-dirty",
-    "allow-recovery-draft"
+    "allow-enable-editor-close-guard",
+    "allow-editor-close-state",
+    "allow-resolve-editor-close",
+    "allow-recovery-draft",
+    "allow-desktop-update-check",
+    "allow-desktop-update-install"
   ]
 }

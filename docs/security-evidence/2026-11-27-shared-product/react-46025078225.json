@@ -1,0 +1,135 @@
+{
+  "evidence_source": "strictly validated GitHub check annotations; artifact download HTTP403, no raw logs",
+  "run_id": 46025078225,
+  "job_id": 140594278258,
+  "source_commit": "6c927422a20469e2f9b1d2e99f493de2ad997559",
+  "status": "failed",
+  "native_app_tested": false,
+  "session": {
+    "status": "failed",
+    "phase": "stop",
+    "reason": "observer_failed",
+    "cleanup": "passed",
+    "diagnostics": {
+      "stop": {
+        "original_reason": "observer_failed",
+        "host_stage": "unit_ready",
+        "start_failure": "none",
+        "host_exit": {
+          "state": "running",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "exited",
+          "code": 2
+        }
+      },
+      "expiry": {
+        "original_reason": "not_run",
+        "host_stage": "not_run",
+        "start_failure": "not_run",
+        "host_exit": {
+          "state": "not_started",
+          "code": null
+        },
+        "observer_exit": {
+          "state": "not_started",
+          "code": null
+        }
+      }
+    }
+  },
+  "cases": {
+    "expiry": {
+      "status": "not_run",
+      "phase": "not_run",
+      "reason": "not_run",
+      "bridge": "not_run",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "not_run",
+      "host_input": "not_run"
+    },
+    "stop": {
+      "status": "failed",
+      "phase": "ready",
+      "reason": "readiness_deadline",
+      "bridge": "passed",
+      "pointer": "not_run",
+      "keyboard": "not_run",
+      "termination": "passed",
+      "host_input": "passed"
+    }
+  },
+  "readiness": {
+    "phase": "ready",
+    "state": "native_only"
+  },
+  "native_snapshot": {
+    "version": 1,
+    "built": true,
+    "committed": false,
+    "finished": false,
+    "navigation_denied": false,
+    "load_failed": false,
+    "termination": "none"
+  },
+  "observer_exceptions": {
+    "stop": {
+      "phase": "ready",
+      "error_type": "Refused",
+      "errno": null,
+      "frames": [
+        {
+          "function": "run",
+          "line": 796
+        },
+        {
+          "function": "state_until",
+          "line": 777
+        },
+        {
+          "function": "_wait",
+          "line": 754
+        }
+      ]
+    }
+  },
+  "keyboard_measurement": "not_generated: keyboard attempt not reached",
+  "os_admission": {
+    "status": "passed",
+    "source_profile": "debian13",
+    "environment": {
+      "id": "debian",
+      "version": "13",
+      "kernel_release": "6.12.118+deb13-amd64",
+      "packages": {
+        "libc6": "2.41-12+deb13u5",
+        "libgtk-3-0t64": "3.24.49-3",
+        "libwebkit2gtk-4.1-0": "2.54.3-1~deb13u1",
+        "linux-image-amd64": "6.12.118-1",
+        "systemd": "257.13-1~deb13u1"
+      }
+    },
+    "evidence": "validated fixed check annotation; original receipt download not available"
+  },
+  "artifacts": [
+    {
+      "id": 15211593006,
+      "name": "fixed-native-inline-react-diagnostic",
+      "expired": false
+    },
+    {
+      "id": 15211593003,
+      "name": "native-vm-os-admission",
+      "expired": false
+    }
+  ],
+  "limitations": [
+    "Artifact download refused HTTP403; no raw/signed job log download attempted.",
+    "Keyboard command was never reached; the timing/budget hypothesis was not tested.",
+    "Native load signals attach after construction: false committed/finished flags do not rule out earlier events.",
+    "Fixed helper does not prove product geometry, IPC/filesystem denial, hostile workloads or general native React readiness.",
+    "Prior intermittent readiness and keyboard failures remain failed; no unchanged retry."
+  ]
+}
