@@ -5,6 +5,7 @@ import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import * as nativeClose from '../../scripts/native-close-controls.mjs';
+import * as nativeObservation from '../../scripts/native-observation-controls.mjs';
 
 // Execute the real probe's editor phase with a transport boundary only. This is a
 // regression for probe ordering/assertions, never evidence of native IPC/ACL behavior.
@@ -30,11 +31,29 @@ async function editorProbe(brokenCommand, error = 'Command not found') {
     exports: {},
     console: { log() {} },
     __builtin: (name) =>
-      name === './native-close-controls.mjs' ? nativeClose : require(name),
+      name === './native-close-controls.mjs'
+        ? nativeClose
+        : name === './native-observation-controls.mjs'
+          ? nativeObservation
+          : require(name),
     __invoke(command, args) {
       calls.push({ command, args: args && JSON.parse(JSON.stringify(args)) });
       if (command === 'host_probe')
         return JSON.stringify({ ok: true, value: 'editor-host-only' });
+      if (command === 'observe_document')
+        return JSON.stringify({
+          ok: true,
+          value: { status: 'unavailable', reason: 'retired' },
+        });
+      if (
+        ['watch_document', 'poll_document_watch', 'unwatch_document'].includes(
+          command,
+        )
+      )
+        return JSON.stringify({
+          ok: false,
+          error: 'Unknown document authorization',
+        });
       if (commands.includes(command))
         return JSON.stringify({
           ok: false,
@@ -96,6 +115,30 @@ test('actual probe checks correctly shaped editor registration controls before s
     },
   ]);
   assert.equal(calls.at(-1).command, 'start_preview');
+  assert.deepEqual(
+    calls.filter(
+      ({ command }) =>
+        command.includes('document') && !command.includes('close'),
+    ),
+    [
+      {
+        command: 'observe_document',
+        args: { id: 'forged-document', revision: 'forged-revision' },
+      },
+      {
+        command: 'watch_document',
+        args: { id: 'forged-document', revision: 'forged-revision' },
+      },
+      {
+        command: 'poll_document_watch',
+        args: { id: 'forged-document', watchId: 'forged-watch' },
+      },
+      {
+        command: 'unwatch_document',
+        args: { id: 'forged-document', watchId: 'forged-watch' },
+      },
+    ],
+  );
 });
 for (const command of commands) {
   test(`actual editor registration control rejects unknown-command and ACL errors for ${command}`, async () => {

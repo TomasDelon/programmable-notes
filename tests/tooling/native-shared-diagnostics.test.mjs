@@ -167,6 +167,7 @@ test('failure catch records a safe category and receipt exposes only derived fie
     fixtureId: 'pn-native-shared-TEST01',
     journey: 'editor',
     recoveryResult: null,
+    externalResult: null,
     interruptionState: 'not_started',
     binarySha256: 'a'.repeat(64),
     checkpoints: [],
@@ -249,4 +250,103 @@ test('synthetic original starts at exact 0640 even under private launcher umask'
     { encoding: 'utf8' },
   );
   assert.equal(result.status, 0, result.stderr);
+});
+
+test('background failure observation returns only exact match, closed save state and focus', async () => {
+  const field = {
+    querySelectorAll: () => [
+      { textContent: '\uFEFF# Synthetic' },
+      { textContent: 'Line' },
+      { textContent: '' },
+    ],
+    contains: () => true,
+  };
+  let status = 'Saved to file';
+  const observe = runInNewContext(
+    `${declaration('observeSource')}\nobserveSource`,
+    {
+      sync: (script, args) =>
+        runInNewContext(`(function(){${script}}).apply(null,args)`, {
+          args,
+          document: {
+            activeElement: {},
+            querySelector: (selector) =>
+              selector.includes('MDX source') ? field : { textContent: status },
+          },
+        }),
+    },
+  );
+  const result = await observe('\uFEFF# Synthetic\r\nLine\n');
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    sourceMatches: true,
+    saveState: 'Saved to file',
+    focused: true,
+  });
+  status = 'PRIVATE SOURCE OR ERROR';
+  const unknown = await observe('different');
+  assert.deepEqual(JSON.parse(JSON.stringify(unknown)), {
+    sourceMatches: false,
+    saveState: 'unknown',
+    focused: true,
+  });
+  assert(!JSON.stringify(unknown).includes('PRIVATE'));
+});
+
+test('native button click waits for on-screen, painted, uniquely hit-tested target before pointer input', async () => {
+  let frame = -1,
+    clickedAt = -1;
+  const ancestor = { parentElement: null };
+  const child = {};
+  const button = {
+    disabled: false,
+    textContent: 'other.mdx',
+    parentElement: ancestor,
+    getAttribute: () => 'Open other.mdx',
+    closest: () => null,
+    getClientRects: () => [{}],
+    getBoundingClientRect: () => ({
+      left: frame === 0 ? -110 : 100,
+      right: frame === 0 ? -10 : 200,
+      top: 100,
+      bottom: 130,
+      width: 100,
+      height: 30,
+    }),
+    contains: (element) => element === child,
+  };
+  const document = {
+    querySelectorAll: () => [button],
+    elementFromPoint: () => (frame === 3 ? child : {}),
+  };
+  const locate = runInNewContext(
+    `${declaration('actionableButton')}\nactionableButton`,
+  );
+  const clickButton = runInNewContext(
+    `${declaration('clickButton')}\nclickButton`,
+    {
+      actionableButton: locate,
+      waitFor: async (predicate) => {
+        for (frame = 0; frame < 4; frame++) if (await predicate()) return;
+        throw Error('No actionable target');
+      },
+      sync: (script, args) =>
+        runInNewContext(`(function(){${script}}).apply(null,args)`, {
+          args,
+          document,
+          innerWidth: 800,
+          innerHeight: 600,
+          getComputedStyle: (element) => ({
+            display: 'block',
+            visibility: 'visible',
+            opacity: element === ancestor && frame === 1 ? '0' : '1',
+          }),
+        }),
+      click: async (element) => {
+        assert.equal(element, button);
+        clickedAt = frame;
+      },
+    },
+  );
+  await clickButton('Open other.mdx');
+  assert.equal(clickedAt, 3);
 });

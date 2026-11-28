@@ -20,7 +20,7 @@ pub(crate) struct Snapshot {
     pub digest: [u8; 32],
 }
 impl Snapshot {
-    fn matches(&self, other: &Self) -> bool {
+    pub(crate) fn matches(&self, other: &Self) -> bool {
         self.metadata.dev() == other.metadata.dev()
             && self.metadata.ino() == other.metadata.ino()
             && self.digest == other.digest
@@ -191,6 +191,81 @@ impl AuthorizedFile {
             0,
         )?;
         read(&mut file)
+    }
+    fn require_current_parent(&self) -> Result<(), Error> {
+        use std::path::Component;
+        let parent = self
+            .path
+            .parent()
+            .ok_or(Error::Rejected("Detached source path"))?;
+        let mut current = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open("/")?;
+        for component in parent.components() {
+            match component {
+                Component::RootDir => {}
+                Component::Normal(name) => {
+                    current = at(
+                        &current,
+                        &c_name(name)?,
+                        libc::O_RDONLY | libc::O_DIRECTORY,
+                        0,
+                    )?
+                }
+                _ => return Err(Error::Rejected("Detached source path")),
+            }
+        }
+        let expected = self.directory.metadata()?;
+        let actual = current.metadata()?;
+        if expected.dev() != actual.dev() || expected.ino() != actual.ino() {
+            return Err(Error::Rejected("Authorized source directory was detached"));
+        }
+        Ok(())
+    }
+    fn validate_observed_snapshot(&self, snapshot: &Snapshot) -> Result<(), Error> {
+        check_observed_owner(&snapshot.metadata, unsafe { libc::geteuid() })?;
+        // Reopen relative to the same capability to reject final-name replacement
+        // during the first read. Both complete reads are bounded and strict UTF-8.
+        let (_, current) = self.current()?;
+        check_observed_owner(&current.metadata, unsafe { libc::geteuid() })?;
+        if !snapshot.matches(&current)
+            || snapshot.metadata.mode() != current.metadata.mode()
+            || snapshot.metadata.mtime() != current.metadata.mtime()
+            || snapshot.metadata.mtime_nsec() != current.metadata.mtime_nsec()
+            || snapshot.metadata.ctime() != current.metadata.ctime()
+            || snapshot.metadata.ctime_nsec() != current.metadata.ctime_nsec()
+        {
+            return Err(Error::Conflict);
+        }
+        self.require_current_parent()
+    }
+    pub(crate) fn observe(&self) -> Result<(Snapshot, String), Error> {
+        self.require_current_parent()?;
+        let (snapshot, source) = self.reread()?;
+        self.validate_observed_snapshot(&snapshot)?;
+        Ok((snapshot, source))
+    }
+    pub(crate) fn write_observed(
+        &mut self,
+        source: &str,
+        expected: &Snapshot,
+    ) -> Result<bool, Error> {
+        self.require_current_parent()?;
+        let previous = self.snapshot.replace(expected.clone());
+        let result = self.write(source);
+        if result.is_err() {
+            self.snapshot = previous;
+        }
+        result
+    }
+    pub(crate) fn watch(&self) -> Result<crate::SourceWatch, Error> {
+        self.observe()?;
+        let watch = crate::SourceWatch::new(&self.directory, &self.name)?;
+        // The watch is installed before this second check; registration races
+        // cannot publish an unchecked path, and initial reconciliation is required.
+        self.observe()?;
+        Ok(watch)
     }
     fn current(&self) -> Result<(File, Snapshot), Error> {
         let mut file = at(
@@ -368,4 +443,68 @@ fn copy_xattrs(source: &File, target: &File) -> Result<(), Error> {
         })?;
     }
     Ok(())
+}
+
+fn check_observed_owner(metadata: &Metadata, expected_uid: libc::uid_t) -> Result<(), Error> {
+    if metadata.uid() != expected_uid || metadata.nlink() != 1 || metadata.mode() & 0o400 == 0 {
+        return Err(Error::Rejected(
+            "Observation requires a readable, singly-linked owned source",
+        ));
+    }
+    Ok(())
+}
+#[cfg(test)]
+mod observation_owner_tests {
+    use super::*;
+    #[test]
+    fn replacement_after_source_read_is_rejected_before_observation_publication() {
+        let root =
+            std::env::temp_dir().join(format!("pn-observe-race-{}", crate::random_id().unwrap()));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("note.mdx");
+        std::fs::write(&path, "captured").unwrap();
+        let (file, _) = AuthorizedFile::select(&path, false).unwrap();
+        let (captured, _) = file.reread().unwrap();
+        let incoming = root.join("incoming.mdx");
+        std::fs::write(&incoming, "new revision").unwrap();
+        std::fs::rename(&incoming, &path).unwrap();
+        assert!(file.validate_observed_snapshot(&captured).is_err());
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "new revision");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn ancestor_replacement_after_read_is_detached_even_with_unchanged_open_inode() {
+        let root = std::env::temp_dir().join(format!(
+            "pn-observe-ancestor-{}",
+            crate::random_id().unwrap()
+        ));
+        let selected = root.join("selected");
+        std::fs::create_dir_all(&selected).unwrap();
+        let path = selected.join("note.mdx");
+        std::fs::write(&path, "captured").unwrap();
+        let (file, _) = AuthorizedFile::select(&path, false).unwrap();
+        let (captured, _) = file.reread().unwrap();
+        std::fs::rename(&selected, root.join("moved")).unwrap();
+        std::fs::create_dir(&selected).unwrap();
+        std::fs::write(&path, "unselected").unwrap();
+        assert!(file.validate_observed_snapshot(&captured).is_err());
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "unselected");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn wrong_owner_is_rejected_without_requiring_privileged_chown() {
+        let path =
+            std::env::temp_dir().join(format!("pn-observe-owner-{}", crate::random_id().unwrap()));
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&path)
+            .unwrap();
+        let metadata = file.metadata().unwrap();
+        assert!(check_observed_owner(&metadata, metadata.uid()).is_ok());
+        assert!(check_observed_owner(&metadata, metadata.uid().wrapping_add(1)).is_err());
+        std::fs::remove_file(path).unwrap();
+    }
 }

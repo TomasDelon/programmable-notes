@@ -20,6 +20,32 @@ async function command(page: Page, name: string) {
     .click();
 }
 
+async function savedSource(page: Page): Promise<string> {
+  return page.evaluate(
+    () =>
+      new Promise<string>((resolve, reject) => {
+        const open = indexedDB.open('programmable-notes-web-v1');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const database = open.result;
+          const read = database
+            .transaction('workspace', 'readonly')
+            .objectStore('workspace')
+            .get('current');
+          read.onsuccess = () => {
+            database.close();
+            const state = read.result.state;
+            resolve(state.workspace.files[state.workspace.selected]);
+          };
+          read.onerror = () => {
+            database.close();
+            reject(read.error);
+          };
+        };
+      }),
+  );
+}
+
 // One project owns deliberate renderer faults after ordinary browser work ends.
 test.describe.configure({ mode: 'default' });
 
@@ -108,6 +134,20 @@ for (const kind of ['prose/math', 'plain prose'] as const) {
       // Use an actual edit in another tab. The app's checksum and CAS save paths
       // run normally while the local composing range owns its final DOM input.
       await other.getByRole('textbox', { name: 'MDX source' }).fill(remote);
+      // This clock is shared by both tabs, including Source DOM-settlement frames.
+      // Allow two frames without reaching the 250ms save debounce. The original
+      // saved source and active composing local range must remain intact.
+      await page.clock.runFor(32);
+      await expect(
+        other.getByText('Resolve the pending edit before saving', {
+          exact: true,
+        }),
+      ).toHaveCount(0);
+      expect(await savedSource(other)).toBe(original);
+      await expect(editor).toHaveAttribute('contenteditable', 'true');
+      await expect(
+        editor.getByRole('heading', { name: 'Conflict local' }),
+      ).toBeVisible();
       await other.keyboard.press('Control+s');
       await expect(other.locator('.web-shell')).toHaveAttribute(
         'data-save-status',

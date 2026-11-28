@@ -6,7 +6,7 @@ import {
 import { createNativeProduct } from '../../src/application/nativeProduct';
 import type { NativeProductServices } from '../../src/product/productApplication';
 
-function setup() {
+function setup(observation: Partial<NativeWorkspacePorts> = {}) {
   let sequence = 0;
   const disk = new Map([
     ['plain.md', '\uFEFF# Plain\r\n'],
@@ -58,6 +58,7 @@ function setup() {
       return { revision: 'disk-1', durable: true };
     }),
     close: vi.fn(async () => {}),
+    ...observation,
   };
   const services: NativeProductServices = {
     setCloseState: vi.fn(async () => {}),
@@ -455,4 +456,84 @@ it('never revives recovery confirmation after the source session is retired', as
   await tick();
   expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
   expect(() => h.app.session(id)).toThrow();
+});
+
+it('keeps native close dirty for retained external source even when the last local write was durable', async () => {
+  const h = setup();
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const id = h.app.snapshot().selectedSessionId!;
+  const lease = h.workspace.controller.reserveObservation(id);
+  await lease.settled();
+  lease.retainExternal(h.app.session(id).witness, 'disk-0', {
+    source: 'external',
+    diskRevision: 'other',
+  });
+  lease.release();
+  await tick();
+  expect(h.services.setCloseState).toHaveBeenLastCalledWith(
+    expect.objectContaining({ dirty: true }),
+  );
+  expect(h.app.documents.state(id).autosave.status).toBe('saved');
+  await expect(h.app.closeDocument(id)).rejects.toThrow();
+  expect(h.ports.close).not.toHaveBeenCalled();
+});
+
+it('owns live external observation through trusted surface binding and drains before native document close', async () => {
+  const observe = vi.fn(async (_id: string, revision: string) => ({
+    status: 'unchanged',
+    revision,
+  }));
+  const watch = vi.fn(async () => 'a'.repeat(32));
+  const unwatch = vi.fn(async () => {});
+  const h = setup({ observe, watch, pollWatch: async () => false, unwatch });
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const id = h.app.snapshot().selectedSessionId!;
+  const unbind = h.app.observeExternal!(() => true);
+  await h.app.reconcileExternal!();
+  expect(observe).toHaveBeenCalled();
+  const tokenCount = watch.mock.calls.length;
+  h.app.select(id);
+  await h.app.reconcileExternal!();
+  expect(watch).toHaveBeenCalledTimes(tokenCount);
+  await h.app.closeDocument(id);
+  expect(unwatch).toHaveBeenCalledExactlyOnceWith(
+    'grant-plain.md',
+    'a'.repeat(32),
+  );
+  expect(h.ports.close).toHaveBeenCalledExactlyOnceWith('grant-plain.md');
+  unbind();
+  await h.app.reconcileExternal!();
+});
+
+it('serializes surface replay cleanup before restarting an idempotent watch', async () => {
+  let active = false;
+  const events: string[] = [];
+  const h = setup({
+    observe: async (_id, revision) => ({ status: 'unchanged', revision }),
+    watch: async () => {
+      expect(active).toBe(false);
+      active = true;
+      events.push('watch');
+      return 'b'.repeat(32);
+    },
+    pollWatch: async () => false,
+    unwatch: async () => {
+      await tick();
+      active = false;
+      events.push('unwatch');
+    },
+  });
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const first = h.app.observeExternal!(() => true);
+  await h.app.reconcileExternal!();
+  first();
+  const second = h.app.observeExternal!(() => true);
+  await h.app.reconcileExternal!();
+  expect(events).toEqual(['watch', 'unwatch', 'watch']);
+  second();
+  await h.app.reconcileExternal!();
+  expect(active).toBe(false);
 });

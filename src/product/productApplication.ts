@@ -1,6 +1,10 @@
 import type { RecoverySnapshot, RecoveryCatalog } from '../documents/recovery';
 import type { DocumentSessions } from '../application/documentSessions';
-import type { SourceBatch, SourceSession } from '../editor/sourceWitness';
+import type {
+  SourceBatch,
+  SourceSession,
+  PrepareExternalHistory,
+} from '../editor/sourceWitness';
 
 export interface ProductNavigationEntry {
   readonly logicalPath: string;
@@ -57,6 +61,12 @@ export interface ProductSnapshot {
   readonly closeUncertain: boolean;
 }
 export interface ProductApplication {
+  /** Trusted editor lifecycle only; authored documents never receive these ports. */
+  observeExternal?(
+    canAdopt: (sessionId: string) => boolean,
+    prepareHistory?: PrepareExternalHistory,
+  ): () => void;
+  reconcileExternal?(): Promise<void>;
   /** A completed durable/readback receipt for the current accepted source only. */
   recoveryAcknowledged?(sessionId: string): boolean;
   refreshRecovery?(signal: AbortSignal): Promise<void>;

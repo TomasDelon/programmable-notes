@@ -2,92 +2,121 @@
 
 ## Objective and constraints
 
-Execute all twelve phases of
-`/home/tomas/.codex/attachments/b676194e-40b9-419a-b40e-64a75c399aba/approved-plan.md`
-in this checkout. Goal active; branch `fix/preview-markdown-input`, PR #9 draft.
-Preserve owner data, existing edits/evidence, retained locked account and recovery
-store. No merge/release, paid service, global security change, native guest or
-public distribution. General native React remains disabled until required gates.
-Ledger: `.superpowers/sdd/approved-plan/progress.md` (ignored; retain it).
+Execute all twelve phases of the owner-approved plan at
+`/home/tomas/.codex/attachments/b676194e-40b9-419a-b40e-64a75c399aba/approved-plan.md`.
+Goal active; PR9 stays draft. Preserve all owner edits/data, ignored evidence,
+backups/snapshots and retained locked account `pn-local-20261128` UID/GID1001.
+No merge/release/distribution, paid services, global policy changes or new guest.
+General native React remains disabled. No normal-account destructive native probe.
+Ignored ledger: `.superpowers/sdd/approved-plan/progress.md`.
 
-## Phase2: validated installed recovery packet
+## Phase3 — local acceptance passed; checked delivery pending
 
-The installed journey passed ten checkpoints at `/tmp/pn-local-collected-kwFPgB/`:
-real permission failure/current-source durable recovery confirmation, exact pending
-snapshot before intentional identity-checked interruption, fresh process/OS chooser,
-read-only discovery/invalid sibling/cancel, actual native exclusive-create conflict,
-new0600 exact copy, edit/undo/redo/autosave/normal close/restart/reopen. Original0640
-and all20 preexisting records preserved. App/infrastructure cleanup true, no force
-or residuals. Fixture/copy/invalid sibling retained. Account `pn-local-20261128`
-UID/GID1001 must not be recreated or its store cleared.
+Latest fullcheck80551 exited0: `prlimit --core=1 -- npm run check`, pinned
+Node24.22.1/npm11.9.0, umask077, configured gitleaks/matching Chromium,
+VITEST_MAX_WORKERS=2 and PLAYWRIGHT_WORKERS=2. Log phase3-check-final-v6.log:
+1088units/98files,253scanner-enabled tooling/0skips,165browser,9Pages,4disposable
+D1/storage. No retries/flaky outcomes. Native suite112passed/0failed/7reportedignored:
+one worker is invoked by its passing contention parent; six crash/sync/ENOSPC cases
+remain local-unexecuted and required CI gates. Native fmt and focused lib/observation
+Clippy passed; all-test Clippy is not claimed. Earlier source-bound host13/22filtered
+and actual4editor/4preview registered-command controls passed. Final CI pending.
 
-Installed ELF434535a20ac0b669b107304b81484fa66f8d2ea2f7ffc671e245687200fc5aa3;
-DEB334430e245bdfe063b372b76729755a3e4b8960c3e121069e0b713afec56fb4d passed inspection.
-Before-build application hashes and current observer-v4 hashes still match.
-Private manifests/logs `.cache/local-acceptance/phase2-package-{source-before,identity}.json`,
-`phase2-observer-manifest-v4.json`, `phase2-installed-recovery-v4.log`.
-Prior package retained via `phase1-retained-package-path.txt`. Public bounded
-receipts/scope: `docs/security-evidence/2026-11-28-local-recovery/`.
+Current installed production V3 ELF:
+827ce097b6ea1cd8c130460435d07705457d4b2fe139a6ed81c99d29aa183833.
+DEB07bf14ee3e1c4edc8b5102420a6aaf1c76fb6bc03b490762e639fa6dd0051f04.
+Production package inspection passed without security-test;295app inputs stayed
+unchanged during build and matched after all later diagnostics. Source/identity
+files phase3-package-{source-before,identity}-v3.json in .cache/local-acceptance.
+Do not overwrite earlier V1/V2 packages, manifests or payloads.
 
-Retain failed v2 `/tmp/pn-local-collected-v5HvmF/` and v3 `a5aBNb` (actual path
-`/tmp/pn-local-collected-a5aBNb/`); both needed app cleanup. v2's loaded-path refusal
-is not native collision evidence; its coarse WebDriver cause remains unproven.
-No uncertain-create retry was added. Independent app/UI/observer/evidence review
-found no remaining Important issue. Confirmation adds no source/history/file/close
-authority. This proves process interruption, not power loss or React containment.
+Installed72229 passed /tmp/pn-local-collected-qGn4Vk/:7checkpoints,5descriptor
+no-echo checks,3background revisions,4Undo/4Redo exact including physical-only line
+endings and earlier local typing, unrelated note bytes/mode preserved, fresh
+process/OSchooser/reopen. All51 preexisting recovery entries preserved. App and
+infrastructure cleanup true, no force/residuals; screenshots visually inspected.
+Sampled visibility213.868ms direct/107.076ms rename, not exact paint latency.
+Public exact receipts: docs/security-evidence/2026-11-28-local-external-source/.
+Executed observer-v5 is retained exactly; current helper differs by explicit
+browser-global lexical binding only, covered by tooling/full lint. Actual separate
+never-installed empty-shell IPC diagnostic59ca91ca… established registration only;
+173native inputs remain identical. No production containment claim.
 
-Final check14226 exited0: `prlimit --core=1 -- npm run check`, log
-`phase2-check-core1-final.log`;1022 units,227 scanner-enabled tooling/zero skips,
-160 matching Chromium,9 local Pages,4 disposable D1/storage, formatting/lint/types
-passed. No retries/flaky outcomes. No current local build/server/GUI owner.
-Earlier `phase2-check-final.log` stopped on test formatting; corrected run71731
-passed159/160 browser but timed out awaiting intentional Page.crash. Trace copied
-to `phase2-final-failed-browser-results`. Exclusive project ordering alone is not
-a complete local correction. Focused baseline35600 reproduced both crash waits,
-then owned SIGINT ended130 with four repeats unexecuted. Diagnostic57807 under
-one-byte core limit passed6/6; descendants' limits independently confirmed1byte.
-Piped core handling ignores zero but reserves1byte suppression. No system setting,
-assertion, timeout or production resource policy changed. Keep both failure logs.
+Retain failed installed observations: /tmp/pn-local-collected-JZ71Xl/ coarse V2
+background failure, /tmp/pn-local-collected-RQEiVP/ V2 thirdRedo physical-only skip,
+/tmp/pn-local-collected-MIcnUb/ firstV3 element-not-interactable before background
+publication. All preserved prior recovery entries; all needed forced app cleanup.
+The history-cache and raw inverse-effect fixes have genuine RED→GREEN controls.
+The navigation driver now waits for painted, on-screen, unique center-hit targets
+before normal WebDriver clicks; exact original failing button remains unproven.
 
-Next: finish evidence aggregation/staged scan/noreply check and separate Phase2
-commit, history/archive scan, normal push, update draft PR9 and observe exact CI.
-Phase1 required CI46151509730 passed at ca61250; do not reuse it for the new head.
-Do not rerun unchanged installed acceptance without a material reason.
+Retain phase3 fullcheck failures v1(receipt formatting),v2(serialized helper DOM
+globals),v3(stale-tab clock fixture),v4(two crash fixtures before crash),v5(default
+Vitest worker deadline failures amid host load19). Traces copied into private
+phase3-check-v3-failed-stale-tab and phase3-check-v4-failed-crash-fixtures.
+Both shared-clock fixtures now allow32virtualms of Source settlement frames below
+250ms autosave, assert original saved bytes/intact drafts before explicit save,
+and retain all conflict/recovery/crash assertions. Independent review accepted.
+Supported Vitest2 control passed1088, then fullv6 passed with unchanged deadlines;
+START_LOCAL documents worker budget. Process core1 is host-specific suppression
+for piped core handling; no system or production resource policy changed.
 
-## Phase3 and remaining implementation
+No live app/driver/probe/test/server owner remains. Final source/evidence consistency,
+metadata/scans, checked commit/push, draftPR update and actual required CI are next.
+Do not mark Phase3 delivered or the full milestone complete before required gates.
 
-Continue live external observation/reconciliation, inventory, real lifecycle,
-verified references/journals/Trash, shared editing/plugins, integrated inline React
-security gates, final acceptance and inactive updater preparation. No full A01–A12
-claim yet. Independent Phase3 architecture review is recorded in ignored
-`phase3-design-notes.md`: observation cannot use Store::reopen (changes baseline).
-Pause both autosave write loop and restart; adopt canonical source+baseline in one
-synchronous transaction; report Source composition ownership and map selection.
-Check ownership, ancestor identity and final pathname after descriptor reads.
+## Phase4 — proven publication defect; safe preparation only
 
-Ignored prototype `.cache/local-acceptance/phase3-native-draft/` extends only copied
-lib.rs/linux.rs plus new observation tests. Bounded two grant-scoped metadata/digest
-tokens preserve original baseline, exact read-only observations and explicit save
-preconditions. Valid stubRED6 and post-read replacementRED2 →73 selected native
-checks pass,0ignored (`phase3-native-post-read-green.log`). Separate target
-`phase3-native-target/`. Not integrated; no native command/watcher/controller/UI
-or installed writer acceptance. Original tracked native sources remain unchanged.
-Compare them before integrating only the intended files, retain exact dependencies.
+Current native save final-checks then unconditionally renames. Restricted-account
+own-child probe77961 reproduced direct/rename writes after the check and an old-FD
+write after durable acknowledgement: exact local bytes saved, foreign version not
+retained by app; oldFDnlink0. This is current-defect evidence, NOT fixed CAS/GUI/React
+acceptance. Actual glibcflags0 syscall is renameat264. All3 role fixtures and foreign
+witness copies retained, account evidence-publication-imvpAr. Cleanup clean without
+force/residuals. Manifest/receipts/logs phase4-retained-* in private cache.
 
-IMPORTANT existing native publication limitation: write checks current snapshot,
-then unconditional rename leaves a concurrent-writer window. Snapshot tokens do
-not make it kernel-atomic CAS. Phase4 needs a deterministic race probe and a
-preservation/publication protocol before stronger overwrite-safety claims.
-Ignored `merge-draft/` pure line-merger17 controls pass after16 initial REDs,
-including repeated-token symmetry; it is not integrated or Phase4 acceptance.
+IMPORTANT provision deviation: the first ignored own-child diagnostic ranUID1000,
+contrary to START_LOCAL's required disposable-account/VM scope. It targeted only
+fresh private synthetic files but is EXCLUDED from acceptance. Retain its exact
+source/identity/receipt/log and phase4-publication-provision-deviation.json; never
+repeat normal-UID execution. Corrected probe refuses non1001 UID/GID. Independent
+review caught privilege metadata, import shadowing and failure-cleanup gaps in its
+new launcher; all corrected BEFORE root execution. Exact byte-only2file payload,
+mode/no-cap checks, cleanenv/isolatedPython, always-run UID/PID/start cleanup;
+setID/cap/extra-module negative controls passed. Final review no material findings.
+No app or recovery-store code ran in this diagnostic.
 
-## Local environment
+Ignored typed merger preparation phase4-merge-typed/sourceMerge.ts has20controls
+including exhaustive31^3 symmetry, exact terminators/opaque source, ambiguous
+boundaries, byte/output/work budgets; missing-module RED then GREEN, strictTS pass.
+First standalone compiler invocation rejected missing --ignoreConfig; retain log.
+It is NOT integrated into canonical sessions or accepted product code. Prior old
+merge-draft17controls and stale native scratch remain ignored; never copy stale
+native code over current source. Design notes phase4-design-next.md.
 
-Use `.cache/local-toolchain/shims` and Node24.22.1 binary directory in PATH
-(system Node22); npm11.9.0/Rust1.100.0. Use umask077,
-`PN_GITLEAKS_BIN=$PWD/.cache/security-tools/gitleaks`, matching
-`PLAYWRIGHT_BROWSERS_PATH=$PWD/.cache/ms-playwright`, `PLAYWRIGHT_WORKERS=2`,
-unset `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. This host's full browser gate also
-needs `prlimit --core=1 -- npm run check`. One build/server owner, runner-owned
-ports4173/4174/4185. No native guest/old private provisioner. Raw logs/reports and
-screenshots remain ignored; never dump protocol source or private scanner reports.
+Next: integrate reviewed pure merger through fresh production tests, durable both-
+version retention and revision-bound resolution in existing ports/surfaces. Native
+publication needs deterministic races and recoverable journal/live-inode analysis;
+exchange then copying/unlinking displaced inode is NOT CAS. Never rollback over a
+new external target. No leases/host policies changed. Investigating candidates needs
+no owner reapproval; materially changing ordinary-editor/retention requirements
+would need a concrete consequential decision. Keep automatic publication gated.
+
+Last GUI witness began with51 old recovery entries; future capacity admission may
+refuse. Never prune/clear the account store or lower reserved capacity to continue.
+Consider a reviewed run-private app-data profile under SAME account before another
+GUI journey; no profile change has been made.
+
+## Earlier delivery and remaining scope
+
+Phase1 ca61250 requiredCI46151509730 passed. Phase2 6955ff8 requiredCI46158218387
+passed, with exact installed recovery /tmp/pn-local-collected-kwFPgB/:10checkpoints,
+20old entries preserved, bothcleanup clean without force/residuals. Historical
+source-bound receipts remain separate; don't transfer recovery acceptance to V3.
+
+Phases4–12 incomplete: merger/conflicts/publication, inventory, real lifecycle,
+reference journals, Trash, shared editing/plugins, admitted same-window React and
+containment/resource matrix, A01–A12, inactive updater. Native guests require the
+versioned share-free preflight/negative controls/independent review; never reuse
+old private provisioner. Required production namespace/seccomp/resource evidence
+cannot be replaced by registered IPC, package inspection, screenshots or CI.

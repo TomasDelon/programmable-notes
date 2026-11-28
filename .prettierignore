@@ -15,3 +15,6 @@ src-tauri/vendor
 
 # Preserve raw runtime evidence bytes and producer checksums.
 docs/security-evidence/**/raw
+
+# Preserve collected Phase 3 bounded receipts byte-for-byte.
+docs/security-evidence/2026-11-28-local-external-source/**/*.json

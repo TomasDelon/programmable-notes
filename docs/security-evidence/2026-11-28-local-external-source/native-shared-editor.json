@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "stage": "external_restart_reauthorization",
+  "startupPhase": "complete",
+  "failureKind": "none",
+  "assertionKind": "none",
+  "sourcePhase": "not_started",
+  "fixtureId": "pn-native-shared-m4Uusd",
+  "journey": "external",
+  "interruptionState": "not_started",
+  "recovery": null,
+  "external": {
+    "schema": 1,
+    "writer": "independent-node-process",
+    "observations": [
+      {
+        "kind": "direct",
+        "sourceSha256": "570bcfffc51c66d83eb2f65915361bfbab76e47faf3f42ea64e456e2cccd1772",
+        "mode": 416,
+        "writeCompletionToVisibleObservationMs": 130.656
+      },
+      {
+        "kind": "rename",
+        "sourceSha256": "182b2c10ddc50f3617845402846620762d147811c271c0dae5c0c303d9a6f28a",
+        "mode": 416,
+        "writeCompletionToVisibleObservationMs": 116.427
+      }
+    ],
+    "idleEchoChecks": 2,
+    "restarted": true,
+    "fixtureRetained": true,
+    "retainedRecovery": {
+      "initialEntries": 31,
+      "invalidRecords": 0,
+      "preserved": true
+    }
+  },
+  "binarySha256": "54a9bb4d4e0de105141004c575540af83768b59267d06a9fcb00b13e0d1fe82d",
+  "checkpoints": [
+    "actual-vault-chooser-and-shared-source",
+    "external-direct-exact-visible-source",
+    "external-rename-exact-visible-source",
+    "external-next-keyboard-exact-save",
+    "external-and-local-keyboard-undo-redo-exact",
+    "external-fresh-process-chooser-exact-reopen"
+  ],
+  "cleanupVerified": true,
+  "forcedCleanup": false,
+  "scope": "Installed external direct/rename writer, exact source/history/autosave/restart and sampled latency; no React or containment acceptance"
+}

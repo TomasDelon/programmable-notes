@@ -516,6 +516,118 @@ pub async fn save_document_as(
     }).await.map_err(|e| e.to_string())?
 }
 #[tauri::command]
+pub async fn observe_document(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    id: String,
+    revision: String,
+) -> Result<native_documents::Observation, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            Ok(store(&docs)?
+                .observe(&id, &revision)
+                .unwrap_or_else(|error| native_documents::Observation::unavailable(&error)))
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (id, revision);
+            Err("Native document observation currently requires Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn watch_document(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    id: String,
+    revision: String,
+) -> Result<String, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            store(&docs)?
+                .watch(&id, &revision)
+                .map_err(|error| error.to_string())
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (id, revision);
+            Err("Native document observation currently requires Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn poll_document_watch(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    id: String,
+    watch_id: String,
+) -> Result<bool, String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            store(&docs)?
+                .poll_watch(&id, &watch_id)
+                .map_err(|error| error.to_string())
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (id, watch_id);
+            Err("Native document observation currently requires Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn unwatch_document(
+    app: AppHandle,
+    window: WebviewWindow,
+    host: tauri::State<'_, Host>,
+    id: String,
+    watch_id: String,
+) -> Result<(), String> {
+    let docs = editor(&app, &window, &host)?;
+    let operation = operation(&app, docs.clone())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let _operation = operation;
+        #[cfg(target_os = "linux")]
+        {
+            store(&docs)?
+                .unwatch(&id, &watch_id)
+                .map_err(|error| error.to_string())
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (id, watch_id);
+            Err("Native document observation currently requires Linux".into())
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
 pub async fn reopen_document(
     app: AppHandle,
     window: WebviewWindow,

@@ -2,6 +2,7 @@ import {
   AutosaveCoordinator,
   type AutosaveState,
   type DocumentWriter,
+  type PersistenceReservation,
 } from './autosave';
 import {
   sameSourceWitness,
@@ -30,6 +31,22 @@ export interface SessionBudgets {
   readonly maxSessions: number;
 }
 
+export type DocumentObservationIssue =
+  'missing' | 'permission' | 'invalid' | 'unstable' | 'retired' | 'unreadable';
+
+export interface ObservedSource {
+  readonly source: string;
+  readonly diskRevision: string;
+}
+
+/** Retained reconciliation inputs, never an additional editable source owner. */
+export interface RetainedObservation {
+  readonly base: SourceWitness;
+  readonly diskRevision: string;
+  readonly observed?: ObservedSource;
+  readonly issue?: DocumentObservationIssue;
+}
+
 export interface DocumentSessionState {
   readonly witness: SourceWitness;
   readonly logicalPath: string;
@@ -38,6 +55,30 @@ export interface DocumentSessionState {
   readonly unapplied: boolean;
   readonly retainedFailures: readonly SourceBatch[];
   readonly closeError: unknown;
+  /** Prior canonical source retained separately from local keystroke publication. */
+  readonly externalCheckpoint?: SourceWitness;
+  readonly externalObservation?: RetainedObservation;
+}
+
+export interface DocumentObservationReservation {
+  settled(): Promise<void>;
+  adopt(
+    expected: SourceWitness,
+    expectedDiskRevision: string,
+    observed: { readonly source: string; readonly diskRevision: string },
+  ): SourceWitness;
+  retainExternal(
+    expected: SourceWitness,
+    expectedDiskRevision: string,
+    observed: ObservedSource,
+  ): void;
+  retainReadFailure(
+    expected: SourceWitness,
+    expectedDiskRevision: string,
+    issue: DocumentObservationIssue,
+  ): void;
+  confirmUnchanged(expectedDiskRevision: string): void;
+  release(): void;
 }
 
 export interface AggregateCloseAdmission {
@@ -56,6 +97,10 @@ interface Entry {
   unapplied: boolean;
   retainedFailures: SourceBatch[];
   closeError: unknown;
+  observation?: object;
+  externalCheckpoint?: SourceWitness;
+  externalObservation?: RetainedObservation;
+  externalPause?: PersistenceReservation;
   listeners: Set<{ listener: Listener }>;
   pendingListeners: Set<{ listener: Listener }>;
   notificationPending: boolean;
@@ -201,6 +246,161 @@ export class DocumentSessions {
       unapplied: entry.unapplied,
       retainedFailures: entry.retainedFailures.map(copyBatch),
       closeError: entry.closeError,
+      ...(entry.externalObservation
+        ? {
+            externalObservation: {
+              ...entry.externalObservation,
+              base: { ...entry.externalObservation.base },
+              ...(entry.externalObservation.observed
+                ? { observed: { ...entry.externalObservation.observed } }
+                : {}),
+            },
+          }
+        : {}),
+      ...(entry.externalCheckpoint
+        ? { externalCheckpoint: { ...entry.externalCheckpoint } }
+        : {}),
+    };
+  }
+
+  reserveObservation(documentId: string): DocumentObservationReservation {
+    const entry = this.get(documentId);
+    if (this.aggregateClose || entry.phase !== 'open' || entry.observation)
+      throw Error('Document observation is already reserved or closing.');
+    const persistence =
+      entry.externalPause ?? this.autosave.reserve(documentId);
+    let settled = false;
+    const token = {};
+    entry.observation = token;
+    const requireHeld = () => {
+      if (
+        this.entries.get(documentId) !== entry ||
+        entry.observation !== token ||
+        entry.phase !== 'open' ||
+        this.aggregateClose
+      )
+        throw Error('Document observation is no longer current.');
+    };
+    const requireBaseline = (expectedDiskRevision: string) => {
+      requireHeld();
+      const saved = this.autosave.state(documentId);
+      if (
+        !settled ||
+        saved.status === 'writing' ||
+        saved.diskRevision !== expectedDiskRevision
+      )
+        throw Error('Observation baseline is unsettled or stale.');
+      return saved;
+    };
+    const retain = (
+      expected: SourceWitness,
+      expectedDiskRevision: string,
+      update: { observed?: ObservedSource; issue?: DocumentObservationIssue },
+    ) => {
+      const saved = requireBaseline(expectedDiskRevision);
+      if (!this.current(entry, expected))
+        throw Error('Observation source capture is stale.');
+      entry.externalObservation = {
+        base: entry.externalObservation?.base ?? {
+          sessionId: documentId,
+          ...saved.persisted,
+        },
+        diskRevision: expectedDiskRevision,
+        ...(entry.externalObservation?.observed
+          ? { observed: entry.externalObservation.observed }
+          : {}),
+        ...update,
+      };
+      entry.externalPause = persistence;
+      this.notify(entry);
+    };
+    return {
+      settled: async () => {
+        requireHeld();
+        await persistence.settled();
+        requireHeld();
+        settled = true;
+      },
+      retainExternal: (expected, expectedDiskRevision, observed) => {
+        if (
+          typeof observed.source !== 'string' ||
+          !this.withinBudget(observed.source, documentId) ||
+          typeof observed.diskRevision !== 'string' ||
+          !observed.diskRevision ||
+          observed.diskRevision === expectedDiskRevision
+        )
+          throw Error('Invalid external source retention.');
+        retain(expected, expectedDiskRevision, { observed: { ...observed } });
+      },
+      retainReadFailure: (expected, expectedDiskRevision, issue) => {
+        if (
+          ![
+            'missing',
+            'permission',
+            'invalid',
+            'unstable',
+            'retired',
+            'unreadable',
+          ].includes(issue)
+        )
+          throw Error('Invalid observation issue.');
+        retain(expected, expectedDiskRevision, { issue });
+      },
+      confirmUnchanged: (expectedDiskRevision) => {
+        requireBaseline(expectedDiskRevision);
+        // Returning to the base cannot silently discard a retained competing version.
+        if (entry.externalObservation?.observed)
+          throw Error('A retained external version requires reconciliation.');
+        entry.externalObservation = undefined;
+        entry.externalPause = undefined;
+        this.notify(entry);
+      },
+      adopt: (expected, expectedDiskRevision, observed) => {
+        requireBaseline(expectedDiskRevision);
+        const retained = entry.externalObservation?.observed;
+        if (
+          (retained &&
+            (retained.source !== observed.source ||
+              retained.diskRevision !== observed.diskRevision)) ||
+          !this.current(entry, expected) ||
+          entry.unapplied ||
+          entry.retainedFailures.length ||
+          expected.editorRevision >= Number.MAX_SAFE_INTEGER ||
+          typeof observed.source !== 'string' ||
+          !this.withinBudget(observed.source, documentId)
+        )
+          throw Error(
+            'External source competes with current or unapplied text.',
+          );
+        const previous = { ...entry.witness };
+        const next = {
+          sessionId: documentId,
+          editorRevision: previous.editorRevision + 1,
+          source: observed.source,
+        };
+        persistence.adopt(
+          { documentId, ...expected, diskRevision: expectedDiskRevision },
+          { documentId, ...next, diskRevision: observed.diskRevision },
+        );
+        // No callbacks/awaits between persistence and canonical acceptance.
+        // Queued subscribers can only observe the complete new transaction.
+        entry.witness = next;
+        entry.externalCheckpoint = previous;
+        entry.externalObservation = undefined;
+        entry.externalPause = undefined;
+        this.notify(entry);
+        return { ...next };
+      },
+      release: () => {
+        if (entry.observation !== token) return;
+        entry.observation = undefined;
+        // Known external data/failures outlive a worker. Cleanup never chooses a winner.
+        if (!entry.externalObservation) {
+          entry.externalPause = undefined;
+          persistence.release();
+        }
+        this.notify(entry);
+      },
     };
   }
 
@@ -375,8 +575,15 @@ export class DocumentSessions {
   }
 
   private requireApplied(entry: Entry) {
-    if (entry.unapplied || entry.retainedFailures.length)
-      throw Error('Unapplied editor text prevents normal close.');
+    if (
+      entry.unapplied ||
+      entry.retainedFailures.length ||
+      entry.observation ||
+      entry.externalObservation
+    )
+      throw Error(
+        'Unapplied text or pending observation prevents normal close.',
+      );
   }
 
   private invalidateAggregate(entry: Entry) {

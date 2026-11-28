@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { EditorView } from '@codemirror/view';
+import { undo, redo } from '@codemirror/commands';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import {
   createNativeWorkspace,
@@ -15,6 +16,7 @@ import {
 import { createNativeProduct } from '../../src/application/nativeProduct';
 import { ProductRoot } from '../../src/product/ProductRoot';
 import type { NativeProductServices } from '../../src/product/productApplication';
+import type { NativeObservationPorts } from '../../src/documents/nativeObservation';
 import { NotificationProvider } from '../../src/ui/Notifications';
 
 const original = '\uFEFF# Original\r\n\r\nBody.\r\n';
@@ -49,6 +51,7 @@ afterEach(() => {
 
 function fixture(
   options: {
+    observation?: Partial<NativeObservationPorts>;
     recovery?: NativeProductServices['recovery'];
     save?: NativeWorkspacePorts['save'];
     files?: Record<string, string>;
@@ -114,6 +117,7 @@ function fixture(
         })),
       save,
       close: async () => {},
+      ...options.observation,
     },
     () => 'session-' + ++sequence,
   );
@@ -131,6 +135,7 @@ function fixture(
   return {
     ...mounted,
     application,
+    workspace,
     save,
     hideInventory: () => {
       inventoryPaths = [];
@@ -1041,4 +1046,225 @@ it('shows recovery confirmation beside a failed save only after the real service
   expect(mounted.application.session(id).witness.source).toBe(
     original + 'Pending.',
   );
+});
+
+it('reports paused external changes without claiming the file is saved or replacing the editor', async () => {
+  const h = fixture();
+  const field = await chooseAndOpen();
+  const view = EditorView.findFromDOM(field)!;
+  const id = h.application.snapshot().selectedSessionId!;
+  await act(async () => {
+    const lease = h.workspace.controller.reserveObservation(id);
+    await lease.settled();
+    lease.retainExternal(h.application.session(id).witness, 'disk-0', {
+      source: 'foreign source',
+      diskRevision: 'foreign',
+    });
+    lease.release();
+  });
+  expect(
+    screen.getByRole('status', { name: 'Document save status' }),
+  ).toHaveTextContent('File changed · Saving paused');
+  expect(EditorView.findFromDOM(field)).toBe(view);
+  expect(h.application.session(id).witness.source).toBe(original);
+  expect(h.save).not.toHaveBeenCalled();
+});
+
+it('reconciles a real Source surface on focus using trusted passive readiness without save echo', async () => {
+  let foreign = false;
+  const external = '\uFEFF# From disk\r\n\r\nExact 🌱.\n';
+  const observe = vi.fn(async (_grant: string, revision: string) =>
+    foreign && revision !== 'external'
+      ? {
+          status: 'changed',
+          baselineRevision: revision,
+          revision: 'external',
+          source: external,
+        }
+      : { status: 'unchanged', revision },
+  );
+  const unwatch = vi.fn(async () => {});
+  const h = fixture({
+    observation: {
+      observe,
+      watch: async () => 'c'.repeat(32),
+      pollWatch: async () => false,
+      unwatch,
+    },
+  });
+  try {
+    const field = await chooseAndOpen();
+    const view = EditorView.findFromDOM(field)!;
+    await act(async () => {
+      await h.application.reconcileExternal!();
+    });
+    foreign = true;
+    fireEvent(window, new Event('focus'));
+    await waitFor(() =>
+      expect(
+        h.application.session(h.application.snapshot().selectedSessionId!)
+          .witness.source,
+      ).toBe(external),
+    );
+    expect(EditorView.findFromDOM(field)).toBe(view);
+    await waitFor(() =>
+      expect(view.state.doc.toString()).toBe(
+        '\uFEFF# From disk\n\nExact 🌱.\n',
+      ),
+    );
+    expect(h.save).not.toHaveBeenCalled();
+  } finally {
+    h.unmount();
+    await h.application.reconcileExternal!();
+  }
+  expect(unwatch).toHaveBeenCalledTimes(1);
+});
+
+it('defers a live external revision through Source composition and adopts it only after native settlement', async () => {
+  let foreign = false;
+  const external = '\uFEFF# External after IME\r\n';
+  const h = fixture({
+    observation: {
+      observe: async (_grant, revision) =>
+        foreign && revision !== 'external'
+          ? {
+              status: 'changed',
+              baselineRevision: revision,
+              revision: 'external',
+              source: external,
+            }
+          : { status: 'unchanged', revision },
+      watch: async () => 'd'.repeat(32),
+      pollWatch: async () => false,
+      unwatch: async () => {},
+    },
+  });
+  try {
+    const field = await chooseAndOpen();
+    const view = EditorView.findFromDOM(field)!;
+    const id = h.application.snapshot().selectedSessionId!;
+    await act(async () => {
+      await h.application.reconcileExternal!();
+    });
+    fireEvent.compositionStart(view.contentDOM);
+    expect(h.application.documents.state(id).unapplied).toBe(true);
+    foreign = true;
+    await act(async () => {
+      await h.application.reconcileExternal!();
+    });
+    expect(h.application.session(id).witness.source).toBe(original);
+    expect(
+      h.application.documents.state(id).externalObservation?.observed?.source,
+    ).toBe(external);
+    expect(view.state.doc.toString()).toBe(original.replaceAll('\r\n', '\n'));
+    fireEvent.compositionEnd(view.contentDOM);
+    await waitFor(() =>
+      expect(h.application.documents.state(id).unapplied).toBe(false),
+    );
+    await act(async () => {
+      await h.application.reconcileExternal!();
+    });
+    expect(h.application.session(id).witness.source).toBe(external);
+    expect(
+      h.application.documents.state(id).externalObservation,
+    ).toBeUndefined();
+    expect(EditorView.findFromDOM(field)).toBe(view);
+    expect(h.save).not.toHaveBeenCalled();
+  } finally {
+    h.unmount();
+    await h.application.reconcileExternal!();
+  }
+});
+
+it('keeps each background external adoption in genuine Source history before earlier local typing', async () => {
+  let disk = original,
+    revision = 'disk-0',
+    writes = 0;
+  const h = fixture({
+    save: async (grant, _revision, source) => {
+      if (grant.includes('note.md')) {
+        disk = source;
+        revision = `written-${++writes}`;
+      }
+      return { revision, durable: true };
+    },
+    observation: {
+      observe: async (grant, expected) =>
+        grant.includes('note.md') && expected !== revision
+          ? {
+              status: 'changed',
+              baselineRevision: expected,
+              revision,
+              source: disk,
+            }
+          : { status: 'unchanged', revision: expected },
+      watch: async () => 'e'.repeat(32),
+      pollWatch: async () => false,
+      unwatch: async () => {},
+    },
+  });
+  try {
+    const field = await chooseAndOpen();
+    const first = EditorView.findFromDOM(field)!;
+    act(() =>
+      first.dispatch({
+        changes: { from: first.state.doc.length, insert: 'Local' },
+        userEvent: 'input.type',
+      }),
+    );
+    await act(async () => {
+      await h.workspace.controller.flush();
+    });
+    const id = h.application.snapshot().selectedSessionId!;
+    const local = original + 'Local';
+    fireEvent.click(screen.getByRole('button', { name: 'Open other.mdx' }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole('textbox', { name: 'MDX source' }),
+      ).toHaveTextContent('Other'),
+    );
+    const one = local.replace('Original', 'External one');
+    const two = one.replace('\r\n', '\n');
+    const three = two.replace('External one', 'External three 🌱');
+    for (const [index, source] of [one, two, three].entries()) {
+      disk = source;
+      revision = `external-${index}`;
+      await act(async () => {
+        await h.application.reconcileExternal!();
+      });
+      expect(h.application.session(id).witness.source).toBe(source);
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Open note.md' }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole('textbox', { name: 'MDX source' }),
+      ).toHaveTextContent('External three'),
+    );
+    const returned = EditorView.findFromDOM(
+      screen.getByRole('textbox', { name: 'MDX source' }),
+    )!;
+    for (const source of [two, one, local, original]) {
+      act(() => {
+        expect(undo(returned)).toBe(true);
+      });
+      expect(h.application.session(id).witness.source).toBe(source);
+      await act(async () => {
+        await h.workspace.controller.flush();
+      });
+      expect(disk).toBe(source);
+    }
+    for (const source of [local, one, two, three]) {
+      act(() => {
+        expect(redo(returned)).toBe(true);
+      });
+      expect(h.application.session(id).witness.source).toBe(source);
+      await act(async () => {
+        await h.workspace.controller.flush();
+      });
+      expect(disk).toBe(source);
+    }
+  } finally {
+    h.unmount();
+    await h.application.reconcileExternal!();
+  }
 });

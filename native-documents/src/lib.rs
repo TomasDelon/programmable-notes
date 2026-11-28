@@ -131,6 +131,8 @@ struct Grant {
     revision: String,
     size: usize,
     logical_path: String,
+    observations: Vec<ObservedRevision>,
+    watch: Option<(String, SourceWatch)>,
 }
 #[cfg(target_os = "linux")]
 pub struct PendingSave {
@@ -256,6 +258,8 @@ impl Store {
                     logical_path: d.logical_path.clone(),
                     file,
                     revision,
+                    observations: Vec::new(),
+                    watch: None,
                 },
             ));
             documents.push(d);
@@ -268,13 +272,26 @@ impl Store {
             return Err(Error::Rejected("File exceeds 500 KB limit"));
         }
         let old = self.grants.get(id).ok_or(Error::UnknownGrant)?;
-        if old.revision != revision {
-            return Err(Error::StaleRevision);
-        }
+        let observed = if old.revision == revision {
+            None
+        } else {
+            Some(
+                old.observations
+                    .iter()
+                    .find(|entry| entry.revision == revision)
+                    .ok_or(Error::StaleRevision)?
+                    .snapshot
+                    .clone(),
+            )
+        };
         self.capacity(0, source.len(), old.size)?;
         let next = random_id()?;
         let grant = self.grants.get_mut(id).unwrap();
-        let durable = grant.file.write(source)?;
+        let durable = match observed {
+            Some(snapshot) => grant.file.write_observed(source, &snapshot)?,
+            None => grant.file.write(source)?,
+        };
+        grant.observations.clear();
         grant.size = source.len();
         grant.revision = next.clone();
         Ok(Saved {
@@ -347,6 +364,8 @@ impl Store {
                 revision,
                 size: source.len(),
                 logical_path: d.logical_path.clone(),
+                observations: Vec::new(),
+                watch: None,
             },
         );
         Ok(d)
@@ -370,6 +389,7 @@ impl Store {
         let next = random_id()?;
         let grant = self.grants.get_mut(id).unwrap();
         grant.file.snapshot = Some(snapshot);
+        grant.observations.clear();
         grant.size = source.len();
         grant.revision = next.clone();
         Ok(Document {
@@ -415,3 +435,178 @@ impl Store {
 
 #[cfg(target_os = "linux")]
 pub mod snapshots;
+
+/// Checked, read-only current source. The baseline grant remains unchanged.
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase"
+)]
+pub enum Observation {
+    Unchanged {
+        revision: String,
+    },
+    Changed {
+        baseline_revision: String,
+        revision: String,
+        source: String,
+    },
+    Unavailable {
+        reason: ObservationIssue,
+    },
+}
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ObservationIssue {
+    Missing,
+    Permission,
+    Invalid,
+    Unstable,
+    Retired,
+    Unreadable,
+}
+impl Observation {
+    pub fn unavailable(error: &Error) -> Self {
+        let reason = match error {
+            Error::UnknownGrant | Error::StaleRevision => ObservationIssue::Retired,
+            Error::Conflict => ObservationIssue::Unstable,
+            Error::Rejected(_) => ObservationIssue::Invalid,
+            Error::Io(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                ObservationIssue::Missing
+            }
+            Error::Io(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+                ObservationIssue::Permission
+            }
+            _ => ObservationIssue::Unreadable,
+        };
+        Self::Unavailable { reason }
+    }
+}
+
+#[cfg(test)]
+mod observation_issue_tests {
+    use super::*;
+    #[test]
+    fn issue_codes_are_closed_and_never_serialize_native_error_contents() {
+        for (error, expected) in [
+            (Error::UnknownGrant, "retired"),
+            (Error::StaleRevision, "retired"),
+            (Error::Conflict, "unstable"),
+            (Error::Rejected("private-source-sentinel"), "invalid"),
+            (Error::Io(std::io::ErrorKind::NotFound.into()), "missing"),
+            (
+                Error::Io(std::io::ErrorKind::PermissionDenied.into()),
+                "permission",
+            ),
+            (
+                Error::Io(std::io::Error::other("private-source-sentinel")),
+                "unreadable",
+            ),
+        ] {
+            assert_eq!(
+                serde_json::to_value(Observation::unavailable(&error)).unwrap(),
+                serde_json::json!({"status":"unavailable", "reason":expected})
+            );
+        }
+    }
+}
+#[cfg(target_os = "linux")]
+impl Store {
+    pub fn observe(&mut self, id: &str, revision: &str) -> Result<Observation, Error> {
+        let grant = self.grants.get(id).ok_or(Error::UnknownGrant)?;
+        let expected = if grant.revision == revision {
+            grant.file.snapshot.as_ref().ok_or(Error::StaleRevision)?
+        } else {
+            &grant
+                .observations
+                .iter()
+                .find(|entry| entry.revision == revision)
+                .ok_or(Error::StaleRevision)?
+                .snapshot
+        };
+        let (snapshot, source) = grant.file.observe()?;
+        if expected.matches(&snapshot) {
+            return Ok(Observation::Unchanged {
+                revision: revision.into(),
+            });
+        }
+        let candidate = grant
+            .observations
+            .iter()
+            .find(|entry| entry.snapshot.matches(&snapshot))
+            .map(|entry| entry.revision.clone())
+            .map(Ok)
+            .unwrap_or_else(random_id)?;
+        let grant = self.grants.get_mut(id).unwrap();
+        // Keep only the requested observation baseline and newest candidate.
+        // Tokens contain metadata/digest, never another full retained source.
+        grant
+            .observations
+            .retain(|entry| entry.revision == revision && entry.revision != candidate);
+        grant.observations.push(ObservedRevision {
+            revision: candidate.clone(),
+            snapshot,
+        });
+        debug_assert!(grant.observations.len() <= 2);
+        Ok(Observation::Changed {
+            baseline_revision: revision.into(),
+            revision: candidate,
+            source,
+        })
+    }
+}
+
+#[cfg(target_os = "linux")]
+struct ObservedRevision {
+    revision: String,
+    snapshot: linux::Snapshot,
+}
+
+#[cfg(target_os = "linux")]
+mod watch;
+#[cfg(target_os = "linux")]
+use watch::SourceWatch;
+#[cfg(target_os = "linux")]
+impl Store {
+    pub fn watch(&mut self, id: &str, revision: &str) -> Result<String, Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        if grant.revision != revision
+            && !grant
+                .observations
+                .iter()
+                .any(|entry| entry.revision == revision)
+        {
+            return Err(Error::StaleRevision);
+        }
+        if let Some((token, _)) = &grant.watch {
+            return Ok(token.clone());
+        }
+        let watch = grant.file.watch()?;
+        let token = random_id()?;
+        grant.watch = Some((token.clone(), watch));
+        Ok(token)
+    }
+    /// Nonblocking and bounded: IPC polling never occupies the source store while waiting.
+    pub fn poll_watch(&mut self, id: &str, watch: &str) -> Result<bool, Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        let (_, entry) = grant
+            .watch
+            .as_mut()
+            .filter(|(token, _)| token == watch)
+            .ok_or(Error::Rejected("Unknown document observation"))?;
+        entry.poll_hint(0)
+    }
+    pub fn unwatch(&mut self, id: &str, watch: &str) -> Result<(), Error> {
+        let grant = self.grants.get_mut(id).ok_or(Error::UnknownGrant)?;
+        if !grant
+            .watch
+            .as_ref()
+            .is_some_and(|(token, _)| token == watch)
+        {
+            return Err(Error::Rejected("Unknown document observation"));
+        }
+        grant.watch = None;
+        Ok(())
+    }
+}

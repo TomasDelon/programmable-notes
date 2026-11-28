@@ -5,6 +5,12 @@ export interface SourceWitness {
   readonly source: string;
 }
 
+/** Trusted history owner prepares without mutation; commit is synchronous/nonthrowing. */
+export type PrepareExternalHistory = (
+  before: SourceWitness,
+  source: string,
+) => (() => void) | null;
+
 export interface SourceBatch {
   readonly expected: SourceWitness;
   readonly source: string;

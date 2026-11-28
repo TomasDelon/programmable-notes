@@ -1,11 +1,21 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  externalSourceChange as external,
+  externalSourceTransaction,
+  type EditorHistory,
+} from './sourceHistory';
+export type { EditorHistory } from './sourceHistory';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Annotation,
   Compartment,
   EditorState,
   Transaction,
-  type EditorSelection,
   type TransactionSpec,
 } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers } from '@codemirror/view';
@@ -33,7 +43,10 @@ import {
   rawSourceHistory,
 } from './live/rawSource';
 import { liveDataChanged, livePreview } from './live/livePreview';
-import { compositionHistory } from './live/compositionHistory';
+import {
+  compositionHistory,
+  setCompositionHistoryBoundary,
+} from './live/compositionHistory';
 import { MathEditor, type MathDraft } from './math/MathEditor';
 import { planMathReplacement } from './math/mathSource';
 import './live/live.css';
@@ -52,9 +65,11 @@ import {
   type SourceReceipt,
 } from './sourceWitness';
 
-const external = Annotation.define<boolean>();
 const EMPTY_WIKILINKS: readonly LinkResolution[] = Object.freeze([]);
+
 export type EditorCommands = {
+  /** Passive readiness for trusted external adoption; never detaches a surface. */
+  canAdoptExternal?: () => boolean;
   /** Native close prerequisite; absence or false means close must remain blocked. */
   detachIfClean?: () => boolean;
   undo: () => void;
@@ -67,13 +82,6 @@ export type EditorCommands = {
   insertText: (text: string) => boolean;
   formatRendered?: (action: string) => void;
 } | null;
-
-// Preserve the real immutable history field, not its JSON serialization:
-// CodeMirror intentionally omits custom inverse effects when serializing JSON.
-export type EditorHistory = Map<
-  string,
-  { source: string; history: unknown; selection: EditorSelection }
->;
 
 export function SourceEditor({
   source,
@@ -159,11 +167,14 @@ export function SourceEditor({
     authority.current = session;
   }, [session]);
 
-  const protocolMatches = () =>
-    !detached.current &&
-    (sessionId.current === undefined
-      ? authority.current === undefined
-      : authority.current?.witness.sessionId === sessionId.current);
+  const protocolMatches = useCallback(
+    () =>
+      !detached.current &&
+      (sessionId.current === undefined
+        ? authority.current === undefined
+        : authority.current?.witness.sessionId === sessionId.current),
+    [],
+  );
 
   function currentWitness(witness: SourceWitness | undefined): boolean {
     return (
@@ -190,6 +201,10 @@ export function SourceEditor({
   const draftRef = useRef<MathDraft | null>(null);
   const legacyPending = useRef(false);
   const renderedPending = useRef(false);
+  const sourceComposing = useRef(false);
+  const sourceInputPending = useRef(false);
+  const deferredExternal = useRef(false);
+  const [compositionSettled, setCompositionSettled] = useState(0);
   const [draft, setDraft] = useState<MathDraft | null>(null);
   const path = sourcePath ?? documentKey ?? 'note.mdx';
   const renderedCommands = useRef<RenderedCommands | null>(null);
@@ -209,16 +224,25 @@ export function SourceEditor({
     pending.current = onPendingChange;
   }, [onChange, acceptChange, wikilinks, onOpenNote, busy, onPendingChange]);
 
-  function setMathDraft(next: MathDraft | null) {
-    draftRef.current = next;
-    setDraft(next);
+  const reportPending = useCallback(() => {
+    if (!protocolMatches()) return;
     pending.current?.(
       publicationFailed.current ||
-        Boolean(next) ||
+        sourceComposing.current ||
+        sourceInputPending.current ||
+        Boolean(draftRef.current) ||
         legacyPending.current ||
         renderedPending.current,
     );
-  }
+  }, [protocolMatches]);
+  const setMathDraft = useCallback(
+    (next: MathDraft | null) => {
+      draftRef.current = next;
+      setDraft(next);
+      reportPending();
+    },
+    [reportPending],
+  );
 
   useEffect(() => {
     function beforeUnload(event: BeforeUnloadEvent) {
@@ -226,6 +250,8 @@ export function SourceEditor({
         draftRef.current ||
         legacyPending.current ||
         renderedPending.current ||
+        sourceComposing.current ||
+        sourceInputPending.current ||
         publicationFailed.current
       ) {
         event.preventDefault();
@@ -353,7 +379,15 @@ export function SourceEditor({
     const historyKey = sessionId.current ?? documentKey;
     const cached =
       historyKey === undefined ? undefined : cache?.get(historyKey);
-    const initial = new RawSourceMap(source);
+    const restoreCached = Boolean(
+      cached &&
+      (cached.source === source ||
+        (sessionId.current !== undefined &&
+          currentWitness(acceptedWitness.current) &&
+          acceptedWitness.current!.source === source)),
+    );
+    const initialSource = restoreCached ? cached!.source : source;
+    const initial = new RawSourceMap(initialSource);
     const extensions = [
       // Tauri authorizes its inline boot style with a nonce. Once present,
       // unsafe-inline is ignored: CodeMirror's runtime CSS needs the same
@@ -363,7 +397,7 @@ export function SourceEditor({
           'style[nonce]',
         )?.nonce ?? '',
       ),
-      rawSourceField.init(() => source),
+      rawSourceField.init(() => initialSource),
       rawSourceHistory,
       compositionHistory(),
       lineNumbers(),
@@ -510,8 +544,17 @@ export function SourceEditor({
         },
       }),
     ];
-    if (cached?.source === source)
-      extensions.push(historyField.init(() => cached.history));
+    if (restoreCached)
+      extensions.push(historyField.init(() => cached!.history));
+    let initialState = EditorState.create({
+      doc: initial.display,
+      extensions,
+      ...(restoreCached ? { selection: cached!.selection } : {}),
+    });
+    if (initialSource !== source)
+      initialState = initialState.update(
+        externalSourceTransaction(initialState, source),
+      ).state;
     const editor = new EditorView({
       parent: element.current!,
       // History bypasses transaction filters. Check each proposed raw transition
@@ -582,11 +625,7 @@ export function SourceEditor({
           pendingBatch.current = null;
         }
       },
-      state: EditorState.create({
-        doc: initial.display,
-        extensions,
-        ...(cached?.source === source ? { selection: cached.selection } : {}),
-      }),
+      state: initialState,
     });
     view.current = editor;
     // This observer does not interpret source or replace CodeMirror's observer.
@@ -601,23 +640,71 @@ export function SourceEditor({
       subtree: true,
     });
     let pendingDom = false;
-    let sourceCompositionPending = false;
     let compositionEpoch = 0;
-    const compositionStart = () => {
-      sourceCompositionPending = true;
+    const compositionMeasure = {};
+    const compositionStart = (event: Event) => {
+      sourceComposing.current = true;
       compositionEpoch++;
+      if (event.currentTarget === editContext)
+        setCompositionHistoryBoundary(editor, true);
+      reportPending();
+    };
+    const settleSourceInput = () => {
+      const epoch = ++compositionEpoch;
+      const current = () =>
+        !disposed &&
+        view.current === editor &&
+        protocolMatches() &&
+        epoch === compositionEpoch;
+      const measure = () => {
+        if (!current() || !domObserver) return;
+        // CodeMirror flushes its DOM observer before public measure requests.
+        // This also consumes Android's delayed end-of-composition mutation read.
+        editor.requestMeasure({
+          key: compositionMeasure,
+          read: () =>
+            !editor.composing && !editor.compositionStarted && !hasPendingDom(),
+          write: (ready) => {
+            queueMicrotask(() => {
+              if (!current()) return;
+              if (!ready) {
+                // A new composition waits for its own end event, never a frame loop.
+                if (!editor.composing && !editor.compositionStarted) measure();
+                return;
+              }
+              if (sourceComposing.current)
+                setCompositionHistoryBoundary(editor, false);
+              sourceComposing.current = false;
+              sourceInputPending.current = false;
+              reportPending();
+              if (deferredExternal.current)
+                setCompositionSettled((value) => value + 1);
+            });
+          },
+        });
+      };
+      measure();
     };
     const compositionEnd = () => {
-      sourceCompositionPending = true;
-      const epoch = ++compositionEpoch;
-      // Bubble on the outer editor after CodeMirror's content DOM handler: its
-      // Linux end-of-composition mutation read has already been queued.
-      queueMicrotask(() => {
-        if (epoch === compositionEpoch) sourceCompositionPending = false;
-      });
+      sourceComposing.current = true;
+      reportPending();
+      settleSourceInput();
     };
-    editor.dom.addEventListener('compositionstart', compositionStart);
+    const sourceInput = () => {
+      sourceInputPending.current = true;
+      reportPending();
+      settleSourceInput();
+    };
+    editor.dom.addEventListener('compositionstart', compositionStart, true);
     editor.dom.addEventListener('compositionend', compositionEnd);
+    editor.dom.addEventListener('beforeinput', sourceInput, true);
+    editor.dom.addEventListener('input', sourceInput, true);
+    // Android Chromium can deliver composition directly to the public EditContext.
+    const editContext = (
+      editor.contentDOM as HTMLElement & { editContext?: EventTarget | null }
+    ).editContext;
+    editContext?.addEventListener('compositionstart', compositionStart);
+    editContext?.addEventListener('compositionend', compositionEnd);
     const hasPendingDom = () => {
       if (pendingDom || !domObserver) return true;
       if (!domObserver.takeRecords().length) return false;
@@ -636,8 +723,16 @@ export function SourceEditor({
       detached.current = true;
       locked.current = true;
       domObserver?.disconnect();
-      editor.dom.removeEventListener('compositionstart', compositionStart);
+      editor.dom.removeEventListener(
+        'compositionstart',
+        compositionStart,
+        true,
+      );
       editor.dom.removeEventListener('compositionend', compositionEnd);
+      editor.dom.removeEventListener('beforeinput', sourceInput, true);
+      editor.dom.removeEventListener('input', sourceInput, true);
+      editContext?.removeEventListener('compositionstart', compositionStart);
+      editContext?.removeEventListener('compositionend', compositionEnd);
       if (historyKey !== undefined) {
         if (publicationFailed.current) cache?.delete(historyKey);
         else
@@ -660,7 +755,8 @@ export function SourceEditor({
       !draftRef.current &&
       !legacyPending.current &&
       !renderedPending.current &&
-      !sourceCompositionPending &&
+      !sourceComposing.current &&
+      !sourceInputPending.current &&
       !editor.composing &&
       !editor.compositionStarted &&
       !visual &&
@@ -670,6 +766,10 @@ export function SourceEditor({
       !hasPendingDom();
     if (commandsRef)
       commandsRef.current = {
+        canAdoptExternal: () =>
+          ownReady() &&
+          (!renderedMounted.current ||
+            renderedCommands.current?.canDetachIfClean?.() === true),
         detachIfClean: () => {
           if (disposed) return true;
           if (!ownReady()) return false;
@@ -768,9 +868,11 @@ export function SourceEditor({
     // A model may accept more input before an earlier React render commits.
     // Never turn that obsolete echo into an external edit or history event.
     if (!protocolMatches()) return;
+    let incoming: SourceWitness | undefined;
     if (sessionId.current !== undefined) {
-      const incoming = session?.witness;
+      incoming = session?.witness;
       if (
+        !session ||
         !incoming ||
         publicationFailed.current ||
         incoming.sessionId !== sessionId.current ||
@@ -780,23 +882,23 @@ export function SourceEditor({
         incoming.editorRevision < acceptedWitness.current!.editorRevision
       )
         return;
-      acceptedWitness.current = { ...incoming };
     } else if (sourceIsCurrent?.(source) === false) return;
     const editor = view.current;
-    if (editor && rawSource(editor.state) !== source)
-      editor.dispatch({
-        changes: {
-          from: 0,
-          to: editor.state.doc.length,
-          insert: new RawSourceMap(source).display,
-        },
-        annotations: [
-          external.of(true),
-          explicitRawSource.of(source),
-          isolateHistory.of('full'),
-        ],
-      });
-  }, [source, sourceIsCurrent, session]);
+    if (!editor) return;
+    if (
+      rawSource(editor.state) !== source &&
+      (sourceComposing.current ||
+        sourceInputPending.current ||
+        editor.compositionStarted)
+    ) {
+      deferredExternal.current = true;
+      return;
+    }
+    if (incoming) acceptedWitness.current = { ...incoming };
+    deferredExternal.current = false;
+    if (rawSource(editor.state) !== source)
+      editor.dispatch(externalSourceTransaction(editor.state, source));
+  }, [source, sourceIsCurrent, session, compositionSettled, protocolMatches]);
 
   useEffect(() => {
     const editor = view.current;
@@ -851,7 +953,7 @@ export function SourceEditor({
       annotations: Transaction.addToHistory.of(false),
     });
     // Callbacks read current refs and the immutable editor instance.
-  }, [live, path]);
+  }, [live, path, setMathDraft]);
 
   useEffect(() => {
     const editor = view.current;
@@ -943,12 +1045,7 @@ export function SourceEditor({
           wikilinks={wikilinks}
           onPendingChange={(value) => {
             renderedPending.current = value;
-            pending.current?.(
-              publicationFailed.current ||
-                value ||
-                legacyPending.current ||
-                Boolean(draftRef.current),
-            );
+            reportPending();
           }}
           openNote={onOpenNote}
           undo={() => {
@@ -973,12 +1070,7 @@ export function SourceEditor({
           busy={readOnly || busy || Boolean(draft)}
           onPendingChange={(value) => {
             legacyPending.current = value;
-            pending.current?.(
-              publicationFailed.current ||
-                value ||
-                renderedPending.current ||
-                Boolean(draftRef.current),
-            );
+            reportPending();
           }}
           onShowSource={onShowSource}
           active={visual === true}

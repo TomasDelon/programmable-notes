@@ -6,6 +6,7 @@ import type {
   RecoverySnapshot,
 } from './recovery';
 import type { NativeDocument } from './workspace';
+import type { NativeSourceObservation } from './nativeObservation';
 export interface NativeVaultInfo {
   vaultId: string;
   /** Display label only; the root may have moved since OS authorization. */
@@ -81,6 +82,14 @@ export const nativeDocuments = {
     invoke<NativeDocument | null>('save_document_as', { name, source }),
   reopen: (id: string, revision: string) =>
     invoke<NativeDocument>('reopen_document', { id, revision }),
+  observe: (id: string, revision: string) =>
+    invoke<NativeSourceObservation>('observe_document', { id, revision }),
+  watch: (id: string, revision: string) =>
+    invoke<string>('watch_document', { id, revision }),
+  pollWatch: (id: string, watchId: string) =>
+    invoke<boolean>('poll_document_watch', { id, watchId }),
+  unwatch: (id: string, watchId: string) =>
+    invoke<void>('unwatch_document', { id, watchId }),
   close: (id: string) => invoke<void>('close_document', { id }),
   confirmDiscard: () => invoke<boolean>('confirm_discard'),
   dirty: (dirty: boolean, busy: boolean) =>

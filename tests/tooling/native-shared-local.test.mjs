@@ -187,3 +187,50 @@ test('launcher admits only the fixed recovery journey before privileged work', (
     assert.match(refused.stderr, /NATIVE_SHARED_LOCAL_REFUSED arguments/);
   }
 });
+
+test('launcher admits the fixed external-writer journey before privileged work', () => {
+  const result = spawnSync('bash', [path, ...Array(6).fill('x'), 'external'], {
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 2);
+  assert.match(
+    result.stderr,
+    /NATIVE_SHARED_LOCAL_REFUSED (?:administrator-required|owner)\n/,
+  );
+  assert.ok(source.includes('scripts/native-shared-external.mjs'));
+  for (const name of [
+    'screenshot-external-direct.png',
+    'screenshot-external-rename.png',
+  ])
+    assert.ok(source.includes(name));
+});
+
+test('registration mode requires its fixed binary digest and refuses arbitrary eighth arguments', () => {
+  const args = Array(6).fill('x');
+  const acceptedShape = spawnSync(
+    'bash',
+    [path, ...args, 'registration', 'a'.repeat(64)],
+    { encoding: 'utf8' },
+  );
+  assert.equal(acceptedShape.status, 2);
+  assert.match(
+    acceptedShape.stderr,
+    /NATIVE_SHARED_LOCAL_REFUSED (?:administrator-required|owner)\n/,
+  );
+  for (const tail of [
+    ['registration'],
+    ['external', 'a'.repeat(64)],
+    ['registration', '../arbitrary'],
+    ['registration', 'a'.repeat(64), 'extra'],
+  ]) {
+    const refused = spawnSync('bash', [path, ...args, ...tail], {
+      encoding: 'utf8',
+    });
+    assert.equal(refused.status, 2);
+    assert.match(refused.stderr, /NATIVE_SHARED_LOCAL_REFUSED arguments/);
+  }
+  assert.ok(source.includes('registration-digest'));
+  assert.ok(source.includes('bin/registration-app'));
+  assert.ok(source.includes('scripts/native-observation-registration.mjs'));
+  assert.ok(source.includes('native-observation-registration.json'));
+});

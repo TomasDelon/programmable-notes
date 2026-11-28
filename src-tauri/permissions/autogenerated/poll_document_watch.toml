@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-poll-document-watch"
+description = "Enables the poll_document_watch command without any pre-configured scope."
+commands.allow = ["poll_document_watch"]
+
+[[permission]]
+identifier = "deny-poll-document-watch"
+description = "Denies the poll_document_watch command without any pre-configured scope."
+commands.deny = ["poll_document_watch"]

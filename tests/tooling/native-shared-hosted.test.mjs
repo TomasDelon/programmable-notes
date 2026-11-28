@@ -444,6 +444,11 @@ test('runtime boundary refuses other hosts before commands and strips inherited 
 
 const observerNames = [
   'native-shared-editor.mjs',
+  'native-shared-recovery.mjs',
+  'native-shared-external.mjs',
+  'native-observation-registration.mjs',
+  'native-observation-controls.mjs',
+  'native-recovery-record.mjs',
   'native-webdriver-lib.mjs',
   'native-ui-lib.mjs',
   'native-dialog.py',

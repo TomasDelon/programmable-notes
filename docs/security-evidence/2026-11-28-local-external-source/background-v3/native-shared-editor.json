@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "stage": "external_restart_reauthorization",
+  "startupPhase": "complete",
+  "failureKind": "none",
+  "assertionKind": "none",
+  "sourcePhase": "not_started",
+  "fixtureId": "pn-native-shared-lNWWdY",
+  "journey": "external",
+  "interruptionState": "not_started",
+  "recovery": null,
+  "external": {
+    "schema": 1,
+    "writer": "independent-node-process",
+    "observations": [
+      {
+        "kind": "direct",
+        "sourceSha256": "570bcfffc51c66d83eb2f65915361bfbab76e47faf3f42ea64e456e2cccd1772",
+        "mode": 416,
+        "writeCompletionToVisibleObservationMs": 213.868
+      },
+      {
+        "kind": "rename",
+        "sourceSha256": "182b2c10ddc50f3617845402846620762d147811c271c0dae5c0c303d9a6f28a",
+        "mode": 416,
+        "writeCompletionToVisibleObservationMs": 107.076
+      }
+    ],
+    "idleEchoChecks": 5,
+    "backgroundHistoryCheckpoints": 3,
+    "otherDocumentPreserved": true,
+    "backgroundObservations": [
+      {
+        "sourceSha256": "36c7e338f4e1da1341a5390fd8f3fbdf59b3d0ac657cf8ae4f9bb944a09c88a7",
+        "mode": 416
+      },
+      {
+        "sourceSha256": "11534c4e3082a7cdbab37782f7def023efd54cb15b070a354411f1a59c3150c0",
+        "mode": 416
+      },
+      {
+        "sourceSha256": "a6662d6f3c55de06290fc267769f857d599cb7b5788a20bb014758a93a416912",
+        "mode": 416
+      }
+    ],
+    "backgroundProgress": {
+      "publications": 3,
+      "historyChecks": 8,
+      "direction": "redo",
+      "step": 4,
+      "expectedSourceSha256": "a6662d6f3c55de06290fc267769f857d599cb7b5788a20bb014758a93a416912",
+      "actualDiskSha256": null,
+      "editor": null
+    },
+    "restarted": true,
+    "fixtureRetained": true,
+    "retainedRecovery": {
+      "initialEntries": 51,
+      "invalidRecords": 0,
+      "preserved": true
+    }
+  },
+  "binarySha256": "827ce097b6ea1cd8c130460435d07705457d4b2fe139a6ed81c99d29aa183833",
+  "checkpoints": [
+    "actual-vault-chooser-and-shared-source",
+    "external-direct-exact-visible-source",
+    "external-rename-exact-visible-source",
+    "external-next-keyboard-exact-save",
+    "external-and-local-keyboard-undo-redo-exact",
+    "external-three-background-checkpoints-and-prior-local-history",
+    "external-fresh-process-chooser-exact-reopen"
+  ],
+  "cleanupVerified": true,
+  "forcedCleanup": false,
+  "scope": "Installed external direct/rename writer, exact source/history/autosave/restart and sampled latency; no React or containment acceptance"
+}

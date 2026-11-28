@@ -8,6 +8,7 @@ import type {
 } from '../documents/native';
 import type { SourceSession } from '../editor/sourceWitness';
 import { isSupportedSource } from '../sourceTypes';
+import type { NativeObservationPorts } from '../documents/nativeObservation';
 
 export type NativeWorkspacePorts = Pick<
   typeof nativeDocuments,
@@ -17,7 +18,14 @@ export type NativeWorkspacePorts = Pick<
   | 'createVaultSource'
   | 'save'
   | 'close'
->;
+> &
+  Partial<NativeObservationPorts>;
+export interface NativeWorkspaceObservationScope {
+  readonly sessionId: string;
+  readonly vaultId: string;
+  readonly logicalPath: string;
+  isCurrent(): boolean;
+}
 type Operation = 'choose' | 'index' | 'open' | 'create' | 'close';
 export interface NativeWorkspaceAssociation {
   readonly sessionId: string;
@@ -138,8 +146,19 @@ export function createNativeWorkspace(
     createVaultSource,
     save,
     close,
+    observe,
+    watch,
+    pollWatch,
+    unwatch,
   } = ports;
-  const native = createNativeSessions({ save, close });
+  const native = createNativeSessions({
+    save,
+    close,
+    observe,
+    watch,
+    pollWatch,
+    unwatch,
+  });
   const controller = native.controller;
   const associations = new Map<string, NativeWorkspaceAssociation>();
   const sessions = new Map<string, SourceSession>();
@@ -381,7 +400,35 @@ export function createNativeWorkspace(
       | 'flush'
       | 'retrySave'
       | 'resolveRetained'
+      | 'reserveObservation'
     >,
+    observation: native.observation
+      ? Object.freeze({
+          ...native.observation,
+          scope(sessionId: string): NativeWorkspaceObservationScope {
+            const association = associations.get(sessionId);
+            const capturedVault = vault;
+            const epoch = selectionEpoch;
+            if (
+              !association ||
+              !capturedVault ||
+              association.vaultId !== capturedVault.vaultId ||
+              controller.state(sessionId).phase !== 'open'
+            )
+              throw Error('Document observation has no current vault scope.');
+            return Object.freeze({
+              sessionId,
+              vaultId: association.vaultId,
+              logicalPath: association.logicalPath,
+              isCurrent: () =>
+                associations.get(sessionId) === association &&
+                vault === capturedVault &&
+                selectionEpoch === epoch &&
+                controller.state(sessionId).phase === 'open',
+            });
+          },
+        })
+      : null,
     beginAggregateClose() {
       if (operation || cleanupCount())
         throw Error(

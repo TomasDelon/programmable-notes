@@ -13,9 +13,10 @@ mod renderer_failure;
 mod updates;
 use documents::{
     choose_vault, close_document, confirm_discard, create_vault_source, editor_close_state,
-    enable_editor_close_guard, open_documents, open_notes_folder, open_vault_sources,
-    recovery_draft, reopen_document, resolve_editor_close, save_document, save_document_as,
-    set_documents_dirty, vault_inventory,
+    enable_editor_close_guard, observe_document, open_documents, open_notes_folder,
+    open_vault_sources, poll_document_watch, recovery_draft, reopen_document, resolve_editor_close,
+    save_document, save_document_as, set_documents_dirty, unwatch_document, vault_inventory,
+    watch_document,
 };
 use preview_policy::{authorize, Supervisor, MAX_HTML_BYTES};
 use std::{
@@ -155,6 +156,10 @@ fn main() {
             save_document,
             save_document_as,
             reopen_document,
+            observe_document,
+            watch_document,
+            poll_document_watch,
+            unwatch_document,
             close_document,
             confirm_discard,
             set_documents_dirty,

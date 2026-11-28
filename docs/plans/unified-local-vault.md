@@ -42,6 +42,37 @@ result separate from the retained deliberate-crash diagnostic failures and the
 required local one-byte process core limit. Continue with read-only live
 external observation and conflict reconciliation; general native React stays off.
 
+## External observation core — installed background acceptance passed
+
+The uncommitted Phase3 candidate now passed the strengthened installed journey on
+production V3 ELF827ce097…: independent direct/rename writes, three background
+revisions, four exact Undo/four Redo steps including physical-only line endings,
+five no-echo checks, unaffected other-note bytes/mode and fresh-process chooser
+reopen. All51 prior recovery entries were preserved. Both cleanup receipts passed
+without force or residuals. Sampled visibility was213.868ms direct/107.076ms rename.
+See [source-bound evidence](../security-evidence/2026-11-28-local-external-source/README.md).
+
+Checked descriptor reads and grant-owned inotify hints feed bounded periodic/focus
+reconciliation through existing session/autosave authority. Canonical adoption and
+persistence baseline change together; composition/native input readiness and
+session/vault/selection generations prevent unsafe replacement. Existing genuine
+history now retains separate background revisions and physical-only Redo effects.
+Retained external versions/read failures keep original-file writes paused across
+worker restarts. Independent review findings received RED→GREEN regressions.
+
+The earlier V2 background-history failure and first V3 driver-readiness failure
+remain failures. The read-only driver eligibility correction has a negative test
+and independent review; the same V3 application passed afterward.1088 units and
+focused matching-browser history/composition controls passed. Actual4editor/4preview
+registered-command controls passed separately in empty test-feature shells, with
+no authored runtime workload. Final local checks passed1088units,253scanner-enabled tooling/0skips,165matching
+browser,9Pages and4local storage cases, with Vitest2/Playwright2 and process core1.
+Native112passed/7reportedignored (one owned helper, six required CI cases); native
+fmt/focusedClippy passed. Independent packet/fixture review found no remaining
+material issue. Checked commit and actual required CI remain pending. No simultaneous-write CAS, general native React,
+containment, distribution or full milestone acceptance is claimed. Phase4 must
+retain both conflict versions durably and resolve the optimistic publication race.
+
 ## Purpose
 
 Deliver one coherent application whose document is the actual local file, whose

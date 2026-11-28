@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
-import { open } from 'node:fs/promises';
-import { basename } from 'node:path';
+import { lstat, open, readdir, realpath } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 const magic = Buffer.from('PNRECOVERY1\n');
 const limit = 500000 + 2048;
@@ -178,4 +178,136 @@ export function classifyRecoveryReadChange(before, after) {
   )
     return 'changed';
   return 'stable';
+}
+
+/** Read-only admission/preservation guard. Never repairs or removes retained data. */
+export async function guardRetainedRecoveryStore(
+  store,
+  { reservedRecords = 12, reservedBytes = 100000 } = {},
+) {
+  assert(
+    Number.isSafeInteger(reservedRecords) &&
+      reservedRecords > 0 &&
+      reservedRecords <= 64,
+  );
+  assert(
+    Number.isSafeInteger(reservedBytes) &&
+      reservedBytes > 0 &&
+      reservedBytes <= 8 * 1024 * 1024,
+  );
+  const directory = await lstat(store, { bigint: true });
+  assert(
+    directory.isDirectory() &&
+      !directory.isSymbolicLink() &&
+      directory.uid === BigInt(process.getuid()),
+  );
+  assert.equal(directory.mode & 0o777n, 0o700n);
+  assert.equal(await realpath(store), store);
+  const names = (await readdir(store)).sort();
+  assert(names.length <= 65, 'Retained inventory bounded');
+  const captured = new Map();
+  const groups = new Map();
+  const generations = new Set();
+  let usedBytes = 0;
+  let invalidRecords = 0;
+  const metadata = (m) =>
+    Object.fromEntries(
+      [
+        'dev',
+        'ino',
+        'uid',
+        'gid',
+        'mode',
+        'nlink',
+        'size',
+        'mtimeNs',
+        'ctimeNs',
+      ].map((key) => [key, String(m[key])]),
+    );
+  async function inspect(name) {
+    const path = join(store, name);
+    const before = await lstat(path, { bigint: true });
+    const bytes = await readPrivateRecoveryBytes(path);
+    const after = await lstat(path, { bigint: true });
+    assert.deepEqual(
+      metadata(after),
+      metadata(before),
+      'Retained entry stable during read',
+    );
+    return {
+      bytes,
+      identity: metadata(after),
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+    };
+  }
+  for (const name of names) {
+    // Native writer cleanup may unlink these or migrate legacy source: refuse first.
+    assert(
+      name === '.lock' ||
+        /^[a-f0-9]{32}-[0-9]{20}-[a-f0-9]{64}\.pnrec$/.test(name),
+      'No retained maintenance entry may be admitted',
+    );
+    const entry = await inspect(name);
+    usedBytes += entry.bytes.length;
+    assert(usedBytes <= 8 * 1024 * 1024, 'Retained bytes bounded');
+    captured.set(name, { identity: entry.identity, sha256: entry.sha256 });
+    if (name === '.lock') continue;
+    let record;
+    try {
+      record = decodeRecoveryRecord(entry.bytes, name);
+    } catch {
+      invalidRecords++;
+      continue;
+    } // Native code preserves invalid siblings.
+    const id = record.metadata.documentId;
+    groups.set(id, (groups.get(id) ?? 0) + 1);
+    const generation = `${id}:${record.metadata.generation}`;
+    assert(!generations.has(generation), 'No ambiguous retained generation');
+    generations.add(generation);
+  }
+  assert(
+    [...groups.values()].every((count) => count <= 5),
+    'No retained version needs pruning',
+  );
+  assert(
+    names.filter((name) => name !== '.lock').length + reservedRecords <= 64,
+    'Record capacity without removing retained data',
+  );
+  assert(
+    usedBytes + reservedBytes <= 8 * 1024 * 1024,
+    'Byte capacity without removing retained data',
+  );
+  assert.deepEqual(
+    (await readdir(store)).sort(),
+    names,
+    'Retained inventory stable before launch',
+  );
+  async function sameDirectory() {
+    const current = await lstat(store, { bigint: true });
+    assert.equal(await realpath(store), store);
+    for (const key of ['dev', 'ino', 'uid', 'gid', 'mode'])
+      assert.equal(
+        current[key],
+        directory[key],
+        'Retained directory identity preserved',
+      );
+  }
+  await sameDirectory();
+  return Object.freeze({
+    entries: captured.size,
+    invalidRecords,
+    usedBytes,
+    async assertPreserved() {
+      await sameDirectory();
+      for (const [name, before] of captured) {
+        const after = await inspect(name);
+        assert.deepEqual(
+          { identity: after.identity, sha256: after.sha256 },
+          before,
+          'Preexisting retained recovery entry unchanged',
+        );
+      }
+      await sameDirectory();
+    },
+  });
 }

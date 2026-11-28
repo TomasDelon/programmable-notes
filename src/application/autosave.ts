@@ -38,6 +38,16 @@ export interface AutosaveState {
 
 export type AutosaveListener = (state: AutosaveState) => void;
 
+/** Trusted observation owner only; this never cancels an already dispatched write. */
+export interface PersistenceReservation {
+  settled(): Promise<void>;
+  adopt(
+    expected: AcceptedSource & { readonly diskRevision: string },
+    next: AcceptedSource & { readonly diskRevision: string },
+  ): void;
+  release(): void;
+}
+
 interface Entry {
   documentId: string;
   latest: Snapshot;
@@ -46,6 +56,7 @@ interface Entry {
   durable: boolean;
   error: unknown;
   running?: Promise<void>;
+  reservation?: object;
   listeners: Set<{ listener: AutosaveListener }>;
   pendingListeners: Set<{ listener: AutosaveListener }>;
   notificationPending: boolean;
@@ -143,6 +154,63 @@ export class AutosaveCoordinator {
     };
   }
 
+  reserve(documentId: string): PersistenceReservation {
+    const entry = this.get(documentId);
+    if (entry.reservation) throw Error('Persistence is already reserved.');
+    const token = {};
+    entry.reservation = token;
+    const requireHeld = () => {
+      if (this.entries.get(documentId) !== entry || entry.reservation !== token)
+        throw Error('Persistence reservation is no longer current.');
+    };
+    return {
+      settled: async () => {
+        requireHeld();
+        await entry.running;
+        requireHeld();
+      },
+      adopt: (expected, next) => {
+        requireHeld();
+        if (
+          entry.running ||
+          entry.error ||
+          !entry.durable ||
+          entry.latest.source !== entry.persisted.source ||
+          expected.documentId !== documentId ||
+          next.documentId !== documentId ||
+          expected.editorRevision !== entry.latest.editorRevision ||
+          expected.source !== entry.latest.source ||
+          expected.diskRevision !== entry.diskRevision ||
+          !validRevision(next.editorRevision) ||
+          next.editorRevision !== expected.editorRevision + 1 ||
+          typeof next.source !== 'string' ||
+          typeof next.diskRevision !== 'string' ||
+          !next.diskRevision
+        )
+          throw Error(
+            'External source adoption is stale or competes with writing.',
+          );
+        const snapshot = {
+          editorRevision: next.editorRevision,
+          source: next.source,
+        };
+        // No writer, callbacks or awaits: the canonical owner completes its
+        // witness update before this queued observation can be delivered.
+        entry.latest = snapshot;
+        entry.persisted = snapshot;
+        entry.diskRevision = next.diskRevision;
+        this.notify(entry);
+      },
+      release: () => {
+        // Cleanup may run twice, or after a newer reservation was acquired.
+        if (entry.reservation !== token) return;
+        entry.reservation = undefined;
+        this.start(entry);
+        this.notify(entry);
+      },
+    };
+  }
+
   /** Trusted status observations only; copied current state, not an event journal. */
   subscribe(documentId: string, listener: AutosaveListener): () => void {
     const entry = this.get(documentId);
@@ -158,6 +226,7 @@ export class AutosaveCoordinator {
   /** Explicit recovery attempt, still using CAS; never replaces an external version. */
   retry(documentId: string) {
     const entry = this.get(documentId);
+    if (entry.reservation) throw Error('Persistence observation is pending.');
     entry.error = null;
     this.start(entry);
     this.notify(entry);
@@ -178,7 +247,7 @@ export class AutosaveCoordinator {
         continue;
       }
       const unsaved = entries.filter(
-        (entry) => entry.error || this.pending(entry),
+        (entry) => entry.reservation || entry.error || this.pending(entry),
       );
       if (unsaved.length)
         throw new UnsavedDocumentsError(
@@ -191,7 +260,12 @@ export class AutosaveCoordinator {
   /** Safe normal close only. Discard/conflict resolution needs a separate use case. */
   release(documentId: string) {
     const entry = this.get(documentId);
-    if (entry.running || entry.error || this.pending(entry))
+    if (
+      entry.reservation ||
+      entry.running ||
+      entry.error ||
+      this.pending(entry)
+    )
       throw new UnsavedDocumentsError([documentId]);
     this.entries.delete(documentId);
     entry.listeners.clear();
@@ -247,7 +321,13 @@ export class AutosaveCoordinator {
   }
 
   private start(entry: Entry) {
-    if (entry.running || entry.error || !this.pending(entry)) return;
+    if (
+      entry.reservation ||
+      entry.running ||
+      entry.error ||
+      !this.pending(entry)
+    )
+      return;
     // Same-turn accepted revisions can coalesce before IPC begins. Writes already
     // in flight are never cancelled or acknowledged as a newer source version.
     entry.running = Promise.resolve()
@@ -262,7 +342,7 @@ export class AutosaveCoordinator {
 
   private async persist(entry: Entry) {
     try {
-      while (this.pending(entry)) {
+      while (!entry.reservation && this.pending(entry)) {
         const snapshot = entry.latest;
         if (entry.durable && snapshot.source === entry.persisted.source) {
           entry.persisted = snapshot;

@@ -171,8 +171,17 @@ test('a stale tab retains its draft and cannot overwrite the other tab', async (
   await other.clock.pauseAt(new Date('2026-11-22T13:00:00Z'));
   await edit(other, 'Retained draft from second tab');
   await edit(page, 'Saved from first tab');
-  // The browser clock is shared by pages in this context. Publish the first
-  // tab explicitly while the second tab's debounce remains paused.
+  // The context clock also pauses CodeMirror's DOM-settlement animation frames.
+  // Advance two frames, below the 250ms autosave debounce, then verify neither
+  // draft was published before explicitly saving the first tab.
+  await other.clock.runFor(32);
+  await expect(
+    page.getByText('Resolve the pending edit before saving', { exact: true }),
+  ).toHaveCount(0);
+  await expect(other.getByRole('textbox', { name: 'MDX source' })).toHaveText(
+    'Retained draft from second tab',
+  );
+  expect(await selectedSavedSource(page)).toBe('Shared baseline');
   await page.keyboard.press('Control+s');
   await expect
     .poll(() => selectedSavedSource(page))

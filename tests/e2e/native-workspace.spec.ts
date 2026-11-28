@@ -42,10 +42,29 @@ async function nativeEntry(page: Page) {
         authorized = false,
         snapshotNumber = 0;
       const acquisitions = new Map<string, number>();
-      const grants = new Map<string, { path: string; revision: string }>();
+      const grants = new Map<
+        string,
+        { path: string; revision: string; observed?: string }
+      >();
       const revisions = new Map(
         Object.keys(fixture.files).map((path) => [path, 'revision-1']),
       );
+      const diskSources = new Map(Object.entries(fixture.files));
+      const watches = new Map<
+        string,
+        { token: string; source: string | undefined }
+      >();
+      let externalSequence = 0;
+      let watchSequence = 0;
+      function currentRevision(path: string): string {
+        const source = fixture.files[path];
+        if (typeof source !== 'string') throw Error('Missing synthetic source');
+        if (diskSources.get(path) !== source) {
+          diskSources.set(path, source);
+          revisions.set(path, `external-${++externalSequence}`);
+        }
+        return revisions.get(path)!;
+      }
       const snapshots = new Map<
         string,
         { id: string; name: string; source: string }
@@ -188,6 +207,7 @@ async function nativeEntry(page: Page) {
             )
               return { status: 'refused', vaultId, path, code: 'rejected' };
             fixture.files[path] = args.source;
+            diskSources.set(path, args.source);
             const id = 'created-grant-' + path,
               revision = 'created-revision';
             revisions.set(path, revision);
@@ -206,13 +226,62 @@ async function nativeEntry(page: Page) {
               },
             };
           }
+          if (command === 'observe_document' || command === 'watch_document') {
+            keys(args, ['id', 'revision']);
+            const grant = typeof args.id === 'string' && grants.get(args.id);
+            if (
+              !grant ||
+              (args.revision !== grant.revision &&
+                args.revision !== grant.observed)
+            )
+              throw Error('Unknown observation grant/revision');
+            if (command === 'watch_document') {
+              if (!watches.has(args.id as string))
+                watches.set(args.id as string, {
+                  token: (++watchSequence).toString(16).padStart(32, '0'),
+                  source: fixture.files[grant.path],
+                });
+              return watches.get(args.id as string)!.token;
+            }
+            if (!Object.hasOwn(fixture.files, grant.path))
+              return { status: 'unavailable', reason: 'missing' };
+            const revision = currentRevision(grant.path);
+            if (revision === args.revision)
+              return { status: 'unchanged', revision };
+            grant.observed = revision;
+            return {
+              status: 'changed',
+              baselineRevision: args.revision,
+              revision,
+              source: fixture.files[grant.path],
+            };
+          }
+          if (
+            command === 'poll_document_watch' ||
+            command === 'unwatch_document'
+          ) {
+            keys(args, ['id', 'watchId']);
+            const grant = typeof args.id === 'string' && grants.get(args.id);
+            const watch = typeof args.id === 'string' && watches.get(args.id);
+            if (!grant || !watch || args.watchId !== watch.token)
+              throw Error('Unknown watch scope');
+            if (command === 'unwatch_document') {
+              watches.delete(args.id as string);
+              return;
+            }
+            const source = fixture.files[grant.path];
+            const changed = watch.source !== source;
+            watch.source = source;
+            return changed;
+          }
           if (command === 'save_document') {
             keys(args, ['id', 'revision', 'source']);
             const grant = typeof args.id === 'string' && grants.get(args.id);
             if (
               !grant ||
-              grant.revision !== args.revision ||
-              revisions.get(grant.path) !== args.revision ||
+              (grant.revision !== args.revision &&
+                grant.observed !== args.revision) ||
+              currentRevision(grant.path) !== args.revision ||
               typeof args.source !== 'string'
             )
               throw Error('Stale or unknown native grant');
@@ -220,10 +289,12 @@ async function nativeEntry(page: Page) {
               throw Error('Synthetic original save refused');
             fixture.saves.push({
               id: args.id as string,
-              revision: grant.revision,
+              revision: args.revision as string,
               source: args.source,
             });
             fixture.files[grant.path] = args.source;
+            diskSources.set(grant.path, args.source);
+            grant.observed = undefined;
             grant.revision = `revision-${fixture.saves.length + 1}`;
             revisions.set(grant.path, grant.revision);
             return { revision: grant.revision, durable: true };
@@ -232,6 +303,7 @@ async function nativeEntry(page: Page) {
             keys(args, ['id']);
             if (typeof args.id !== 'string' || !grants.delete(args.id))
               throw Error('Unknown close grant');
+            watches.delete(args.id);
             fixture.closed.push(args.id);
             return;
           }
@@ -415,6 +487,74 @@ async function openSettings(page: Page) {
     .getByRole('button', { name: /Settings Appearance and core plugins/ })
     .click();
   return page.getByRole('dialog', { name: 'Settings' });
+}
+
+for (const profile of [
+  { channel: 'DOM', version: 125 },
+  { channel: 'editContext', version: 150 },
+] as const) {
+  test.describe(`Source composition through the ${profile.channel} browser channel`, () => {
+    test.use({
+      userAgent: `Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${profile.version}.0.0.0 Mobile Safari/537.36`,
+    });
+    test('keeps close dirty through composition, accepts exact Unicode and preserves separate keyboard undo', async ({
+      page,
+      browserName,
+    }, info) => {
+      await nativeEntry(page);
+      await openNote(page);
+      await page
+        .getByRole('button', { name: 'Close navigation', exact: true })
+        .click();
+      const source = page.getByRole('textbox', { name: 'MDX source' });
+      await source.focus();
+      await page.keyboard.press('Control+End');
+      await page.keyboard.insertText(' Before');
+      const before = original + ' Before';
+      await saved(page, before);
+      const dirty = async () =>
+        (await fixture(page)).commands
+          .filter(({ command }) => command === 'set_documents_dirty')
+          .at(-1)?.args.dirty;
+      await expect.poll(dirty).toBe(false);
+      const channel = await source.evaluate((node) => {
+        const context = (
+          node as HTMLElement & { editContext?: EventTarget | null }
+        ).editContext;
+        (context ?? node).dispatchEvent(
+          new CompositionEvent('compositionstart', { bubbles: true }),
+        );
+        return context ? 'editContext' : 'DOM';
+      });
+      if (browserName === 'chromium') expect(channel).toBe(profile.channel);
+      await expect.poll(dirty).toBe(true);
+      await page.keyboard.insertText('確定🌱');
+      const composed = before + '確定🌱';
+      await expect
+        .poll(async () => (await fixture(page)).files['math/note.mdx'])
+        .toBe(composed);
+      await expect.poll(dirty).toBe(true);
+      await source.evaluate((node) => {
+        const context = (
+          node as HTMLElement & { editContext?: EventTarget | null }
+        ).editContext;
+        (context ?? node).dispatchEvent(
+          new CompositionEvent('compositionend', {
+            bubbles: true,
+            data: '確定🌱',
+          }),
+        );
+      });
+      await expect.poll(dirty).toBe(false);
+      await saved(page, composed);
+      await capture(page, info, 'native-source-composition-settled');
+      await page.keyboard.press('Control+z');
+      await saved(page, before);
+      await page.keyboard.press('Control+z');
+      await saved(page, original);
+      expect((await fixture(page)).browserStorageOpens).toBe(0);
+    });
+  });
 }
 
 test('actual native entry uses the shared editor, autosaves scoped grants and preserves history without browser persistence', async ({
@@ -999,4 +1139,188 @@ test('failed save confirms current recovery only after the published snapshot re
   ).toMatchObject({ source: pending });
   await expect(editor).toContainText('Pending recovery.');
   await capture(page, info, 'native-recovery-confirmed');
+});
+
+test('automatically observes external source and preserves keyboard history and the next exact save precondition', async ({
+  page,
+}, info) => {
+  await nativeEntry(page);
+  await openNote(page);
+  await page
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click();
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.click();
+  await page.keyboard.press('Control+End');
+  const external = original
+    .replace('First title', 'External title')
+    .replace(
+      'A **bold** paragraph',
+      'An externally changed **bold** paragraph',
+    );
+  await page.evaluate((source) => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.files['math/note.mdx'] = source;
+  }, external);
+  await expect(editor).toContainText('External title');
+  await expect(editor).toBeFocused();
+  expect((await fixture(page)).saves).toHaveLength(0);
+  await page.keyboard.insertText('Typed after disk.');
+  await saved(page, external + 'Typed after disk.');
+  expect((await fixture(page)).saves[0]?.revision).toMatch(/^external-/);
+  await page.keyboard.press('Control+z');
+  await saved(page, external);
+  await page.keyboard.press('Control+z');
+  await saved(page, original);
+  expect((await fixture(page)).browserStorageOpens).toBe(0);
+  await capture(page, info, 'external-source-history');
+});
+
+test('keeps source visible and writing paused while the external file is missing, then confirms its return', async ({
+  page,
+}, info) => {
+  await nativeEntry(page);
+  await openNote(page);
+  await page
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click();
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await page.evaluate(() => {
+    delete (window as unknown as { __nativeFixture: NativeFixture })
+      .__nativeFixture.files['math/note.mdx'];
+  });
+  await expect(
+    page.getByRole('status', { name: 'Document save status' }),
+  ).toHaveText('File unavailable · Saving paused');
+  await expect(editor).toContainText('First title');
+  expect((await fixture(page)).saves).toHaveLength(0);
+  await capture(page, info, 'external-missing-source-retained');
+  await page.evaluate((source) => {
+    (
+      window as unknown as { __nativeFixture: NativeFixture }
+    ).__nativeFixture.files['math/note.mdx'] = source;
+  }, original);
+  await expect(
+    page.getByRole('status', { name: 'Document save status' }),
+  ).toHaveText('Saved to file');
+  await expect(editor).toContainText('First title');
+  expect((await fixture(page)).saves).toHaveLength(0);
+});
+
+test('keeps each background external revision and earlier typing as separate keyboard history', async ({
+  page,
+}, info) => {
+  await nativeEntry(page);
+  await openNote(page);
+  await page
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click();
+  let editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.insertText('Local before background.');
+  const local = original + 'Local before background.';
+  await saved(page, local);
+  await page
+    .getByRole('button', { name: 'Open navigation', exact: true })
+    .click();
+  await page
+    .getByRole('button', { name: 'Open other.mdx', exact: true })
+    .click();
+  await expect(editor).toContainText('Other title');
+  const one = local.replace('First title', 'External one');
+  const two = one.replace('\r\n', '\n');
+  const three = two.replace('External one', 'External three 🌱');
+  for (const [index, source] of [one, two, three].entries()) {
+    await page.evaluate((source) => {
+      (
+        window as unknown as { __nativeFixture: NativeFixture }
+      ).__nativeFixture.files['math/note.mdx'] = source;
+    }, source);
+    // A later checked read with the adopted baseline proves the background
+    // canonical transaction completed before the next independent publication.
+    await expect
+      .poll(async () =>
+        (await fixture(page)).commands.some(
+          ({ command, args }) =>
+            command === 'observe_document' &&
+            args.id === 'note-grant-1' &&
+            args.revision === `external-${index + 1}`,
+        ),
+      )
+      .toBe(true);
+    await expect(editor).toContainText('Other title');
+  }
+  await page
+    .getByRole('button', { name: 'Open math/note.mdx', exact: true })
+    .click();
+  await page
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click();
+  editor = page.getByRole('textbox', { name: 'MDX source' });
+  await expect(editor).toContainText('External three 🌱');
+  await editor.click();
+  for (const source of [two, one, local, original]) {
+    await page.keyboard.press('Control+z');
+    await saved(page, source);
+  }
+  await page.evaluate(() => {
+    const host = window as unknown as {
+      __historyKeyEvents: {
+        key: string;
+        ctrl: boolean;
+        shift: boolean;
+        code: string;
+      }[];
+    };
+    host.__historyKeyEvents = [];
+    window.addEventListener(
+      'keydown',
+      (event) => {
+        if (
+          event.ctrlKey &&
+          event.key.toLowerCase() === 'z' &&
+          host.__historyKeyEvents.length < 16
+        )
+          host.__historyKeyEvents.push({
+            key: event.key,
+            ctrl: event.ctrlKey,
+            shift: event.shiftKey,
+            code: event.code,
+          });
+      },
+      true,
+    );
+  });
+  try {
+    for (const source of [local, one, two, three]) {
+      await page.keyboard.press('Control+Shift+Z');
+      await saved(page, source);
+    }
+  } finally {
+    const keys = await page.evaluate(
+      () =>
+        (window as unknown as { __historyKeyEvents: unknown[] })
+          .__historyKeyEvents,
+    );
+    await info.attach('history-key-events', {
+      body: Buffer.from(JSON.stringify(keys)),
+      contentType: 'application/json',
+    });
+    expect(keys).toEqual(
+      Array.from({ length: 4 }, () => ({
+        key: 'Z',
+        ctrl: true,
+        shift: true,
+        code: 'KeyZ',
+      })),
+    );
+  }
+  expect(
+    (await fixture(page)).commands.filter(
+      ({ command, args }) =>
+        command === 'watch_document' && args.id === 'note-grant-1',
+    ),
+  ).toHaveLength(1);
 });

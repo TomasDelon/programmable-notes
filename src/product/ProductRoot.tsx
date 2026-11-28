@@ -37,7 +37,11 @@ import { useNotifications } from '../ui/useNotifications';
 import { DocumentSurface } from '../workspace/DocumentSurface';
 import { DocumentNavigationRow } from '../workspace/DocumentNavigationRow';
 import { useDocumentSession } from '../workspace/useDocumentSession';
-import type { EditorCommands, EditorHistory } from '../editor/SourceEditor';
+import type { EditorCommands } from '../editor/SourceEditor';
+import {
+  prepareExternalSourceHistory,
+  type EditorHistory,
+} from '../editor/sourceHistory';
 import type { SourceBatch } from '../editor/sourceWitness';
 import {
   DocumentRuntime,
@@ -162,6 +166,33 @@ export function ProductRoot({
     },
     [report],
   );
+  useEffect(() => {
+    if (!application.observeExternal) return;
+    const currentSurface = () =>
+      latest.current.application === application &&
+      application.snapshot().selectedSessionId === latest.current.id;
+    const stop = application.observeExternal(
+      (sessionId) => {
+        if (!currentSurface()) return false;
+        return (
+          latest.current.id !== sessionId ||
+          commands.current?.canAdoptExternal?.() === true
+        );
+      },
+      (before, source) => {
+        if (!currentSurface()) return null;
+        return latest.current.id === before.sessionId
+          ? () => {}
+          : prepareExternalSourceHistory(histories.current, before, source);
+      },
+    );
+    const focus = () => run(() => application.reconcileExternal?.());
+    window.addEventListener('focus', focus);
+    return () => {
+      window.removeEventListener('focus', focus);
+      stop();
+    };
+  }, [application, run]);
   function changePreferences(next: ProductPreferences) {
     setPreferences(next);
     if (services.writePreferences) run(() => services.writePreferences!(next));
@@ -475,13 +506,17 @@ export function ProductRoot({
   const saved = document?.autosave;
   const saveLabel = !saved
     ? ''
-    : saved.status === 'saved' && saved.durable
-      ? 'Saved to file'
-      : saved.status === 'blocked'
-        ? recoveryConfirmed
-          ? 'Not saved · Recovery confirmed'
-          : 'Not saved'
-        : 'Saving…';
+    : document?.externalObservation
+      ? document.externalObservation.observed
+        ? 'File changed · Saving paused'
+        : 'File unavailable · Saving paused'
+      : saved.status === 'saved' && saved.durable
+        ? 'Saved to file'
+        : saved.status === 'blocked'
+          ? recoveryConfirmed
+            ? 'Not saved · Recovery confirmed'
+            : 'Not saved'
+          : 'Saving…';
   return (
     <div
       className={

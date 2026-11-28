@@ -19,6 +19,17 @@ const firstCompositionChange = StateField.define<boolean>({
   },
 });
 
+/** Shared boundary for DOM composition and the public Android EditContext channel. */
+export function setCompositionHistoryBoundary(
+  view: EditorView,
+  first: boolean,
+) {
+  view.dispatch({
+    effects: compositionBoundary.of(first),
+    annotations: Transaction.addToHistory.of(false),
+  });
+}
+
 /** Keep one composition separate from earlier typing or a redone visual edit. */
 export function compositionHistory() {
   return [
@@ -62,10 +73,7 @@ export function compositionHistory() {
         eventObservers: {
           compositionstart(_event, view) {
             this.cancel();
-            view.dispatch({
-              effects: compositionBoundary.of(true),
-              annotations: Transaction.addToHistory.of(false),
-            });
+            setCompositionHistoryBoundary(view, true);
           },
           compositionend(_event, view) {
             this.cancel();
@@ -73,10 +81,7 @@ export function compositionHistory() {
             this.frame = requestAnimationFrame(() => {
               this.frame = null;
               if (!view.compositionStarted)
-                view.dispatch({
-                  effects: compositionBoundary.of(false),
-                  annotations: Transaction.addToHistory.of(false),
-                });
+                setCompositionHistoryBoundary(view, false);
             });
           },
         },

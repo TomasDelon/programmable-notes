@@ -30,7 +30,7 @@ assert.notEqual(
 assert.equal(process.argv.length, 2, 'No command-line options');
 const journey = process.env.NATIVE_SHARED_JOURNEY ?? 'editor';
 assert(
-  ['editor', 'recovery'].includes(journey),
+  ['editor', 'recovery', 'external'].includes(journey),
   'Fixed installed journey required',
 );
 const installed = '/usr/bin/programmable-notes';
@@ -82,6 +82,8 @@ let forcedCleanup = false;
 let cleanupVerified = false;
 let binarySha256;
 let recoveryResult = null;
+let externalResult = null;
+let external;
 let interruptionState = 'not_started';
 const absence = (error) => error.code === 'ENOENT' || error.code === 'ESRCH';
 function classifyAssertion(error) {
@@ -265,11 +267,51 @@ async function click(reference) {
   assert.equal(typeof id, 'string', 'Expected real WebDriver element');
   await protocol.wd(`/session/${protocol.session}/element/${id}/click`, {});
 }
+function actionableButton(name) {
+  const { document, innerWidth, innerHeight, getComputedStyle } = globalThis;
+  const candidates = [...document.querySelectorAll('button')].filter(
+    (button) => {
+      if (
+        button.disabled ||
+        button.closest('[inert]') ||
+        !button.getClientRects().length ||
+        (button.textContent.trim() !== name &&
+          button.getAttribute('aria-label') !== name)
+      )
+        return false;
+      const rect = button.getBoundingClientRect();
+      if (
+        rect.width <= 0 ||
+        rect.height <= 0 ||
+        rect.left < 0 ||
+        rect.top < 0 ||
+        rect.right > innerWidth ||
+        rect.bottom > innerHeight
+      )
+        return false;
+      for (let element = button; element; element = element.parentElement) {
+        const style = getComputedStyle(element);
+        if (
+          style.display === 'none' ||
+          style.visibility !== 'visible' ||
+          Number(style.opacity) === 0
+        )
+          return false;
+      }
+      const hit = document.elementFromPoint(
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2,
+      );
+      return hit === button || button.contains(hit);
+    },
+  );
+  return candidates.length === 1 ? candidates[0] : null;
+}
 async function clickButton(name) {
   let reference;
   await waitFor(async () => {
     reference = await sync(
-      `return [...document.querySelectorAll('button')].find(b => !b.disabled && !b.closest('[inert]') && b.getClientRects().length && (b.textContent.trim() === arguments[0] || b.getAttribute('aria-label') === arguments[0])) ?? null`,
+      `return (${actionableButton.toString()})(arguments[0])`,
       [name],
     );
     return reference !== null;
@@ -328,6 +370,12 @@ async function sourceShows(expected) {
       `return [...document.querySelectorAll('[aria-label="MDX source"] .cm-line')].map(line => line.textContent).join('\\n') === arguments[0]`,
       [expected.replaceAll('\r\n', '\n')],
     ),
+  );
+}
+async function observeSource(expected) {
+  return sync(
+    `const field=document.querySelector('[aria-label="MDX source"]');const text=field?[...field.querySelectorAll('.cm-line')].map(line=>line.textContent).join('\\n'):null;const status=document.querySelector('[aria-label="Document save status"]')?.textContent;return {sourceMatches:text===arguments[0],saveState:['Saved to file','Saving…','Not saved','Not saved · Recovery confirmed','File changed · Saving paused','File unavailable · Saving paused'].includes(status)?status:'unknown',focused:Boolean(field?.contains(document.activeElement))};`,
+    [expected.replaceAll('\r\n', '\n')],
   );
 }
 async function closeSession() {
@@ -463,6 +511,13 @@ try {
     'WebDriver required',
   );
   let recovery;
+  if (journey === 'external') {
+    stage = 'external_preflight';
+    const { prepareInstalledExternal } =
+      await import('./native-shared-external.mjs');
+    external = await prepareInstalledExternal({ fixture, original });
+    externalResult = external.evidence;
+  }
   if (journey === 'recovery') {
     stage = 'recovery_preflight';
     const { prepareInstalledRecovery } =
@@ -482,7 +537,30 @@ try {
   await chooseAndOpen();
   await sourceShows(original);
   await checkpoint('actual-vault-chooser-and-shared-source');
-  if (recovery) {
+  if (external) {
+    externalResult = await external.run({
+      first,
+      setStage: (value) => {
+        stage = value;
+      },
+      source,
+      sourceShows,
+      observeSource,
+      chord,
+      type,
+      bytes,
+      pause,
+      clickButton,
+      start,
+      chooseAndOpen,
+      normalClose,
+      checkpoint,
+      screenshot,
+      onEvidence: (value) => {
+        externalResult = value;
+      },
+    });
+  } else if (recovery) {
     recoveryResult = await recovery.run({
       first,
       setStage: (value) => {
@@ -627,6 +705,15 @@ try {
   } catch {
     process.exitCode = 1;
   }
+  try {
+    await external?.verify();
+  } catch (error) {
+    passed = false;
+    process.exitCode = 1;
+    stage = 'external_retained_store_preservation';
+    failureKind = classifyFailure(error);
+    assertionKind = classifyAssertion(error);
+  }
   clearTimeout(deadline);
   if (forcedCleanup || !cleanupVerified) {
     passed = false;
@@ -648,14 +735,17 @@ try {
         journey,
         interruptionState,
         recovery: recoveryResult,
+        external: externalResult,
         binarySha256,
         checkpoints,
         cleanupVerified,
         forcedCleanup,
         scope:
-          journey === 'recovery'
-            ? 'Installed shared editor save failure, interruption and explicit new-copy recovery; no React or containment acceptance'
-            : 'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance',
+          journey === 'external'
+            ? 'Installed external direct/rename writer, exact source/history/autosave/restart and sampled latency; no React or containment acceptance'
+            : journey === 'recovery'
+              ? 'Installed shared editor save failure, interruption and explicit new-copy recovery; no React or containment acceptance'
+              : 'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance',
       },
       null,
       2,

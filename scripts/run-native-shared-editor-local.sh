@@ -8,7 +8,7 @@ PATH=/usr/bin:/bin
 umask 077
 export PATH
 refuse() { printf 'NATIVE_SHARED_LOCAL_REFUSED %s\n' "$1" >&2; exit 2; }
-[[ $# == 6 || ( $# == 7 && ${7:-} == recovery ) ]] || refuse arguments
+[[ $# == 6 || ( $# == 7 && ( ${7:-} == recovery || ${7:-} == external ) ) || ( $# == 8 && ${7:-} == registration && ${8:-} =~ ^[a-f0-9]{64}$ ) ]] || refuse arguments
 pn_journey=${7:-editor}
 [[ $EUID == 0 ]] || refuse administrator-required
 pn_owner=$1 pn_payload=$2 pn_owner_home=$3 pn_app_hash=$4 pn_node_hash=$5 pn_driver_hash=$6
@@ -33,12 +33,20 @@ for pn_dir in "$pn_payload" "$pn_payload/bin" "$pn_payload/scripts"; do
   [[ -d $pn_dir && ! -L $pn_dir && $(stat -c %u "$pn_dir") == "$pn_owner" ]] || refuse payload-directory
   role test ! -w "$pn_dir" || refuse payload-writable
 done
-for pn_name in bin/node bin/tauri-driver scripts/native-shared-editor.mjs scripts/native-shared-recovery.mjs scripts/native-recovery-record.mjs scripts/native-webdriver-lib.mjs scripts/native-ui-lib.mjs scripts/native-dialog.py scripts/native-close-window.py; do
+for pn_name in bin/node bin/tauri-driver scripts/native-shared-editor.mjs scripts/native-shared-recovery.mjs scripts/native-shared-external.mjs scripts/native-observation-registration.mjs scripts/native-observation-controls.mjs scripts/native-recovery-record.mjs scripts/native-webdriver-lib.mjs scripts/native-ui-lib.mjs scripts/native-dialog.py scripts/native-close-window.py; do
   pn_file="$pn_payload/$pn_name"
   [[ -f $pn_file && ! -L $pn_file && $(stat -c %u "$pn_file") == "$pn_owner" ]] || refuse payload-file
   role test -r "$pn_file" || refuse payload-unreadable
   role test ! -w "$pn_file" || refuse payload-writable
 done
+if [[ $pn_journey == registration ]]; then
+  pn_registration="$pn_payload/bin/registration-app"
+  [[ -f $pn_registration && ! -L $pn_registration && $(stat -c %u "$pn_registration") == "$pn_owner" && $(stat -c %s "$pn_registration") -le 536870912 ]] || refuse registration-file
+  role test -r "$pn_registration" || refuse registration-unreadable
+  role test -x "$pn_registration" || refuse registration-not-executable
+  role test ! -w "$pn_registration" || refuse registration-writable
+  [[ $(sha256sum "$pn_registration" | cut -d' ' -f1) == "$8" ]] || refuse registration-digest
+fi
 [[ -f /usr/bin/programmable-notes && ! -L /usr/bin/programmable-notes ]] || refuse application-file
 [[ $(sha256sum /usr/bin/programmable-notes | cut -d' ' -f1) == "$pn_app_hash" ]] || refuse application-digest
 [[ $(sha256sum "$pn_payload/bin/node" | cut -d' ' -f1) == "$pn_node_hash" ]] || refuse node-digest
@@ -117,7 +125,7 @@ console.log("NATIVE_SHARED_LOCAL_COLLECTED "+directory);
 import {constants} from 'node:fs';
 import {open} from 'node:fs/promises';
 const directory=process.argv[2], files=[];
-for(const name of ['local-infrastructure.json','native-shared-editor.json','screenshot-startup.png','screenshot-source.png','screenshot-preview.png','screenshot-recovery-pending.png','screenshot-recovery-copy.png','screenshot-recovery-collision.png','screenshot-recovery-collision-notice.png']) {
+for(const name of ['local-infrastructure.json','native-shared-editor.json','native-observation-registration.json','screenshot-startup.png','screenshot-source.png','screenshot-preview.png','screenshot-recovery-pending.png','screenshot-recovery-copy.png','screenshot-recovery-collision.png','screenshot-recovery-collision-notice.png','screenshot-external-direct.png','screenshot-external-rename.png','screenshot-external-background.png','screenshot-external-background-failed.png']) {
   let handle;
   try {
     handle=await open(directory+'/'+name,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -177,5 +185,9 @@ timeout 10s gdbus call --session --dest org.a11y.Bus --object-path /org/a11y/bus
 track "$!"
 for ((pn_i=0; pn_i<30; pn_i++)); do if curl --silent --fail --max-time 1 http://127.0.0.1:4444/status >/dev/null; then break; fi; sleep .2; done
 curl --silent --fail --max-time 1 http://127.0.0.1:4444/status >/dev/null
-timeout -k 5s 210s "$pn_payload/bin/node" scripts/native-shared-editor.mjs
+if [[ $NATIVE_SHARED_JOURNEY == registration ]]; then
+  timeout -k 5s 120s "$pn_payload/bin/node" scripts/native-observation-registration.mjs
+else
+  timeout -k 5s 210s "$pn_payload/bin/node" scripts/native-shared-editor.mjs
+fi
 DESKTOP

@@ -40,3 +40,20 @@ Codex running **on your Linux computer** this prompt:
 > PR updated, and ask only for genuine access, security or product decisions.
 > Do not merge, publish a release, change visibility, overwrite my data or weaken
 > sandboxing. Start with a short machine/checkpoint inspection, then run the app.
+
+## Local validation workers
+
+After preparing the pinned toolchain, scanner and matching browser described in
+the handoff, bound test concurrency on the shared desktop:
+
+```sh
+umask 077
+VITEST_MAX_WORKERS=2 PLAYWRIGHT_WORKERS=2 npm run check
+```
+
+Vitest otherwise uses almost every available CPU. A retained local run experienced
+multiple independent deadline failures with that default; all1088 units passed
+with two workers and unchanged assertions/timeouts. This setting affects test
+scheduling only. The process-local core limit required for this host's deliberate
+renderer-crash cases is recorded in `PROJECT_STATE.md`; do not change system core
+handling or production resource limits.

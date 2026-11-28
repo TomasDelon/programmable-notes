@@ -1,6 +1,11 @@
+import { createWorkspaceObserver } from './workspaceObserver';
 import type { createNativeWorkspace } from './nativeWorkspace';
 import type { AggregateCloseAdmission } from './documentSessions';
-import { sameSourceWitness, type SourceBatch } from '../editor/sourceWitness';
+import {
+  sameSourceWitness,
+  type SourceBatch,
+  type PrepareExternalHistory,
+} from '../editor/sourceWitness';
 import type {
   LoadedProductDocument,
   NativeProductServices,
@@ -56,6 +61,68 @@ export function createNativeProduct(
   let cache: ProductSnapshot;
   let fingerprint = '';
   let notificationPending = false;
+  let externalSurface: {
+    canAdopt: (sessionId: string) => boolean;
+    prepareHistory?: PrepareExternalHistory;
+  } | null = null;
+  let externalObserver: ReturnType<typeof createWorkspaceObserver> | null =
+    null;
+  let observationQueue = Promise.resolve();
+  let observationGeneration = 0;
+  let observationFailure = false;
+  function queueObservation(stop: 'none' | 'drain' | 'cancel'): Promise<void> {
+    const generation = ++observationGeneration;
+    const job = observationQueue.then(async () => {
+      if (stop !== 'none' && externalObserver) {
+        const previous = externalObserver;
+        externalObserver = null;
+        if (stop === 'cancel') await previous.stop();
+        else await previous.quiesce();
+      }
+      if (
+        generation !== observationGeneration ||
+        externalObserver ||
+        !externalSurface ||
+        !workspace.observation ||
+        productOperations ||
+        closeActive ||
+        closing ||
+        closeUncertain ||
+        observationFailure
+      )
+        return;
+      const surface = externalSurface;
+      externalObserver = createWorkspaceObserver(
+        {
+          controller: workspace.controller,
+          observation: workspace.observation,
+          state: workspace.state,
+          subscribe: workspace.subscribe,
+        },
+        (id) => externalSurface === surface && surface.canAdopt(id),
+        () => {
+          observationFailure = true;
+          error(
+            'External file observation cleanup is uncertain. Document operations remain protected.',
+          );
+          void protect().catch(() => {});
+        },
+        (before, source) => {
+          if (externalSurface !== surface) return null;
+          return surface.prepareHistory
+            ? surface.prepareHistory(before, source)
+            : () => {};
+        },
+      );
+    });
+    observationQueue = job.catch(() => {
+      observationFailure = true;
+      error(
+        'External file observation cleanup is uncertain. Document operations remain protected.',
+      );
+    });
+    return job;
+  }
   let hintQueue = Promise.resolve();
   let recoveryQueue = Promise.resolve();
   const copyBatch = (batch: SourceBatch): SourceBatch =>
@@ -85,6 +152,7 @@ export function createNativeProduct(
         const state = workspace.controller.state(sessionId);
         return (
           state.phase !== 'open' ||
+          !!state.externalObservation ||
           state.unapplied ||
           state.retainedFailures.length > 0 ||
           state.autosave.status !== 'saved' ||
@@ -99,6 +167,7 @@ export function createNativeProduct(
     const state = {
       dirty: dirty(),
       busy:
+        observationFailure ||
         !closeGuard ||
         closing ||
         productOperations > 0 ||
@@ -163,6 +232,7 @@ export function createNativeProduct(
     return (
       key !== null &&
       confirmedRecoveryKeys.get(id) === key &&
+      !state.externalObservation &&
       !state.unapplied &&
       state.retainedFailures.length === 0
     );
@@ -280,14 +350,21 @@ export function createNativeProduct(
     if (closing || closeActive)
       throw Error('Aggregate document close is pending.');
   }
-  async function perform(action: () => Promise<unknown>): Promise<void> {
+  async function perform(
+    action: () => Promise<unknown>,
+    quiesce = false,
+  ): Promise<void> {
     admitted();
     productOperations++;
     try {
+      if (observationFailure)
+        throw Error('External file observation cleanup is uncertain.');
+      if (quiesce) await queueObservation('drain');
       await protect();
       await action();
     } finally {
       productOperations--;
+      await queueObservation('none');
       refresh();
       void protect().catch(() => {});
     }
@@ -452,6 +529,10 @@ export function createNativeProduct(
         workspace.state().unresolvedCleanup
       )
         throw Error('Finish the current operation before closing.');
+      if (observationFailure)
+        throw Error('External file observation cleanup is uncertain.');
+      if (workspace.observation) await queueObservation('drain');
+      requireRequest();
       if (!detachEditor || !detachEditor())
         throw Error('Finish the current edit before closing.');
       heldAdmission = workspace.beginAggregateClose();
@@ -512,6 +593,29 @@ export function createNativeProduct(
   return {
     snapshot: () => refresh(false),
     recoveryAcknowledged,
+    ...(workspace.observation
+      ? {
+          observeExternal(
+            canAdopt: (sessionId: string) => boolean,
+            prepareHistory?: PrepareExternalHistory,
+          ) {
+            const surface = { canAdopt, prepareHistory };
+            externalSurface = surface;
+            void queueObservation('cancel').catch(() => {});
+            return () => {
+              if (externalSurface !== surface) return;
+              externalSurface = null;
+              void queueObservation('cancel').catch(() => {});
+            };
+          },
+          async reconcileExternal() {
+            await observationQueue;
+            if (observationFailure)
+              throw Error('External file observation cleanup is uncertain.');
+            await externalObserver?.reconcile();
+          },
+        }
+      : {}),
     subscribe(changed) {
       listeners.add(changed);
       if (listeners.size === 1) startObserver();
@@ -668,7 +772,7 @@ export function createNativeProduct(
     },
     chooseVault: () => {
       structuralGeneration++;
-      return perform(() => workspace.choose());
+      return perform(() => workspace.choose(), true);
     },
     refreshInventory: () => perform(() => workspace.refreshInventory()),
     open: (path) => {
@@ -762,7 +866,7 @@ export function createNativeProduct(
     },
     closeDocument: (id) => {
       structuralGeneration++;
-      return perform(() => workspace.close(id));
+      return perform(() => workspace.close(id), true);
     },
     prepareClose(detachEditor) {
       structuralGeneration++;
@@ -787,6 +891,7 @@ export function createNativeProduct(
               closeActive = false;
               capturedCloseRequest = null;
               closeFlight = null;
+              void queueObservation('none').catch(() => {});
             }
             settle(outcome);
             refresh();
@@ -799,6 +904,9 @@ export function createNativeProduct(
       }
       return (async (): Promise<ProductCloseOutcome> => {
         admitted();
+        if (observationFailure)
+          throw Error('External file observation cleanup is uncertain.');
+        if (workspace.observation) await queueObservation('drain');
         const admission = workspace.beginAggregateClose();
         closing = true;
         refresh();
@@ -821,6 +929,7 @@ export function createNativeProduct(
           );
           throw reason;
         } finally {
+          void queueObservation('none').catch(() => {});
           void protect().catch(() => {});
         }
       })();

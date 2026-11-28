@@ -18,6 +18,11 @@ import { fileURLToPath } from 'node:url';
 
 const names = Object.freeze([
   'native-shared-editor.mjs',
+  'native-shared-recovery.mjs',
+  'native-shared-external.mjs',
+  'native-observation-registration.mjs',
+  'native-observation-controls.mjs',
+  'native-recovery-record.mjs',
   'native-webdriver-lib.mjs',
   'native-ui-lib.mjs',
   'native-dialog.py',
