@@ -32,6 +32,7 @@ vi.mock('react-dom/client', async (importOriginal) => {
     },
   };
 });
+let entryOwner: { fail(): void } | undefined;
 const epoch = 'a'.repeat(32);
 const idle = () => ({ version: 1, epoch, phase: 'idle', request: null });
 beforeEach(() => {
@@ -60,10 +61,18 @@ beforeEach(() => {
     removeEventListener() {},
   }));
 });
-afterEach(async () => {
+async function disposeEntry() {
+  // Unmount does not cancel React.lazy's promise. Retire its window owner
+  // before a pending chunk can negotiate against another test's transport.
+  entryOwner?.fail();
+  entryOwner = undefined;
   await act(async () => {
     for (const root of platform.roots.splice(0)) root.unmount();
   });
+}
+afterEach(async () => {
+  await disposeEntry();
+  await vi.dynamicImportSettled();
   for (const error of platform.recoverable.splice(0)) {
     expect(error).toMatchObject({
       cause: {
@@ -78,10 +87,19 @@ afterEach(async () => {
   vi.restoreAllMocks();
   document.body.replaceChildren();
 });
-async function boot() {
+async function boot(settleChunks = true) {
+  entryOwner = (await import('../../src/desktop/nativeProductBootstrap'))
+    .nativeProductBootstrap;
   await act(async () => {
     await import('../../src/main');
   });
+  // React starts lazy loading when act flushes the initial render. Drain after
+  // that flush, outside the negotiation assertion's waitFor budget.
+  if (settleChunks) {
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
+  }
 }
 function commands() {
   return platform.invoke.mock.calls.map(([command]) => command as string);
@@ -130,6 +148,30 @@ it('selects native before /engine, suspends before acknowledgement and boots the
     ),
   ).toBe(true);
   expect(platform.offline).not.toHaveBeenCalled();
+});
+
+it('retires an unmounted entry before a delayed presentation can negotiate in the next test', async () => {
+  platform.native = true;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let loading = false;
+  vi.doMock('../../src/desktop/NativeProductEntry', async () => {
+    loading = true;
+    await gate;
+    return { NativeProductEntry: () => <main>Delayed presentation</main> };
+  });
+  try {
+    await boot(false);
+    await waitFor(() => expect(loading).toBe(true));
+    await disposeEntry();
+    platform.invoke.mockClear();
+  } finally {
+    release();
+  }
+  await vi.dynamicImportSettled();
+  expect(platform.invoke).not.toHaveBeenCalled();
 });
 
 it('keeps failed native negotiation terminal without browser Reload or a legacy fallback', async () => {

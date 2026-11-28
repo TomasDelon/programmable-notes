@@ -44,6 +44,14 @@ const saved = original + appended;
 const visualSaved = saved.replace('Appended.', 'Appended.&#32;Visual.');
 const invalid = '$unfinished <Broken';
 await writeFile(file, original, { mode: 0o640, flag: 'wx' });
+// Creation modes are filtered by the launcher's private umask. Establish the
+// synthetic original's intended mode before the application can observe it.
+await chmod(file, 0o640);
+assert.equal(
+  (await stat(file)).mode & 0o777,
+  0o640,
+  'Fixture mode established',
+);
 const wrapper = join(fixture, 'editor-driver');
 const pidFile = join(fixture, 'editor.pid');
 await writeFile(
@@ -61,11 +69,22 @@ const checkpoints = [];
 let stage = 'preflight';
 let startupPhase = 'not_started';
 let failureKind = 'none';
+let assertionKind = 'none';
+let sourcePhase = 'not_started';
 let passed = false;
 let forcedCleanup = false;
 let cleanupVerified = false;
 let binarySha256;
 const absence = (error) => error.code === 'ENOENT' || error.code === 'ESRCH';
+function classifyAssertion(error) {
+  if (error?.code !== 'ERR_ASSERTION') return 'none';
+  const label =
+    typeof error.message === 'string' ? error.message.split('\n', 1)[0] : '';
+  if (label === 'Expected real WebDriver element')
+    return 'element_reference_missing';
+  if (label === 'Original mode preserved') return 'original_mode_mismatch';
+  return 'assertion_other';
+}
 function classifyFailure(error) {
   if (error?.code === 'ERR_ASSERTION') return 'assertion';
   if (error?.message === 'observation_deadline') return 'observation_deadline';
@@ -275,6 +294,7 @@ async function source() {
   await click(reference);
 }
 async function bytes(expected) {
+  if (stage === 'source_autosave') sourcePhase = 'disk';
   await waitFor(async () =>
     (await readFile(file)).equals(Buffer.from(expected)),
   );
@@ -283,6 +303,7 @@ async function bytes(expected) {
     0o640,
     'Original mode preserved',
   );
+  if (stage === 'source_autosave') sourcePhase = 'status';
   await waitFor(() =>
     sync(
       `return document.querySelector('[aria-label="Document save status"]')?.textContent === 'Saved to file'`,
@@ -405,10 +426,14 @@ try {
   await sourceShows(original);
   await checkpoint('actual-vault-chooser-and-shared-source');
   stage = 'source_autosave';
+  sourcePhase = 'focus';
   await source();
+  sourcePhase = 'end';
   await chord('\uE010');
+  sourcePhase = 'type';
   await type(appended);
   await bytes(saved);
+  sourcePhase = 'complete';
   await checkpoint('automatic-exact-bom-mixed-ending-jsx-bytes');
   stage = 'undo_redo';
   await chord('z');
@@ -503,6 +528,7 @@ try {
 } catch (error) {
   // Never expose arbitrary page source, framework replies, file contents or paths.
   failureKind = classifyFailure(error);
+  assertionKind = classifyAssertion(error);
   console.error(`NATIVE_SHARED_EDITOR_FAILED stage=${stage}`);
   process.exitCode = 1;
 } finally {
@@ -526,6 +552,8 @@ try {
         stage,
         startupPhase,
         failureKind,
+        assertionKind,
+        sourcePhase,
         binarySha256,
         checkpoints,
         cleanupVerified,

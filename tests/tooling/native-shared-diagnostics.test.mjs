@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
@@ -145,7 +146,7 @@ test('failure catch records a safe category and receipt exposes only derived fie
     process: {},
   };
   runInNewContext(
-    `${declaration('classifyFailure')}\n${catchBody[1]}`,
+    `${declaration('classifyFailure')}\n${declaration('classifyAssertion')}\n${catchBody[1]}`,
     context,
   );
   assert.equal(context.failureKind, 'other');
@@ -157,6 +158,8 @@ test('failure catch records a safe category and receipt exposes only derived fie
     stage: 'installed_startup',
     startupPhase: 'driver_session',
     failureKind: context.failureKind,
+    assertionKind: context.assertionKind,
+    sourcePhase: 'not_started',
     binarySha256: 'a'.repeat(64),
     checkpoints: [],
     cleanupVerified: true,
@@ -164,5 +167,74 @@ test('failure catch records a safe category and receipt exposes only derived fie
   });
   assert.equal(record.startupPhase, 'driver_session');
   assert.equal(record.failureKind, 'other');
+  assert.equal(record.assertionKind, 'none');
+  assert.equal(record.sourcePhase, 'not_started');
   assert.ok(!JSON.stringify(record).includes('PRIVATE'));
+});
+
+test('assertion diagnostics never expose arbitrary error text', () => {
+  const classify = runInNewContext(
+    `${declaration('classifyAssertion')}\nclassifyAssertion`,
+  );
+  for (const [message, expected] of [
+    [
+      'Expected real WebDriver element\nPRIVATE actual',
+      'element_reference_missing',
+    ],
+    ['Original mode preserved\nPRIVATE actual', 'original_mode_mismatch'],
+    ['PRIVATE source/path', 'assertion_other'],
+    ['Expected real WebDriver element PRIVATE', 'assertion_other'],
+  ])
+    assert.equal(classify({ code: 'ERR_ASSERTION', message }), expected);
+  for (const error of [null, {}, new Error('PRIVATE')])
+    assert.equal(classify(error), 'none');
+});
+
+test('real strict assertion messages classify without publishing actual values', () => {
+  const classify = runInNewContext(
+    `${declaration('classifyAssertion')}\nclassifyAssertion`,
+  );
+  for (const [actual, expected, label, kind] of [
+    [
+      'undefined',
+      'string',
+      'Expected real WebDriver element',
+      'element_reference_missing',
+    ],
+    [384, 416, 'Original mode preserved', 'original_mode_mismatch'],
+  ]) {
+    let error;
+    try {
+      assert.equal(actual, expected, label);
+    } catch (caught) {
+      error = caught;
+    }
+    assert.ok(error);
+    assert.equal(classify(error), kind);
+  }
+});
+
+test('synthetic original starts at exact 0640 even under private launcher umask', () => {
+  const start = source.indexOf('await writeFile(file, original,');
+  const end = source.indexOf('const wrapper =', start);
+  assert.ok(start > 0 && end > start);
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+    import assert from 'node:assert/strict';
+    import { chmod, mkdtemp, writeFile, stat } from 'node:fs/promises';
+    process.umask(0o077);
+    const directory = await mkdtemp('/tmp/pn-fixture-mode-regression-');
+    const file = directory + '/primary.mdx', original = 'synthetic';
+    ${source.slice(start, end)}
+    assert.equal((await stat(file)).mode & 0o777, 0o640);
+    assert.equal((await stat(directory)).mode & 0o777, 0o700);
+  `,
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.equal(result.status, 0, result.stderr);
 });

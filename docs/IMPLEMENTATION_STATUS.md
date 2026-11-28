@@ -1,5 +1,35 @@
 # Programmable Notes implementation status
 
+## Current local installed editor evidence — 28 November 2026
+
+The local Ubuntu26.04 amd64 witness passed all ten installed editor checkpoints
+with installed ELF SHA256
+`9d2409dd8e1781675ed7fe0eb39616cefe55cfaadd60eb1ea99217d59a5e8c06`.
+The retained `/tmp/pn-local-collected-ubmdql/` receipt covers the real OS vault
+chooser, Source/Preview typing, exact BOM/mixed-ending/opaque-JSX disk bytes and
+mode0640, keyboard undo/redo, invalid-source autosave, document close/reopen,
+normal window close and fresh-process reauthorization/reopen. Application and
+infrastructure cleanup both passed without force or residual processes. The
+restricted `pn-local-20261128` account and its recovery data remain retained.
+
+Earlier failed receipts `/tmp/pn-local-collected-ggZZtl/` and
+`/tmp/pn-local-collected-nG7VTQ/` remain failures. The mode mismatch came from the
+fixture: umask077 filtered creation mode0640 to0600. Explicit fixture chmod and a
+prelaunch assertion establish0640; the post-save0640 assertion is unchanged.
+The subprocess regression failed before this correction and passed afterward.
+No application save-permission behavior was changed.
+
+These results supersede the older unverified editing/chooser claims below for
+this exact local candidate only. Installed recovery/failure retention, live
+external observation/conflicts, rename/move/Trash and native inline React remain
+open. General native React stays disabled. This is not containment acceptance,
+a public release or complete A01–A12 acceptance. The final Phase1 check passed1015 unit,206 scanner-enabled tooling/zero skips,
+159 browser,9 local Pages and4 disposable D1/storage cases with formatting,
+lint and strict types. The two intentional crash witnesses run after ordinary
+browser work under a separate one-worker project; failed prior concurrency runs
+remain retained. Independent review and exact discovery comparison preserve all
+159 cases. See the [dated evidence](security-evidence/2026-11-28-local-editor/README.md).
+
 ## Local development transfer — 28 November 2026
 
 The owner changed today's objective to sealing this checkpoint and continuing on

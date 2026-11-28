@@ -1,5 +1,23 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const chromiumUse = {
+  ...devices['Desktop Chrome'],
+  launchOptions: {
+    executablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+  },
+};
+const browserProjects = [
+  { name: 'chromium', use: chromiumUse },
+  ...(process.env.PN_ALL_BROWSERS === '1'
+    ? [
+        { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+        { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+      ]
+    : []),
+];
+const crashTest = '**/web-recovery-crash.spec.ts';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -20,22 +38,17 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
+    ...browserProjects.map((project) => ({
+      ...project,
+      testIgnore: crashTest,
+    })),
     {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        launchOptions: {
-          executablePath:
-            process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
-        },
-      },
+      name: 'chromium-crash-recovery',
+      testMatch: crashTest,
+      dependencies: browserProjects.map((project) => project.name),
+      workers: 1,
+      use: chromiumUse,
     },
-    ...(process.env.PN_ALL_BROWSERS === '1'
-      ? [
-          { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-          { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-        ]
-      : []),
   ],
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',

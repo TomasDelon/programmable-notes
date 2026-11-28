@@ -486,3 +486,43 @@ select or activate a vault: acceptance and selected-path validation remain
 mandatory, and cancellation preserves the previous scope. No fallback path is
 accepted if Home resolution fails. The change is awaiting current-package SDK and
 GUI validation; the earlier disabled-button observation remains a failed test.
+
+## Local admission fixtures and installed editor witness
+
+Run admission-tooling fixtures and the final local check with `umask 077`.
+The native admission tests intentionally reject nonprivate source/dependency
+fixtures; inherited group-writable creation is a refused fixture, not permission
+to weaken admission. Preserve incompatible-run failures. Use the prepared pinned
+Node/npm, matching Playwright browser and scanner-enabled tooling. One runner
+owns build output and browser ports at a time.
+
+`scripts/run-native-shared-editor-local.sh` is a separate Ubuntu26.04 editor-only
+launcher for the retained restricted account `pn-local-20261128`. It checks
+account/home isolation, payload ownership/read-only access, fixed payload paths,
+exact installed ELF/Node/driver hashes, and process start identities. Its desktop
+runs under that account with a clean environment; evidence collection drops
+privileges. Existing accounts and recovery data are not cleared. Administrative
+execution uses the already authorized system authentication flow.
+
+The synthetic original is explicitly chmodded to0640 and asserted before launch:
+`writeFile(mode: 0640)` alone becomes0600 under private umask077. The unchanged
+post-save assertion still requires0640. The successful retained local receipts
+at `/tmp/pn-local-collected-ubmdql/` prove only the listed installed editing and
+restart checkpoints, not recovery, hostile runtime containment or React.
+
+The two persistent-profile composition/recovery witnesses deliberately crash
+renderers. The `chromium-crash-recovery` project now waits for every enabled
+ordinary browser project, then runs these faults with one worker. Keeping only
+the two cases in a sequential group did not prevent stalls during unrelated
+browser work; both full-run failures and the unsuccessful task-local corelimit0
+probe remain retained. Exact focused isolated journeys passed, motivating full
+browser-job ownership for deliberate faults. The kernel/browser cause remains
+unproven. All159 original Chromium test titles and assertions remain covered:
+157 ordinary cases plus2 dependent crash/restart/recovery cases. No timeout or
+retry is changed. Never change system crash or storage policy for this witness.
+
+The default `npm run check` includes the ordinary and crash-recovery projects.
+Selecting `--project chromium` alone now intentionally selects only the157
+ordinary cases; it cannot support a complete browser-gate claim. Run the default
+suite for all159. The Chromium-only crash cases were previously skipped in the
+optional Firefox/WebKit projects; moving them removes no executable coverage.

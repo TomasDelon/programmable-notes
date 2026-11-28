@@ -6,6 +6,26 @@ Requirements: [PRODUCT_CONTRACT](../PRODUCT_CONTRACT.md); engineering boundaries
 [PRODUCT_ACCEPTANCE](../PRODUCT_ACCEPTANCE.md). This plan does not authorize public
 release, merge, paid services, history rewriting or weaker isolation.
 
+## Approved local execution — 28 November 2026
+
+The owner approved the detailed twelve-phase local development and acceptance
+plan. Execute small checked packets on `fix/preview-markdown-input`, keeping
+PR #9 draft. Start by sealing the existing launcher/fixture packet and resolving
+native-entry asynchronous test ownership, then execute installed recovery using
+the retained restricted account. Continue with external observation and disjoint
+three-way reconciliation, inventory, real scoped lifecycle, verified reference
+patches/journals, vault-local Trash, shared editing/plugin acceptance, integrated
+native React security gates, final installed validation and inactive updater work.
+Cloud synchronization and provider selection remain deferred. Distribution and
+key custody require the later explicit decision; this plan publishes no release.
+
+The real local installed editor journey passed with exact bytes/mode, real
+Source/Preview keyboard undo/redo, ordinary close and fresh-process reopen;
+see the current [implementation status](../IMPLEMENTATION_STATUS.md). The mode
+fixture correction changes no application permission assertion. Recovery and
+external-writer/lifecycle/React gates are still incomplete; historical progress
+below is not evidence for those gates.
+
 ## Purpose
 
 Deliver one coherent application whose document is the actual local file, whose
