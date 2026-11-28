@@ -17,11 +17,17 @@ export function createNativeProduct(
   workspace: ReturnType<typeof createNativeWorkspace>,
   services: NativeProductServices,
 ): ProductApplication {
-  const { setCloseState, preserveAttempt, closeGuard } = services;
+  const {
+    setCloseState,
+    preserveAttempt: persistAttempt,
+    closeGuard,
+  } = services;
   const listeners = new Set<() => void>();
   const loaded = new Map<string, LoadedProductDocument>();
   const subscriptions = new Map<string, () => void>();
   const recoveryKeys = new Map<string, string>();
+  const recoveryAttempts = new Map<string, object>();
+  const confirmedRecoveryKeys = new Map<string, string>();
   const resolving = new Set<string>();
   const pendingRecovery = new Set<string>();
   const recoveryPort = services.recovery;
@@ -122,6 +128,45 @@ export function createNativeProduct(
       return null;
     return `${state.witness.editorRevision}:${state.autosave.persisted.editorRevision}:${state.autosave.diskRevision}:${state.autosave.durable}`;
   }
+  async function preserveAttempt(
+    input: Parameters<NativeProductServices['preserveAttempt']>[0],
+  ) {
+    const id = input.sessionId;
+    const attempt = {};
+    recoveryAttempts.set(id, attempt);
+    confirmedRecoveryKeys.delete(id);
+    const key = loaded.has(id) ? recoveryKey(id) : null;
+    emit();
+    try {
+      const receipt = await persistAttempt(input);
+      if (
+        receipt.durable === true &&
+        key !== null &&
+        loaded.has(id) &&
+        recoveryAttempts.get(id) === attempt &&
+        recoveryKey(id) === key &&
+        workspace.session(id).witness.source === input.batch.source
+      ) {
+        confirmedRecoveryKeys.set(id, key);
+      }
+      return receipt;
+    } finally {
+      // Acknowledgement is operational observation, not structural metadata or
+      // a new source/history owner. Structural snapshots keep their identity.
+      emit();
+    }
+  }
+  function recoveryAcknowledged(id: string): boolean {
+    if (!loaded.has(id)) return false;
+    const state = workspace.controller.state(id);
+    const key = recoveryKey(id);
+    return (
+      key !== null &&
+      confirmedRecoveryKeys.get(id) === key &&
+      !state.unapplied &&
+      state.retainedFailures.length === 0
+    );
+  }
   function observeDocument(id: string) {
     void protect().catch(() => {});
     const key = recoveryKey(id);
@@ -173,6 +218,8 @@ export function createNativeProduct(
         subscriptions.delete(id);
         loaded.delete(id);
         recoveryKeys.delete(id);
+        recoveryAttempts.delete(id);
+        confirmedRecoveryKeys.delete(id);
       }
     for (const association of state.sessions) {
       if (!loaded.has(association.sessionId))
@@ -464,6 +511,7 @@ export function createNativeProduct(
   void protect().catch(() => {});
   return {
     snapshot: () => refresh(false),
+    recoveryAcknowledged,
     subscribe(changed) {
       listeners.add(changed);
       if (listeners.size === 1) startObserver();

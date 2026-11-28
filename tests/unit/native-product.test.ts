@@ -313,3 +313,146 @@ it('navigates a large inventory without reinterpreting it as the loaded graph an
   await h.workspace.controller.flush();
   expect(h.disk.get('new.md')).toBe('\uFEFFNew edited\r\n');
 });
+
+it.each([true, false])(
+  'confirms only a completed durable current-source recovery receipt (durable=%s)',
+  async (durable) => {
+    const h = setup();
+    await h.app.chooseVault();
+    await h.app.open('plain.md');
+    const id = h.app.snapshot().selectedSessionId!;
+    expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
+    let release!: (receipt: { durable: boolean }) => void;
+    const held = new Promise<{ durable: boolean }>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(h.services.preserveAttempt).mockReturnValue(held);
+    vi.mocked(h.ports.save).mockRejectedValue(Error('save refused'));
+    h.app.session(id).publish({
+      expected: h.app.session(id).witness,
+      source: 'pending exact source',
+    });
+    await expect(h.workspace.controller.flush()).rejects.toThrow();
+    await tick();
+    expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
+    release({ durable });
+    await tick();
+    expect(h.app.recoveryAcknowledged?.(id)).toBe(durable);
+    expect(h.app.documents.state(id).autosave.status).toBe('blocked');
+    expect(h.disk.get('plain.md')).toBe('\uFEFF# Plain\r\n');
+  },
+);
+
+it('cannot reuse a late recovery acknowledgement after same-byte history changes', async () => {
+  const h = setup();
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const id = h.app.snapshot().selectedSessionId!;
+  const replies: ((receipt: { durable: boolean }) => void)[] = [];
+  vi.mocked(h.services.preserveAttempt).mockImplementation(
+    () => new Promise((resolve) => replies.push(resolve)),
+  );
+  vi.mocked(h.ports.save).mockRejectedValue(Error('save refused'));
+  const publish = (source: string) =>
+    h.app.session(id).publish({ expected: h.app.session(id).witness, source });
+  publish('same');
+  await expect(h.workspace.controller.flush()).rejects.toThrow();
+  await tick();
+  publish('different');
+  publish('same');
+  await tick();
+  expect(replies).toHaveLength(1);
+  replies[0]!({ durable: true });
+  await tick();
+  expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
+  expect(replies).toHaveLength(2);
+  replies[1]!({ durable: true });
+  await tick();
+  expect(h.app.recoveryAcknowledged?.(id)).toBe(true);
+  expect(h.app.session(id).witness.source).toBe('same');
+});
+
+it('does not claim current source recovery after retaining a different unapplied attempt', async () => {
+  const h = setup();
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const id = h.app.snapshot().selectedSessionId!;
+  vi.mocked(h.ports.save).mockRejectedValue(Error('save refused'));
+  h.app.session(id).publish({
+    expected: h.app.session(id).witness,
+    source: 'canonical source',
+  });
+  await expect(h.workspace.controller.flush()).rejects.toThrow();
+  await tick();
+  expect(h.app.recoveryAcknowledged?.(id)).toBe(true);
+  const batch = {
+    expected: h.app.session(id).witness,
+    source: 'different retained text',
+  };
+  await h.app.retainAttempt(id, batch);
+  await h.app.resolveAttempt(id, batch, 'discard');
+  expect(h.app.documents.state(id).retainedFailures).toHaveLength(0);
+  expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
+  expect(h.app.session(id).witness.source).toBe('canonical source');
+});
+
+it('keeps a held recovery acknowledgement scoped through document selection A-to-B-to-A', async () => {
+  const h = setup();
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const a = h.app.snapshot().selectedSessionId!;
+  let release!: (receipt: { durable: boolean }) => void;
+  const held = new Promise<{ durable: boolean }>((resolve) => {
+    release = resolve;
+  });
+  vi.mocked(h.services.preserveAttempt).mockReturnValue(held);
+  vi.mocked(h.ports.save).mockRejectedValue(Error('save refused'));
+  h.app
+    .session(a)
+    .publish({ expected: h.app.session(a).witness, source: 'pending A' });
+  await expect(h.workspace.controller.flush()).rejects.toThrow();
+  await tick();
+  await h.app.open('component.mdx');
+  const b = h.app.snapshot().selectedSessionId!;
+  release({ durable: true });
+  await tick();
+  expect(h.app.snapshot().selectedSessionId).toBe(b);
+  expect(h.app.recoveryAcknowledged?.(b)).toBe(false);
+  expect(h.app.recoveryAcknowledged?.(a)).toBe(true);
+  h.app.select(a);
+  expect(h.app.session(a).witness.source).toBe('pending A');
+  expect(h.app.recoveryAcknowledged?.(a)).toBe(true);
+});
+
+it('never revives recovery confirmation after the source session is retired', async () => {
+  const h = setup();
+  await h.app.chooseVault();
+  await h.app.open('plain.md');
+  const id = h.app.snapshot().selectedSessionId!;
+  let releaseRecovery!: (receipt: { durable: boolean }) => void;
+  let releaseSave!: (receipt: { revision: string; durable: boolean }) => void;
+  vi.mocked(h.services.preserveAttempt).mockReturnValue(
+    new Promise((resolve) => {
+      releaseRecovery = resolve;
+    }),
+  );
+  vi.mocked(h.ports.save).mockReturnValue(
+    new Promise((resolve) => {
+      releaseSave = resolve;
+    }),
+  );
+  h.app.session(id).publish({
+    expected: h.app.session(id).witness,
+    source: 'saved before retirement',
+  });
+  const flushing = h.workspace.controller.flush();
+  await tick();
+  expect(h.services.preserveAttempt).toHaveBeenCalled();
+  releaseSave({ revision: 'disk-1', durable: true });
+  await flushing;
+  await h.app.closeDocument(id);
+  releaseRecovery({ durable: true });
+  await tick();
+  expect(h.app.recoveryAcknowledged?.(id)).toBe(false);
+  expect(() => h.app.session(id)).toThrow();
+});

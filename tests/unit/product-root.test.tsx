@@ -1009,3 +1009,36 @@ it('does not keep modal shortcuts blocked after replacement removes recovery sup
     screen.getByRole('dialog', { name: 'Command palette' }),
   ).toBeInTheDocument();
 });
+
+it('shows recovery confirmation beside a failed save only after the real service acknowledgement', async () => {
+  let release!: (receipt: { durable: boolean }) => void;
+  const held = new Promise<{ durable: boolean }>((resolve) => {
+    release = resolve;
+  });
+  const mounted = fixture({
+    save: async () => {
+      throw Error('synthetic save refusal');
+    },
+    preserveAttempt: () => held,
+  });
+  const field = await chooseAndOpen();
+  const editor = EditorView.findFromDOM(field)!;
+  act(() =>
+    editor.dispatch({
+      changes: { from: editor.state.doc.length, insert: 'Pending.' },
+      userEvent: 'input.type',
+    }),
+  );
+  const status = screen.getByRole('status', { name: 'Document save status' });
+  await waitFor(() => expect(status).toHaveTextContent('Not saved'));
+  expect(status).not.toHaveTextContent('Recovery confirmed');
+  await act(async () => release({ durable: true }));
+  await waitFor(() =>
+    expect(status).toHaveTextContent('Not saved · Recovery confirmed'),
+  );
+  expect(EditorView.findFromDOM(field)).toBe(editor);
+  const id = mounted.application.snapshot().selectedSessionId!;
+  expect(mounted.application.session(id).witness.source).toBe(
+    original + 'Pending.',
+  );
+});

@@ -1,5 +1,30 @@
 # Programmable Notes implementation status
 
+## Current installed recovery — 28 November 2026
+
+The new optimized local package passed the complete installed failure/recovery
+journey with ELF434535a2…fc5aa3. Real parent-permission failure retained editor
+text, original bytes/mode and an integrity-valid application-generated snapshot
+only confirmed after the current-source durable/readback acknowledgement. Actual
+interruption, fresh-process reauthorization, read-only discovery, invalid sibling,
+cancel, registered native collision refusal,0600 new-copy restoration,
+edit/undo/redo/autosave and close/restart/reopen passed. Both cleanup receipts
+passed without force or residuals; all20 preexisting records were preserved.
+The earlier failed observations remain failures. See the
+[exact scoped evidence](security-evidence/2026-11-28-local-recovery/README.md).
+
+The shared passive status now distinguishes “Not saved · Recovery confirmed”.
+It does not claim the original is saved or grant write/close authority. The latest
+retention attempt and exact source/revision/lifetime bind confirmation. Independent
+review and focused tests cover held/non-durable/stale/history-ABA/foreign/retired
+results and the same owning editor instance. Final Phase2 checks passed formatting,
+lint, strict types,1022 units,227 scanner-enabled tooling/zero skips,160 Chromium,
+9 local Pages and4 disposable D1/storage cases. Local deliberate-crash diagnostics
+require a one-byte process-local core limit on this piped-core host; the earlier
+full/focused failures remain retained, with no timeout/assertion changes.
+External observation/reconciliation, lifecycle/Trash and integrated native React
+remain incomplete. No release or full product acceptance is implied.
+
 ## Current local installed editor evidence — 28 November 2026
 
 The local Ubuntu26.04 amd64 witness passed all ten installed editor checkpoints
@@ -20,9 +45,9 @@ The subprocess regression failed before this correction and passed afterward.
 No application save-permission behavior was changed.
 
 These results supersede the older unverified editing/chooser claims below for
-this exact local candidate only. Installed recovery/failure retention, live
-external observation/conflicts, rename/move/Trash and native inline React remain
-open. General native React stays disabled. This is not containment acceptance,
+this exact local candidate only. That earlier editor-only journey did not establish recovery acceptance; the
+current recovery result is recorded above. Live external observation/conflicts,
+rename/move/Trash and native inline React remain open. General native React stays disabled. This is not containment acceptance,
 a public release or complete A01–A12 acceptance. The final Phase1 check passed1015 unit,206 scanner-enabled tooling/zero skips,
 159 browser,9 local Pages and4 disposable D1/storage cases with formatting,
 lint and strict types. The two intentional crash witnesses run after ordinary

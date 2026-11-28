@@ -1,6 +1,7 @@
 # Installed shared-editor recovery acceptance
 
-27 November 2026. **Proposed; not executed.** This extends A06–A07 only after the
+27 November 2026 proposal; local installed execution passed28 November2026.
+See [the scoped result](../security-evidence/2026-11-28-local-recovery/README.md). This extends A06–A07 only after the
 basic packaged chooser/edit/autosave/history/close/reopen journey passes. It does
 not substitute old manual-save application tests or controlled-IPC browser tests
 for the current shared workspace. Follow PRODUCT_CONTRACT, NATIVE_SECURITY and
@@ -70,3 +71,30 @@ does not establish React integration, IPC/network denial or CPU/memory containme
 Unknown create acknowledgements must retain source/destination and block retry;
 exercise that case separately with a reviewed fault mechanism rather than silently
 calling an existing file a recovered success.
+
+## Local implementation candidate — 28 November 2026
+
+The installed editor prerequisite and the local recovery journey passed;
+final delivery checks passed1022 units,227 tooling,160 browser,9 Pages and4 local storage
+cases with static checks and no skips/retries; see the exact scoped evidence. Reuse the retained restricted account and preserve its existing
+store. The candidate's passive save status adds “Recovery confirmed” only after
+the native durable receipt, matching metadata and exact readback for the current
+accepted source. The failed original still says “Not saved”. A later edit,
+foreign retained attempt, retired session or stale acknowledgement cannot reuse
+that confirmation. This observation never authorizes file writes or close.
+
+The external witness must wait for that current-source confirmation as well as
+independently validating the exact published record before intentional
+interruption. Publication alone precedes directory fsync and is insufficient.
+During bounded retention polling only, an immutable descriptor retired by native
+pruning is a classified transient; changed bytes, privacy/integrity failures and
+preflight/read-only discovery remain strict. Preflight refuses existing pending,
+damaged or over-retained records and inadequate space rather than clearing them.
+
+Only the run-created corrupt sibling moves into the fresh retained evidence
+directory after its warning/read-only checks; preexisting records are not repaired
+or deleted. The synthetic vault and restored copy remain retained. Record the
+selected file/id/metadata, exact hashes, intentional interruption separately from
+forced cleanup, and original/copy permissions. The changed app must be packaged
+and inspected before this witness runs; old installed bytes cannot prove the new
+confirmation path. Controlled Chromium/port tests are not installed acceptance.

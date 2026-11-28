@@ -28,11 +28,17 @@ assert.notEqual(
   'Run as an ordinary disposable desktop user',
 );
 assert.equal(process.argv.length, 2, 'No command-line options');
+const journey = process.env.NATIVE_SHARED_JOURNEY ?? 'editor';
+assert(
+  ['editor', 'recovery'].includes(journey),
+  'Fixed installed journey required',
+);
 const installed = '/usr/bin/programmable-notes';
 const evidence = resolve(
   process.env.NATIVE_SHARED_EVIDENCE ?? '.cache/native-shared-editor.json',
 );
 const fixture = await mkdtemp('/tmp/pn-native-shared-');
+const fixtureId = fixture.slice(fixture.lastIndexOf('/') + 1);
 await chmod(fixture, 0o700);
 const vault = join(fixture, 'vault');
 await mkdir(vault, { mode: 0o700 });
@@ -75,6 +81,8 @@ let passed = false;
 let forcedCleanup = false;
 let cleanupVerified = false;
 let binarySha256;
+let recoveryResult = null;
+let interruptionState = 'not_started';
 const absence = (error) => error.code === 'ENOENT' || error.code === 'ESRCH';
 function classifyAssertion(error) {
   if (error?.code !== 'ERR_ASSERTION') return 'none';
@@ -110,6 +118,10 @@ function classifyFailure(error) {
       'no such window': 'webdriver_no_such_window',
       timeout: 'webdriver_timeout',
       'invalid argument': 'webdriver_invalid_argument',
+      'element click intercepted': 'webdriver_element_click_intercepted',
+      'element not interactable': 'webdriver_element_not_interactable',
+      'stale element reference': 'webdriver_stale_element_reference',
+      'javascript error': 'webdriver_javascript_error',
     };
     if (Object.hasOwn(specific, kind)) return specific[kind];
     if (
@@ -355,17 +367,18 @@ async function screenshot(name) {
     flag: 'wx',
   });
 }
-async function chooseAndOpen() {
+async function chooseAndOpen(name = 'primary.mdx') {
   await clickButton('Choose local vault');
   dialog(await rootPid(), 'choose-folder', 'Choose local vault', vault);
   // Successful vault acquisition opens navigation. Wait for that acknowledgement
   // rather than racing its async completion with a second toggle.
   await waitFor(() =>
     sync(
-      `return document.querySelector('[aria-label="Close navigation"]')?.getAttribute('aria-expanded') === 'true' && [...document.querySelectorAll('[aria-label="Open primary.mdx"]')].some(button => !button.closest('[inert]') && button.getClientRects().length > 0)`,
+      `return document.querySelector('[aria-label="Close navigation"]')?.getAttribute('aria-expanded') === 'true' && [...document.querySelectorAll('button')].some(button => button.getAttribute('aria-label') === 'Open ' + arguments[0] && !button.closest('[inert]') && button.getClientRects().length > 0)`,
+      [name],
     ),
   );
-  await clickButton('Open primary.mdx');
+  await clickButton('Open ' + name);
   await waitFor(() =>
     sync(`return Boolean(document.querySelector('[aria-label="MDX source"]'))`),
   );
@@ -387,6 +400,37 @@ async function start() {
   );
   startupPhase = 'complete';
   return pid;
+}
+async function interrupt(pid) {
+  await capture(pid);
+  assert.equal(
+    (await identity(pid))?.start,
+    owned.get(pid),
+    'Captured interruption identity',
+  );
+  interruptionState = 'requested';
+  for (const child of await liveOwned()) {
+    if ((await identity(child))?.start === owned.get(child)) {
+      try {
+        process.kill(child, 'SIGKILL');
+      } catch (error) {
+        if (!absence(error)) throw error;
+      }
+    }
+  }
+  await waitFor(async () => (await liveOwned()).length === 0);
+  await closeSession();
+  interruptionState = 'confirmed';
+}
+async function normalClose(pid) {
+  await capture(pid);
+  execFileSync('python3', ['scripts/native-close-window.py', String(pid)], {
+    timeout: 10_000,
+    stdio: 'ignore',
+  });
+  await waitFor(async () => !(await identity(pid)));
+  await closeSession();
+  await waitFor(async () => (await liveOwned()).length === 0);
 }
 async function mode(name) {
   const expanded = await sync(
@@ -418,6 +462,19 @@ try {
     ).ok,
     'WebDriver required',
   );
+  let recovery;
+  if (journey === 'recovery') {
+    stage = 'recovery_preflight';
+    const { prepareInstalledRecovery } =
+      await import('./native-shared-recovery.mjs');
+    recovery = await prepareInstalledRecovery({
+      fixture,
+      vault,
+      file,
+      original,
+      evidence,
+    });
+  }
   stage = 'installed_startup';
   const first = await start();
   await screenshot('screenshot-startup.png');
@@ -425,105 +482,138 @@ try {
   await chooseAndOpen();
   await sourceShows(original);
   await checkpoint('actual-vault-chooser-and-shared-source');
-  stage = 'source_autosave';
-  sourcePhase = 'focus';
-  await source();
-  sourcePhase = 'end';
-  await chord('\uE010');
-  sourcePhase = 'type';
-  await type(appended);
-  await bytes(saved);
-  sourcePhase = 'complete';
-  await checkpoint('automatic-exact-bom-mixed-ending-jsx-bytes');
-  stage = 'undo_redo';
-  await chord('z');
-  await bytes(original);
-  await chord('z', true);
-  await bytes(saved);
-  await checkpoint('actual-source-keyboard-undo-redo-autosave');
-  stage = 'invalid_source_autosave';
-  await chord('\uE010');
-  await type(invalid);
-  await bytes(saved + invalid);
-  await chord('z');
-  await bytes(saved);
-  await checkpoint('invalid-source-autosave-and-undo-to-valid');
-  stage = 'source_preview_switch';
-  await mode('Preview');
-  await waitFor(() =>
-    sync(
-      `return Boolean(document.querySelector('[aria-label="Editable document"]'))`,
-    ),
-  );
-  stage = 'preview_caret_autosave';
-  await click(
-    await sync(
-      `return [...document.querySelectorAll('[aria-label="Editable document"] p')].at(-1) ?? null`,
-    ),
-  );
-  await chord('\uE010');
-  await type(' Visual.');
-  await bytes(visualSaved);
-  await waitFor(() =>
-    sync(
-      `return document.querySelector('[aria-label="Editable document"]')?.textContent.includes('Appended. Visual.') === true`,
-    ),
-  );
-  await checkpoint('actual-preview-paragraph-caret-autosave-exact-bytes');
-  stage = 'preview_undo_redo';
-  await chord('z');
-  await bytes(saved);
-  await chord('z', true);
-  await bytes(visualSaved);
-  await checkpoint('actual-preview-keyboard-undo-redo-autosave');
-  await screenshot('screenshot-preview.png');
-  await mode('Source');
-  await sourceShows(visualSaved);
-  await bytes(visualSaved);
-  await screenshot('screenshot-source.png');
-  await checkpoint('source-preview-switch-preserves-real-file');
-  stage = 'document_close_reopen';
-  await chord('k');
-  await click(
-    await sync(
-      `return document.querySelector('[aria-label="Search commands and notes"]')`,
-    ),
-  );
-  await type('Close document');
-  await keys([down('\uE007'), up('\uE007')]);
-  await waitFor(() =>
-    sync(`return !document.querySelector('[aria-label="MDX source"]')`),
-  );
-  await clickButton('Open primary.mdx');
-  await sourceShows(visualSaved);
-  await bytes(visualSaved);
-  await checkpoint('document-close-reopen-exact-disk');
-  stage = 'os_close';
-  await capture(first);
-  execFileSync('python3', ['scripts/native-close-window.py', String(first)], {
-    timeout: 10_000,
-    stdio: 'ignore',
-  });
-  await waitFor(async () => !(await identity(first)));
-  await closeSession();
-  await waitFor(async () => (await liveOwned()).length === 0);
-  assert.deepEqual(await readFile(file), Buffer.from(visualSaved));
-  checkpoints.push('actual-wm-close-and-observed-process-exit');
-  stage = 'fresh_launch_reopen';
-  const second = await start();
-  assert.notEqual(second, first);
-  await chooseAndOpen();
-  await sourceShows(visualSaved);
-  await bytes(visualSaved);
-  await checkpoint('fresh-process-chooser-reopen-exact-file');
-  stage = 'final_os_close';
-  execFileSync('python3', ['scripts/native-close-window.py', String(second)], {
-    timeout: 10_000,
-    stdio: 'ignore',
-  });
-  await waitFor(async () => !(await identity(second)));
-  await closeSession();
-  await waitFor(async () => (await liveOwned()).length === 0);
+  if (recovery) {
+    recoveryResult = await recovery.run({
+      first,
+      setStage: (value) => {
+        stage = value;
+      },
+      source,
+      sourceShows,
+      chord,
+      type,
+      waitFor,
+      sync,
+      click,
+      clickButton,
+      keys,
+      down,
+      up,
+      start,
+      chooseAndOpen,
+      interrupt,
+      normalClose,
+      checkpoint,
+      screenshot,
+      onEvidence: (value) => {
+        recoveryResult = value;
+      },
+    });
+  } else {
+    stage = 'source_autosave';
+    sourcePhase = 'focus';
+    await source();
+    sourcePhase = 'end';
+    await chord('\uE010');
+    sourcePhase = 'type';
+    await type(appended);
+    await bytes(saved);
+    sourcePhase = 'complete';
+    await checkpoint('automatic-exact-bom-mixed-ending-jsx-bytes');
+    stage = 'undo_redo';
+    await chord('z');
+    await bytes(original);
+    await chord('z', true);
+    await bytes(saved);
+    await checkpoint('actual-source-keyboard-undo-redo-autosave');
+    stage = 'invalid_source_autosave';
+    await chord('\uE010');
+    await type(invalid);
+    await bytes(saved + invalid);
+    await chord('z');
+    await bytes(saved);
+    await checkpoint('invalid-source-autosave-and-undo-to-valid');
+    stage = 'source_preview_switch';
+    await mode('Preview');
+    await waitFor(() =>
+      sync(
+        `return Boolean(document.querySelector('[aria-label="Editable document"]'))`,
+      ),
+    );
+    stage = 'preview_caret_autosave';
+    await click(
+      await sync(
+        `return [...document.querySelectorAll('[aria-label="Editable document"] p')].at(-1) ?? null`,
+      ),
+    );
+    await chord('\uE010');
+    await type(' Visual.');
+    await bytes(visualSaved);
+    await waitFor(() =>
+      sync(
+        `return document.querySelector('[aria-label="Editable document"]')?.textContent.includes('Appended. Visual.') === true`,
+      ),
+    );
+    await checkpoint('actual-preview-paragraph-caret-autosave-exact-bytes');
+    stage = 'preview_undo_redo';
+    await chord('z');
+    await bytes(saved);
+    await chord('z', true);
+    await bytes(visualSaved);
+    await checkpoint('actual-preview-keyboard-undo-redo-autosave');
+    await screenshot('screenshot-preview.png');
+    await mode('Source');
+    await sourceShows(visualSaved);
+    await bytes(visualSaved);
+    await screenshot('screenshot-source.png');
+    await checkpoint('source-preview-switch-preserves-real-file');
+    stage = 'document_close_reopen';
+    await chord('k');
+    await click(
+      await sync(
+        `return document.querySelector('[aria-label="Search commands and notes"]')`,
+      ),
+    );
+    await type('Close document');
+    await keys([down('\uE007'), up('\uE007')]);
+    await waitFor(() =>
+      sync(`return !document.querySelector('[aria-label="MDX source"]')`),
+    );
+    await clickButton('Open primary.mdx');
+    await sourceShows(visualSaved);
+    await bytes(visualSaved);
+    await checkpoint('document-close-reopen-exact-disk');
+    stage = 'os_close';
+    await capture(first);
+    execFileSync('python3', ['scripts/native-close-window.py', String(first)], {
+      timeout: 10_000,
+      stdio: 'ignore',
+    });
+    await waitFor(async () => !(await identity(first)));
+    await closeSession();
+    await waitFor(async () => (await liveOwned()).length === 0);
+    assert.deepEqual(await readFile(file), Buffer.from(visualSaved));
+    checkpoints.push('actual-wm-close-and-observed-process-exit');
+    stage = 'fresh_launch_reopen';
+    const second = await start();
+    assert.notEqual(second, first);
+    await chooseAndOpen();
+    await sourceShows(visualSaved);
+    await bytes(visualSaved);
+    await checkpoint('fresh-process-chooser-reopen-exact-file');
+    stage = 'final_os_close';
+    execFileSync(
+      'python3',
+      ['scripts/native-close-window.py', String(second)],
+      {
+        timeout: 10_000,
+        stdio: 'ignore',
+      },
+    );
+    await waitFor(async () => !(await identity(second)));
+    await closeSession();
+    await waitFor(async () => (await liveOwned()).length === 0);
+  }
   passed = true;
 } catch (error) {
   // Never expose arbitrary page source, framework replies, file contents or paths.
@@ -554,18 +644,24 @@ try {
         failureKind,
         assertionKind,
         sourcePhase,
+        fixtureId,
+        journey,
+        interruptionState,
+        recovery: recoveryResult,
         binarySha256,
         checkpoints,
         cleanupVerified,
         forcedCleanup,
         scope:
-          'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance',
+          journey === 'recovery'
+            ? 'Installed shared editor save failure, interruption and explicit new-copy recovery; no React or containment acceptance'
+            : 'Installed shared editor, real chooser/keyboard/autosave/close/reopen; no React or containment acceptance',
       },
       null,
       2,
     ) + '\n',
     { mode: 0o600 },
   );
-  await rm(fixture, { recursive: true, force: true });
+  if (journey === 'editor') await rm(fixture, { recursive: true, force: true });
 }
 if (passed) console.log('NATIVE_SHARED_EDITOR_PASS');

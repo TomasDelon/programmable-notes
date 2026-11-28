@@ -22,9 +22,25 @@ key custody require the later explicit decision; this plan publishes no release.
 The real local installed editor journey passed with exact bytes/mode, real
 Source/Preview keyboard undo/redo, ordinary close and fresh-process reopen;
 see the current [implementation status](../IMPLEMENTATION_STATUS.md). The mode
-fixture correction changes no application permission assertion. Recovery and
-external-writer/lifecycle/React gates are still incomplete; historical progress
+fixture correction changes no application permission assertion. The recovery packet below adds its own scoped acceptance. Full
+external-writer/lifecycle/React gates remain incomplete; historical progress
 below is not evidence for those gates.
+
+## Installed recovery packet — 28 November 2026
+
+The current local candidate passed failed-save/interruption/restart recovery,
+read-only discovery with invalid sibling, cancel, actual native exclusive-create
+collision, private exact-byte new copy, real history/autosave and restart/reopen.
+The existing restricted account and all20 prior recovery records were preserved;
+both cleanup receipts passed without force/residuals. Current-source confirmation
+in the existing passive save status follows the durable/readback receipt and
+binds exact lifetime/revision, without new source/history or file authority.
+See [scoped evidence](../security-evidence/2026-11-28-local-recovery/README.md).
+Final Phase2 checks passed1022 units,227 scanner-enabled tooling/zero skips,160
+browser,9 Pages and4 local storage cases with static checks. Keep the installed
+result separate from the retained deliberate-crash diagnostic failures and the
+required local one-byte process core limit. Continue with read-only live
+external observation and conflict reconciliation; general native React stays off.
 
 ## Purpose
 

@@ -5,6 +5,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ComponentType,
 } from 'react';
 import {
@@ -78,6 +79,19 @@ export function ProductRoot({
   const snapshot = useProductApplication(application);
   const id = snapshot.selectedSessionId;
   const document = useDocumentSession(application.documents, id);
+  const subscribeRecovery = useCallback(
+    (changed: () => void) => application.subscribe(changed),
+    [application],
+  );
+  const readRecovery = useCallback(
+    () => id !== null && (application.recoveryAcknowledged?.(id) ?? false),
+    [application, id],
+  );
+  const recoveryConfirmed = useSyncExternalStore(
+    subscribeRecovery,
+    readRecovery,
+    readRecovery,
+  );
   const metadata = id ? application.loadedDocument(id) : null;
   const [preferences, setPreferences] = useState<ProductPreferences>(
     () => services.initialPreferences ?? { mode: 'source', theme: 'dark' },
@@ -464,7 +478,9 @@ export function ProductRoot({
     : saved.status === 'saved' && saved.durable
       ? 'Saved to file'
       : saved.status === 'blocked'
-        ? 'Not saved'
+        ? recoveryConfirmed
+          ? 'Not saved · Recovery confirmed'
+          : 'Not saved'
         : 'Saving…';
   return (
     <div

@@ -168,3 +168,22 @@ exec(${JSON.stringify(cleanup)})
   );
   assert.equal(receipt.cleanupVerified, false);
 });
+
+test('launcher admits only the fixed recovery journey before privileged work', () => {
+  const args = Array(6).fill('x');
+  const recovery = spawnSync('bash', [path, ...args, 'recovery'], {
+    encoding: 'utf8',
+  });
+  assert.equal(recovery.status, 2);
+  assert.match(
+    recovery.stderr,
+    /NATIVE_SHARED_LOCAL_REFUSED (?:administrator-required|owner)\n/,
+  );
+  for (const mode of ['unknown', '../recovery', 'recovery;anything']) {
+    const refused = spawnSync('bash', [path, ...args, mode], {
+      encoding: 'utf8',
+    });
+    assert.equal(refused.status, 2);
+    assert.match(refused.stderr, /NATIVE_SHARED_LOCAL_REFUSED arguments/);
+  }
+});

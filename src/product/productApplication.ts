@@ -57,6 +57,8 @@ export interface ProductSnapshot {
   readonly closeUncertain: boolean;
 }
 export interface ProductApplication {
+  /** A completed durable/readback receipt for the current accepted source only. */
+  recoveryAcknowledged?(sessionId: string): boolean;
   refreshRecovery?(signal: AbortSignal): Promise<void>;
   restoreRecoveryCopy?(
     file: string,

@@ -12,6 +12,9 @@ type NativeFixture = {
   opens: { id: string; path: string }[];
   closed: string[];
   holdRecoveryRead?: boolean;
+  holdRecoveryAppend?: boolean;
+  failSaves?: boolean;
+  publishedRecovery: number;
   holdRecoveryList?: boolean;
   failRecoveryList?: boolean;
 };
@@ -27,6 +30,7 @@ async function nativeEntry(page: Page) {
         saves: [],
         opens: [],
         closed: [],
+        publishedRecovery: 0,
         files: {
           'math/note.mdx': source,
           'other.mdx': '# Other title\r\n\r\nSecond unchanged.\r\n',
@@ -51,6 +55,7 @@ async function nativeEntry(page: Page) {
         isTauri: boolean;
         __nativeFixture: NativeFixture;
         __releaseRecovery?: () => void;
+        __releaseRecoveryAppend?: () => void;
         __releaseRecoveryList?: () => void;
         __TAURI_INTERNALS__: {
           invoke(
@@ -211,6 +216,8 @@ async function nativeEntry(page: Page) {
               typeof args.source !== 'string'
             )
               throw Error('Stale or unknown native grant');
+            if (fixture.failSaves)
+              throw Error('Synthetic original save refused');
             fixture.saves.push({
               id: args.id as string,
               revision: grant.revision,
@@ -309,6 +316,11 @@ async function nativeEntry(page: Page) {
                 source: input.source,
               });
               heads.set(input.documentId, id);
+              fixture.publishedRecovery++;
+              if (fixture.holdRecoveryAppend)
+                await new Promise<void>((resolve) => {
+                  host.__releaseRecoveryAppend = resolve;
+                });
               return {
                 snapshot: {
                   file,
@@ -938,4 +950,53 @@ test('recovery discovery shows pending and failure, preserves cached options, an
   expect(
     commands.filter(({ command }) => command === 'create_vault_source'),
   ).toHaveLength(0);
+});
+
+test('failed save confirms current recovery only after the published snapshot receives its durable acknowledgement', async ({
+  page,
+}, info) => {
+  await nativeEntry(page);
+  await openNote(page);
+  await page
+    .getByRole('button', { name: 'Close navigation', exact: true })
+    .click();
+  await page.evaluate(() => {
+    const host = window as unknown as { __nativeFixture: NativeFixture };
+    host.__nativeFixture.failSaves = true;
+    host.__nativeFixture.holdRecoveryAppend = true;
+  });
+  const editor = page.getByRole('textbox', { name: 'MDX source' });
+  await editor.click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.insertText('Pending recovery.');
+  const pending = original + 'Pending recovery.';
+  const status = page.getByRole('status', { name: 'Document save status' });
+  await expect(status).toHaveText('Not saved');
+  await expect
+    .poll(async () => (await fixture(page)).publishedRecovery)
+    .toBeGreaterThan(0);
+  await expect(status).not.toContainText('Recovery confirmed');
+  expect((await fixture(page)).files['math/note.mdx']).toBe(original);
+  await page.evaluate(() => {
+    const host = window as unknown as {
+      __nativeFixture: NativeFixture;
+      __releaseRecoveryAppend?: () => void;
+    };
+    host.__nativeFixture.holdRecoveryAppend = false;
+    host.__releaseRecoveryAppend?.();
+  });
+  await expect(status).toHaveText('Not saved · Recovery confirmed');
+  await expect(editor).toBeFocused();
+  const state = await fixture(page);
+  expect(state.files['math/note.mdx']).toBe(original);
+  expect(
+    state.commands
+      .filter(
+        (entry) =>
+          entry.command === 'recovery_draft' && entry.args.action === 'append',
+      )
+      .at(-1)?.args.input,
+  ).toMatchObject({ source: pending });
+  await expect(editor).toContainText('Pending recovery.');
+  await capture(page, info, 'native-recovery-confirmed');
 });

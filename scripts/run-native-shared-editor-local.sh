@@ -8,7 +8,8 @@ PATH=/usr/bin:/bin
 umask 077
 export PATH
 refuse() { printf 'NATIVE_SHARED_LOCAL_REFUSED %s\n' "$1" >&2; exit 2; }
-[[ $# == 6 ]] || refuse arguments
+[[ $# == 6 || ( $# == 7 && ${7:-} == recovery ) ]] || refuse arguments
+pn_journey=${7:-editor}
 [[ $EUID == 0 ]] || refuse administrator-required
 pn_owner=$1 pn_payload=$2 pn_owner_home=$3 pn_app_hash=$4 pn_node_hash=$5 pn_driver_hash=$6
 [[ $pn_owner =~ ^[1-9][0-9]*$ && $pn_owner == 1000 ]] || refuse owner
@@ -32,7 +33,7 @@ for pn_dir in "$pn_payload" "$pn_payload/bin" "$pn_payload/scripts"; do
   [[ -d $pn_dir && ! -L $pn_dir && $(stat -c %u "$pn_dir") == "$pn_owner" ]] || refuse payload-directory
   role test ! -w "$pn_dir" || refuse payload-writable
 done
-for pn_name in bin/node bin/tauri-driver scripts/native-shared-editor.mjs scripts/native-webdriver-lib.mjs scripts/native-ui-lib.mjs scripts/native-dialog.py scripts/native-close-window.py; do
+for pn_name in bin/node bin/tauri-driver scripts/native-shared-editor.mjs scripts/native-shared-recovery.mjs scripts/native-recovery-record.mjs scripts/native-webdriver-lib.mjs scripts/native-ui-lib.mjs scripts/native-dialog.py scripts/native-close-window.py; do
   pn_file="$pn_payload/$pn_name"
   [[ -f $pn_file && ! -L $pn_file && $(stat -c %u "$pn_file") == "$pn_owner" ]] || refuse payload-file
   role test -r "$pn_file" || refuse payload-unreadable
@@ -116,7 +117,7 @@ console.log("NATIVE_SHARED_LOCAL_COLLECTED "+directory);
 import {constants} from 'node:fs';
 import {open} from 'node:fs/promises';
 const directory=process.argv[2], files=[];
-for(const name of ['local-infrastructure.json','native-shared-editor.json','screenshot-startup.png','screenshot-source.png','screenshot-preview.png']) {
+for(const name of ['local-infrastructure.json','native-shared-editor.json','screenshot-startup.png','screenshot-source.png','screenshot-preview.png','screenshot-recovery-pending.png','screenshot-recovery-copy.png','screenshot-recovery-collision.png','screenshot-recovery-collision-notice.png']) {
   let handle;
   try {
     handle=await open(directory+'/'+name,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -140,7 +141,7 @@ COLLECT
 }
 trap cleanup EXIT
 role mkdir -m 700 "$pn_evidence/runtime"
-role env DISPLAY=:91 XAUTHORITY="$pn_evidence/Xauthority" XDG_RUNTIME_DIR="$pn_evidence/runtime" GTK_MODULES=atk-bridge NO_AT_BRIDGE=0 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 NATIVE_DISPOSABLE_PROFILE=1 NATIVE_SHARED_EVIDENCE="$pn_evidence/native-shared-editor.json" timeout -k 5s 260s dbus-run-session -- /bin/bash -s -- "$pn_payload" "$pn_evidence" <<'DESKTOP'
+role env DISPLAY=:91 XAUTHORITY="$pn_evidence/Xauthority" XDG_RUNTIME_DIR="$pn_evidence/runtime" GTK_MODULES=atk-bridge NO_AT_BRIDGE=0 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 NATIVE_DISPOSABLE_PROFILE=1 NATIVE_SHARED_JOURNEY="$pn_journey" NATIVE_SHARED_EVIDENCE="$pn_evidence/native-shared-editor.json" timeout -k 5s 260s dbus-run-session -- /bin/bash -s -- "$pn_payload" "$pn_evidence" <<'DESKTOP'
 set -euo pipefail
 cd "$1"
 pn_payload=$1 pn_evidence=$2

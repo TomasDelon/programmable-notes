@@ -7,10 +7,13 @@ guarded window-lifetime owner. Authorize a disposable folder using **Choose loca
 vault**. Edits target original files automatically; there is no manual Save
 workflow in this candidate. Reselect the vault after restarting. React execution,
 file lifecycle/Trash and update integration remain incomplete. Recovery discovery
-and explicit new-copy restoration are implemented; actual installed restart/recovery
-acceptance remains pending. Do not treat this as the accepted application or production security readiness.
+and explicit new-copy restoration passed the scoped installed journey in
+[the local recovery evidence](security-evidence/2026-11-28-local-recovery/README.md).
+External-writer, lifecycle and React acceptance remain pending. Do not treat this as the accepted application or production security readiness.
 
-Actual installed validation must use a fresh ordinary account and synthetic files:
+Actual installed validation must use a disposable ordinary account and synthetic files.
+The approved local journey reuses the retained locked account and preserves its
+existing recovery store; do not clear or recreate it. Verify:
 open through the real OS folder picker; type in Source and Preview; independently
 compare original-file bytes and permissions; undo/redo; close/reopen the document;
 send a real desktop close request; wait for process exit and launch a fresh process;
@@ -45,6 +48,20 @@ PrivateNetwork/cgroup admission because the shared native React adapter is disab
 It still requires the production package policy and working WebKit sandbox, DBus,
 X display and accessibility. Never bypass sandboxing or report this limited journey
 as native React/network/resource-containment acceptance.
+
+## Local deliberate browser-crash diagnostics
+
+The matching Chromium suite deliberately crashes two renderers to test persisted
+composition recovery. On a Linux host with a piped `core_pattern`, a zero core
+limit does not suppress that pipe. The kernel reserves a one-byte `RLIMIT_CORE`
+for suppressing recursive piped dumps; see the
+[kernel implementation](https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux-stable.git/+/refs/tags/v6.12.27/fs/coredump.c).
+For this local host, run the test process with `prlimit --core=1 -- npm run check`
+and the pinned toolchain/scanner/browser environment. This limit applies only to
+that process and its descendants. It changes no system setting, browser assertion,
+timeout, runtime permission or native resource policy. Preserve failed crash
+observations; a passing retry is not a clean acceptance result. Record the actual
+limit and diagnostic repetition results with the candidate evidence.
 
 ## Historical manual-save application procedures
 

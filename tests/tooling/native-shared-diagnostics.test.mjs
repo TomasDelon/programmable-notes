@@ -32,6 +32,10 @@ test('failure classification accepts only closed diagnostic categories', () => {
     ['timeout', 'webdriver_timeout'],
     ['invalid argument', 'webdriver_invalid_argument'],
     ['no such element', 'webdriver_other'],
+    ['element click intercepted', 'webdriver_element_click_intercepted'],
+    ['element not interactable', 'webdriver_element_not_interactable'],
+    ['stale element reference', 'webdriver_stale_element_reference'],
+    ['javascript error', 'webdriver_javascript_error'],
     ['PRIVATE RAW DIAGNOSTIC', 'other'],
     ['constructor', 'other'],
     [{ toString: 'unknown error' }, 'other'],
@@ -160,6 +164,10 @@ test('failure catch records a safe category and receipt exposes only derived fie
     failureKind: context.failureKind,
     assertionKind: context.assertionKind,
     sourcePhase: 'not_started',
+    fixtureId: 'pn-native-shared-TEST01',
+    journey: 'editor',
+    recoveryResult: null,
+    interruptionState: 'not_started',
     binarySha256: 'a'.repeat(64),
     checkpoints: [],
     cleanupVerified: true,
@@ -169,6 +177,10 @@ test('failure catch records a safe category and receipt exposes only derived fie
   assert.equal(record.failureKind, 'other');
   assert.equal(record.assertionKind, 'none');
   assert.equal(record.sourcePhase, 'not_started');
+  assert.equal(record.journey, 'editor');
+  assert.equal(record.fixtureId, 'pn-native-shared-TEST01');
+  assert.equal(record.interruptionState, 'not_started');
+  assert.equal(record.recovery, null);
   assert.ok(!JSON.stringify(record).includes('PRIVATE'));
 });
 
