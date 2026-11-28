@@ -1,5 +1,20 @@
 # Programmable Notes implementation status
 
+## Local development transfer — 28 November 2026
+
+The owner changed today's objective to sealing this checkpoint and continuing on
+his Linux computer as quickly as possible. [START_LOCAL](../START_LOCAL.md) and
+[the local handoff](LOCAL_DEVELOPMENT_HANDOFF.md) provide code/document locations,
+exact toolchains, setup/build/test commands, current native blockers and a Codex
+resume prompt. No application behavior changes are included in this transfer.
+
+Required CI46079096696 passed both jobs at f02db0d, including the Home-picker
+candidate's SDK compilation and optimized packaging. Its actual installed GUI
+correction was not tested before transfer and is the first local task. No new
+cloud native run is needed to begin local development. Existing source-bound
+browser/backend/fixed-helper evidence remains separately scoped below. The
+project is ready to transfer development, not declared production ready.
+
 ## Owner acceptance correction — 26 November 2026
 
 The owner rejected the separate native interface delivered in 0.1.2 as different

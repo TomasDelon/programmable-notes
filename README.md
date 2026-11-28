@@ -2,6 +2,14 @@
 
 Programmable Notes is a local-first, cross-platform Markdown/MDX editor designed for writing and rendering real interactive React components directly in documents.
 
+## Continue development on your Linux computer
+
+Read [START_LOCAL.md](START_LOCAL.md) and the
+[local development handoff](docs/LOCAL_DEVELOPMENT_HANDOFF.md). They identify the
+exact tested checkpoint, current branch/draft PR, local setup, runnable package,
+remaining blockers and a ready-to-use Codex prompt. All required source, design,
+specifications and evidence are in this repository; cloud cache access is unnecessary.
+
 ## Current architecture and product target
 
 The owner has confirmed a **fully local file vault with automatic writes**, real
@@ -131,16 +139,15 @@ npm run dev
 The Vite development server listens on port 5173. On a fresh Linux machine, Playwright may also need system libraries: use `npx playwright install --with-deps chromium` with the appropriate system permissions. CI installs those libraries explicitly.
 
 The web workspace opens at `/`. The original engine remains at `/engine` for
-regression testing and is selected automatically by the native application.
+regression testing. The native application now selects the shared ProductRoot;
+it does not select that historical engine interface.
 
-The repository's `.npmrc` keeps npm's cache in ignored `.cache/npm`, which works in restricted cloud workspaces. Codex Cloud already provides Chromium. Use it explicitly for browser checks:
-
-```sh
-export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
-npm run check
-```
-
-CI uses Playwright's matching downloaded browser; cloud validation uses the system Chromium version. To install Playwright browsers in a writable cloud path instead, set `PLAYWRIGHT_BROWSERS_PATH=/workspace/.cache/ms-playwright` for both installation and tests. Browser downloads require the network domains saved in the cloud configuration draft to be active. Neither override is required on ordinary local machines.
+The repository's `.npmrc` keeps npm's cache in ignored `.cache/npm`. Final browser
+checks use Playwright's matching downloaded browser, as CI does. Ordinary local
+machines need no cloud executable/cache override. In Codex Cloud only, the optional
+writable cache is `/workspace/.cache/ms-playwright`; use that path for both browser
+installation and testing. System Chromium is a separately labelled diagnostic,
+not a replacement for matching-browser acceptance.
 
 ## Commands
 

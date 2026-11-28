@@ -1,5 +1,13 @@
 # Working on Programmable Notes
 
+## Local development handoff
+
+Development is moving to the owner's Linux computer. Read [START_LOCAL.md](START_LOCAL.md)
+and [docs/LOCAL_DEVELOPMENT_HANDOFF.md](docs/LOCAL_DEVELOPMENT_HANDOFF.md) before resuming.
+Use the real local checkout and machine for edits/builds/GUI feedback; do not copy
+cloud caches/credentials or start further cloud VM cycles by default. This transfer
+does not waive product or security acceptance. Preserve existing local edits and data.
+
 ## Current scope
 
 Read [docs/PRODUCT_CONTRACT.md](docs/PRODUCT_CONTRACT.md) before planning or changing
@@ -19,7 +27,7 @@ Preserve the README's local-first and document-isolation principles. Build-time 
 ## Workspace and tools
 
 - Cloud tasks already use an isolated environment. Use the existing checkout; do not create a Git worktree unless the user explicitly asks for one.
-- Run commands from the repository root, `/workspace/programmable-notes` in Codex Cloud.
+- Run commands from the repository root, `/workspace/programmable-notes` in Codex Cloud or the actual checkout path on the owner's Linux computer. Do not hardcode cloud paths in local setup.
 - Use the Node version in `.nvmrc` and npm version in `package.json`.
 - Install with `npm ci`. Keep exact versions and commit `package-lock.json` when intentionally changing dependencies.
 - `.npmrc` puts npm's cache in ignored `.cache/npm`. Keep generated output, browser artifacts, credentials, and local environment files out of commits.
